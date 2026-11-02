@@ -1,2 +1,43 @@
-# stageplay
+# Stageplay — 3D Camera-Blocking & Scene Choreography Diorama
 
+**Stageplay** is a standalone 3D spatial staging and camera-blocking visualizer built with **React 19**, **Three.js / React Three Fiber (`@react-three/fiber` & `@react-three/drei`)**, **TypeScript**, and **Tailwind CSS v4**.
+
+It synchronizes a universal video player (**Local `.mp4`/`.webm`**, **YouTube URLs**, or a built-in **60fps Stage Cam Blueprint Simulator**) with an interactive **3D Minimalist Blueprint Diorama** to illustrate where subjects/props are positioned and how the physical camera is placed, lensed, and moving at every millisecond of a scene.
+
+---
+
+## Key Capabilities
+
+1. **Stateless Functional Timeline (`Frame_t = f(t, score)`)**:
+   - Pure mathematical evaluation of camera poses, forward pose chaining ($P_0 \to P_1 \to \dots \to P_k$), and actor blocking with zero-drift scrubbing determinism.
+2. **Hybrid Geometric + Directorial Lens Optics**:
+   - Metric coordinates ($1\text{ unit} = 1\text{m}$), human-authored degrees in YAML (`pitch`, `yaw`, `rotation`), and full-frame equivalent cinema lens focal lengths (`24mm`, `35mm`, `50mm`, `85mm`) projecting a true **Rectangular Cinematic Gate Frustum (`16:9` / `2.39:1`)** with an optical focus plane frame.
+3. **Dual-Camera Architecture & Free-Orbit Handover**:
+   - **Observer Camera**: Drives the 3D viewport during playback and automatically releases to `OrbitControls` when paused so you can freely orbit, pan, and inspect the frozen 3D setup.
+   - **Stage Camera**: Illustrative 3D camera rig inside the diorama with sight-line, rectangular gate frustum, and 3D trajectory path curve.
+   - **Instant POV Cut**: Switch between `Scripted Observer`, `Free Orbit`, and `Stage Cam POV` with zero transition lag.
+4. **Universal Media Clock Parity**:
+   - Identical 60fps synchronization, scrubbing, frame-stepping (`[` / `]`), and slow-motion playback (`0.25x`, `0.5x`, `1x`, `2x`) across local `.mp4` files, YouTube URLs, and procedural blueprint slates.
+5. **Live YAML Score Drawer & Authoring Telemetry Capsule**:
+   - Edit YAML scores live in the slide-out drawer with instant 3D re-evaluation, or click the floating telemetry capsule to copy live camera coordinates (`target`, `distance`, `pitch`, `yaw`, `lens`) directly to the clipboard.
+
+---
+
+## Commands
+
+```bash
+# Install dependencies
+npm install
+
+# Start local development server
+npm run dev
+
+# Run unit test suite (Vitest)
+npm test
+
+# Type-check and build production bundle
+npm run build
+
+# Run fast linter (oxlint)
+npm run lint
+```

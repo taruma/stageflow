@@ -1,0 +1,43 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --color-blueprint-bg: #050811;
+  --color-blueprint-panel: #0a0f1d;
+  --color-blueprint-card: #0f172a;
+  --color-blueprint-border: #1e293b;
+  --color-blueprint-accent: #38bdf8;
+  --color-blueprint-stage-cam: #f59e0b;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  height: 100dvh;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background-color: #050811;
+  color: #f1f5f9;
+}
+
+/* Custom slim scrollbar for YAML Inspector Drawer and dropdowns */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.4);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(56, 189, 248, 0.25);
+  border-radius: 9999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(56, 189, 248, 0.45);
+}
