@@ -84,6 +84,7 @@ Scene entities (`character`, `prop`, `marker`) are rendered with unambiguous ori
 - Toggled via the top-right `[ YAML Score ]` button (closes with `Escape` or `X`).
 - Provides a live monospace editor bound to `parseStageScore()`.
 - Valid edits immediately re-evaluate the 3D stage in real time (`Frame_t = f(t)`); syntax errors display a non-blocking diagnostic banner while preserving the last valid 3D stage state.
+- Includes a 1-click **`[ Guide ]`** button that opens [`docs/YAML_AUTHORING_GUIDE.md`](YAML_AUTHORING_GUIDE.md) in a new browser tab for side-by-side reference.
 
 ### 4.4 Drag-and-Drop Custom Asset Loader (`useFileDropLoader.ts`)
 - Dropping any `.yaml`/`.yml`/`.json` file or `.mp4`/`.webm`/`.mov` video file anywhere onto the window (or selecting via `[ Load Video / YAML ]`) binds the assets in browser memory (`URL.createObjectURL`) with zero server upload required.
