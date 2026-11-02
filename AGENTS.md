@@ -111,9 +111,12 @@ stageplay/
 │   │   └── useFileDropLoader.ts     # Drag-and-drop & file picker loader for .yaml and .mp4 pairs
 │   ├── stage/                       # Layer 4: React Three Fiber 3D Blueprint Diorama
 │   │   ├── DioramaCanvas.tsx        # Root R3F <Canvas>, lighting, fog, and priority -1 frame ticker
+│   │   ├── BlueprintStageScene.tsx  # Shared lighting, metric floor grid, and mannequins
 │   │   ├── BlueprintFloorGrid.tsx   # Metric floor grid (1m / 0.25m), perimeter frame & compass labels
 │   │   ├── ObserverCameraRig.tsx    # Viewport PerspectiveCamera + OrbitControls handover & POV cuts
 │   │   ├── StageCameraRig.tsx       # 3D camera prop, rectangular gate frustum, focus plane & path line
+│   │   ├── StageCamViewRig.tsx      # Stage Camera POV lock controller for procedural monitor
+│   │   ├── StageCamMonitorCanvas.tsx# True 3D Stage Cam monitor with optical safe-action HUD
 │   │   ├── DirectionalMannequin.tsx # Stylized character/prop proxies with facing visor & floor trails
 │   │   └── StageBillboardLabel.tsx  # Crisp 3D HTML floating identity badges
 │   ├── ui/                          # Layer 5: 2D Directorial UI Shell

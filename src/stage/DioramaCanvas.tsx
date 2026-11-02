@@ -12,10 +12,9 @@ import type {
   StageFrame,
   StageScore,
 } from '../core/types';
-import { BlueprintFloorGrid } from './BlueprintFloorGrid';
+import { BlueprintStageScene } from './BlueprintStageScene';
 import { ObserverCameraRig } from './ObserverCameraRig';
 import { StageCameraRig } from './StageCameraRig';
-import { DirectionalMannequin } from './DirectionalMannequin';
 
 export interface DioramaCanvasProps {
   score: StageScore;
@@ -64,20 +63,11 @@ export const DioramaCanvas: React.FC<DioramaCanvasProps> = ({
         {/* 60fps Stateless Frame Evaluator Tick */}
         <FrameLoopTicker onTick={evaluateTick60fps} />
 
-        {/* Clean Blueprint Studio Lighting */}
-        <ambientLight intensity={0.75} />
-        <directionalLight position={[6, 12, 8]} intensity={1.1} />
-        <directionalLight
-          position={[-6, 8, -6]}
-          intensity={0.45}
-          color="#38bdf8"
-        />
-
-        {/* 1. Metric Blueprint Stage Floor Grid */}
-        <BlueprintFloorGrid
-          width={score.stage.width}
-          depth={score.stage.depth}
-          gridStep={score.stage.gridStep}
+        {/* 1. Shared Diorama Scene (Lighting, Metric Floor Grid, Directional Mannequins) */}
+        <BlueprintStageScene
+          score={score}
+          frameRef={frameRef}
+          uiFrame={uiFrame}
         />
 
         {/* 2. Viewport Observer Camera & Free-Orbit Handover Rig */}
@@ -95,16 +85,6 @@ export const DioramaCanvas: React.FC<DioramaCanvasProps> = ({
           cameraMode={cameraMode}
           uiFrame={uiFrame}
         />
-
-        {/* 4. Directional Character Mannequins & Stage Props */}
-        {uiFrame.entitiesList.map((entityState) => (
-          <DirectionalMannequin
-            key={entityState.id}
-            entityId={entityState.id}
-            initialState={entityState}
-            frameRef={frameRef}
-          />
-        ))}
       </Canvas>
     </div>
   );

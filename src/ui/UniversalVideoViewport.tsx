@@ -3,14 +3,14 @@
  * Seamlessly renders:
  *   1. Native HTML5 <video> (local .mp4 / .webm or dropped file blob)
  *   2. YouTube IFrame Player (with unified transport & 60fps drift-corrected sync)
- *   3. Procedural Blueprint Monitor Slate (for zero-asset `procedural://` demos)
+ *   3. True 3D Stage Cam Monitor Viewport (for zero-asset `procedural://` demos)
  */
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import { Film, Globe, Sparkles, Check, Link2 } from 'lucide-react';
 import type { StageFrame, StageScore } from '../core/types';
 import type { MediaSourceInfo } from '../media/mediaTypes';
-import { radToDeg } from '../core/sphericalMath';
+import { StageCamMonitorCanvas } from '../stage/StageCamMonitorCanvas';
 
 export interface UniversalVideoViewportProps {
   score: StageScore;
@@ -18,6 +18,7 @@ export interface UniversalVideoViewportProps {
   html5VideoRef: React.RefObject<HTMLVideoElement | null>;
   youtubeContainerRef: React.RefObject<HTMLDivElement | null>;
   frameRef: React.RefObject<StageFrame>;
+  uiFrame: StageFrame;
   isPlaying: boolean;
   onApplyVideoUrlOverride: (url: string) => void;
 }
@@ -28,184 +29,11 @@ export const UniversalVideoViewport: React.FC<UniversalVideoViewportProps> = ({
   html5VideoRef,
   youtubeContainerRef,
   frameRef,
+  uiFrame,
   onApplyVideoUrlOverride,
 }) => {
   const [isUrlPopoverOpen, setIsUrlPopoverOpen] = useState(false);
   const [urlInput, setUrlInput] = useState('');
-  const proceduralCanvasRef = useRef<HTMLCanvasElement | null>(null);
-
-  // Render live 60fps procedural blueprint monitor when sourceInfo.kind === 'procedural'
-  useEffect(() => {
-    if (sourceInfo.kind !== 'procedural') return;
-    let rafId: number;
-
-    const drawSlate = () => {
-      const canvas = proceduralCanvasRef.current;
-      const frame = frameRef.current;
-      if (canvas && frame) {
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          const w = canvas.width;
-          const h = canvas.height;
-          ctx.clearRect(0, 0, w, h);
-
-          // 1. Dark Blueprint Monitor Background
-          ctx.fillStyle = '#060a15';
-          ctx.fillRect(0, 0, w, h);
-
-          // 2. Subtle Horizon & Optical Grid
-          ctx.strokeStyle = 'rgba(56, 189, 248, 0.10)';
-          ctx.lineWidth = 1;
-          const gridCols = 12;
-          const gridRows = 6;
-          for (let i = 1; i < gridCols; i++) {
-            const x = (w / gridCols) * i;
-            ctx.beginPath();
-            ctx.moveTo(x, 0);
-            ctx.lineTo(x, h);
-            ctx.stroke();
-          }
-          for (let j = 1; j < gridRows; j++) {
-            const y = (h / gridRows) * j;
-            ctx.beginPath();
-            ctx.moveTo(0, y);
-            ctx.lineTo(w, y);
-            ctx.stroke();
-          }
-
-          // 3. Project Scene Entities from the Stage Camera's exact POV
-          const camPos = frame.stageCamera.transform.position;
-          const camTgt = frame.stageCamera.transform.target;
-          const fovRad = (frame.stageCamera.transform.fovDeg * Math.PI) / 180;
-          const focalPx = (h * 0.5) / Math.tan(fovRad * 0.5);
-
-          // Forward, Right, Up basis vectors for Stage Camera
-          const fx = camTgt.x - camPos.x;
-          const fy = camTgt.y - camPos.y;
-          const fz = camTgt.z - camPos.z;
-          const flen = Math.hypot(fx, fy, fz) || 1;
-          const fnx = fx / flen;
-          const fny = fy / flen;
-          const fnz = fz / flen;
-
-          // Right = normalize(cross(forward, worldUp(0,1,0)))
-          let rx = -fnz;
-          let ry = 0;
-          let rz = fnx;
-          const rlen = Math.hypot(rx, ry, rz) || 1;
-          rx /= rlen;
-          rz /= rlen;
-
-          // Up = cross(right, forward)
-          const ux = ry * fnz - rz * fny;
-          const uy = rz * fnx - rx * fnz;
-          const uz = rx * fny - ry * fnx;
-
-          // Draw horizon line
-          const horizonY = h * 0.5 + fny * focalPx;
-          ctx.strokeStyle = 'rgba(245, 158, 11, 0.25)';
-          ctx.beginPath();
-          ctx.moveTo(0, horizonY);
-          ctx.lineTo(w, horizonY);
-          ctx.stroke();
-
-          // Sort entities back-to-front relative to Stage Camera
-          const projectedEntities = frame.entitiesList
-            .map((ent) => {
-              const centerY = ent.position.y + ent.def.height * 0.5;
-              const dx = ent.position.x - camPos.x;
-              const dy = centerY - camPos.y;
-              const dz = ent.position.z - camPos.z;
-              const depth = dx * fnx + dy * fny + dz * fnz;
-              const camX = dx * rx + dy * ry + dz * rz;
-              const camY = dx * ux + dy * uy + dz * uz;
-              return { ent, depth, camX, camY };
-            })
-            .filter((item) => item.depth > 0.2)
-            .sort((a, b) => b.depth - a.depth);
-
-          for (const { ent, depth, camX, camY } of projectedEntities) {
-            const screenX = w * 0.5 + (camX / depth) * focalPx;
-            const screenY = h * 0.5 - (camY / depth) * focalPx;
-            const pixelHeight = (ent.def.height / depth) * focalPx;
-            const pixelWidth = (ent.def.radius * 2.2 / depth) * focalPx;
-
-            // Silhouette capsule on monitor
-            ctx.save();
-            ctx.strokeStyle = ent.def.color;
-            ctx.fillStyle = `${ent.def.color}28`;
-            ctx.lineWidth = ent.highlighted ? 2.5 : 1.5;
-
-            ctx.beginPath();
-            ctx.roundRect(
-              screenX - pixelWidth * 0.5,
-              screenY - pixelHeight * 0.5,
-              pixelWidth,
-              pixelHeight,
-              Math.min(24, pixelWidth * 0.4)
-            );
-            ctx.fill();
-            ctx.stroke();
-
-            // Head circle inside monitor
-            const headRadius = Math.max(6, pixelWidth * 0.28);
-            const headCenterY =
-              screenY - pixelHeight * 0.5 + headRadius * 1.25;
-            ctx.beginPath();
-            ctx.arc(screenX, headCenterY, headRadius, 0, Math.PI * 2);
-            ctx.stroke();
-
-            // Entity label under silhouette
-            ctx.fillStyle = '#e2e8f0';
-            ctx.font = '600 11px monospace';
-            ctx.textAlign = 'center';
-            ctx.fillText(
-              `${ent.def.label} (${depth.toFixed(1)}m)`,
-              screenX,
-              screenY + pixelHeight * 0.5 + 16
-            );
-            ctx.restore();
-          }
-
-          // 4. Cinema Gate Safe-Action Guide & Center Crosshair
-          const marginX = w * 0.06;
-          const marginY = h * 0.06;
-          ctx.strokeStyle = 'rgba(245, 158, 11, 0.45)';
-          ctx.lineWidth = 1.2;
-          ctx.strokeRect(marginX, marginY, w - marginX * 2, h - marginY * 2);
-
-          // Center optical reticle
-          ctx.beginPath();
-          ctx.arc(w * 0.5, h * 0.5, 10, 0, Math.PI * 2);
-          ctx.stroke();
-
-          // 5. Bottom Monitor Telemetry Strip
-          const pose = frame.stageCamera.transform.pose;
-          ctx.fillStyle = 'rgba(5, 8, 17, 0.82)';
-          ctx.fillRect(marginX + 8, h - marginY - 34, w - (marginX + 8) * 2, 26);
-          ctx.fillStyle = '#fbbf24';
-          ctx.font = 'bold 11px monospace';
-          ctx.textAlign = 'left';
-          ctx.fillText(
-            `STAGE CAM MONITOR · ${Math.round(pose.focalLengthMm)}mm LENS · DIST ${pose.distance.toFixed(2)}m · YAW ${radToDeg(pose.yaw).toFixed(1)}°`,
-            marginX + 18,
-            h - marginY - 17
-          );
-          ctx.textAlign = 'right';
-          ctx.fillStyle = '#38bdf8';
-          ctx.fillText(
-            `T+ ${frame.timestampSec.toFixed(2)}s`,
-            w - marginX - 18,
-            h - marginY - 17
-          );
-        }
-      }
-      rafId = requestAnimationFrame(drawSlate);
-    };
-
-    rafId = requestAnimationFrame(drawSlate);
-    return () => cancelAnimationFrame(rafId);
-  }, [sourceInfo.kind, frameRef]);
 
   const handleApplyUrl = (e: React.FormEvent) => {
     e.preventDefault();
@@ -325,13 +153,12 @@ export const UniversalVideoViewport: React.FC<UniversalVideoViewportProps> = ({
             }`}
           />
 
-          {/* 3. Procedural Blueprint Monitor Slate */}
+          {/* 3. True 3D Optical Stage Cam Monitor Viewport */}
           {sourceInfo.kind === 'procedural' && (
-            <canvas
-              ref={proceduralCanvasRef}
-              width={960}
-              height={540}
-              className="w-full h-full object-contain"
+            <StageCamMonitorCanvas
+              score={score}
+              frameRef={frameRef}
+              uiFrame={uiFrame}
             />
           )}
         </div>

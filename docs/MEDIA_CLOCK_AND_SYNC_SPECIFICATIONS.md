@@ -52,7 +52,7 @@ export interface MediaClockDriver {
 
 ### 2.3 `ProceduralMediaDriver` (`proceduralMediaDriver.ts`)
 - Pure `performance.now()` virtual clock used by `procedural://` blueprint scenes.
-- Paired with a 60fps 2D optical monitor canvas in [`UniversalVideoViewport.tsx`](../src/ui/UniversalVideoViewport.tsx) that projects the scene entities from the Stage Camera's exact POV with a rule-of-thirds safe-action reticle and live lens telemetry strip.
+- Paired with a 60fps true 3D Stage Cam Viewport (`StageCamMonitorCanvas.tsx` / `StageCamViewRig.tsx`) in [`UniversalVideoViewport.tsx`](../src/ui/UniversalVideoViewport.tsx) that renders the shared 3D diorama scene directly through the Stage Camera's lens with a rule-of-thirds safe-action reticle and live optical lens telemetry strip.
 
 ---
 

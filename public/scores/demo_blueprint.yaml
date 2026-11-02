@@ -1,5 +1,5 @@
 # ==============================================================================
-# STAGEPLAY BLUEPRINT 01 — MINIMAL SINGLE-SHOT ARC BLOCKING
+# STAGEPLAY BLUEPRINT 01 — TWO-SHOT ARC BLOCKING
 # ==============================================================================
 # Units:
 #   - Spatial Coordinates & Distances: Metric Meters (1 unit = 1m)
@@ -8,7 +8,7 @@
 
 version: "1.0"
 id: "demo-blueprint"
-title: "Blueprint 01: Single-Shot Arc Blocking"
+title: "Blueprint 01: Two-Shot Arc Blocking"
 subtitle: "50mm Medium Two-Shot · 45° Clockwise Camera Arc"
 video: "procedural://demo-blueprint"
 aspect_ratio: "16:9"
@@ -25,10 +25,10 @@ stage:
     yaw: 38
     lens: 35mm
   stage_camera:
-    target: "protagonist"
-    distance: 3.2
-    pitch: 6
-    yaw: -20
+    target: [0, 1.25, 0]
+    distance: 4.4
+    pitch: 7
+    yaw: -22
     lens: 50mm
 
 entities:
@@ -54,16 +54,15 @@ shots:
     start: 0.0
     end: 10.0
     stage_camera:
-      from: "protagonist"
-      target: "protagonist"
+      target: [0, 1.25, 0]
       maneuver: "arc"
       easing: "smooth"
-      distance_start: 3.4
-      distance_end: 2.6
-      pitch_start: 8
-      pitch_end: 4
-      yaw_start: -20
-      yaw_end: 25
+      distance_start: 4.4
+      distance_end: 3.8
+      pitch_start: 7
+      pitch_end: 5
+      yaw_start: -22
+      yaw_end: 23
       lens: 50mm
       show_path: true
     observer_camera:

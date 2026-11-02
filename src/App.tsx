@@ -201,6 +201,7 @@ export const App: React.FC = () => {
             html5VideoRef={mediaClock.html5VideoRef}
             youtubeContainerRef={mediaClock.youtubeContainerRef}
             frameRef={stageLoop.frameRef}
+            uiFrame={stageLoop.uiSnapshot.frame}
             isPlaying={mediaClock.isPlaying}
             onApplyVideoUrlOverride={(url) => {
               setVideoOverrideUrl(url);
