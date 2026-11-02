@@ -23,6 +23,18 @@ It synchronizes a universal video player (**Local `.mp4`/`.webm`**, **YouTube UR
 
 ---
 
+## Architecture & Documentation
+
+Stageplay is organized into a strictly decoupled **5-Layer Architecture** (`core/` $\to$ `media/` $\to$ `hooks/` $\to$ `stage/` & `ui/`). See the living specification suite for complete details:
+
+- [**`AGENTS.md`**](AGENTS.md) — Repository governance, non-negotiable invariants, and 5-layer architecture map.
+- [**`SPECIFICATION.md`**](SPECIFICATION.md) — Product vision and core system mechanics.
+- [**`docs/CORE_MATH_AND_SCORE_SPECIFICATIONS.md`**](docs/CORE_MATH_AND_SCORE_SPECIFICATIONS.md) — Layer 1 stateless math (`Frame_t = f(t)`), metric/degree conventions, lens optics (`mm`), and YAML score schema.
+- [**`docs/MEDIA_CLOCK_AND_SYNC_SPECIFICATIONS.md`**](docs/MEDIA_CLOCK_AND_SYNC_SPECIFICATIONS.md) — Layer 2 & 3 universal `MediaClockDriver`, YouTube 60fps drift extrapolation, and dual-tier 60fps ref / ~10Hz UI loop.
+- [**`docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md`**](docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md) — Layer 4 & 5 React Three Fiber blueprint stage, dual-camera handover, directional mannequins, and workspace UI.
+
+---
+
 ## Commands
 
 ```bash
