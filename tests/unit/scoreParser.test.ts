@@ -151,6 +151,8 @@ shots:
       'spline',
       'orbit',
     ]);
+    expect(bp02.score.observerShots).toBeDefined();
+    expect(bp02.score.observerShots).toHaveLength(3);
   });
 
   it('parses root-level observer_shots with flattened camera properties into ObserverShotCue[]', () => {
