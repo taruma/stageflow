@@ -53,6 +53,16 @@ function parseVec3(raw: unknown, fallback: Vec3 = { x: 0, y: 0, z: 0 }): Vec3 {
   return { ...fallback };
 }
 
+function parseOptionalVec3(raw: unknown): Vec3 | undefined {
+  if (Array.isArray(raw) && raw.length >= 3) {
+    return parseVec3(raw);
+  }
+  if (raw && typeof raw === 'object') {
+    return parseVec3(raw);
+  }
+  return undefined;
+}
+
 function parseTargetOrVec3(raw: unknown): string | Vec3 | undefined {
   if (typeof raw === 'string' && raw.trim().length > 0) {
     return raw.trim();
@@ -146,7 +156,18 @@ function parseBaseSphericalPose(
     return { ...fallback, target: { ...fallback.target } };
   }
   const obj = raw as Record<string, unknown>;
-  const target = obj.target ? parseVec3(obj.target, fallback.target) : { ...fallback.target };
+  const rawTarget = obj.target
+    ? parseVec3(obj.target, fallback.target)
+    : { ...fallback.target };
+  const offset = parseOptionalVec3(obj.target_offset ?? obj.targetOffset);
+  const target =
+    offset && typeof obj.target !== 'string'
+      ? {
+          x: rawTarget.x + offset.x,
+          y: rawTarget.y + offset.y,
+          z: rawTarget.z + offset.z,
+        }
+      : rawTarget;
   const distance =
     typeof obj.distance === 'number' && Number.isFinite(obj.distance)
       ? obj.distance
@@ -207,6 +228,16 @@ function parseCameraCueSpec(
   const rollStartRad = parseAngleToRad(obj.roll_start ?? obj.rollStart);
   const rollEndRad = parseAngleToRad(obj.roll_end ?? obj.rollEnd);
 
+  const targetOffset = parseOptionalVec3(
+    obj.target_offset ?? obj.targetOffset
+  );
+  const targetOffsetStart = parseOptionalVec3(
+    obj.target_offset_start ?? obj.targetOffsetStart
+  );
+  const targetOffsetEnd = parseOptionalVec3(
+    obj.target_offset_end ?? obj.targetOffsetEnd
+  );
+
   let waypoints: CameraWaypointSpec[] | undefined;
   if (Array.isArray(obj.waypoints)) {
     waypoints = obj.waypoints
@@ -215,6 +246,9 @@ function parseCameraCueSpec(
         const wp = w as Record<string, unknown>;
         return {
           target: parseTargetOrVec3(wp.target),
+          targetOffset: parseOptionalVec3(
+            wp.target_offset ?? wp.targetOffset
+          ),
           distance:
             typeof wp.distance === 'number' && Number.isFinite(wp.distance)
               ? wp.distance
@@ -244,6 +278,9 @@ function parseCameraCueSpec(
     easing,
     target: parseTargetOrVec3(obj.target),
     from: parseTargetOrVec3(obj.from),
+    targetOffset,
+    targetOffsetStart,
+    targetOffsetEnd,
     distance:
       typeof obj.distance === 'number' && Number.isFinite(obj.distance)
         ? obj.distance
@@ -470,30 +507,42 @@ export function parseStageScore(
     });
 
   // Resolve target strings inside defaultStageCameraPose / defaultObserverPose if they reference an entity
-  if (
-    rawStage.stage_camera &&
-    typeof rawStage.stage_camera === 'object' &&
-    typeof (rawStage.stage_camera as Record<string, unknown>).target === 'string'
-  ) {
-    const tgtName = String(
-      (rawStage.stage_camera as Record<string, unknown>).target
-    )
-      .trim()
-      .toLowerCase();
+  const resolveStageCamEntityTarget = (
+    rawCam: unknown,
+    pose: SphericalPose
+  ) => {
+    if (!rawCam || typeof rawCam !== 'object') return;
+    const camObj = rawCam as Record<string, unknown>;
+    if (typeof camObj.target !== 'string') return;
+    const tgtName = camObj.target.trim().toLowerCase();
     const matched = entities.find(
       (e) =>
         e.id.toLowerCase() === tgtName || e.label.toLowerCase() === tgtName
     );
     if (matched) {
-      defaultStageCameraPose.target = {
-        x: matched.position.x,
-        y:
-          matched.position.y +
-          matched.height * ENTITY_DEFAULTS.CHARACTER_LOOK_ANCHOR_RATIO,
-        z: matched.position.z,
+      const anchorRatio =
+        matched.kind === 'character'
+          ? ENTITY_DEFAULTS.CHARACTER_LOOK_ANCHOR_RATIO
+          : 0.5;
+      const offset = parseOptionalVec3(
+        camObj.target_offset ?? camObj.targetOffset
+      );
+      pose.target = {
+        x: matched.position.x + (offset?.x ?? 0),
+        y: matched.position.y + matched.height * anchorRatio + (offset?.y ?? 0),
+        z: matched.position.z + (offset?.z ?? 0),
       };
     }
-  }
+  };
+
+  resolveStageCamEntityTarget(
+    rawStage.stage_camera ?? rawStage.stageCamera,
+    defaultStageCameraPose
+  );
+  resolveStageCamEntityTarget(
+    rawStage.observer_camera ?? rawStage.observerCamera,
+    defaultObserverPose
+  );
 
   // Parse Shots
   const rawShots = Array.isArray(root.shots ?? root.score)

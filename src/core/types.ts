@@ -96,6 +96,7 @@ export interface EvaluatedEntityState {
 
 export interface CameraWaypointSpec {
   target?: string | Vec3;
+  targetOffset?: Vec3;
   distance?: number;
   pitchRad?: number;
   yawRad?: number;
@@ -109,6 +110,9 @@ export interface CameraCueSpec {
   easing: CameraEasing;
   target?: string | Vec3;
   from?: string | Vec3;
+  targetOffset?: Vec3;
+  targetOffsetStart?: Vec3;
+  targetOffsetEnd?: Vec3;
   distance?: number;
   distanceStart?: number;
   distanceEnd?: number;

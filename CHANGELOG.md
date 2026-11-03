@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Camera Target Offset (`target_offset`, `target_offset_start`, `target_offset_end`) Support**:
+  - Extended `CameraCueSpec` and `CameraWaypointSpec` (`src/core/types.ts`) with world-space metric offset vectors (`targetOffset`, `targetOffsetStart`, `targetOffsetEnd`).
+  - Implemented Option A shot-boundary offset reset and cross-shot recovery (`resolveShotStartOffset`, `resolveShotDestOffset`, and offset-aware `resolveTargetPoint3D` in `src/core/trajectoryChain.ts`), supporting static offsets, animated intra-shot pedestal/pan offsets, and Catmull-Rom spline waypoint offsets.
+  - Extended YAML parser (`src/core/scoreParser.ts`) to normalize `target_offset`, `target_offset_start`, and `target_offset_end` on shots, observer shots, spline waypoints, and baseline stage cameras.
+  - Added 3 deterministic unit tests in `tests/unit/scoreParser.test.ts` and `tests/unit/frameEngine.test.ts` verifying YAML parsing, Option A reset, optical sightline invariance, and animated offset recovery.
 - **Blueprint 03 Choreography Example: "The Long Distance Pass" (`public/scores/blueprint_03_ball_pass.yaml`)**:
   - Authored a 30-meter, 3-actor, 6-shot dynamic choreography score illustrating:
     - Wide-span spatial staging with three characters aligned along the $X$-axis: Arthur at $X = -15\text{m}$, Ruby at $X = +5\text{m}$ ($20\text{m}$ span), and Mark at $X = +15\text{m}$ ($10\text{m}$ span).

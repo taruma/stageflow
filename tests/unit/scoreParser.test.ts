@@ -313,4 +313,57 @@ shots:
     expect(radToDeg(s2Cam!.rollEndRad!)).toBeCloseTo(25, 4);
     expect(radToDeg(s2Cam!.rollDeltaRad!)).toBeCloseTo(35, 4);
   });
+
+  it('parses target_offset, target_offset_start, target_offset_end, and spline waypoint target_offset in meters', () => {
+    const yamlWithTargetOffset = `
+version: "1.0"
+id: "target-offset-parse-test"
+title: "Target Offset Parsing Test"
+duration: 12.0
+entities:
+  - id: "arthur"
+    label: "Arthur"
+    kind: "character"
+    position: [-5, 0, 0]
+shots:
+  - id: "shot-1"
+    shot: 1
+    start: 0
+    end: 4
+    stage_camera:
+      target: "arthur"
+      target_offset: [0.25, 0.35, -0.1]
+  - id: "shot-2"
+    shot: 2
+    start: 4
+    end: 8
+    stage_camera:
+      target: "arthur"
+      target_offset_start: [0, -1.1, 0]
+      target_offset_end: [0, 0.25, 0]
+  - id: "shot-3"
+    shot: 3
+    start: 8
+    end: 12
+    stage_camera:
+      maneuver: "spline"
+      waypoints:
+        - target: "arthur"
+          target_offset: [0, 0.4, 0]
+          distance: 3.0
+`;
+    const { score, error } = parseStageScore(yamlWithTargetOffset);
+    expect(error).toBeNull();
+    expect(score).not.toBeNull();
+
+    const s1Cam = score!.shots[0].stageCamera!;
+    expect(s1Cam.targetOffset).toEqual({ x: 0.25, y: 0.35, z: -0.1 });
+
+    const s2Cam = score!.shots[1].stageCamera!;
+    expect(s2Cam.targetOffsetStart).toEqual({ x: 0, y: -1.1, z: 0 });
+    expect(s2Cam.targetOffsetEnd).toEqual({ x: 0, y: 0.25, z: 0 });
+
+    const s3Cam = score!.shots[2].stageCamera!;
+    expect(s3Cam.waypoints?.[0].targetOffset).toEqual({ x: 0, y: 0.4, z: 0 });
+  });
 });

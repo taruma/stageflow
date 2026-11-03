@@ -600,4 +600,121 @@ shots:
     expect(obsPose0.pitch).toBeCloseTo(obsPose16.pitch, 5);
     expect(obsPose0.yaw).toBeCloseTo(obsPose16.yaw, 5);
   });
+
+  it('implements Option A shot-boundary target_offset reset: applies world offset and resets to [0,0,0] when omitted on next shot', () => {
+    const yaml = `
+version: "1.0"
+id: "target-offset-reset-test"
+title: "Target Offset Reset Test"
+duration: 8.0
+entities:
+  - id: "arthur"
+    label: "Arthur"
+    kind: "character"
+    position: [-4, 0, 2]
+    height: 1.75
+shots:
+  - id: "shot-1"
+    shot: 1
+    start: 0.0
+    end: 4.0
+    stage_camera:
+      target: "arthur"
+      target_offset: [0.5, 0.3, -0.2]
+      distance: 3.0
+      pitch: 0
+      yaw: 0
+  - id: "shot-2"
+    shot: 2
+    start: 4.0
+    end: 8.0
+    stage_camera:
+      target: "arthur"
+      distance: 3.0
+      pitch: 0
+      yaw: 0
+`;
+    const { score, error } = parseStageScore(yaml);
+    expect(error).toBeNull();
+    expect(score).not.toBeNull();
+
+    const baseAnchorY = 1.75 * 0.78; // 1.365m
+
+    // In Shot 1 (t = 2.0s), target is offset by [+0.5, +0.3, -0.2] and eye translates identically
+    const f1 = computeStageFrame(2.0, score!);
+    expect(f1.stageCamera.transform.target.x).toBeCloseTo(-4 + 0.5, 5);
+    expect(f1.stageCamera.transform.target.y).toBeCloseTo(baseAnchorY + 0.3, 5);
+    expect(f1.stageCamera.transform.target.z).toBeCloseTo(2 - 0.2, 5);
+    expect(f1.stageCamera.transform.position.x).toBeCloseTo(-4 + 0.5, 5);
+    expect(f1.stageCamera.transform.position.y).toBeCloseTo(baseAnchorY + 0.3, 5);
+    expect(f1.stageCamera.transform.position.z).toBeCloseTo(2 - 0.2 + 3.0, 5);
+
+    // In Shot 2 (t = 5.0s), target_offset is omitted -> Option A resets offset to [0, 0, 0]
+    const f2 = computeStageFrame(5.0, score!);
+    expect(f2.stageCamera.transform.target.x).toBeCloseTo(-4, 5);
+    expect(f2.stageCamera.transform.target.y).toBeCloseTo(baseAnchorY, 5);
+    expect(f2.stageCamera.transform.target.z).toBeCloseTo(2, 5);
+  });
+
+  it('interpolates animated target_offset_start -> target_offset_end and supports cross-shot recovery via target_offset_end: [0,0,0]', () => {
+    const yaml = `
+version: "1.0"
+id: "target-offset-anim-test"
+title: "Animated Target Offset Test"
+duration: 8.0
+entities:
+  - id: "arthur"
+    label: "Arthur"
+    kind: "character"
+    position: [0, 0, 0]
+    height: 1.75
+shots:
+  - id: "shot-1"
+    shot: 1
+    start: 0.0
+    end: 4.0
+    stage_camera:
+      target: "arthur"
+      maneuver: "dolly"
+      easing: "linear"
+      target_offset_start: [0, -1.0, 0]
+      target_offset_end: [0, 0.4, 0]
+      distance: 2.5
+  - id: "shot-2"
+    shot: 2
+    start: 4.0
+    end: 8.0
+    stage_camera:
+      target: "arthur"
+      maneuver: "dolly"
+      easing: "linear"
+      target_offset_end: [0, 0, 0]
+      distance: 2.5
+`;
+    const { score, error } = parseStageScore(yaml);
+    expect(error).toBeNull();
+    expect(score).not.toBeNull();
+
+    const baseAnchorY = 1.75 * 0.78; // 1.365m
+
+    // At t = 0.0s, offsetY = -1.0m
+    const f0 = computeStageFrame(0.0, score!);
+    expect(f0.stageCamera.transform.target.y).toBeCloseTo(baseAnchorY - 1.0, 5);
+
+    // At t = 2.0s (midpoint of Shot 1 with linear easing), offsetY = -0.3m
+    const f2 = computeStageFrame(2.0, score!);
+    expect(f2.stageCamera.transform.target.y).toBeCloseTo(baseAnchorY - 0.3, 5);
+
+    // At t = 4.0s (start of Shot 2), chains from Shot 1's end offset (+0.4m)
+    const f4 = computeStageFrame(4.0, score!);
+    expect(f4.stageCamera.transform.target.y).toBeCloseTo(baseAnchorY + 0.4, 5);
+
+    // At t = 6.0s (midpoint of Shot 2 with linear recovery to 0), offsetY = +0.2m
+    const f6 = computeStageFrame(6.0, score!);
+    expect(f6.stageCamera.transform.target.y).toBeCloseTo(baseAnchorY + 0.2, 5);
+
+    // At t = 8.0s (end of Shot 2), offsetY has recovered to 0m
+    const f8 = computeStageFrame(8.0, score!);
+    expect(f8.stageCamera.transform.target.y).toBeCloseTo(baseAnchorY, 5);
+  });
 });

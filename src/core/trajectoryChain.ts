@@ -67,46 +67,90 @@ export function resolveShotDestRoll(
   return baselinePose.roll;
 }
 
+const ZERO_OFFSET: Vec3 = { x: 0, y: 0, z: 0 };
+
 /**
- * Resolves an anchor key (entity ID, preset name, or Vec3) into a 3D world look-at point.
+ * Resolves starting 3D target offset for a shot according to Option A semantics:
+ * Resets to (0, 0, 0) unless explicitly specified or continuing via target_offset_end.
+ */
+export function resolveShotStartOffset(
+  spec: CameraCueSpec,
+  prevOffset: Vec3 = ZERO_OFFSET
+): Vec3 {
+  if (spec.targetOffsetStart !== undefined) {
+    return { ...spec.targetOffsetStart };
+  }
+  if (spec.targetOffsetEnd !== undefined) {
+    return spec.targetOffset ? { ...spec.targetOffset } : { ...prevOffset };
+  }
+  if (spec.targetOffset !== undefined) {
+    return { ...spec.targetOffset };
+  }
+  return { ...ZERO_OFFSET };
+}
+
+export function resolveShotDestOffset(spec: CameraCueSpec): Vec3 {
+  if (spec.targetOffsetEnd !== undefined) {
+    return { ...spec.targetOffsetEnd };
+  }
+  if (spec.targetOffset !== undefined) {
+    return { ...spec.targetOffset };
+  }
+  return { ...ZERO_OFFSET };
+}
+
+/**
+ * Resolves an anchor key (entity ID, preset name, or Vec3) into a 3D world look-at point,
+ * applying an optional world-space metric offset [dx, dy, dz].
  */
 export function resolveTargetPoint3D(
   targetKey: string | Vec3 | undefined,
   entitiesById: Map<string, EvaluatedEntityState>,
-  fallbackTarget: Vec3
+  fallbackTarget: Vec3,
+  offset?: Vec3
 ): Vec3 {
+  let base: Vec3 | undefined;
+
   if (!targetKey) {
-    return { ...fallbackTarget };
-  }
-  if (typeof targetKey === 'object') {
-    return { ...targetKey };
-  }
-
-  const clean = targetKey.trim().toLowerCase();
-  if (clean === 'center' || clean === 'origin' || clean === 'stage') {
-    return { x: 0, y: 1.0, z: 0 };
-  }
-
-  // Match entity by ID or label
-  for (const ent of entitiesById.values()) {
-    if (
-      ent.id.toLowerCase() === clean ||
-      ent.def.label.toLowerCase() === clean
-    ) {
-      const anchorY =
-        ent.def.kind === 'character'
-          ? ent.position.y +
-            ent.def.height * ENTITY_DEFAULTS.CHARACTER_LOOK_ANCHOR_RATIO
-          : ent.position.y + ent.def.height * 0.5;
-      return {
-        x: ent.position.x,
-        y: anchorY,
-        z: ent.position.z,
-      };
+    base = { ...fallbackTarget };
+  } else if (typeof targetKey === 'object') {
+    base = { ...targetKey };
+  } else {
+    const clean = targetKey.trim().toLowerCase();
+    if (clean === 'center' || clean === 'origin' || clean === 'stage') {
+      base = { x: 0, y: 1.0, z: 0 };
+    } else {
+      // Match entity by ID or label
+      for (const ent of entitiesById.values()) {
+        if (
+          ent.id.toLowerCase() === clean ||
+          ent.def.label.toLowerCase() === clean
+        ) {
+          const anchorY =
+            ent.def.kind === 'character'
+              ? ent.position.y +
+                ent.def.height * ENTITY_DEFAULTS.CHARACTER_LOOK_ANCHOR_RATIO
+              : ent.position.y + ent.def.height * 0.5;
+          base = {
+            x: ent.position.x,
+            y: anchorY,
+            z: ent.position.z,
+          };
+          break;
+        }
+      }
     }
   }
 
-  return { ...fallbackTarget };
+  const resolved = base ?? { ...fallbackTarget };
+  if (!offset) {
+    return resolved;
+  }
+  return {
+    x: resolved.x + offset.x,
+    y: resolved.y + offset.y,
+    z: resolved.z + offset.z,
+  };
 }
 
 /**
@@ -126,7 +170,21 @@ function evaluateSplineCameraPose(
   const resolvedWaypoints: SphericalPose[] = [cloneSphericalPose(startPose)];
   for (const wp of rawWaypoints) {
     const prev = resolvedWaypoints[resolvedWaypoints.length - 1];
-    const target = resolveTargetPoint3D(wp.target, entitiesById, prev.target);
+    const target =
+      wp.target !== undefined
+        ? resolveTargetPoint3D(
+            wp.target,
+            entitiesById,
+            prev.target,
+            wp.targetOffset
+          )
+        : wp.targetOffset !== undefined
+        ? {
+            x: prev.target.x + wp.targetOffset.x,
+            y: prev.target.y + wp.targetOffset.y,
+            z: prev.target.z + wp.targetOffset.z,
+          }
+        : { ...prev.target };
     resolvedWaypoints.push(
       clampSphericalPose({
         target,
@@ -217,7 +275,8 @@ export function evaluateShotCameraPose(
   tRaw: number,
   durationSec: number,
   entitiesById: Map<string, EvaluatedEntityState>,
-  baselinePose?: SphericalPose
+  baselinePose?: SphericalPose,
+  startOffset: Vec3 = ZERO_OFFSET
 ): SphericalPose {
   const u = evaluateCameraEasing(spec.easing, tRaw);
 
@@ -225,7 +284,15 @@ export function evaluateShotCameraPose(
     return evaluateSplineCameraPose(P0, spec, u, entitiesById);
   }
 
-  const destTarget = resolveTargetPoint3D(spec.target, entitiesById, P0.target);
+  const endOffset = resolveShotDestOffset(spec);
+  const destTarget =
+    spec.target !== undefined
+      ? resolveTargetPoint3D(spec.target, entitiesById, P0.target, endOffset)
+      : {
+          x: P0.target.x + (endOffset.x - startOffset.x),
+          y: P0.target.y + (endOffset.y - startOffset.y),
+          z: P0.target.z + (endOffset.z - startOffset.z),
+        };
 
   let destYaw = P0.yaw;
   if (spec.yawEndRad !== undefined) {
@@ -262,6 +329,7 @@ function sampleTrajectoryPoints(
   entitiesById: Map<string, EvaluatedEntityState>,
   aspectRatio: number,
   baselinePose?: SphericalPose,
+  startOffset: Vec3 = ZERO_OFFSET,
   samples = 32
 ): Vec3[] {
   if (spec.maneuver === 'cut') {
@@ -276,7 +344,8 @@ function sampleTrajectoryPoints(
       t,
       durationSec,
       entitiesById,
-      baselinePose
+      baselinePose,
+      startOffset
     );
     const cart = sphericalToCartesian(pose, aspectRatio);
     points.push(cart.position);
@@ -353,6 +422,8 @@ export function evaluateCameraTrack(
 
   const cueStartPoses = new Map<NormalizedCameraCue, SphericalPose>();
   const cueEndPoses = new Map<NormalizedCameraCue, SphericalPose>();
+  const cueStartOffsets = new Map<NormalizedCameraCue, Vec3>();
+  const cueEndOffsets = new Map<NormalizedCameraCue, Vec3>();
 
   for (let i = 0; i < cues.length; i++) {
     const cue = cues[i];
@@ -361,12 +432,35 @@ export function evaluateCameraTrack(
       i > 0
         ? cueEndPoses.get(cues[i - 1]) ?? baselinePose
         : baselinePose;
+    const prevOffset =
+      i > 0
+        ? cueEndOffsets.get(cues[i - 1]) ?? ZERO_OFFSET
+        : ZERO_OFFSET;
+
+    const startOffset = resolveShotStartOffset(spec, prevOffset);
+    const endOffset = resolveShotDestOffset(spec);
+    cueStartOffsets.set(cue, startOffset);
+    cueEndOffsets.set(cue, endOffset);
 
     const startTarget = spec.from
-      ? resolveTargetPoint3D(spec.from, entitiesById, prevPose.target)
+      ? resolveTargetPoint3D(
+          spec.from,
+          entitiesById,
+          prevPose.target,
+          startOffset
+        )
       : spec.target
-      ? resolveTargetPoint3D(spec.target, entitiesById, prevPose.target)
-      : { ...prevPose.target };
+      ? resolveTargetPoint3D(
+          spec.target,
+          entitiesById,
+          prevPose.target,
+          startOffset
+        )
+      : {
+          x: prevPose.target.x + startOffset.x,
+          y: prevPose.target.y + startOffset.y,
+          z: prevPose.target.z + startOffset.z,
+        };
 
     const startYaw =
       spec.yawStartRad ??
@@ -394,7 +488,8 @@ export function evaluateCameraTrack(
       1.0,
       durationSec,
       entitiesById,
-      baselinePose
+      baselinePose,
+      startOffset
     );
     cueEndPoses.set(cue, P_end);
   }
@@ -408,6 +503,7 @@ export function evaluateCameraTrack(
   if (activeCue) {
     const spec = activeCue.spec;
     const startPose = cueStartPoses.get(activeCue) ?? baselinePose;
+    const startOffset = cueStartOffsets.get(activeCue) ?? ZERO_OFFSET;
     const durationSec = Math.max(0.016, activeCue.endSec - activeCue.startSec);
     const tRaw = Math.min(
       1,
@@ -419,7 +515,8 @@ export function evaluateCameraTrack(
       tRaw,
       durationSec,
       entitiesById,
-      baselinePose
+      baselinePose,
+      startOffset
     );
     const trajectoryPoints = sampleTrajectoryPoints(
       startPose,
@@ -427,7 +524,8 @@ export function evaluateCameraTrack(
       durationSec,
       entitiesById,
       score.aspectRatio,
-      baselinePose
+      baselinePose,
+      startOffset
     );
 
     return {
@@ -464,6 +562,9 @@ export function evaluateCameraTrack(
   const heldSpec = lastFinished?.spec;
   const heldStart =
     (lastFinished ? cueStartPoses.get(lastFinished) : undefined) ?? heldPose;
+  const heldStartOffset =
+    (lastFinished ? cueStartOffsets.get(lastFinished) : undefined) ??
+    ZERO_OFFSET;
   const heldDuration = lastFinished
     ? Math.max(0.016, lastFinished.endSec - lastFinished.startSec)
     : 1.0;
@@ -481,7 +582,8 @@ export function evaluateCameraTrack(
           heldDuration,
           entitiesById,
           score.aspectRatio,
-          baselinePose
+          baselinePose,
+          heldStartOffset
         )
       : [],
   };

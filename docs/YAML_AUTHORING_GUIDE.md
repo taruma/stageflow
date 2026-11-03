@@ -247,6 +247,8 @@ You can write camera cues in two intuitive ways:
 | `easing` | `string` | — | Temporal velocity curve (`smooth`, `linear`, `ease-in`, `ease-out`, `expo`, `pop`, `accel`, `deccel`, `cruise`). Default: `smooth`. |
 | `target` | `string \| [x,y,z]` | `m` | Destination look-at anchor (entity ID, `"center"`, or `[x, y, z]`). |
 | `from` | `string \| [x,y,z]` | `m` | Optional explicit starting look-at anchor at `start` of shot. |
+| `target_offset` | `[dx, dy, dz]` | `m` | World-space metric offset added to `target` (e.g. `[0, 0.25, 0]` for headroom). Defaults to `[0, 0, 0]` (Option A reset when omitted). |
+| `target_offset_start` / `target_offset_end` | `[dx, dy, dz]` | `m` | Explicit start and end world-space target offsets in meters across the shot (e.g. vertical pedestal tilt from boots to face). |
 | `distance` | `number` | `m` | Target radial distance from `target` in meters. |
 | `distance_start` / `distance_end` | `number` | `m` | Explicit start and end distances in meters across the shot. |
 | `pitch` | `number` | `deg` | Target vertical elevation angle in degrees (`-85°` to `+85°`). |
