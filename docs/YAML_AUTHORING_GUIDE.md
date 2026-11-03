@@ -45,6 +45,7 @@ StageFlow uses a right-handed, **$Y$-Up** 3D coordinate system centered at the s
 | **`z` (Depth)** | Centerline of stage | **Downstage / Front** (`+Z`, meters) | **Upstage / Back** (`-Z`, meters) |
 | **`pitch` (Elevation)** | Horizon / Eye-Level (`0°`) | **High-Angle Overhead** (`+1°` to `+85°`, looking down at target) | **Low-Angle Hero** (`-1°` to `-85°`, looking up at target) |
 | **`yaw` (Azimuth)** | Camera placed on **`+Z` axis** looking toward `-Z` (`0°`) | Rotates camera position toward **`+X` (Stage Right)** | Rotates camera position toward **`-X` (Stage Left)** |
+| **`roll` (Dutch Angle / Bank)** | Level Horizon (`0°`) | **Clockwise Camera Bank** (`+1°` to `+180°`, camera leans right from operator POV) | **Counter-Clockwise Camera Bank** (`-1°` to `-180°`, camera leans left from operator POV) |
 | **Entity `rotation`** | Mannequin faces **`+Z` (Downstage)** (`0°`) | Turns face toward **`+X` (`+90°` faces Stage Right)** | Turns face toward **`-X` (`-90°` faces Stage Left)** |
 
 ---
@@ -253,6 +254,9 @@ You can write camera cues in two intuitive ways:
 | `yaw` | `number` | `deg` | Target horizontal azimuth angle in degrees. Interpolates via shortest arc (`shortestAngleDiff`). |
 | `yaw_start` / `yaw_end` | `number` | `deg` | Explicit start and end azimuth angles in degrees. |
 | `yaw_delta` | `number` | `deg` | Relative angular offset from starting yaw (e.g. `yaw_delta: 45` or `-90`). |
+| `roll` (or `dutch`) | `number` | `deg` | Optical axis roll angle in degrees (Dutch angle / banking). Defaults to `0°` (Option A reset when omitted). |
+| `roll_start` / `roll_end` | `number` | `deg` | Explicit start and end roll angles in degrees across the shot. |
+| `roll_delta` | `number` | `deg` | Relative roll offset in degrees (e.g. `roll_delta: 360` for a complete barrel roll). |
 | `lens` (or `focal_length`) | `number \| string` | `mm` | Full-frame lens focal length (e.g. `35mm`, `50`, `85mm`). |
 | `lens_start` / `lens_end` | `number \| string` | `mm` | Start and end focal lengths for zoom or Vertigo dolly-zoom shots. |
 | `breathe` | `number` | multiplier | Mid-flight arc pullback factor for `arc`, `swoop`, and `recoil` (default `1.12`). |

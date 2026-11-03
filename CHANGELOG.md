@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Camera Roll (Dutch Angle / Banking) Support across Layers 1–5**:
+  - `SphericalPose.roll` added in radians (`src/core/types.ts`), parameterizing camera rotation around the optical sightline with zero position drift.
+  - Orthonormal rolled up-vector `CameraTransform3D.up` derived analytically in `sphericalToCartesian` (`src/core/sphericalMath.ts`) using $\vec{U}_{\text{rolled}} = \cos(\gamma)\vec{U}_0 + \sin(\gamma)\vec{R}_0$.
+  - Option A shot-boundary reset semantics implemented in `resolveShotStartRoll` and `resolveShotDestRoll` (`src/core/trajectoryChain.ts`), automatically resetting omitted roll to the level baseline ($0^\circ$) while supporting static Dutch angles (`roll`), explicit spans (`roll_start`, `roll_end`), relative turns (`roll_delta`), and cross-shot recovery (`roll_end: 0`).
+  - Catmull-Rom spline roll unwrapping and interpolation across waypoints in `evaluateSplineCameraPose`.
+  - Pure roll progress interpolation `interpolateRoll` supporting all 11 camera maneuvers in `src/core/maneuvers.ts`.
+  - YAML parser extension in `src/core/scoreParser.ts` converting `roll`, `roll_start`, `roll_end`, `roll_delta`, and `dutch` alias in human degrees to radians.
+  - 3D Stage Camera banking in `src/stage/StageCameraRig.tsx` via dedicated inner `rollGroupRef` (`rotation.z = -pose.roll`), tilting the chassis and rectangular frustum gate while keeping the floating `"STAGE CAM"` identity badge upright in unrolled space.
+  - True 3D Stage Cam Monitor Viewport (`src/stage/StageCamViewRig.tsx`) and Viewport Observer Camera (`src/stage/ObserverCameraRig.tsx`) optical roll synchronization via local `persp.rotateZ(pose.roll)`.
+  - UI Telemetry Capsule (`src/ui/CameraTelemetryCapsule.tsx`) displaying live roll degrees, tooltip readout, and 1-click YAML snippet copying with dynamic `roll: <deg>` injection.
+  - Optical Stage Cam Monitor HUD (`src/stage/StageCamMonitorCanvas.tsx`) displaying live `ROLL` telemetry.
+  - 5 new deterministic unit tests in `sphericalMath.test.ts`, `scoreParser.test.ts`, and `frameEngine.test.ts` verifying position invariance, orthonormal up-vector math, YAML parsing, Option A reset, animated roll, and cross-shot recovery.
+
 ## [0.1.0] - 2026-11-03
 
 ### Added

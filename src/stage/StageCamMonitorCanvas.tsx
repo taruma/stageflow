@@ -24,6 +24,7 @@ export const StageCamMonitorCanvas: React.FC<StageCamMonitorCanvasProps> = ({
 }) => {
   const pose = uiFrame.stageCamera.transform.pose;
   const yawDeg = radToDeg(pose.yaw);
+  const rollDeg = radToDeg(pose.roll);
 
   return (
     <div className="relative w-full h-full bg-[#050811] select-none overflow-hidden">
@@ -106,6 +107,14 @@ export const StageCamMonitorCanvas: React.FC<StageCamMonitorCanvasProps> = ({
             <span className="text-slate-300">
               YAW {yawDeg >= 0 ? `+${yawDeg.toFixed(1)}` : yawDeg.toFixed(1)}°
             </span>
+            {Math.abs(rollDeg) >= 0.1 && (
+              <>
+                <span className="text-slate-500">·</span>
+                <span className="text-violet-300">
+                  ROLL {rollDeg >= 0 ? `+${rollDeg.toFixed(1)}` : rollDeg.toFixed(1)}°
+                </span>
+              </>
+            )}
           </div>
           <div className="text-sky-400 font-semibold">
             T+ {uiFrame.timestampSec.toFixed(2)}s

@@ -69,6 +69,9 @@ export const ObserverCameraRig: React.FC<ObserverCameraRigProps> = ({
         transform.target.z
       );
     }
+    if (Math.abs(transform.pose.roll) > 1e-6) {
+      persp.rotateZ(transform.pose.roll);
+    }
   };
 
   // Apply initial camera pose on mount

@@ -38,6 +38,7 @@ export const DEFAULT_OBSERVER_POSE: SphericalPose = {
   distance: 7.5,
   pitch: 26 * DEG_TO_RAD,
   yaw: 38 * DEG_TO_RAD,
+  roll: 0,
   focalLengthMm: 35,
 };
 
@@ -49,6 +50,7 @@ export const DEFAULT_STAGE_CAMERA_POSE: SphericalPose = {
   distance: 3.2,
   pitch: 6 * DEG_TO_RAD,
   yaw: -25 * DEG_TO_RAD,
+  roll: 0,
   focalLengthMm: 50,
 };
 

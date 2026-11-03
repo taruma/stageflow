@@ -251,4 +251,52 @@ observer_shots:
     expect(score).toBeNull();
     expect(error).toContain('Score must define at least one shot in "shots:".');
   });
+
+  it('parses camera roll parameters and dutch angle aliases in degrees into radians', () => {
+    const yamlWithRoll = `
+version: "1.0"
+id: "roll-parse-test"
+title: "Roll Parsing Test"
+duration: 10.0
+stage:
+  observer_camera:
+    target: [0, 1, 0]
+    roll: 12deg
+shots:
+  - id: "shot-1"
+    shot: 1
+    start: 0
+    end: 5
+    stage_camera:
+      target: [0, 1, 0]
+      roll: 15
+  - id: "shot-2"
+    shot: 2
+    start: 5
+    end: 10
+    stage_camera:
+      target: [0, 1, 0]
+      roll_start: -10
+      roll_end: 25deg
+      roll_delta: 35deg
+`;
+    const { score, error } = parseStageScore(yamlWithRoll);
+    expect(error).toBeNull();
+    expect(score).not.toBeNull();
+
+    // Default observer camera roll
+    expect(radToDeg(score!.stage.defaultObserverPose.roll)).toBeCloseTo(12, 4);
+
+    // Shot 1 static roll
+    const s1Cam = score!.shots[0].stageCamera;
+    expect(s1Cam).toBeDefined();
+    expect(radToDeg(s1Cam!.rollRad!)).toBeCloseTo(15, 4);
+
+    // Shot 2 animated roll properties
+    const s2Cam = score!.shots[1].stageCamera;
+    expect(s2Cam).toBeDefined();
+    expect(radToDeg(s2Cam!.rollStartRad!)).toBeCloseTo(-10, 4);
+    expect(radToDeg(s2Cam!.rollEndRad!)).toBeCloseTo(25, 4);
+    expect(radToDeg(s2Cam!.rollDeltaRad!)).toBeCloseTo(35, 4);
+  });
 });

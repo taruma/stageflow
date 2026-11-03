@@ -401,4 +401,93 @@ observer_shots:
     expect(Number.isFinite(fEnd.stageCamera.transform.position.x)).toBe(true);
     expect(Number.isFinite(fEnd.observerCamera.transform.position.x)).toBe(true);
   });
+
+  it('implements Option A shot-boundary roll reset: resets to 0 deg when roll is omitted on subsequent shot', () => {
+    const yaml = `
+version: "1.0"
+id: "option-a-test"
+title: "Option A Roll Reset Test"
+duration: 8.0
+shots:
+  - id: "shot-1"
+    shot: 1
+    start: 0.0
+    end: 4.0
+    stage_camera:
+      target: [0, 1, 0]
+      roll: 18
+  - id: "shot-2"
+    shot: 2
+    start: 4.0
+    end: 8.0
+    stage_camera:
+      target: [0, 1, 0]
+`;
+    const { score } = parseStageScore(yaml);
+    expect(score).not.toBeNull();
+
+    // In Shot 1 (e.g. t = 2.0s), camera has 18 deg roll
+    const f1 = computeStageFrame(2.0, score!);
+    expect(f1.stageCamera.transform.pose.roll).toBeCloseTo(18 * (Math.PI / 180), 4);
+
+    // At t = 4.0s (instant cut to Shot 2 which omits roll), roll MUST reset to 0 deg (Option A)
+    const f2 = computeStageFrame(4.0, score!);
+    expect(f2.stageCamera.shotId).toBe('shot-2');
+    expect(f2.stageCamera.transform.pose.roll).toBeCloseTo(0, 5);
+
+    // Later in Shot 2 (t = 6.0s), roll remains at 0 deg
+    const f3 = computeStageFrame(6.0, score!);
+    expect(f3.stageCamera.transform.pose.roll).toBeCloseTo(0, 5);
+  });
+
+  it('supports smooth animated roll within a shot and cross-shot recovery via roll_end: 0', () => {
+    const yaml = `
+version: "1.0"
+id: "animated-roll-test"
+title: "Animated Roll Test"
+duration: 8.0
+shots:
+  - id: "shot-1"
+    shot: 1
+    start: 0.0
+    end: 4.0
+    stage_camera:
+      target: [0, 1, 0]
+      maneuver: "straight"
+      easing: "linear"
+      roll_start: 0
+      roll_end: 20
+  - id: "shot-2"
+    shot: 2
+    start: 4.0
+    end: 8.0
+    stage_camera:
+      target: [0, 1, 0]
+      maneuver: "straight"
+      easing: "linear"
+      roll_end: 0
+`;
+    const { score } = parseStageScore(yaml);
+    expect(score).not.toBeNull();
+
+    // At t = 0.0s, roll is 0
+    const fStart = computeStageFrame(0.0, score!);
+    expect(fStart.stageCamera.transform.pose.roll).toBeCloseTo(0, 5);
+
+    // At t = 2.0s (midpoint of Shot 1 with linear easing), roll is 10 deg
+    const fMid = computeStageFrame(2.0, score!);
+    expect(fMid.stageCamera.transform.pose.roll).toBeCloseTo(10 * (Math.PI / 180), 4);
+
+    // At t = 4.0s (start of Shot 2), chains from Shot 1's end pose (20 deg)
+    const fCut = computeStageFrame(4.0, score!);
+    expect(fCut.stageCamera.transform.pose.roll).toBeCloseTo(20 * (Math.PI / 180), 4);
+
+    // At t = 6.0s (midpoint of Shot 2 with linear easing to 0), roll is 10 deg
+    const fMidRecover = computeStageFrame(6.0, score!);
+    expect(fMidRecover.stageCamera.transform.pose.roll).toBeCloseTo(10 * (Math.PI / 180), 4);
+
+    // At t = 8.0s (end of Shot 2), roll has leveled back to 0
+    const fEndRecover = computeStageFrame(8.0, score!);
+    expect(fEndRecover.stageCamera.transform.pose.roll).toBeCloseTo(0, 5);
+  });
 });

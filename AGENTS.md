@@ -68,8 +68,8 @@ Types: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`.
 | # | Invariant | Core Constraint & Engineering Rule | Domain Spec |
 | :--- | :--- | :--- | :--- |
 | 1 | **Stateless Timeline (`Frame_t = f(t)`)** | `computeStageFrame(t, score)` is 100% pure and deterministic; scrubbing forward or backward yields bit-for-bit identical 3D states | [Core Math Specs](docs/CORE_MATH_AND_SCORE_SPECIFICATIONS.md) |
-| 2 | **Metric Meters & Human Degrees** | World space uses **meters** ($1\text{ unit} = 1\text{m}$); YAML angles use **degrees** (`pitch`, `yaw`, `rotation`) converted to radians in `scoreParser.ts` | [Core Math Specs](docs/CORE_MATH_AND_SCORE_SPECIFICATIONS.md) |
-| 3 | **Shortest-Arc Angle Unwrapping** | All yaw and facing interpolations use `shortestAngleDiff` on $[-\pi, \pi]$ to eliminate $360^\circ$ wrap-around spin flips | [Core Math Specs](docs/CORE_MATH_AND_SCORE_SPECIFICATIONS.md) |
+| 2 | **Metric Meters & Human Degrees** | World space uses **meters** ($1\text{ unit} = 1\text{m}$); YAML angles use **degrees** (`pitch`, `yaw`, `roll`, `rotation`) converted to radians in `scoreParser.ts` | [Core Math Specs](docs/CORE_MATH_AND_SCORE_SPECIFICATIONS.md) |
+| 3 | **Shortest-Arc Angle Unwrapping** | All yaw, roll, and facing interpolations use `shortestAngleDiff` on $[-\pi, \pi]$ to eliminate $360^\circ$ wrap-around spin flips | [Core Math Specs](docs/CORE_MATH_AND_SCORE_SPECIFICATIONS.md) |
 | 4 | **Cinematic Lens Optics (`mm`)** | Stage & Observer cameras use full-frame focal lengths (`24mm`, `35mm`, `50mm`, `85mm`) mapped to vertical FOV via $36\text{mm}$ sensor math | [Core Math Specs](docs/CORE_MATH_AND_SCORE_SPECIFICATIONS.md) |
 | 5 | **Rectangular Film Gate Frustum** | Stage Camera projects a rectangular pyramidal frustum matching the video aspect ratio (`16:9`, `2.39:1`) with a target Focus Plane Frame | [3D & UI Specs](docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md) |
 | 6 | **Universal Media Clock Parity** | Local `.mp4`, YouTube URLs, and Procedural Simulator share `MediaClockDriver`; YouTube uses 60fps `performance.now()` drift extrapolation | [Media & Sync Specs](docs/MEDIA_CLOCK_AND_SYNC_SPECIFICATIONS.md) |
@@ -78,7 +78,7 @@ Types: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`.
 | 9 | **Instant Camera POV Cuts (0ms)** | Switching between `'scripted'`, `'free'`, and `'stage-pov'` cuts instantaneously on the next frame without disorienting transition lag | [3D & UI Specs](docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md) |
 | 10 | **Directional Mannequins & Trails** | Character proxies render a torso column, head sphere, forward $+Z$ eye-visor wedge, ground chevron, and dashed floor movement trails | [3D & UI Specs](docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md) |
 | 11 | **Resizable Split Workspace** | Draggable split divider ($18\%$–$82\%$) with 1-click header presets (`50/50`, `70/30 Stage`, `70/30 Video`, `100% Stage`) | [3D & UI Specs](docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md) |
-| 12 | **Telemetry Capsule & Live YAML** | Bottom-right capsule copies formatted YAML (`target`, `distance`, `pitch`, `yaw`, `lens`); YAML Drawer re-evaluates stage live without crashing | [3D & UI Specs](docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md) |
+| 12 | **Telemetry Capsule & Live YAML** | Bottom-right capsule copies formatted YAML (`target`, `distance`, `pitch`, `yaw`, `roll`, `lens`); YAML Drawer re-evaluates stage live without crashing | [3D & UI Specs](docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md) |
 | 13 | **Dual-Tier Storage & Deferred Invalidation** | Scores & drafts persist in IndexedDB (`idb`); UI preferences in `localStorage`; local dropped videos remain in-memory only; YAML is SSOT; synchronous initializers must never discard stored pointers before asynchronous hydration completes | [Core Math Specs](docs/CORE_MATH_AND_SCORE_SPECIFICATIONS.md) |
 
 ---

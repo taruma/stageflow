@@ -27,12 +27,17 @@ export function cloneVec3(v: Vec3): Vec3 {
   return { x: v.x, y: v.y, z: v.z };
 }
 
-export function cloneSphericalPose(pose: SphericalPose): SphericalPose {
+export type SphericalPoseInput = Omit<SphericalPose, 'roll'> & {
+  roll?: number;
+};
+
+export function cloneSphericalPose(pose: SphericalPoseInput): SphericalPose {
   return {
     target: { ...pose.target },
     distance: pose.distance,
     pitch: pose.pitch,
     yaw: pose.yaw,
+    roll: Number.isFinite(pose.roll) ? pose.roll! : 0,
     focalLengthMm: pose.focalLengthMm,
   };
 }
@@ -40,7 +45,7 @@ export function cloneSphericalPose(pose: SphericalPose): SphericalPose {
 /**
  * Clamps a SphericalPose within valid pitch, distance, and optical bounds.
  */
-export function clampSphericalPose(pose: SphericalPose): SphericalPose {
+export function clampSphericalPose(pose: SphericalPoseInput): SphericalPose {
   return {
     target: {
       x: Number.isFinite(pose.target.x) ? pose.target.x : 0,
@@ -62,6 +67,7 @@ export function clampSphericalPose(pose: SphericalPose): SphericalPose {
       )
     ),
     yaw: Number.isFinite(pose.yaw) ? pose.yaw : 0,
+    roll: Number.isFinite(pose.roll) ? pose.roll! : 0,
     focalLengthMm: clampFocalLengthMm(pose.focalLengthMm),
   };
 }
@@ -84,9 +90,12 @@ export function shortestAngleDiff(targetRad: number, currentRad: number): number
  *   x = target.x + d * cos(pitch) * sin(yaw)
  *   y = target.y + d * sin(pitch)
  *   z = target.z + d * cos(pitch) * cos(yaw)
+ *
+ * Up-vector equation (with roll around forward sightline F):
+ *   U_rolled = cos(roll) * U0 + sin(roll) * R0
  */
 export function sphericalToCartesian(
-  rawPose: SphericalPose,
+  rawPose: SphericalPoseInput,
   aspectRatio = DEFAULT_ASPECT_RATIO
 ): CameraTransform3D {
   const pose = clampSphericalPose(rawPose);
@@ -94,11 +103,22 @@ export function sphericalToCartesian(
   const sinPitch = Math.sin(pose.pitch);
   const sinYaw = Math.sin(pose.yaw);
   const cosYaw = Math.cos(pose.yaw);
+  const cosRoll = Math.cos(pose.roll);
+  const sinRoll = Math.sin(pose.roll);
 
   const position: Vec3 = {
     x: pose.target.x + pose.distance * cosPitch * sinYaw,
     y: pose.target.y + pose.distance * sinPitch,
     z: pose.target.z + pose.distance * cosPitch * cosYaw,
+  };
+
+  // Orthonormal unrolled camera up U0 = (-sinPitch*sinYaw, cosPitch, -sinPitch*cosYaw)
+  // Orthonormal unrolled camera right R0 = (cosYaw, 0, -sinYaw)
+  // U_rolled = cos(roll) * U0 + sin(roll) * R0
+  const up: Vec3 = {
+    x: -cosRoll * sinPitch * sinYaw + sinRoll * cosYaw,
+    y: cosRoll * cosPitch,
+    z: -cosRoll * sinPitch * cosYaw - sinRoll * sinYaw,
   };
 
   const fovDeg = focalLengthToVerticalFovDeg(pose.focalLengthMm, aspectRatio);
@@ -107,6 +127,7 @@ export function sphericalToCartesian(
     pose,
     position,
     target: { ...pose.target },
+    up,
     fovDeg,
     aspectRatio,
   };
@@ -119,7 +140,8 @@ export function sphericalToCartesian(
 export function cartesianToSpherical(
   eye: Vec3,
   target: Vec3,
-  focalLengthMm = 35
+  focalLengthMm = 35,
+  roll = 0
 ): SphericalPose {
   const dx = eye.x - target.x;
   const dy = eye.y - target.y;
@@ -138,6 +160,7 @@ export function cartesianToSpherical(
     distance,
     pitch,
     yaw,
+    roll,
     focalLengthMm,
   });
 }

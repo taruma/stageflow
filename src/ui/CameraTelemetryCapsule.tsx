@@ -20,6 +20,9 @@ export const CameraTelemetryCapsule: React.FC<CameraTelemetryCapsuleProps> =
 
     const pitchDeg = radToDeg(pose.pitch).toFixed(1);
     const yawDeg = radToDeg(pose.yaw).toFixed(1);
+    const rollVal = radToDeg(pose.roll);
+    const rollDeg = rollVal.toFixed(1);
+    const hasNonZeroRoll = Math.abs(rollVal) >= 0.05;
     const distMeters = pose.distance.toFixed(2);
     const tx = pose.target.x.toFixed(2);
     const ty = pose.target.y.toFixed(2);
@@ -33,6 +36,7 @@ export const CameraTelemetryCapsule: React.FC<CameraTelemetryCapsuleProps> =
         `distance: ${distMeters}`,
         `pitch: ${pitchDeg}`,
         `yaw: ${yawDeg}`,
+        ...(hasNonZeroRoll ? [`roll: ${rollDeg}`] : []),
         `lens: ${lensMm}mm`,
       ].join('\n');
 
@@ -78,6 +82,21 @@ export const CameraTelemetryCapsule: React.FC<CameraTelemetryCapsuleProps> =
           >
             {yawDeg}°
           </span>
+          {hasNonZeroRoll && (
+            <>
+              <span className="text-slate-600">/</span>
+              <span
+                className={
+                  copied
+                    ? 'text-emerald-300 font-bold'
+                    : 'font-bold text-violet-300'
+                }
+                title="Camera Roll (Dutch Angle)"
+              >
+                {rollDeg}°
+              </span>
+            </>
+          )}
           <span className="text-slate-600">·</span>
           <span
             className={
@@ -123,6 +142,22 @@ export const CameraTelemetryCapsule: React.FC<CameraTelemetryCapsuleProps> =
                 <strong className="text-sky-300">{yawDeg}°</strong>{' '}
                 <span className="text-slate-600 text-[9.5px]">
                   ({pose.yaw.toFixed(3)} rad)
+                </span>
+              </span>
+            </div>
+
+            <div className="flex justify-between items-center text-slate-300 font-mono">
+              <span className="text-slate-500 font-sans">Roll:</span>
+              <span>
+                <strong
+                  className={
+                    hasNonZeroRoll ? 'text-violet-300' : 'text-slate-400'
+                  }
+                >
+                  {rollDeg}°
+                </strong>{' '}
+                <span className="text-slate-600 text-[9.5px]">
+                  ({pose.roll.toFixed(3)} rad)
                 </span>
               </span>
             </div>

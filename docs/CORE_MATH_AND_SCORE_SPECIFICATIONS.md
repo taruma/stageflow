@@ -31,23 +31,33 @@ export interface SphericalPose {
   distance: number;      // Radial distance from target to camera eye in meters
   pitch: number;         // Vertical elevation angle in radians (-85° to +85°)
   yaw: number;           // Horizontal azimuth angle in radians around Y-axis
+  roll: number;          // Optical sightline roll angle in radians (0 = level horizon, + = CW from operator POV)
   focalLengthMm: number; // Full-frame equivalent focal length in millimeters
 }
 ```
 
 ### 2.1 Forward Conversion (`sphericalToCartesian`)
-Given a `SphericalPose`, [`sphericalToCartesian`](../src/core/sphericalMath.ts) computes the 3D eye position $(x, y, z)$:
+Given a `SphericalPose`, [`sphericalToCartesian`](../src/core/sphericalMath.ts) computes the 3D eye position $(x, y, z)$ and the orthonormal rolled camera up-vector $\vec{U}_{\text{rolled}}$:
 $$\begin{aligned}
-x &= \text{target}_x + d \cdot \cos(\text{pitch}) \cdot \sin(\text{yaw}) \\
-y &= \text{target}_y + d \cdot \sin(\text{pitch}) \\
-z &= \text{target}_z + d \cdot \cos(\text{pitch}) \cdot \cos(\text{yaw})
+x_{\text{eye}} &= \text{target}_x + d \cdot \cos(\text{pitch}) \cdot \sin(\text{yaw}) \\
+y_{\text{eye}} &= \text{target}_y + d \cdot \sin(\text{pitch}) \\
+z_{\text{eye}} &= \text{target}_z + d \cdot \cos(\text{pitch}) \cdot \cos(\text{yaw})
 \end{aligned}$$
 
+The unit up-vector $\vec{U}_{\text{rolled}}$ rotated by roll $\gamma$ around the forward sightline $\vec{F}$ is:
+$$\vec{U}_{\text{rolled}} = \begin{bmatrix}
+-\cos(\gamma)\sin(\text{pitch})\sin(\text{yaw}) + \sin(\gamma)\cos(\text{yaw}) \\
+\cos(\gamma)\cos(\text{pitch}) \\
+-\cos(\gamma)\sin(\text{pitch})\cos(\text{yaw}) - \sin(\gamma)\sin(\text{yaw})
+\end{bmatrix}$$
+
+Notice that `roll` preserves 3D eye position invariance: varying `roll` rotates the camera sensor and rectangular gate without moving $(x_{\text{eye}}, y_{\text{eye}}, z_{\text{eye}})$ or the look-at target.
+
 ### 2.2 Inverse Conversion (`cartesianToSpherical`)
-When the user freely orbits or pans the viewport via `OrbitControls`, [`cartesianToSpherical(eye, target, focalLengthMm)`](../src/core/sphericalMath.ts) recovers the exact `SphericalPose` so the bottom-right [`CameraTelemetryCapsule`](../src/ui/CameraTelemetryCapsule.tsx) displays live degrees and meters ready for 1-click YAML copying.
+When the user freely orbits or pans the viewport via `OrbitControls`, [`cartesianToSpherical(eye, target, focalLengthMm, roll)`](../src/core/sphericalMath.ts) recovers the exact `SphericalPose` so the bottom-right [`CameraTelemetryCapsule`](../src/ui/CameraTelemetryCapsule.tsx) displays live degrees and meters ready for 1-click YAML copying. Free orbit maintains level horizon ($\text{roll} = 0$).
 
 ### 2.3 Shortest-Arc Angular Unwrapping (`shortestAngleDiff`)
-All angular interpolations (`yaw` and entity `rotationYRad`) must use [`shortestAngleDiff(targetRad, currentRad)`](../src/core/sphericalMath.ts), which wraps $\Delta\theta$ onto $[-\pi, \pi]$ to prevent $360^\circ$ spin artifacts across the $-\pi / +\pi$ boundary.
+All angular interpolations (`yaw`, `roll`, and entity `rotationYRad`) use [`shortestAngleDiff(targetRad, currentRad)`](../src/core/sphericalMath.ts), which wraps $\Delta\theta$ onto $[-\pi, \pi]$ to prevent $360^\circ$ spin artifacts across the $-\pi / +\pi$ boundary. Explicit multi-turn rotations authored with `roll_delta` or `roll_start`/`roll_end` bypass modulo wrapping to execute complete deliberate barrel rolls.
 
 ---
 
@@ -78,6 +88,7 @@ StageFlow models camera framing using standard **35mm Full-Frame Sensor Gate Wid
 In [`trajectoryChain.ts`](../src/core/trajectoryChain.ts) and [`entityEngine.ts`](../src/core/entityEngine.ts):
 - Each shot cuts cleanly (`0ms`) to its target anchor point (`spec.target`) unless explicit camera travel from another anchor is authored via `from:`.
 - Continuous camera parameters (`distance`, `pitch`, `yaw`) forward-chain from the preceding shot's terminal pose $P_{\text{end}}$ when unspecified, but immediately adopt newly specified angles (`pitch`, `pitch_start`, `yaw`, `yaw_start`) without cross-shot drift.
+- **Option A Shot-Boundary Roll Reset**: Unlike spatial position angles, `roll` (Dutch angle) defaults to resetting to the baseline level horizon (`0°`) at shot boundaries whenever a shot omits all roll parameters. To animate a continuous Dutch tilt across shots or smoothly level the camera back, authors specify `roll_start`/`roll_end` or `roll_end: 0`.
 - For the active shot, `sampleTrajectoryPoints()` samples $N = 32$ 3D world-space eye coordinates along $u \in [0, 1]$ so moving cameras render a smooth 3D trajectory curve in the diorama. Trajectory lines are visibility-gated to the active shot ID to prevent 1-frame asynchronous ghosting across cut boundaries.
 - **3-Tier Observer Camera Normalization**:
   1. **Tier 1 (Root `observer_shots:`)**: If `score.observerShots` is defined, the Observer Camera evaluates exclusively across these decoupled cues, allowing diorama viewport moves to span smoothly across film cuts. During any time gap between observer shots, the camera holds the terminal resting pose $P_{\text{end}}$ of the last completed cue and forward-chains into the next cue.

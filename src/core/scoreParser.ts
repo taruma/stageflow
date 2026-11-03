@@ -153,6 +153,9 @@ function parseBaseSphericalPose(
       : fallback.distance;
   const pitch = parseAngleToRad(obj.pitch, fallback.pitch) ?? fallback.pitch;
   const yaw = parseAngleToRad(obj.yaw, fallback.yaw) ?? fallback.yaw;
+  const roll =
+    parseAngleToRad(obj.roll ?? obj.dutch ?? obj.tilt_roll, fallback.roll) ??
+    fallback.roll;
   const focalLengthMm = parseLensFocalLengthMm(
     obj.lens ?? obj.focal_length ?? obj.focalLengthMm,
     fallback.focalLengthMm
@@ -163,6 +166,7 @@ function parseBaseSphericalPose(
     distance,
     pitch,
     yaw,
+    roll,
     focalLengthMm,
   });
 }
@@ -198,6 +202,11 @@ function parseCameraCueSpec(
     }
   }
 
+  const rollDeltaRad = parseAngleToRad(obj.roll_delta ?? obj.rollDelta);
+  const rollRad = parseAngleToRad(obj.roll ?? obj.dutch);
+  const rollStartRad = parseAngleToRad(obj.roll_start ?? obj.rollStart);
+  const rollEndRad = parseAngleToRad(obj.roll_end ?? obj.rollEnd);
+
   let waypoints: CameraWaypointSpec[] | undefined;
   if (Array.isArray(obj.waypoints)) {
     waypoints = obj.waypoints
@@ -212,6 +221,7 @@ function parseCameraCueSpec(
               : undefined,
           pitchRad: parseAngleToRad(wp.pitch),
           yawRad: parseAngleToRad(wp.yaw),
+          rollRad: parseAngleToRad(wp.roll ?? wp.dutch),
           focalLengthMm:
             wp.lens !== undefined || wp.focal_length !== undefined
               ? parseLensFocalLengthMm(wp.lens ?? wp.focal_length, defaultLensMm)
@@ -254,6 +264,10 @@ function parseCameraCueSpec(
     yawDeltaRad,
     yawStartRad: parseAngleToRad(obj.yaw_start ?? obj.yawStart),
     yawEndRad: parseAngleToRad(obj.yaw_end ?? obj.yawEnd),
+    rollRad,
+    rollDeltaRad,
+    rollStartRad,
+    rollEndRad,
     focalLengthMm: hasLens
       ? parseLensFocalLengthMm(
           obj.lens ?? obj.focal_length ?? obj.focalLengthMm,

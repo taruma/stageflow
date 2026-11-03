@@ -17,6 +17,7 @@ export interface SphericalPose {
   distance: number;      // meters
   pitch: number;         // radians (-PI/2 to +PI/2)
   yaw: number;           // radians
+  roll: number;          // radians (0 = level horizon, + = CW camera tilt from operator POV)
   focalLengthMm: number; // e.g., 24, 35, 50, 85
 }
 
@@ -27,6 +28,7 @@ export interface CameraTransform3D {
   pose: SphericalPose;
   position: Vec3;      // Eye position in meters
   target: Vec3;        // Look-at target in meters
+  up: Vec3;            // Unit camera up-vector in world space (incorporating roll)
   fovDeg: number;      // Vertical FOV in degrees derived from focalLengthMm & aspect
   aspectRatio: number; // Gate aspect ratio (e.g. 16/9 = 1.7778, 2.39)
 }
@@ -97,6 +99,7 @@ export interface CameraWaypointSpec {
   distance?: number;
   pitchRad?: number;
   yawRad?: number;
+  rollRad?: number;
   focalLengthMm?: number;
   at?: number;
 }
@@ -116,6 +119,10 @@ export interface CameraCueSpec {
   yawDeltaRad?: number;
   yawStartRad?: number;
   yawEndRad?: number;
+  rollRad?: number;
+  rollDeltaRad?: number;
+  rollStartRad?: number;
+  rollEndRad?: number;
   focalLengthMm?: number;
   focalLengthStartMm?: number;
   focalLengthEndMm?: number;

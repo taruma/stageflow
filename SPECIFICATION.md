@@ -26,7 +26,7 @@ Explore `taruma-film` to extract, refine, and modernize these core systems:
 
 2\. \*\*Spherical Camera Coordinate \& Maneuver System:\*\*
 
-&#x20;  - Adapt the `{ target, distance, pitch, yaw }` camera model, shortest-angle unwrapping, and declarative maneuvers (`cut`, `dolly`, `arc`, `swoop`, `orbit`, `spline`, etc.) so they drive Three.js objects and cameras cleanly.
+&#x20;  - Adapt the `{ target, distance, pitch, yaw, roll }` camera model, shortest-angle unwrapping, and declarative maneuvers (`cut`, `dolly`, `arc`, `swoop`, `orbit`, `spline`, etc.) so they drive Three.js objects and cameras cleanly.
 
 3\. \*\*Authoritative Media Clock \& Free-Orbit Handover:\*\*
 
@@ -122,7 +122,7 @@ Keep the visual styling clean, minimal, and functional so the focus remains on s
 
 4\. \*\*Inspector / Authoring Helper (Dev Utility):\*\*
 
-&#x20;  - A lightweight panel or readout displaying current camera coordinates (`target`, `distance`, `pitch`, `yaw`) with a one-click copy button to make authoring YAML cues fast and intuitive.
+&#x20;  - A lightweight panel or readout displaying current camera coordinates (`target`, `distance`, `pitch`, `yaw`, `roll`) with a one-click copy button to make authoring YAML cues fast and intuitive.
 
 
 

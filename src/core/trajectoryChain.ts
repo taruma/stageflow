@@ -27,6 +27,47 @@ import {
 export type TrackRole = 'observer' | 'stage';
 
 /**
+ * Resolves starting roll for a shot according to Option A semantics:
+ * Resets to baselinePose.roll (0 rad) unless explicitly specified or continuing a delta/end.
+ */
+export function resolveShotStartRoll(
+  spec: CameraCueSpec,
+  prevPose: SphericalPose,
+  baselinePose: SphericalPose
+): number {
+  if (spec.rollStartRad !== undefined) {
+    return spec.rollStartRad;
+  }
+  if (spec.rollDeltaRad !== undefined) {
+    return spec.rollRad ?? prevPose.roll;
+  }
+  if (spec.rollEndRad !== undefined) {
+    return prevPose.roll;
+  }
+  if (spec.rollRad !== undefined) {
+    return spec.rollRad;
+  }
+  return baselinePose.roll;
+}
+
+export function resolveShotDestRoll(
+  P0: SphericalPose,
+  spec: CameraCueSpec,
+  baselinePose: SphericalPose
+): number {
+  if (spec.rollEndRad !== undefined) {
+    return spec.rollEndRad;
+  }
+  if (spec.rollDeltaRad !== undefined) {
+    return P0.roll + spec.rollDeltaRad;
+  }
+  if (spec.rollRad !== undefined) {
+    return spec.rollRad;
+  }
+  return baselinePose.roll;
+}
+
+/**
  * Resolves an anchor key (entity ID, preset name, or Vec3) into a 3D world look-at point.
  */
 export function resolveTargetPoint3D(
@@ -92,6 +133,7 @@ function evaluateSplineCameraPose(
         distance: wp.distance ?? prev.distance,
         pitch: wp.pitchRad ?? prev.pitch,
         yaw: wp.yawRad ?? prev.yaw,
+        roll: wp.rollRad ?? prev.roll,
         focalLengthMm: wp.focalLengthMm ?? prev.focalLengthMm,
       })
     );
@@ -101,11 +143,15 @@ function evaluateSplineCameraPose(
     return resolvedWaypoints[0];
   }
 
-  // Unwrap yaw angles across waypoints to prevent 360-deg spin flips
+  // Unwrap yaw and roll angles across waypoints to prevent 360-deg spin flips
   for (let i = 1; i < resolvedWaypoints.length; i++) {
     const prevYaw = resolvedWaypoints[i - 1].yaw;
     const currYaw = resolvedWaypoints[i].yaw;
     resolvedWaypoints[i].yaw = prevYaw + shortestAngleDiff(currYaw, prevYaw);
+
+    const prevRoll = resolvedWaypoints[i - 1].roll;
+    const currRoll = resolvedWaypoints[i].roll;
+    resolvedWaypoints[i].roll = prevRoll + shortestAngleDiff(currRoll, prevRoll);
   }
 
   const numSegments = resolvedWaypoints.length - 1;
@@ -151,6 +197,7 @@ function evaluateSplineCameraPose(
     ),
     pitch: catmullRomScalar(p0.pitch, p1.pitch, p2.pitch, p3.pitch, segFrac),
     yaw: catmullRomScalar(p0.yaw, p1.yaw, p2.yaw, p3.yaw, segFrac),
+    roll: catmullRomScalar(p0.roll, p1.roll, p2.roll, p3.roll, segFrac),
     focalLengthMm: catmullRomScalar(
       p0.focalLengthMm,
       p1.focalLengthMm,
@@ -169,7 +216,8 @@ export function evaluateShotCameraPose(
   spec: CameraCueSpec,
   tRaw: number,
   durationSec: number,
-  entitiesById: Map<string, EvaluatedEntityState>
+  entitiesById: Map<string, EvaluatedEntityState>,
+  baselinePose?: SphericalPose
 ): SphericalPose {
   const u = evaluateCameraEasing(spec.easing, tRaw);
 
@@ -188,11 +236,15 @@ export function evaluateShotCameraPose(
     destYaw = P0.yaw + spec.yawDeltaRad;
   }
 
+  const effectiveBaseline = baselinePose ?? { ...P0, roll: 0 };
+  const destRoll = resolveShotDestRoll(P0, spec, effectiveBaseline);
+
   const P1: SphericalPose = clampSphericalPose({
     target: destTarget,
     distance: spec.distanceEnd ?? spec.distance ?? P0.distance,
     pitch: spec.pitchEndRad ?? spec.pitchRad ?? P0.pitch,
     yaw: destYaw,
+    roll: destRoll,
     focalLengthMm:
       spec.focalLengthEndMm ?? spec.focalLengthMm ?? P0.focalLengthMm,
   });
@@ -209,6 +261,7 @@ function sampleTrajectoryPoints(
   durationSec: number,
   entitiesById: Map<string, EvaluatedEntityState>,
   aspectRatio: number,
+  baselinePose?: SphericalPose,
   samples = 32
 ): Vec3[] {
   if (spec.maneuver === 'cut') {
@@ -222,7 +275,8 @@ function sampleTrajectoryPoints(
       spec,
       t,
       durationSec,
-      entitiesById
+      entitiesById,
+      baselinePose
     );
     const cart = sphericalToCartesian(pose, aspectRatio);
     points.push(cart.position);
@@ -319,11 +373,14 @@ export function evaluateCameraTrack(
       (spec.yawDeltaRad === undefined ? spec.yawRad : undefined) ??
       prevPose.yaw;
 
+    const startRoll = resolveShotStartRoll(spec, prevPose, baselinePose);
+
     const P_start = clampSphericalPose({
       target: startTarget,
       distance: spec.distanceStart ?? spec.distance ?? prevPose.distance,
       pitch: spec.pitchStartRad ?? spec.pitchRad ?? prevPose.pitch,
       yaw: startYaw,
+      roll: startRoll,
       focalLengthMm:
         spec.focalLengthStartMm ?? spec.focalLengthMm ?? prevPose.focalLengthMm,
     });
@@ -336,7 +393,8 @@ export function evaluateCameraTrack(
       spec,
       1.0,
       durationSec,
-      entitiesById
+      entitiesById,
+      baselinePose
     );
     cueEndPoses.set(cue, P_end);
   }
@@ -360,14 +418,16 @@ export function evaluateCameraTrack(
       spec,
       tRaw,
       durationSec,
-      entitiesById
+      entitiesById,
+      baselinePose
     );
     const trajectoryPoints = sampleTrajectoryPoints(
       startPose,
       spec,
       durationSec,
       entitiesById,
-      score.aspectRatio
+      score.aspectRatio,
+      baselinePose
     );
 
     return {
@@ -420,7 +480,8 @@ export function evaluateCameraTrack(
           heldSpec,
           heldDuration,
           entitiesById,
-          score.aspectRatio
+          score.aspectRatio,
+          baselinePose
         )
       : [],
   };

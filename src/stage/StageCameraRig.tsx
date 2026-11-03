@@ -65,6 +65,7 @@ export const StageCameraRig: React.FC<StageCameraRigProps> = ({
   uiFrame,
 }) => {
   const rigGroupRef = useRef<THREE.Group | null>(null);
+  const rollGroupRef = useRef<THREE.Group | null>(null);
   const trajectoryGroupRef = useRef<THREE.Group | null>(null);
   const frustumGroupRef = useRef<THREE.Group | null>(null);
   const targetRingRef = useRef<THREE.Mesh | null>(null);
@@ -104,6 +105,10 @@ export const StageCameraRig: React.FC<StageCameraRigProps> = ({
       effectiveTransform.target.y,
       effectiveTransform.target.z
     );
+
+    if (rollGroupRef.current) {
+      rollGroupRef.current.rotation.z = -effectiveTransform.pose.roll;
+    }
 
     const liveCam = isShotDesynced
       ? stageCam
@@ -154,6 +159,10 @@ export const StageCameraRig: React.FC<StageCameraRigProps> = ({
       transform.target.y,
       transform.target.z
     );
+
+    if (rollGroupRef.current) {
+      rollGroupRef.current.rotation.z = -transform.pose.roll;
+    }
 
     // Update Frustum Pyramid scale and Focus Target Ring position at native 60fps/144fps
     const liveCam = isShotDesynced ? stageCam : liveFrame.stageCamera;
@@ -218,130 +227,135 @@ export const StageCameraRig: React.FC<StageCameraRigProps> = ({
 
       {/* 2. 60fps/144fps Animated Stage Camera Rig Group */}
       <group ref={rigGroupRef}>
+        {/* Floating Camera Lens & Maneuver Badge stays upright in unrolled parent group */}
         {isBodyVisible && (
-          <group>
-            {/* Camera Body Chassis */}
-            <mesh position={[0, 0, -0.14]}>
-              <boxGeometry args={[0.24, 0.22, 0.28]} />
-              <meshStandardMaterial
-                color="#0f172a"
-                emissive={color}
-                emissiveIntensity={0.25}
-                roughness={0.3}
-                metalness={0.7}
-              />
-            </mesh>
-
-            {/* Cinema Lens Barrel & Matte Box at Nodal Point (0,0,0) */}
-            <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, 0, 0.04]}>
-              <cylinderGeometry args={[0.075, 0.085, 0.12, 20]} />
-              <meshStandardMaterial
-                color="#1e293b"
-                emissive={color}
-                emissiveIntensity={0.4}
-              />
-            </mesh>
-
-            {/* Top Carry Handle */}
-            <mesh position={[0, 0.15, -0.14]}>
-              <boxGeometry args={[0.05, 0.06, 0.2]} />
-              <meshBasicMaterial color={color} transparent opacity={0.85} />
-            </mesh>
-
-            {/* Floating Camera Lens & Maneuver Badge */}
-            <StageBillboardLabel
-              position={[0, 0.36, -0.1]}
-              label="STAGE CAM"
-              sublabel={`${Math.round(pose.focalLengthMm)}mm · ${stageCam.maneuver.toUpperCase()}`}
-              accentColor={color}
-              highlighted
-            />
-          </group>
+          <StageBillboardLabel
+            position={[0, 0.36, -0.1]}
+            label="STAGE CAM"
+            sublabel={`${Math.round(pose.focalLengthMm)}mm · ${stageCam.maneuver.toUpperCase()}`}
+            accentColor={color}
+            highlighted
+          />
         )}
 
-        {/* 3. Rectangular Cinematic Gate Frustum & Sight-Line (Scaled at 60fps/144fps in useFrame) */}
-        {isBodyVisible && (
-          <group>
-            {/* Normalized Unit Frustum Pyramid Group */}
-            <group ref={frustumGroupRef}>
-              {/* Central Optical Axis Sight-Line */}
-              <Line
-                points={UNIT_FRUSTUM.sightLine}
-                color={color}
-                lineWidth={1.2}
-                dashed
-                dashScale={12}
-                dashSize={0.25}
-                gapSize={0.2}
-                transparent
-                opacity={0.65}
-              />
-
-              {/* 4 Corner Frustum Pyramid Edge Rays */}
-              {UNIT_FRUSTUM.rays.map((ray, idx) => (
-                <Line
-                  key={idx}
-                  points={ray}
-                  color={color}
-                  lineWidth={1.3}
-                  transparent
-                  opacity={0.55}
+        {/* Rolled Group containing Camera Chassis, Barrel, and Frustum Gate */}
+        <group ref={rollGroupRef}>
+          {isBodyVisible && (
+            <group>
+              {/* Camera Body Chassis */}
+              <mesh position={[0, 0, -0.14]}>
+                <boxGeometry args={[0.24, 0.22, 0.28]} />
+                <meshStandardMaterial
+                  color="#0f172a"
+                  emissive={color}
+                  emissiveIntensity={0.25}
+                  roughness={0.3}
+                  metalness={0.7}
                 />
-              ))}
+              </mesh>
 
-              {/* Rectangular Film Gate Frame at depth Z = 1 */}
-              <Line
-                points={UNIT_FRUSTUM.gateFrame}
-                color={color}
-                lineWidth={2.0}
-                transparent
-                opacity={0.9}
-              />
+              {/* Cinema Lens Barrel & Matte Box at Nodal Point (0,0,0) */}
+              <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, 0, 0.04]}>
+                <cylinderGeometry args={[0.075, 0.085, 0.12, 20]} />
+                <meshStandardMaterial
+                  color="#1e293b"
+                  emissive={color}
+                  emissiveIntensity={0.4}
+                />
+              </mesh>
 
-              {/* Subtle Rule-of-Thirds Horizon Guides */}
-              <Line
-                points={UNIT_FRUSTUM.ruleOfThirdsH1}
-                color={color}
-                lineWidth={0.7}
-                transparent
-                opacity={0.2}
-              />
-              <Line
-                points={UNIT_FRUSTUM.ruleOfThirdsH2}
-                color={color}
-                lineWidth={0.7}
-                transparent
-                opacity={0.2}
-              />
+              {/* Top Carry Handle */}
+              <mesh position={[0, 0.15, -0.14]}>
+                <boxGeometry args={[0.05, 0.06, 0.2]} />
+                <meshBasicMaterial color={color} transparent opacity={0.85} />
+              </mesh>
+            </group>
+          )}
 
-              {/* Translucent Focus Plane Glass Fill */}
-              <mesh position={[0, 0, 1]}>
-                <planeGeometry args={[2, 2]} />
+          {/* 3. Rectangular Cinematic Gate Frustum & Sight-Line (Scaled at 60fps/144fps in useFrame) */}
+          {isBodyVisible && (
+            <group>
+              {/* Normalized Unit Frustum Pyramid Group */}
+              <group ref={frustumGroupRef}>
+                {/* Central Optical Axis Sight-Line */}
+                <Line
+                  points={UNIT_FRUSTUM.sightLine}
+                  color={color}
+                  lineWidth={1.2}
+                  dashed
+                  dashScale={12}
+                  dashSize={0.25}
+                  gapSize={0.2}
+                  transparent
+                  opacity={0.65}
+                />
+
+                {/* 4 Corner Frustum Pyramid Edge Rays */}
+                {UNIT_FRUSTUM.rays.map((ray, idx) => (
+                  <Line
+                    key={idx}
+                    points={ray}
+                    color={color}
+                    lineWidth={1.3}
+                    transparent
+                    opacity={0.55}
+                  />
+                ))}
+
+                {/* Rectangular Film Gate Frame at depth Z = 1 */}
+                <Line
+                  points={UNIT_FRUSTUM.gateFrame}
+                  color={color}
+                  lineWidth={2.0}
+                  transparent
+                  opacity={0.9}
+                />
+
+                {/* Subtle Rule-of-Thirds Horizon Guides */}
+                <Line
+                  points={UNIT_FRUSTUM.ruleOfThirdsH1}
+                  color={color}
+                  lineWidth={0.7}
+                  transparent
+                  opacity={0.2}
+                />
+                <Line
+                  points={UNIT_FRUSTUM.ruleOfThirdsH2}
+                  color={color}
+                  lineWidth={0.7}
+                  transparent
+                  opacity={0.2}
+                />
+
+                {/* Translucent Focus Plane Glass Fill */}
+                <mesh position={[0, 0, 1]}>
+                  <planeGeometry args={[2, 2]} />
+                  <meshBasicMaterial
+                    color={color}
+                    transparent
+                    opacity={0.05}
+                    side={THREE.DoubleSide}
+                    depthWrite={false}
+                  />
+                </mesh>
+              </group>
+
+              {/* Focus Target Center Crosshair Ring (kept at 1:1 circular aspect ratio) */}
+              <mesh
+                ref={targetRingRef}
+                position={[0, 0, stageCam.frustumDepth]}
+              >
+                <ringGeometry args={[0.06, 0.085, 24]} />
                 <meshBasicMaterial
                   color={color}
                   transparent
-                  opacity={0.05}
+                  opacity={0.85}
                   side={THREE.DoubleSide}
-                  depthWrite={false}
                 />
               </mesh>
             </group>
-
-            {/* Focus Target Center Crosshair Ring (kept at 1:1 circular aspect ratio) */}
-            <mesh
-              ref={targetRingRef}
-              position={[0, 0, stageCam.frustumDepth]}
-            >
-              <ringGeometry args={[0.06, 0.085, 24]} />
-              <meshBasicMaterial
-                color={color}
-                transparent
-                opacity={0.85}
-                side={THREE.DoubleSide}
-              />
-            </mesh>
-          </group>
-        )}
+          )}
+        </group>
       </group>
     </group>
   );

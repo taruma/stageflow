@@ -95,6 +95,26 @@ export function catmullRomScalar(
 }
 
 /**
+ * Interpolates camera roll progress between P0 and P1.
+ * Preserves deliberate multi-angle rotations (e.g. roll_delta or explicit start+end)
+ * while using shortest-arc unwrapping for implicit transitions.
+ */
+export function interpolateRoll(
+  P0: SphericalPose,
+  P1: SphericalPose,
+  spec: CameraCueSpec,
+  u: number
+): number {
+  if (
+    spec.rollDeltaRad !== undefined ||
+    (spec.rollStartRad !== undefined && spec.rollEndRad !== undefined)
+  ) {
+    return P0.roll + u * (P1.roll - P0.roll);
+  }
+  return P0.roll + u * shortestAngleDiff(P1.roll, P0.roll);
+}
+
+/**
  * Pure 3D maneuver evaluator mapping P0 -> P1 via normalized progress u in [0, 1].
  */
 export function evaluateManeuverPose(
@@ -108,6 +128,7 @@ export function evaluateManeuverPose(
   const maneuver = spec.maneuver;
   const focalLengthMm =
     P0.focalLengthMm + u * (P1.focalLengthMm - P0.focalLengthMm);
+  const roll = interpolateRoll(P0, P1, spec, u);
 
   // 1. 'cut': Instantaneous cut to destination pose
   if (maneuver === 'cut') {
@@ -124,7 +145,7 @@ export function evaluateManeuverPose(
     const distance = P0.distance + u * (P1.distance - P0.distance);
     const pitch = P0.pitch + u * (P1.pitch - P0.pitch);
     const yaw = P0.yaw + u * shortestAngleDiff(P1.yaw, P0.yaw);
-    return clampSphericalPose({ target, distance, pitch, yaw, focalLengthMm });
+    return clampSphericalPose({ target, distance, pitch, yaw, roll, focalLengthMm });
   }
 
   // 3. 'arc' / 'swoop': 3D Quadratic Bezier arc + mid-flight distance breathing
@@ -167,7 +188,7 @@ export function evaluateManeuverPose(
       (maneuver === 'swoop' ? 0.08 * Math.sin(Math.PI * u) : 0);
     const yaw = P0.yaw + u * shortestAngleDiff(P1.yaw, P0.yaw);
 
-    return clampSphericalPose({ target, distance, pitch, yaw, focalLengthMm });
+    return clampSphericalPose({ target, distance, pitch, yaw, roll, focalLengthMm });
   }
 
   // 4. 'orbit' / 'sweep': Continuous azimuthal turntable revolution
@@ -200,7 +221,7 @@ export function evaluateManeuverPose(
     const pitch = P0.pitch + u * (P1.pitch - P0.pitch);
     const yaw = (spec.yawStartRad ?? P0.yaw) + deltaTheta;
 
-    return clampSphericalPose({ target, distance, pitch, yaw, focalLengthMm });
+    return clampSphericalPose({ target, distance, pitch, yaw, roll, focalLengthMm });
   }
 
   // 5. 'spiral': Helical zoom & elevation orbit
@@ -218,7 +239,7 @@ export function evaluateManeuverPose(
     const pitch = P0.pitch + u * (P1.pitch - P0.pitch);
     const yaw = (spec.yawStartRad ?? P0.yaw) + deltaTheta;
 
-    return clampSphericalPose({ target, distance, pitch, yaw, focalLengthMm });
+    return clampSphericalPose({ target, distance, pitch, yaw, roll, focalLengthMm });
   }
 
   // 6. 'dive': Fast perigee dive toward subject
@@ -234,7 +255,7 @@ export function evaluateManeuverPose(
     const pitch = P0.pitch + u * (P1.pitch - P0.pitch) - 0.12 * Math.sin(Math.PI * u);
     const yaw = P0.yaw + u * shortestAngleDiff(P1.yaw, P0.yaw);
 
-    return clampSphericalPose({ target, distance, pitch, yaw, focalLengthMm });
+    return clampSphericalPose({ target, distance, pitch, yaw, roll, focalLengthMm });
   }
 
   // 7. 'recoil': Immediate impact impulse kick
@@ -250,7 +271,7 @@ export function evaluateManeuverPose(
     const pitch = P0.pitch + u * (P1.pitch - P0.pitch);
     const yaw = P0.yaw + u * shortestAngleDiff(P1.yaw, P0.yaw);
 
-    return clampSphericalPose({ target, distance, pitch, yaw, focalLengthMm });
+    return clampSphericalPose({ target, distance, pitch, yaw, roll, focalLengthMm });
   }
 
   // Default fallback linear interpolation
@@ -262,5 +283,5 @@ export function evaluateManeuverPose(
   const distance = P0.distance + u * (P1.distance - P0.distance);
   const pitch = P0.pitch + u * (P1.pitch - P0.pitch);
   const yaw = P0.yaw + u * shortestAngleDiff(P1.yaw, P0.yaw);
-  return clampSphericalPose({ target, distance, pitch, yaw, focalLengthMm });
+  return clampSphericalPose({ target, distance, pitch, yaw, roll, focalLengthMm });
 }
