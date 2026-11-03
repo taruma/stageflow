@@ -201,15 +201,21 @@ export function evaluateManeuverPose(
       deltaTheta = dirSign * spec.revolutions * Math.PI * 2 * u;
     } else if (spec.orbitSpeedRad !== undefined) {
       deltaTheta = dirSign * spec.orbitSpeedRad * Math.max(0.016, durationSec) * u;
-    } else if (spec.yawStartRad !== undefined && spec.yawEndRad !== undefined) {
-      deltaTheta = (spec.yawEndRad - spec.yawStartRad) * u;
     } else if (spec.yawDeltaRad !== undefined) {
       deltaTheta = spec.yawDeltaRad * u;
+    } else if (
+      spec.hasExplicitDirection &&
+      (spec.yawRad !== undefined || spec.yawEndRad !== undefined)
+    ) {
+      const targetYaw = spec.yawEndRad ?? spec.yawRad!;
+      const startYaw = spec.yawStartRad ?? P0.yaw;
+      deltaTheta = directedAngleDiff(targetYaw, startYaw, spec.direction) * u;
+    } else if (spec.yawStartRad !== undefined && spec.yawEndRad !== undefined) {
+      deltaTheta = (spec.yawEndRad - spec.yawStartRad) * u;
     } else if (spec.yawRad !== undefined || spec.yawEndRad !== undefined) {
       const targetYaw = spec.yawEndRad ?? spec.yawRad!;
       const startYaw = spec.yawStartRad ?? P0.yaw;
-      const effectiveDir = spec.hasExplicitDirection ? spec.direction : undefined;
-      deltaTheta = directedAngleDiff(targetYaw, startYaw, effectiveDir) * u;
+      deltaTheta = directedAngleDiff(targetYaw, startYaw, undefined) * u;
     } else {
       deltaTheta = dirSign * (Math.PI / 4) * u;
     }

@@ -1123,6 +1123,40 @@ shots:
       expect(f10.stageCamera.transform.pose.yaw).toBeCloseTo(0, 3);
     });
 
+    it('orbits strictly counter-clockwise when both yaw_start and yaw_end are specified with direction: ccw', () => {
+      const ccwSpanYaml = `
+version: "1.0"
+id: "ccw-span-test"
+title: "CCW Span Test"
+shots:
+  - id: "orbit-ccw-span"
+    start: 0.0
+    end: 12.0
+    stage_camera:
+      target: [0, 1.25, 0]
+      maneuver: "orbit"
+      direction: "ccw"
+      easing: "linear"
+      yaw_start: 175
+      yaw_end: 0
+`;
+      const { score } = parseStageScore(ccwSpanYaml);
+      expect(score).not.toBeNull();
+
+      // At t = 0.0s: starts at 175 deg
+      const f0 = computeStageFrame(0.0, score!);
+      expect(f0.stageCamera.transform.pose.yaw).toBeCloseTo(175 * (Math.PI / 180), 3);
+
+      // At midpoint t = 6.0s: CCW rotation from 175 deg to 0 deg travels along +185 deg arc
+      // 175 + 185 * 0.5 = 267.5 deg
+      const f6 = computeStageFrame(6.0, score!);
+      expect(f6.stageCamera.transform.pose.yaw).toBeCloseTo(267.5 * (Math.PI / 180), 3);
+
+      // At t = 12.0s: reaches 360 deg = 0 deg
+      const f12 = computeStageFrame(12.0, score!);
+      expect(f12.stageCamera.transform.pose.yaw).toBeCloseTo(360 * (Math.PI / 180), 3);
+    });
+
     it('evaluates The Expansion oner score with continuous chaining and CCW orbit maneuver', () => {
       const expansionYaml = `
 version: "1.0"

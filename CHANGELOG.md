@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Explicit `direction: "ccw" | "cw"` Priority on Spanned Orbits (`maneuver: "orbit"` with `yaw_start` & `yaw_end`)**:
+  - Resolved an evaluation order issue in `src/core/maneuvers.ts` where shots declaring both `yaw_start` and `yaw_end` executed raw linear subtraction `(yaw_end - yaw_start) * u`, inadvertently short-circuiting `directedAngleDiff` and causing `yaw_start: 175` -> `yaw_end: 0` with `direction: "ccw"` to rotate clockwise ($-175^\circ$) instead of counter-clockwise ($+185^\circ$).
+  - Prioritized `hasExplicitDirection` so authored `direction: "ccw"` or `"cw"` always routes through `directedAngleDiff` regardless of whether `yaw_start` and `yaw_end` are both explicitly provided.
+  - Added unit test coverage in `tests/unit/frameEngine.test.ts`.
+
 ### Added
 - **Stage Cam POV Director's Optical Viewfinder & Composition Guides**:
   - Implemented `StageCamViewfinderOverlay` (`src/ui/StageCamViewfinderOverlay.tsx`), an optical viewfinder overlay automatically engaging in `Stage Cam POV` (`cameraMode === 'stage-pov'`).
