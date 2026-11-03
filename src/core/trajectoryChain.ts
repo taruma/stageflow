@@ -310,15 +310,20 @@ export function evaluateCameraTrack(
 
     const startTarget = spec.from
       ? resolveTargetPoint3D(spec.from, entitiesById, prevPose.target)
-      : spec.target && spec.maneuver !== 'dolly' && spec.maneuver !== 'straight'
+      : spec.target
       ? resolveTargetPoint3D(spec.target, entitiesById, prevPose.target)
       : { ...prevPose.target };
+
+    const startYaw =
+      spec.yawStartRad ??
+      (spec.yawDeltaRad === undefined ? spec.yawRad : undefined) ??
+      prevPose.yaw;
 
     const P_start = clampSphericalPose({
       target: startTarget,
       distance: spec.distanceStart ?? spec.distance ?? prevPose.distance,
       pitch: spec.pitchStartRad ?? spec.pitchRad ?? prevPose.pitch,
-      yaw: spec.yawStartRad ?? prevPose.yaw,
+      yaw: startYaw,
       focalLengthMm:
         spec.focalLengthStartMm ?? spec.focalLengthMm ?? prevPose.focalLengthMm,
     });

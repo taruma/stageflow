@@ -7,7 +7,7 @@
  *   4. 3D Trajectory Path Curve across the active shot
  */
 
-import React, { useRef, useMemo } from 'react';
+import React, { useRef, useMemo, useLayoutEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Line } from '@react-three/drei';
 import * as THREE from 'three';
@@ -27,6 +27,7 @@ export const StageCameraRig: React.FC<StageCameraRigProps> = ({
   uiFrame,
 }) => {
   const rigGroupRef = useRef<THREE.Group | null>(null);
+  const trajectoryGroupRef = useRef<THREE.Group | null>(null);
   const frustumVolumeRef = useRef<THREE.Mesh | null>(null);
   const focusPlaneGroupRef = useRef<THREE.Group | null>(null);
 
@@ -86,6 +87,16 @@ export const StageCameraRig: React.FC<StageCameraRigProps> = ({
     return stageCam.trajectoryPoints.map((pt) => [pt.x, pt.y, pt.z]);
   }, [stageCam.showPath, stageCam.trajectoryPoints]);
 
+  // Set initial camera transform synchronously before first paint
+  useLayoutEffect(() => {
+    const liveFrame = frameRef.current;
+    if (!liveFrame || !rigGroupRef.current) return;
+
+    const { position, target } = liveFrame.stageCamera.transform;
+    rigGroupRef.current.position.set(position.x, position.y, position.z);
+    rigGroupRef.current.lookAt(target.x, target.y, target.z);
+  }, [frameRef]);
+
   // Update 3D position and orientation imperatively at 60fps
   useFrame(() => {
     const liveFrame = frameRef.current;
@@ -94,6 +105,13 @@ export const StageCameraRig: React.FC<StageCameraRigProps> = ({
     const { position, target } = liveFrame.stageCamera.transform;
     rigGroupRef.current.position.set(position.x, position.y, position.z);
     rigGroupRef.current.lookAt(target.x, target.y, target.z);
+
+    // Suppress trajectory path ghosting during the 1-frame async transition between shots
+    if (trajectoryGroupRef.current) {
+      trajectoryGroupRef.current.visible =
+        liveFrame.stageCamera.showPath &&
+        liveFrame.stageCamera.shotId === stageCam.shotId;
+    }
   });
 
   // Hide the 3D camera body mesh when viewing directly through Stage Camera POV
@@ -103,7 +121,7 @@ export const StageCameraRig: React.FC<StageCameraRigProps> = ({
     <group>
       {/* 1. World-Space 3D Trajectory Curve for Moving Shots */}
       {trajectoryLinePoints.length >= 2 && (
-        <group>
+        <group ref={trajectoryGroupRef}>
           <Line
             points={trajectoryLinePoints}
             color={color}
@@ -130,14 +148,7 @@ export const StageCameraRig: React.FC<StageCameraRigProps> = ({
       )}
 
       {/* 2. 60fps Animated Stage Camera Rig Group */}
-      <group
-        ref={rigGroupRef}
-        position={[
-          stageCam.transform.position.x,
-          stageCam.transform.position.y,
-          stageCam.transform.position.z,
-        ]}
-      >
+      <group ref={rigGroupRef}>
         {isBodyVisible && (
           <group>
             {/* Camera Body Chassis */}

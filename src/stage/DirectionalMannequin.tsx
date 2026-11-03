@@ -8,7 +8,7 @@
  *   - Dynamic floor movement trail when moving across a shot
  */
 
-import React, { useRef, useMemo } from 'react';
+import React, { useRef, useMemo, useLayoutEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Line } from '@react-three/drei';
 import * as THREE from 'three';
@@ -31,6 +31,19 @@ export const DirectionalMannequin: React.FC<DirectionalMannequinProps> = ({
   const color = def.color;
   const height = def.height;
   const radius = def.radius;
+
+  // Ensure synchronous pre-paint alignment so React reconciler never resets 60fps transform
+  useLayoutEffect(() => {
+    if (!groupRef.current) return;
+    const liveEntity = frameRef.current?.entitiesById.get(entityId) ?? initialState;
+    groupRef.current.visible = liveEntity.visible;
+    groupRef.current.position.set(
+      liveEntity.position.x,
+      liveEntity.position.y,
+      liveEntity.position.z
+    );
+    groupRef.current.rotation.set(0, liveEntity.rotationYRad, 0);
+  });
 
   // Imperatively sync 3D position and facing rotation at 60fps
   useFrame(() => {
@@ -85,16 +98,8 @@ export const DirectionalMannequin: React.FC<DirectionalMannequinProps> = ({
         />
       )}
 
-      {/* 60fps Animated Entity Transform Group */}
-      <group
-        ref={groupRef}
-        position={[
-          initialState.position.x,
-          initialState.position.y,
-          initialState.position.z,
-        ]}
-        rotation={[0, initialState.rotationYRad, 0]}
-      >
+      {/* 60fps Animated Entity Transform Group (controlled imperatively to avoid JSX prop overwrite) */}
+      <group ref={groupRef}>
         {/* Ground Contact Shadow & Selection Ring */}
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.012, 0]}>
           <ringGeometry

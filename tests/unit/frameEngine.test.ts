@@ -95,6 +95,85 @@ shots:
     );
   });
 
+  it('cuts cleanly between sequential dolly shots with different targets without dragging look-at target across shots', () => {
+    const sequentialDollyYaml = `
+version: "1.0"
+id: "sequential-dolly-test"
+title: "Sequential Dolly Target Cut Test"
+duration: 6.0
+entities:
+  - id: "actor_a"
+    label: "Actor A"
+    kind: "character"
+    position: [-2, 0, 0]
+  - id: "actor_b"
+    label: "Actor B"
+    kind: "character"
+    position: [2, 0, 0]
+shots:
+  - id: "shot-1"
+    shot: 1
+    start: 0.0
+    end: 3.0
+    stage_camera:
+      target: "actor_a"
+      maneuver: "dolly"
+      distance_start: 4.0
+      distance_end: 2.0
+      pitch: 0
+      yaw: 0
+      lens: 50mm
+  - id: "shot-2"
+    shot: 2
+    start: 3.0
+    end: 6.0
+    stage_camera:
+      target: "actor_b"
+      maneuver: "dolly"
+      distance_start: 3.0
+      distance_end: 1.5
+      pitch: 0
+      yaw: 180
+      lens: 85mm
+`;
+    const { score, error } = parseStageScore(sequentialDollyYaml);
+    expect(error).toBeNull();
+    expect(score).not.toBeNull();
+
+    // Default character height 1.75m * anchor ratio 0.78 = 1.365m eye-level anchor
+    const expectedAnchorY = 1.365;
+
+    // At t = 0.0s (start of Shot 1): camera is at actor_a + [0, 0, 4] -> [-2, 1.365, 4], target [-2, 1.365, 0]
+    const f0 = computeStageFrame(0.0, score!);
+    expect(f0.stageCamera.transform.target.x).toBeCloseTo(-2, 3);
+    expect(f0.stageCamera.transform.target.y).toBeCloseTo(expectedAnchorY, 3);
+    expect(f0.stageCamera.transform.position.x).toBeCloseTo(-2, 3);
+    expect(f0.stageCamera.transform.position.y).toBeCloseTo(expectedAnchorY, 3);
+    expect(f0.stageCamera.transform.position.z).toBeCloseTo(4, 3);
+
+    // At t = 2.99s (end of Shot 1): camera is at actor_a + [0, 0, 2] -> [-2, 1.365, 2], target [-2, 1.365, 0]
+    const fBeforeCut = computeStageFrame(2.99, score!);
+    expect(fBeforeCut.stageCamera.transform.target.x).toBeCloseTo(-2, 2);
+    expect(fBeforeCut.stageCamera.transform.position.x).toBeCloseTo(-2, 2);
+
+    // At t = 3.0s (instantaneous cut to Shot 2): target MUST immediately be actor_b [2, 1.365, 0]
+    // with yaw = 180 deg (facing back: delta Z = -3) -> camera pos [2, 1.365, -3]
+    const fCut = computeStageFrame(3.0, score!);
+    expect(fCut.stageCamera.shotId).toBe('shot-2');
+    expect(fCut.stageCamera.transform.target.x).toBeCloseTo(2, 3);
+    expect(fCut.stageCamera.transform.target.y).toBeCloseTo(expectedAnchorY, 3);
+    expect(fCut.stageCamera.transform.target.z).toBeCloseTo(0, 3);
+
+    expect(fCut.stageCamera.transform.position.x).toBeCloseTo(2, 3);
+    expect(fCut.stageCamera.transform.position.y).toBeCloseTo(expectedAnchorY, 3);
+    expect(fCut.stageCamera.transform.position.z).toBeCloseTo(-3, 3);
+
+    // Mid-shot at t = 4.5s: target must remain strictly on actor_b
+    const fMid = computeStageFrame(4.5, score!);
+    expect(fMid.stageCamera.transform.target.x).toBeCloseTo(2, 3);
+    expect(fMid.stageCamera.transform.position.x).toBeCloseTo(2, 3);
+  });
+
   it('evaluates a single continuous observer_shots move across multiple rapid film cuts smoothly', () => {
     const scoreYaml = `
 version: "1.0"

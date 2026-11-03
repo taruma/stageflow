@@ -76,8 +76,9 @@ StageFlow models camera framing using standard **35mm Full-Frame Sensor Gate Wid
 
 ### 4.2 Forward Pose Chaining ($P_0 \to P_1 \to \dots \to P_k$) & Track Normalization
 In [`trajectoryChain.ts`](../src/core/trajectoryChain.ts) and [`entityEngine.ts`](../src/core/entityEngine.ts):
-- Each shot inherits the terminal resting pose $P_{\text{end}}$ of the preceding shot as its starting pose $P_{\text{start}}$, unless explicitly overridden by `from:`, `distance_start:`, `pitch_start:`, or `yaw_start:`.
-- For the active shot, `sampleTrajectoryPoints()` samples $N = 32$ 3D world-space eye coordinates along $u \in [0, 1]$ so moving cameras render a smooth 3D trajectory curve in the diorama.
+- Each shot cuts cleanly (`0ms`) to its target anchor point (`spec.target`) unless explicit camera travel from another anchor is authored via `from:`.
+- Continuous camera parameters (`distance`, `pitch`, `yaw`) forward-chain from the preceding shot's terminal pose $P_{\text{end}}$ when unspecified, but immediately adopt newly specified angles (`pitch`, `pitch_start`, `yaw`, `yaw_start`) without cross-shot drift.
+- For the active shot, `sampleTrajectoryPoints()` samples $N = 32$ 3D world-space eye coordinates along $u \in [0, 1]$ so moving cameras render a smooth 3D trajectory curve in the diorama. Trajectory lines are visibility-gated to the active shot ID to prevent 1-frame asynchronous ghosting across cut boundaries.
 - **3-Tier Observer Camera Normalization**:
   1. **Tier 1 (Root `observer_shots:`)**: If `score.observerShots` is defined, the Observer Camera evaluates exclusively across these decoupled cues, allowing diorama viewport moves to span smoothly across film cuts. During any time gap between observer shots, the camera holds the terminal resting pose $P_{\text{end}}$ of the last completed cue and forward-chains into the next cue.
   2. **Tier 2 (Per-Shot `shots[].observer_camera`)**: If root `observer_shots:` is omitted, the engine extracts observer cues from `shots:`.
