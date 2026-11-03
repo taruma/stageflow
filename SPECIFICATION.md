@@ -134,5 +134,24 @@ Keep the visual styling clean, minimal, and functional so the focus remains on s
 
 \- \*\*Zero-Drift Determinism:\*\* Ensure scrubbing forward, backward, or jumping across shots always produces the exact same 3D state for any timestamp `t`.
 
-\- \*\*Extensibility:\*\* Keep entity types and camera maneuvers pluggable so future iterations can easily swap basic 3D proxies for custom `.glb` models or add new choreography tracks.
+\- **Extensibility:** Keep entity types and camera maneuvers pluggable so future iterations can easily swap basic 3D proxies for custom `.glb` models or add new choreography tracks.
+
+---
+
+## 6. Client-Side Persistence Architecture
+
+To ensure user edits are preserved without risk of exceeding browser quotas or leaking large binary media files into storage, StageFlow uses a **Dual-Tier Persistence Engine**:
+
+1. **IndexedDB (via `idb`):**
+   - Automatically persists live YAML choreography score drafts and imported custom scenes to the `'scores'` store in `stageflow-db`.
+   - Work is retained across browser refreshes and tab closures.
+   - Resetting a scene requires explicit confirmation via `ConfirmResetModal` before deleting the draft and reverting to the bundled baseline.
+2. **Synchronous `localStorage`:**
+   - Retains lightweight UI and layout preferences (`splitPreset`, `isYamlDrawerOpen`, `activeSceneId`).
+   - Hydrated synchronously on mount to eliminate layout shifts or UI flicker.
+3. **In-Memory Ephemeral Video Policy:**
+   - Heavy local video files (`.mp4`, `.webm`) dropped by the user are handled purely as session memory `blob:` URLs and are **never** persisted to `IndexedDB` or `localStorage`.
+   - Reloading the page or switching scenes reverts to the score's authoritative video source (`videoUrl` in YAML) or the procedural stage cam simulator.
+4. **YAML Video Authority:**
+   - The YAML choreography score is the single source of truth for video playback. Both string formats (`video: "https://..."`) and structured objects (`video: { src: "...", aspect_ratio: "16:9" }`) are parsed robustly. Editing or changing the video property in YAML immediately clears any local drop override.
 

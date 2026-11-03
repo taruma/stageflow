@@ -1,6 +1,6 @@
-# Stageplay — 3D Camera-Blocking & Scene Choreography Diorama
+# StageFlow — 3D Camera-Blocking & Scene Choreography Diorama
 
-**Stageplay** is a standalone 3D spatial staging and camera-blocking visualizer built with **React 19**, **Three.js / React Three Fiber (`@react-three/fiber` & `@react-three/drei`)**, **TypeScript**, and **Tailwind CSS v4**.
+**StageFlow** is a standalone 3D spatial staging and camera-blocking visualizer built with **React 19**, **Three.js / React Three Fiber (`@react-three/fiber` & `@react-three/drei`)**, **TypeScript**, and **Tailwind CSS v4**.
 
 It synchronizes a universal video player (**Local `.mp4`/`.webm`**, **YouTube URLs**, or a built-in **60fps Stage Cam Blueprint Simulator**) with an interactive **3D Minimalist Blueprint Diorama** to illustrate where subjects/props are positioned and how the physical camera is placed, lensed, and moving at every millisecond of a scene.
 
@@ -20,12 +20,15 @@ It synchronizes a universal video player (**Local `.mp4`/`.webm`**, **YouTube UR
    - Identical 60fps synchronization, scrubbing, frame-stepping (`[` / `]`), and slow-motion playback (`0.25x`, `0.5x`, `1x`, `2x`) across local `.mp4` files, YouTube URLs, and procedural blueprint slates.
 5. **Live YAML Score Drawer & Authoring Telemetry Capsule**:
    - Edit YAML scores live in the slide-out drawer with instant 3D re-evaluation, or click the floating telemetry capsule to copy live camera coordinates (`target`, `distance`, `pitch`, `yaw`, `lens`) directly to the clipboard.
+6. **Dual-Tier Storage Persistence & YAML SSOT**:
+   - Automatically saves score drafts and custom imported scenes in browser **IndexedDB** (`idb`), while persisting UI layout preferences in **`localStorage`**. Heavy local dropped videos remain strictly in temporary session memory, and the YAML score remains the authoritative single source of truth for video playback.
+
 
 ---
 
 ## Architecture & Documentation
 
-Stageplay is organized into a strictly decoupled **5-Layer Architecture** (`core/` $\to$ `media/` $\to$ `hooks/` $\to$ `stage/` & `ui/`). See the living specification suite for complete details:
+StageFlow is organized into a strictly decoupled **5-Layer Architecture** (`core/` $\to$ `media/` $\to$ `hooks/` $\to$ `stage/` & `ui/`). See the living specification suite for complete details:
 
 - [**`AGENTS.md`**](AGENTS.md) — Repository governance, non-negotiable invariants, and 5-layer architecture map.
 - [**`SPECIFICATION.md`**](SPECIFICATION.md) — Product vision and core system mechanics.

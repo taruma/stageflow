@@ -335,14 +335,36 @@ export function parseStageScore(
   const root = parsed as Record<string, unknown>;
   const version = String(root.version ?? '1.0');
   const id = String(root.id ?? fallbackId);
-  const title = String(root.title ?? 'Untitled Stageplay Scene');
+  const title = String(root.title ?? 'Untitled StageFlow Scene');
   const subtitle =
     typeof root.subtitle === 'string' ? root.subtitle : undefined;
-  const videoUrl = String(
-    root.video ?? root.video_url ?? root.videoUrl ?? 'procedural://demo'
-  );
+  let videoUrl = 'procedural://demo';
+  let videoAspectRatio: string | number | undefined;
+
+  if (typeof root.video === 'string') {
+    videoUrl = root.video.trim();
+  } else if (root.video && typeof root.video === 'object') {
+    const vObj = root.video as Record<string, unknown>;
+    const candidate = vObj.src ?? vObj.url;
+    if (typeof candidate === 'string') {
+      videoUrl = candidate.trim();
+    }
+    if (vObj.aspect_ratio || vObj.aspectRatio) {
+      videoAspectRatio = (vObj.aspect_ratio ?? vObj.aspectRatio) as
+        | string
+        | number;
+    }
+  } else if (typeof root.video_url === 'string') {
+    videoUrl = root.video_url.trim();
+  } else if (typeof root.videoUrl === 'string') {
+    videoUrl = root.videoUrl.trim();
+  }
+
   const aspectRatio = parseAspectRatio(
-    (root.aspect_ratio ?? root.aspectRatio) as string | number | undefined
+    (root.aspect_ratio ?? root.aspectRatio ?? videoAspectRatio) as
+      | string
+      | number
+      | undefined
   );
 
   const rawStage =

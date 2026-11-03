@@ -15,6 +15,10 @@ import {
   X,
 } from 'lucide-react';
 import yamlAuthoringGuideRaw from '../../docs/YAML_AUTHORING_GUIDE.md?raw';
+import {
+  StorageStatusBadge,
+  type StoragePersistenceStatus,
+} from './StorageStatusBadge';
 
 function openGuideInNewTab() {
   const blob = new Blob([yamlAuthoringGuideRaw], {
@@ -28,6 +32,7 @@ export interface YamlInspectorDrawerProps {
   isOpen: boolean;
   rawYaml: string;
   parseError: string | null;
+  storageStatus?: StoragePersistenceStatus;
   onChangeYaml: (newYaml: string) => void;
   onResetDefault: () => void;
   onClose: () => void;
@@ -37,6 +42,7 @@ export const YamlInspectorDrawer: React.FC<YamlInspectorDrawerProps> = ({
   isOpen,
   rawYaml,
   parseError,
+  storageStatus = 'bundled',
   onChangeYaml,
   onResetDefault,
   onClose,
@@ -84,7 +90,7 @@ export const YamlInspectorDrawer: React.FC<YamlInspectorDrawerProps> = ({
             type="button"
             onClick={openGuideInNewTab}
             className="px-2 py-1 rounded bg-slate-900 hover:bg-sky-500/20 border border-slate-800 hover:border-sky-500/40 text-[10px] font-mono text-sky-300 hover:text-white flex items-center gap-1 cursor-pointer"
-            title="Open Stageplay YAML Authoring Manual in new tab"
+            title="Open StageFlow YAML Authoring Manual in new tab"
           >
             <BookOpen className="w-3 h-3 text-sky-400" />
             <span>Guide</span>
@@ -140,7 +146,10 @@ export const YamlInspectorDrawer: React.FC<YamlInspectorDrawerProps> = ({
         </div>
       ) : (
         <div className="px-3.5 py-1.5 bg-emerald-950/30 border-b border-emerald-500/20 flex items-center justify-between text-[10px] font-mono text-emerald-300/90 select-none">
-          <span>● Live Sync Active — Edits immediately update 3D stage</span>
+          <div className="flex items-center gap-2">
+            <span>● Live Sync Active</span>
+            <StorageStatusBadge status={storageStatus} />
+          </div>
           <span className="text-slate-500">Frame_t = f(t)</span>
         </div>
       )}

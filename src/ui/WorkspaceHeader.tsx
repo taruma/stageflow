@@ -1,5 +1,5 @@
 /**
- * Top Studio Header Bar for Stageplay.
+ * Top Studio Header Bar for StageFlow.
  * Houses the Scene Catalog Selector, File Upload trigger, Layout Split Presets,
  * and Live YAML Score Drawer toggle.
  */
@@ -16,6 +16,10 @@ import {
   Upload,
 } from 'lucide-react';
 import type { ScoreCatalogItem } from '../core/scoreCatalog';
+import {
+  StorageStatusBadge,
+  type StoragePersistenceStatus,
+} from './StorageStatusBadge';
 
 export type SplitPreset = '50-50' | '30-70' | '70-30' | '0-100';
 
@@ -24,6 +28,7 @@ export interface WorkspaceHeaderProps {
   activeSceneId: string;
   splitPreset: SplitPreset;
   isYamlDrawerOpen: boolean;
+  storageStatus?: StoragePersistenceStatus;
   onSelectScene: (sceneId: string) => void;
   onSelectSplitPreset: (preset: SplitPreset) => void;
   onToggleYamlDrawer: () => void;
@@ -35,6 +40,7 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
   activeSceneId,
   splitPreset,
   isYamlDrawerOpen,
+  storageStatus = 'bundled',
   onSelectScene,
   onSelectSplitPreset,
   onToggleYamlDrawer,
@@ -52,7 +58,7 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
           </div>
           <div className="flex flex-col">
             <span className="text-xs font-mono font-bold tracking-wider text-slate-100 uppercase leading-none">
-              Stageplay
+              StageFlow
             </span>
             <span className="text-[9px] font-mono text-sky-400/80 tracking-widest uppercase mt-0.5">
               3D Blocking Diorama
@@ -78,6 +84,10 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
               </option>
             ))}
           </select>
+          <StorageStatusBadge
+            status={storageStatus}
+            className="hidden sm:inline-flex shrink-0"
+          />
         </div>
 
         {/* Upload / Drop .MP4 + .YAML Trigger */}

@@ -1,5 +1,5 @@
 /**
- * Bundled scene catalog registry for Stageplay.
+ * Bundled scene catalog registry for StageFlow.
  */
 
 import demoBlueprintRaw from '../../public/scores/demo_blueprint.yaml?raw';

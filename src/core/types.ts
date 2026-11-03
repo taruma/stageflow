@@ -1,5 +1,5 @@
 /**
- * Core data contracts for the Stageplay 3D Camera-Blocking & Scene Choreography Diorama.
+ * Core data contracts for the StageFlow 3D Camera-Blocking & Scene Choreography Diorama.
  * Zero React or DOM dependencies.
  */
 

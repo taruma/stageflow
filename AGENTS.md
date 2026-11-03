@@ -1,12 +1,12 @@
-# AGENTS.md — Stageplay: 3D Choreography Diorama Guidelines
+# AGENTS.md — StageFlow: 3D Choreography Diorama Guidelines
 
-This is the authoritative operating guide for AI agents working in **stageplay**. Read it first before inspecting, planning, or modifying any code.
+This is the authoritative operating guide for AI agents working in **StageFlow**. Read it first before inspecting, planning, or modifying any code.
 
 ---
 
 ## 1. Mission & Role
 
-**stageplay** is a standalone 3D Camera-Blocking & Scene Choreography Diorama web application. It synchronizes a universal video player (**Local `.mp4`/`.webm`**, **YouTube URLs**, or a **60fps Stage Cam Blueprint Simulator**) with an interactive **Three.js / React Three Fiber (R3F)** blueprint stage to analyze, dissect, and visualize spatial staging and camera maneuvers at every millisecond of a scene.
+**StageFlow** is a standalone 3D Camera-Blocking & Scene Choreography Diorama web application. It synchronizes a universal video player (**Local `.mp4`/`.webm`**, **YouTube URLs**, or a **60fps Stage Cam Blueprint Simulator**) with an interactive **Three.js / React Three Fiber (R3F)** blueprint stage to analyze, dissect, and visualize spatial staging and camera maneuvers at every millisecond of a scene.
 
 - **Taruma Sakti** ([@taruma](https://github.com/taruma)) is the Creator and Showrunner. He owns product direction, visual staging philosophy, and UX decisions.
 - **The AI Agent** is a software engineering partner and system architect. Its mission is to keep the engine strictly decoupled, mathematically deterministic, unit-tested, and synchronized with living documentation.
@@ -52,7 +52,7 @@ Types: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`.
 > - **Layer 2 & 3: Universal Media Clock, YouTube Sync & Dual-Tier 60fps Loop** (`src/media/*`, `src/hooks/*`): Read [`docs/MEDIA_CLOCK_AND_SYNC_SPECIFICATIONS.md`](docs/MEDIA_CLOCK_AND_SYNC_SPECIFICATIONS.md).
 > - **Layer 4 & 5: 3D Blueprint Diorama, Dual-Camera Rigs & 2D Workspace UI** (`src/stage/*`, `src/ui/*`, `src/App.tsx`): Read [`docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md`](docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md).
 
-### Universal Stageplay Invariants Matrix
+### Universal StageFlow Invariants Matrix
 
 | # | Invariant | Core Constraint & Engineering Rule | Domain Spec |
 | :--- | :--- | :--- | :--- |
@@ -68,6 +68,7 @@ Types: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`.
 | 10 | **Directional Mannequins & Trails** | Character proxies render a torso column, head sphere, forward $+Z$ eye-visor wedge, ground chevron, and dashed floor movement trails | [3D & UI Specs](docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md) |
 | 11 | **Resizable Split Workspace** | Draggable split divider ($18\%$–$82\%$) with 1-click header presets (`50/50`, `70/30 Stage`, `70/30 Video`, `100% Stage`) | [3D & UI Specs](docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md) |
 | 12 | **Telemetry Capsule & Live YAML** | Bottom-right capsule copies formatted YAML (`target`, `distance`, `pitch`, `yaw`, `lens`); YAML Drawer re-evaluates stage live without crashing | [3D & UI Specs](docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md) |
+| 13 | **Dual-Tier Storage & YAML SSOT** | Scores & drafts persist in IndexedDB (`idb`); UI preferences in `localStorage`; local dropped videos remain in-memory only; YAML remains the authoritative source for video playback | [Core Math Specs](docs/CORE_MATH_AND_SCORE_SPECIFICATIONS.md) |
 
 ---
 
@@ -76,7 +77,7 @@ Types: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`.
 Each layer depends only on the layers below it.
 
 ```text
-stageplay/
+stageflow/
 ├── AGENTS.md                        # Root governance, workflow rules & invariant router (< 24 KB)
 ├── SPECIFICATION.md                 # Foundational product vision & system mechanics
 ├── README.md                        # Quickstart overview & CLI command reference
@@ -100,7 +101,10 @@ stageplay/
 │   │   ├── trajectoryChain.ts       # Forward pose chaining (P_0 -> P_k) & 32-point 3D path sampling
 │   │   ├── frameEngine.ts           # Master stateless evaluator: computeStageFrame(t, score)
 │   │   ├── scoreParser.ts           # Resilient YAML/JSON parser & degree/meter normalizer
-│   │   └── scoreCatalog.ts          # Bundled & custom scene score registry
+│   │   ├── scoreCatalog.ts          # Bundled & custom scene score registry
+│   │   └── storage/                 # Client persistence utilities
+│   │       ├── scoreDb.ts           # IndexedDB persistence for score drafts & custom scenes (idb)
+│   │       └── localStorageUi.ts    # Synchronous localStorage helpers for UI preferences
 │   ├── media/                       # Layer 2: Universal Media Clock Drivers
 │   │   ├── mediaTypes.ts            # MediaClockDriver interface & URL source classifier
 │   │   ├── html5MediaDriver.ts      # Native <video> adapter for local MP4/WebM & dropped blobs
@@ -109,7 +113,8 @@ stageplay/
 │   ├── hooks/                       # Layer 3: Dual-Tier State & Bridge Hooks
 │   │   ├── useMediaClock.ts         # Transport controls, frame-stepping ([ / ]), loop-shot, hotkeys
 │   │   ├── useStageFrameLoop.ts     # 60fps ref evaluation tick + ~10Hz throttled React UI sync
-│   │   └── useFileDropLoader.ts     # Drag-and-drop & file picker loader for .yaml and .mp4 pairs
+│   │   ├── useFileDropLoader.ts     # Drag-and-drop & file picker loader for .yaml and .mp4 pairs
+│   │   └── useScorePersistence.ts   # Startup hydration, draft auto-saving & confirmed reset
 │   ├── stage/                       # Layer 4: React Three Fiber 3D Blueprint Diorama
 │   │   ├── DioramaCanvas.tsx        # Root R3F <Canvas>, lighting, fog, and priority -1 frame ticker
 │   │   ├── BlueprintStageScene.tsx  # Shared lighting, metric floor grid, and mannequins
@@ -127,7 +132,9 @@ stageplay/
 │   │   ├── ShotBreakdownHud.tsx     # Top-left active shot, lens, maneuver & staging note overlay
 │   │   ├── CameraTelemetryCapsule.tsx  # Live degree/meter readout with 1-click YAML snippet copy
 │   │   ├── DirectorialTransportBar.tsx # Shot-marker scrubber, shot chips, speed (0.25x-2x) & POV toggle
-│   │   └── YamlInspectorDrawer.tsx  # Slide-out live YAML editor with non-blocking syntax diagnostics
+│   │   ├── YamlInspectorDrawer.tsx  # Slide-out live YAML editor with non-blocking syntax diagnostics
+│   │   ├── ConfirmResetModal.tsx    # Accessible confirmation dialog modal for discarding drafts
+│   │   └── StorageStatusBadge.tsx   # Visual status badge (Bundled vs. IndexedDB draft)
 │   ├── App.tsx                      # Root application state wiring
 │   ├── main.tsx                     # Application entry point
 │   └── index.css                    # Tailwind CSS v4 + blueprint design tokens
@@ -136,7 +143,8 @@ stageplay/
         ├── opticsMath.test.ts
         ├── sphericalMath.test.ts
         ├── frameEngine.test.ts
-        └── scoreParser.test.ts
+        ├── scoreParser.test.ts
+        └── storage.test.ts
 ```
 
 ---

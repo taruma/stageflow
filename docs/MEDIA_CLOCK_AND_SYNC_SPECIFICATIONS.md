@@ -1,6 +1,6 @@
 # Universal Media Clock & Dual-Tier Synchronization Specifications
 
-This document is the authoritative technical specification for **Layer 2 (`src/media/`)** and **Layer 3 (`src/hooks/`)** in **Stageplay**. It is governed by [`AGENTS.md`](../AGENTS.md).
+This document is the authoritative technical specification for **Layer 2 (`src/media/`)** and **Layer 3 (`src/hooks/`)** in **StageFlow**. It is governed by [`AGENTS.md`](../AGENTS.md).
 
 ---
 
@@ -58,7 +58,7 @@ export interface MediaClockDriver {
 
 ## 3. Dual-Tier 60fps Render & State Architecture (`src/hooks/useStageFrameLoop.ts`)
 
-To maintain locked 60fps rendering in Three.js without triggering React component tree reconciliation on every animation frame, Stageplay enforces a strict **Two-Tier State Engine**:
+To maintain locked 60fps rendering in Three.js without triggering React component tree reconciliation on every animation frame, StageFlow enforces a strict **Two-Tier State Engine**:
 
 ```mermaid
 sequenceDiagram

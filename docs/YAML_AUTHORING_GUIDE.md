@@ -1,14 +1,14 @@
-# Stageplay YAML Score Authoring Manual (`*.yaml`)
+# StageFlow YAML Score Authoring Manual (`*.yaml`)
 
-This is the authoritative operational manual and directorial reference for authoring and editing **Stageplay Choreography Scores** (`*.yaml`). It covers coordinate conventions, scene setup, entity blocking, camera optics, trajectory maneuvers, easing profiles, and copy-pasteable cinematography recipes.
+This is the authoritative operational manual and directorial reference for authoring and editing **StageFlow Choreography Scores** (`*.yaml`). It covers coordinate conventions, scene setup, entity blocking, camera optics, trajectory maneuvers, easing profiles, and copy-pasteable cinematography recipes.
 
 ---
 
 ## 1. Mental Model & Core Rules
 
-Stageplay compiles a declarative `.yaml` score into a deterministic, 60fps 3D spatial diorama via [`scoreParser.ts`](../src/core/scoreParser.ts) and [`frameEngine.ts`](../src/core/frameEngine.ts).
+StageFlow compiles a declarative `.yaml` score into a deterministic, 60fps 3D spatial diorama via [`scoreParser.ts`](../src/core/scoreParser.ts) and [`frameEngine.ts`](../src/core/frameEngine.ts).
 
-### The 5 Golden Rules of Stageplay YAML
+### The 5 Golden Rules of StageFlow YAML
 1. **Pure Metric Meters (`m`)**: Every spatial coordinate (`[x, y, z]`), stage dimension (`width`, `depth`), and camera `distance` is in **real-world meters** ($1\text{ unit} = 1.0\text{m}$).
    - A standing human character is `1.75m` tall by default (with their eye/chest look-at anchor automatically placed at $0.78 \times \text{height} \approx 1.365\text{m}$).
 2. **Human Degrees (`deg`)**: Every angle in YAML (`pitch`, `yaw`, `yaw_start`, `yaw_end`, `yaw_delta`, `rotation`, `orbit_speed`) is authored in **intuitive degrees** (e.g., `yaw: -45`, `pitch: 15`, `rotation: 90`). You never need to calculate radians by hand. *(Note: if you ever wish to pass raw radians, append `"rad"`, e.g. `"1.57rad"`).*
@@ -22,7 +22,7 @@ Stageplay compiles a declarative `.yaml` score into a deterministic, 60fps 3D sp
 
 ## 2. 3D Stage Coordinate System & Compass
 
-Stageplay uses a right-handed, **$Y$-Up** 3D coordinate system centered at the stage origin `[0, 0, 0]`:
+StageFlow uses a right-handed, **$Y$-Up** 3D coordinate system centered at the stage origin `[0, 0, 0]`:
 
 ```text
                      -Z (Upstage / Background)

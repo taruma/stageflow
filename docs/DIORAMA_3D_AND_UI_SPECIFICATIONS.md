@@ -1,12 +1,12 @@
 # 3D Blueprint Diorama & 2D Workspace UI Specifications
 
-This document is the authoritative technical specification for **Layer 4 (`src/stage/`)** and **Layer 5 (`src/ui/`)** in **Stageplay**. It is governed by [`AGENTS.md`](../AGENTS.md).
+This document is the authoritative technical specification for **Layer 4 (`src/stage/`)** and **Layer 5 (`src/ui/`)** in **StageFlow**. It is governed by [`AGENTS.md`](../AGENTS.md).
 
 ---
 
 ## 1. Visual Aesthetic: Minimalist Blueprint / Architectural Schematic
 
-Stageplay's 3D stage is engineered for maximum spatial legibility and zero visual clutter:
+StageFlow's 3D stage is engineered for maximum spatial legibility and zero visual clutter:
 - **Studio Void Background**: Deep blueprint obsidian (`#050811`) with subtle depth fog (`16m` to `42m`).
 - **Dual-Cadence Metric Floor Grid (`BlueprintFloorGrid.tsx`)**:
   - Renders a precision ground plane at $Y = 0$ with `1.0m` primary section lines (`#1e293b`), `0.25m` minor sub-grid lines (`#0f172a`), an active stage perimeter frame (`#38bdf8`), center $X/Z$ axis crosshairs, an origin reticle at `(0, 0, 0)`, and cardinal stage labels (`+Z · Downstage / Front`, `-Z · Upstage / Back`).
@@ -93,3 +93,17 @@ Scene entities (`character`, `prop`, `marker`) are rendered with unambiguous ori
 
 ### 4.4 Drag-and-Drop Custom Asset Loader (`useFileDropLoader.ts`)
 - Dropping any `.yaml`/`.yml`/`.json` file or `.mp4`/`.webm`/`.mov` video file anywhere onto the window (or selecting via `[ Load Video / YAML ]`) binds the assets in browser memory (`URL.createObjectURL`) with zero server upload required.
+
+### 4.5 Storage Persistence Indicator (`StorageStatusBadge.tsx`)
+- Displayed in the top studio header and the YAML inspector status bar.
+- Visually communicates the active persistence tier:
+  - `Bundled Baseline` (pristine unedited preset).
+  - `Draft (IndexedDB)` (active edits saved safely in IndexedDB).
+  - `Custom (IndexedDB)` (imported custom scene saved in IndexedDB).
+  - `Saving Draft...` (transient pulse while debounced auto-save writes).
+
+### 4.6 Reset Confirmation Modal (`ConfirmResetModal.tsx`)
+- Accessible modal dialog protecting against accidental data loss.
+- Triggered when clicking "Reset" in the YAML drawer.
+- Confirms the deletion of the active draft from IndexedDB before reverting the score to its original bundled baseline.
+

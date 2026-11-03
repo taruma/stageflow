@@ -1,12 +1,12 @@
 # Core Math, Optics & Choreography Score Specifications
 
-This document is the authoritative technical specification for **Layer 1 (`src/core/`)** and the **YAML Choreography Score Schema (`public/scores/*.yaml`)** in **Stageplay**. It is governed by [`AGENTS.md`](../AGENTS.md).
+This document is the authoritative technical specification for **Layer 1 (`src/core/`)** and the **YAML Choreography Score Schema (`public/scores/*.yaml`)** in **StageFlow**. It is governed by [`AGENTS.md`](../AGENTS.md).
 
 ---
 
 ## 1. Coordinate System & Unit Conventions
 
-Stageplay uses a standardized, human-intuitive metric coordinate system in YAML that maps cleanly to Three.js right-handed $Y$-up world space:
+StageFlow uses a standardized, human-intuitive metric coordinate system in YAML that maps cleanly to Three.js right-handed $Y$-up world space:
 
 - **World Space Axes**:
   - $+X$: Stage Right
@@ -53,7 +53,7 @@ All angular interpolations (`yaw` and entity `rotationYRad`) must use [`shortest
 
 ## 3. Directorial Lens Optics & Frustum Gate Geometry (`opticsMath.ts`)
 
-Stageplay models camera framing using standard **35mm Full-Frame Sensor Gate Width ($W_{\text{sensor}} = 36.0\text{mm}$)**:
+StageFlow models camera framing using standard **35mm Full-Frame Sensor Gate Width ($W_{\text{sensor}} = 36.0\text{mm}$)**:
 
 1. **Sensor Height Derivation**:
    $$H_{\text{sensor}} = \frac{36.0\text{mm}}{\text{aspectRatio}}$$
@@ -167,3 +167,28 @@ shots:
         look_at: "interlocutor"      # Dynamic facing toward another entity or [x, y, z]
         highlighted: true
 ```
+
+---
+
+## 6. Client Storage Persistence & Video Authority
+
+### 6.1 Score Draft Persistence (`src/core/storage/scoreDb.ts`)
+Live YAML edits and custom imported score files are persisted to an IndexedDB object store (`'stageflow-db'` $\to$ `'scores'`) using the [`idb`](https://github.com/jakearchibald/idb) promise library:
+- **Record Structure**: `{ id, title, subtitle, rawYaml, isCustom, updatedAt }`.
+- **Auto-save**: Debounced at `350ms` on every valid YAML edit.
+- **Hydration**: On application mount, saved score drafts merge over bundled defaults and restore custom scenes to the catalog.
+- **Confirmed Reset**: Resetting a score deletes its IndexedDB record via `deleteStoredScore()` and reverts state to the bundled YAML.
+
+### 6.2 Video Format Support & YAML SSOT Authority
+The score parser supports both concise string syntax and structured object syntax for video:
+```yaml
+# Concise string syntax
+video: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+
+# Or structured mapping syntax
+video:
+  src: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+  aspect_ratio: "16:9"
+```
+**YAML as Single Source of Truth**: Whenever the YAML score specifies or changes a video URL, any active in-memory dropped video override is automatically cleared so the score's video is played. Local dropped video files (`.mp4`, `.webm`) are maintained strictly in temporary session memory and are never written to `IndexedDB` or `localStorage`.
+

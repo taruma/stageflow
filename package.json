@@ -1,5 +1,5 @@
 {
-  "name": "stageplay",
+  "name": "stageflow",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -14,6 +14,7 @@
   "dependencies": {
     "@react-three/drei": "^10.0.0",
     "@react-three/fiber": "^9.1.0",
+    "idb": "^8.0.4",
     "lucide-react": "^1.55.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",

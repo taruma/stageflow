@@ -88,6 +88,50 @@ shots: [1, 2
     expect(procSource.kind).toBe('procedural');
   });
 
+  it('parses video as object mapping (src/url + aspect_ratio) and as plain string', () => {
+    const rawObjectVideo = `
+version: "1.0"
+id: "video-obj-test"
+title: "Object Video Test"
+video:
+  src: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+  aspect_ratio: "16:9"
+duration: 10
+stage:
+  width: 10
+  depth: 10
+shots:
+  - id: "s1"
+    shot: 1
+    start: 0
+    end: 10
+`;
+    const res1 = parseStageScore(rawObjectVideo);
+    expect(res1.error).toBeNull();
+    expect(res1.score?.videoUrl).toBe('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
+    expect(res1.score?.aspectRatio).toBeCloseTo(16 / 9, 3);
+
+    const rawUrlVideo = `
+version: "1.0"
+id: "video-url-test"
+title: "URL Video Test"
+video:
+  url: "https://youtu.be/dQw4w9WgXcQ"
+duration: 5
+stage:
+  width: 10
+  depth: 10
+shots:
+  - id: "s1"
+    shot: 1
+    start: 0
+    end: 5
+`;
+    const res2 = parseStageScore(rawUrlVideo);
+    expect(res2.error).toBeNull();
+    expect(res2.score?.videoUrl).toBe('https://youtu.be/dQw4w9WgXcQ');
+  });
+
   it('registers and bundles Blueprint 01 and Blueprint 02 in the initial catalog', () => {
     expect(INITIAL_CATALOG_ITEMS).toHaveLength(2);
 

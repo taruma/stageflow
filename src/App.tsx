@@ -1,7 +1,8 @@
 /**
- * Root Application Component for Stageplay.
+ * Root Application Component for StageFlow.
  * Connects the Scene Catalog, Universal Media Clock, 60fps Dual-Tier Frame Loop,
- * Resizable Split Workspace, 3D Blueprint Diorama, and Live YAML Score Drawer.
+ * Resizable Split Workspace, 3D Blueprint Diorama, Live YAML Score Drawer,
+ * and Persistent Storage (IndexedDB scores + localStorage UI preferences).
  */
 
 import React, { useState, useCallback } from 'react';
@@ -10,9 +11,19 @@ import {
   type ScoreCatalogItem,
 } from './core/scoreCatalog';
 import { parseStageScore } from './core/scoreParser';
+import {
+  loadStoredActiveSceneId,
+  loadStoredSplitPreset,
+  loadStoredYamlDrawerOpen,
+  saveStoredActiveSceneId,
+  saveStoredSplitPreset,
+  saveStoredYamlDrawerOpen,
+} from './core/storage/localStorageUi';
+import { saveStoredScore } from './core/storage/scoreDb';
 import { useMediaClock } from './hooks/useMediaClock';
 import { useStageFrameLoop } from './hooks/useStageFrameLoop';
 import { useFileDropLoader } from './hooks/useFileDropLoader';
+import { useScorePersistence } from './hooks/useScorePersistence';
 import { DioramaCanvas } from './stage/DioramaCanvas';
 import {
   WorkspaceHeader,
@@ -24,25 +35,69 @@ import { ShotBreakdownHud } from './ui/ShotBreakdownHud';
 import { CameraTelemetryCapsule } from './ui/CameraTelemetryCapsule';
 import { DirectorialTransportBar } from './ui/DirectorialTransportBar';
 import { YamlInspectorDrawer } from './ui/YamlInspectorDrawer';
+import { ConfirmResetModal } from './ui/ConfirmResetModal';
 
 export const App: React.FC = () => {
   const [catalog, setCatalog] = useState<ScoreCatalogItem[]>(
     INITIAL_CATALOG_ITEMS
   );
-  const [activeSceneId, setActiveSceneId] = useState<string>(
-    INITIAL_CATALOG_ITEMS[0].id
+
+  // Hydrate initial UI preferences synchronously from localStorage
+  const [activeSceneId, setActiveSceneIdState] = useState<string>(() => {
+    const stored = loadStoredActiveSceneId();
+    if (stored && INITIAL_CATALOG_ITEMS.some((item) => item.id === stored)) {
+      return stored;
+    }
+    return INITIAL_CATALOG_ITEMS[0].id;
+  });
+
+  const [splitPreset, setSplitPresetState] = useState<SplitPreset>(
+    () => loadStoredSplitPreset() ?? '50-50'
   );
-  const [rawYaml, setRawYaml] = useState<string>(
-    INITIAL_CATALOG_ITEMS[0].rawYaml
+
+  const [isYamlDrawerOpen, setIsYamlDrawerOpenState] = useState<boolean>(
+    () => loadStoredYamlDrawerOpen() ?? false
   );
-  const [activeScore, setActiveScore] = useState(
-    INITIAL_CATALOG_ITEMS[0].score
-  );
+
+  const initialItem =
+    INITIAL_CATALOG_ITEMS.find((item) => item.id === activeSceneId) ??
+    INITIAL_CATALOG_ITEMS[0];
+
+  const [rawYaml, setRawYaml] = useState<string>(initialItem.rawYaml);
+  const [activeScore, setActiveScore] = useState(initialItem.score);
   const [parseError, setParseError] = useState<string | null>(null);
   const [videoOverrideUrl, setVideoOverrideUrl] = useState<string | null>(null);
 
-  const [splitPreset, setSplitPreset] = useState<SplitPreset>('50-50');
-  const [isYamlDrawerOpen, setIsYamlDrawerOpen] = useState<boolean>(false);
+  // Sync wrappers that persist UI preferences to localStorage
+  const setActiveSceneId = useCallback((id: string) => {
+    setActiveSceneIdState(id);
+    saveStoredActiveSceneId(id);
+  }, []);
+
+  const handleSelectSplitPreset = useCallback((preset: SplitPreset) => {
+    setSplitPresetState(preset);
+    saveStoredSplitPreset(preset);
+  }, []);
+
+  const handleToggleYamlDrawer = useCallback(() => {
+    setIsYamlDrawerOpenState((prev) => {
+      const next = !prev;
+      saveStoredYamlDrawerOpen(next);
+      return next;
+    });
+  }, []);
+
+  // IndexedDB Score Persistence Hook (Hydration, Draft Auto-saving, Confirmed Reset)
+  const scorePersistence = useScorePersistence({
+    catalog,
+    activeSceneId,
+    rawYaml,
+    setCatalog,
+    setActiveSceneId,
+    setRawYaml,
+    setActiveScore,
+    onClearVideoOverride: () => setVideoOverrideUrl(null),
+  });
 
   // 1. Universal Media Clock (Local HTML5 Video, YouTube IFrame, or Procedural Slate)
   const mediaClock = useMediaClock(activeScore, videoOverrideUrl);
@@ -68,10 +123,10 @@ export const App: React.FC = () => {
       setVideoOverrideUrl(null);
       mediaClock.seek(0);
     },
-    [catalog, mediaClock]
+    [catalog, mediaClock, setActiveSceneId]
   );
 
-  // Live YAML editing in the Inspector Drawer
+  // Live YAML editing in the Inspector Drawer (YAML as authoritative SSOT)
   const handleChangeYaml = useCallback(
     (nextYaml: string) => {
       setRawYaml(nextYaml);
@@ -79,21 +134,23 @@ export const App: React.FC = () => {
       if (result.score) {
         setActiveScore(result.score);
         setParseError(null);
+
+        // If YAML score specifies a video URL or changed it, clear ephemeral video override
+        if (
+          result.score.videoUrl &&
+          result.score.videoUrl !== 'procedural://demo'
+        ) {
+          setVideoOverrideUrl(null);
+        }
+
+        // Auto-save draft to IndexedDB (debounced)
+        scorePersistence.saveYamlDraftDebounced(nextYaml, result.score);
       } else {
         setParseError(result.error);
       }
     },
-    [activeSceneId]
+    [activeSceneId, scorePersistence]
   );
-
-  // Reset active scene YAML back to its catalog baseline
-  const handleResetDefaultYaml = useCallback(() => {
-    const baseItem =
-      catalog.find((c) => c.id === activeSceneId) ?? INITIAL_CATALOG_ITEMS[0];
-    setRawYaml(baseItem.rawYaml);
-    setActiveScore(baseItem.score);
-    setParseError(null);
-  }, [catalog, activeSceneId]);
 
   // Drag-and-drop / File picker handlers for custom .yaml and .mp4 files
   const handleLoadYamlFile = useCallback(
@@ -117,14 +174,25 @@ export const App: React.FC = () => {
         setRawYaml(yamlText);
         setActiveScore(parsed.score);
         setParseError(null);
+        setVideoOverrideUrl(null);
         mediaClock.seek(0);
+
+        // Persist custom imported score to IndexedDB
+        saveStoredScore({
+          id: newItem.id,
+          title: newItem.title,
+          subtitle: newItem.subtitle,
+          rawYaml: yamlText,
+          isCustom: true,
+          updatedAt: Date.now(),
+        });
       } else {
         setRawYaml(yamlText);
         setParseError(parsed.error);
-        setIsYamlDrawerOpen(true);
+        setIsYamlDrawerOpenState(true);
       }
     },
-    [mediaClock]
+    [mediaClock, setActiveSceneId]
   );
 
   const handleLoadVideoBlobUrl = useCallback(
@@ -140,7 +208,6 @@ export const App: React.FC = () => {
     onLoadVideoBlobUrl: handleLoadVideoBlobUrl,
   });
 
-  // Ensure seek also immediately refreshes UI snapshot
   const handleSeekAndSync = useCallback(
     (targetSec: number) => {
       mediaClock.seek(targetSec);
@@ -173,7 +240,7 @@ export const App: React.FC = () => {
             Drop .MP4 / .WebM Video or .YAML Choreography Score
           </span>
           <span className="text-xs font-mono text-sky-400">
-            Files are bound locally in browser memory
+            Videos are held in session memory; YAML scores are saved in IndexedDB
           </span>
         </div>
       )}
@@ -184,9 +251,10 @@ export const App: React.FC = () => {
         activeSceneId={activeSceneId}
         splitPreset={splitPreset}
         isYamlDrawerOpen={isYamlDrawerOpen}
+        storageStatus={scorePersistence.storageStatus}
         onSelectScene={handleSelectScene}
-        onSelectSplitPreset={setSplitPreset}
-        onToggleYamlDrawer={() => setIsYamlDrawerOpen((prev) => !prev)}
+        onSelectSplitPreset={handleSelectSplitPreset}
+        onToggleYamlDrawer={handleToggleYamlDrawer}
         onUploadFiles={fileDrop.processFiles}
       />
 
@@ -263,9 +331,21 @@ export const App: React.FC = () => {
         isOpen={isYamlDrawerOpen}
         rawYaml={rawYaml}
         parseError={parseError}
+        storageStatus={scorePersistence.storageStatus}
         onChangeYaml={handleChangeYaml}
-        onResetDefault={handleResetDefaultYaml}
-        onClose={() => setIsYamlDrawerOpen(false)}
+        onResetDefault={() => scorePersistence.setIsResetModalOpen(true)}
+        onClose={() => {
+          setIsYamlDrawerOpenState(false);
+          saveStoredYamlDrawerOpen(false);
+        }}
+      />
+
+      {/* Reset Confirmation Dialog Modal */}
+      <ConfirmResetModal
+        isOpen={scorePersistence.isResetModalOpen}
+        sceneTitle={activeScore.title}
+        onConfirm={scorePersistence.confirmResetActiveScore}
+        onCancel={() => scorePersistence.setIsResetModalOpen(false)}
       />
     </div>
   );
