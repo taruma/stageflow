@@ -87,30 +87,63 @@ export const StageCameraRig: React.FC<StageCameraRigProps> = ({
     return stageCam.trajectoryPoints.map((pt) => [pt.x, pt.y, pt.z]);
   }, [stageCam.showPath, stageCam.trajectoryPoints]);
 
+  // Helper to determine the effective transform, gating cuts so 3D transform matches committed UI props
+  const getEffectiveTransform = (liveFrame: StageFrame | null) => {
+    if (!liveFrame) return stageCam.transform;
+
+    const isShotDesynced =
+      Boolean(liveFrame.stageCamera.shotId) &&
+      Boolean(stageCam.shotId) &&
+      liveFrame.stageCamera.shotId !== stageCam.shotId;
+
+    return isShotDesynced ? stageCam.transform : liveFrame.stageCamera.transform;
+  };
+
   // Set initial camera transform synchronously before first paint
   useLayoutEffect(() => {
-    const liveFrame = frameRef.current;
-    if (!liveFrame || !rigGroupRef.current) return;
-
-    const { position, target } = liveFrame.stageCamera.transform;
-    rigGroupRef.current.position.set(position.x, position.y, position.z);
-    rigGroupRef.current.lookAt(target.x, target.y, target.z);
-  }, [frameRef]);
+    if (!rigGroupRef.current) return;
+    const transform = getEffectiveTransform(frameRef.current);
+    rigGroupRef.current.position.set(
+      transform.position.x,
+      transform.position.y,
+      transform.position.z
+    );
+    rigGroupRef.current.lookAt(
+      transform.target.x,
+      transform.target.y,
+      transform.target.z
+    );
+  }, [frameRef, stageCam]);
 
   // Update 3D position and orientation imperatively at 60fps
   useFrame(() => {
     const liveFrame = frameRef.current;
     if (!liveFrame || !rigGroupRef.current) return;
 
-    const { position, target } = liveFrame.stageCamera.transform;
-    rigGroupRef.current.position.set(position.x, position.y, position.z);
-    rigGroupRef.current.lookAt(target.x, target.y, target.z);
+    const isShotDesynced =
+      Boolean(liveFrame.stageCamera.shotId) &&
+      Boolean(stageCam.shotId) &&
+      liveFrame.stageCamera.shotId !== stageCam.shotId;
+
+    const transform = isShotDesynced
+      ? stageCam.transform
+      : liveFrame.stageCamera.transform;
+
+    rigGroupRef.current.position.set(
+      transform.position.x,
+      transform.position.y,
+      transform.position.z
+    );
+    rigGroupRef.current.lookAt(
+      transform.target.x,
+      transform.target.y,
+      transform.target.z
+    );
 
     // Suppress trajectory path ghosting during the 1-frame async transition between shots
     if (trajectoryGroupRef.current) {
       trajectoryGroupRef.current.visible =
-        liveFrame.stageCamera.showPath &&
-        liveFrame.stageCamera.shotId === stageCam.shotId;
+        stageCam.showPath && !isShotDesynced;
     }
   });
 

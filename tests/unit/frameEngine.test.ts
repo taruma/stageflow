@@ -336,4 +336,69 @@ observer_shots:
     const f10 = computeStageFrame(10.0, score!);
     expect(f10.observerCamera.transform.pose.focalLengthMm).toBe(50);
   });
+
+  it('validates Blueprint 02 full timeline continuity and shot cut integrity across all 6 film shots', () => {
+    const bp2Item = INITIAL_CATALOG_ITEMS.find(
+      (item) => item.id === 'blueprint-02-dialogue'
+    );
+    expect(bp2Item).toBeDefined();
+    const score = bp2Item!.score;
+
+    expect(score.shots).toHaveLength(6);
+    expect(score.observerShots).toHaveLength(3);
+
+    // Verify Shot 1 -> Shot 2 cut (t = 5.0s)
+    const fBeforeCut1 = computeStageFrame(4.99, score);
+    const fAtCut1 = computeStageFrame(5.00, score);
+    expect(fBeforeCut1.stageCamera.shotId).toBe('shot-1');
+    expect(fAtCut1.stageCamera.shotId).toBe('shot-2');
+    expect(fBeforeCut1.stageCamera.transform.pose.focalLengthMm).toBe(35);
+    expect(fAtCut1.stageCamera.transform.pose.focalLengthMm).toBe(50);
+
+    // Observer camera spans smoothly across Shot 1 -> Shot 2 cut inside Move 1
+    expect(fBeforeCut1.observerCamera.shotId).toBe('obs-move-1');
+    expect(fAtCut1.observerCamera.shotId).toBe('obs-move-1');
+    expect(
+      Math.abs(
+        fAtCut1.observerCamera.transform.pose.yaw -
+          fBeforeCut1.observerCamera.transform.pose.yaw
+      )
+    ).toBeLessThan(0.05);
+
+    // Verify Shot 2 -> Shot 3 cut (t = 9.0s, OTS A -> Reverse OTS B, and Observer Move 1 -> Move 2)
+    const fBeforeCut2 = computeStageFrame(8.99, score);
+    const fAtCut2 = computeStageFrame(9.00, score);
+    expect(fBeforeCut2.stageCamera.shotId).toBe('shot-2');
+    expect(fAtCut2.stageCamera.shotId).toBe('shot-3');
+    expect(fBeforeCut2.observerCamera.shotId).toBe('obs-move-1');
+    expect(fAtCut2.observerCamera.shotId).toBe('obs-move-2');
+
+    // Verify Shot 3 -> Shot 4 cut (t = 13.0s, Reverse OTS -> 85mm Hero Arc)
+    const fBeforeCut3 = computeStageFrame(12.99, score);
+    const fAtCut3 = computeStageFrame(13.00, score);
+    expect(fBeforeCut3.stageCamera.shotId).toBe('shot-3');
+    expect(fAtCut3.stageCamera.shotId).toBe('shot-4');
+    expect(fAtCut3.stageCamera.transform.pose.focalLengthMm).toBe(85);
+
+    // Verify Shot 4 -> Shot 5 cut (t = 17.5s, Arc -> Spline Bridge)
+    const fBeforeCut4 = computeStageFrame(17.49, score);
+    const fAtCut4 = computeStageFrame(17.50, score);
+    expect(fBeforeCut4.stageCamera.shotId).toBe('shot-4');
+    expect(fAtCut4.stageCamera.shotId).toBe('shot-5');
+    expect(fAtCut4.stageCamera.maneuver).toBe('spline');
+
+    // Verify Shot 5 -> Shot 6 cut (t = 21.5s, Spline -> Crane Orbit Pullback)
+    const fBeforeCut5 = computeStageFrame(21.49, score);
+    const fAtCut5 = computeStageFrame(21.50, score);
+    expect(fBeforeCut5.stageCamera.shotId).toBe('shot-5');
+    expect(fAtCut5.stageCamera.shotId).toBe('shot-6');
+    expect(fAtCut5.stageCamera.maneuver).toBe('orbit');
+
+    // Verify Terminal Pose at t = 26.0s (full timeline end)
+    const fEnd = computeStageFrame(26.00, score);
+    expect(fEnd.stageCamera.shotId).toBe('shot-6');
+    expect(fEnd.observerCamera.shotId).toBe('obs-move-3');
+    expect(Number.isFinite(fEnd.stageCamera.transform.position.x)).toBe(true);
+    expect(Number.isFinite(fEnd.observerCamera.transform.position.x)).toBe(true);
+  });
 });

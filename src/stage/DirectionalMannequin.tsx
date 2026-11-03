@@ -6,6 +6,7 @@
  *   - Ground contact shadow ring
  *   - Floating identity badge
  *   - Dynamic floor movement trail when moving across a shot
+ *   - Gated cut synchronization across shot boundaries
  */
 
 import React, { useRef, useMemo, useLayoutEffect } from 'react';
@@ -19,12 +20,14 @@ export interface DirectionalMannequinProps {
   entityId: string;
   initialState: EvaluatedEntityState;
   frameRef: React.RefObject<StageFrame>;
+  uiFrame?: StageFrame;
 }
 
 export const DirectionalMannequin: React.FC<DirectionalMannequinProps> = ({
   entityId,
   initialState,
   frameRef,
+  uiFrame,
 }) => {
   const groupRef = useRef<THREE.Group | null>(null);
   const { def, highlighted, trailPoints } = initialState;
@@ -32,31 +35,48 @@ export const DirectionalMannequin: React.FC<DirectionalMannequinProps> = ({
   const height = def.height;
   const radius = def.radius;
 
+  // Helper to get synchronized live entity state
+  const getSynchronizedEntity = (liveFrame: StageFrame | null) => {
+    if (!liveFrame) return initialState;
+
+    const isShotDesynced =
+      uiFrame !== undefined &&
+      Boolean(liveFrame.activeShot?.id) &&
+      Boolean(uiFrame.activeShot?.id) &&
+      liveFrame.activeShot?.id !== uiFrame.activeShot?.id;
+
+    if (isShotDesynced) {
+      return initialState;
+    }
+
+    return liveFrame.entitiesById.get(entityId) ?? initialState;
+  };
+
   // Ensure synchronous pre-paint alignment so React reconciler never resets 60fps transform
   useLayoutEffect(() => {
     if (!groupRef.current) return;
-    const liveEntity = frameRef.current?.entitiesById.get(entityId) ?? initialState;
-    groupRef.current.visible = liveEntity.visible;
+    const entity = getSynchronizedEntity(frameRef.current);
+    groupRef.current.visible = entity.visible;
     groupRef.current.position.set(
-      liveEntity.position.x,
-      liveEntity.position.y,
-      liveEntity.position.z
+      entity.position.x,
+      entity.position.y,
+      entity.position.z
     );
-    groupRef.current.rotation.set(0, liveEntity.rotationYRad, 0);
+    groupRef.current.rotation.set(0, entity.rotationYRad, 0);
   });
 
   // Imperatively sync 3D position and facing rotation at 60fps
   useFrame(() => {
-    const liveEntity = frameRef.current?.entitiesById.get(entityId);
-    if (!liveEntity || !groupRef.current) return;
+    if (!groupRef.current) return;
+    const entity = getSynchronizedEntity(frameRef.current);
 
-    groupRef.current.visible = liveEntity.visible;
+    groupRef.current.visible = entity.visible;
     groupRef.current.position.set(
-      liveEntity.position.x,
-      liveEntity.position.y,
-      liveEntity.position.z
+      entity.position.x,
+      entity.position.y,
+      entity.position.z
     );
-    groupRef.current.rotation.set(0, liveEntity.rotationYRad, 0);
+    groupRef.current.rotation.set(0, entity.rotationYRad, 0);
   });
 
   // Floor trail points in world space

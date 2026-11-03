@@ -45,6 +45,7 @@ export const BlueprintStageScene: React.FC<BlueprintStageSceneProps> = ({
           entityId={entityState.id}
           initialState={entityState}
           frameRef={frameRef}
+          uiFrame={uiFrame}
         />
       ))}
     </group>

@@ -47,8 +47,8 @@ export const StageCamMonitorCanvas: React.FC<StageCamMonitorCanvasProps> = ({
           uiFrame={uiFrame}
         />
 
-        {/* 60fps Stage Camera View Controller */}
-        <StageCamViewRig frameRef={frameRef} />
+        {/* 60fps Stage Camera View Controller (Gated to cut atomically with UI state) */}
+        <StageCamViewRig frameRef={frameRef} uiFrame={uiFrame} />
       </Canvas>
 
       {/* 2. Optical Director's Monitor HUD Overlay */}
@@ -75,8 +75,8 @@ export const StageCamMonitorCanvas: React.FC<StageCamMonitorCanvasProps> = ({
             <div className="border-r border-b border-amber-400" />
             <div className="border-r border-b border-amber-400" />
             <div className="border-b border-amber-400" />
-            <div className="border-r border-amber-400" />
-            <div className="border-r border-amber-400" />
+            <div className="border-r border-b border-amber-400" />
+            <div className="border-r border-b border-amber-400" />
             <div />
           </div>
 

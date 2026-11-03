@@ -3,6 +3,7 @@
  * Implements:
  *   1. Instant Cut (0ms transition) between 'scripted', 'free', and 'stage-pov'.
  *   2. Scripted lock during playback -> Free Orbit handover on pause -> Instant update on scrub.
+ *   3. Gated atomic cut synchronization across React UI state updates.
  */
 
 import React, { useRef, useEffect } from 'react';
@@ -23,6 +24,7 @@ export interface ObserverCameraRigProps {
   cameraMode: CameraViewMode;
   isPlaying: boolean;
   frameRef: React.RefObject<StageFrame>;
+  uiFrame?: StageFrame;
   lastManualSeekIdRef: React.RefObject<number>;
   onFreeOrbitPoseChange: (pose: SphericalPose) => void;
 }
@@ -31,6 +33,7 @@ export const ObserverCameraRig: React.FC<ObserverCameraRigProps> = ({
   cameraMode,
   isPlaying,
   frameRef,
+  uiFrame,
   lastManualSeekIdRef,
   onFreeOrbitPoseChange,
 }) => {
@@ -70,7 +73,7 @@ export const ObserverCameraRig: React.FC<ObserverCameraRigProps> = ({
 
   // Apply initial camera pose on mount
   useEffect(() => {
-    const initialFrame = frameRef.current;
+    const initialFrame = uiFrame ?? frameRef.current;
     if (!initialFrame) return;
     const targetTransform =
       cameraMode === 'stage-pov'
@@ -95,7 +98,17 @@ export const ObserverCameraRig: React.FC<ObserverCameraRigProps> = ({
 
     // 1. STAGE CAMERA POV MODE: Always locked to the illustrative Stage Camera's exact frustum
     if (cameraMode === 'stage-pov') {
-      applyTransformImperatively(frame.stageCamera.transform);
+      const isShotDesynced =
+        uiFrame !== undefined &&
+        Boolean(frame.stageCamera.shotId) &&
+        Boolean(uiFrame.stageCamera.shotId) &&
+        frame.stageCamera.shotId !== uiFrame.stageCamera.shotId;
+
+      const transform = isShotDesynced
+        ? uiFrame.stageCamera.transform
+        : frame.stageCamera.transform;
+
+      applyTransformImperatively(transform);
       return;
     }
 
@@ -105,7 +118,17 @@ export const ObserverCameraRig: React.FC<ObserverCameraRigProps> = ({
     //    - Releases lock to OrbitControls when paused so user can freely orbit/inspect
     if (cameraMode === 'scripted') {
       if (isPlaying || modeChanged || seekOccurred || justStartedPlaying) {
-        applyTransformImperatively(frame.observerCamera.transform);
+        const isObserverShotDesynced =
+          uiFrame !== undefined &&
+          Boolean(frame.observerCamera.shotId) &&
+          Boolean(uiFrame.observerCamera.shotId) &&
+          frame.observerCamera.shotId !== uiFrame.observerCamera.shotId;
+
+        const transform = isObserverShotDesynced
+          ? uiFrame.observerCamera.transform
+          : frame.observerCamera.transform;
+
+        applyTransformImperatively(transform);
       }
       return;
     }

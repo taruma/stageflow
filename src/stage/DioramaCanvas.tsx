@@ -75,6 +75,7 @@ export const DioramaCanvas: React.FC<DioramaCanvasProps> = ({
           cameraMode={cameraMode}
           isPlaying={isPlaying}
           frameRef={frameRef}
+          uiFrame={uiFrame}
           lastManualSeekIdRef={lastManualSeekIdRef}
           onFreeOrbitPoseChange={onFreeOrbitPoseChange}
         />

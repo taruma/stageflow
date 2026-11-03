@@ -46,6 +46,12 @@ To enforce strict DRY principles and visual parity:
 - **`BlueprintStageScene.tsx`**: Renders studio lighting, the metric floor grid (`BlueprintFloorGrid.tsx`), and directional mannequins (`DirectionalMannequin.tsx`), shared identically by both the 3D Diorama and the Stage Cam Viewport.
 - **`StageCamMonitorCanvas.tsx` & `StageCamViewRig.tsx`**: When `score.video` uses `procedural://`, mounts an R3F `<Canvas>` locked directly to `frame.stageCamera.transform` (`position`, `target`, `fovDeg`), overlaid with a director's optical monitor HUD (90% safe-action frame, rule-of-thirds grid guides, optical reticle, and live focal length/distance telemetry). When video playback uses local `.mp4` or YouTube, the 3D canvas is unmounted (0% GPU overhead).
 
+### 2.4 Dual-Tier State Gating on Camera Cuts (Atomic Handover)
+To eliminate 1-frame asynchronous ghosting between 60fps WebGL transforms (`frameRef.current`) and batched React 19 UI state (`uiFrame`):
+- All 3D stage components ([`StageCameraRig.tsx`](../src/stage/StageCameraRig.tsx), [`ObserverCameraRig.tsx`](../src/stage/ObserverCameraRig.tsx), [`StageCamViewRig.tsx`](../src/stage/StageCamViewRig.tsx), and [`DirectionalMannequin.tsx`](../src/stage/DirectionalMannequin.tsx)) implement **Gated Frame Cuts**.
+- If the 60fps clock crosses a shot boundary (`liveFrame.stageCamera.shotId !== uiFrame.stageCamera.shotId`) before React commits its render cycle (~16ms), the 3D rigs hold their transforms at `uiFrame`'s committed shot.
+- On the subsequent frame, when React re-renders with the new shot's props, the 3D position, rectangular frustum gate, lens badge text, and 2D HUD switch **atomically on the exact same frame** with zero intermediate ghosting.
+
 ---
 
 ## 3. Directional Minimalist Mannequins & Props (`DirectionalMannequin.tsx`)
