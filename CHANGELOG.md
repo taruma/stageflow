@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Blueprint 04 Tutorial Example: "Cinematography & Framing Tutorial" (`public/scores/blueprint_04_cinematography_tutorial.yaml`)**:
+  - Authored a 20-second, 16-shot pedagogical tutorial score systematically teaching visual staging grammar:
+    - Module 1 (The Framing Ladder, Shots 1–6): Normal static framing sizes from Extreme Wide Shot (18mm) down through WS (28mm), Cowboy MFS (35mm), MS (50mm), MCU (65mm), to Extreme Close-Up (100mm).
+    - Module 2 (3D Camera Movement Tracking, Shots 7–10): Dynamic physical camera maneuvers including dolly push-in (50mm), parallel lateral truck (35mm), 70° circular Bezier arc (40mm), and high-to-low crane swoop (28mm).
+    - Module 3 (Camera Roll & Dutch Angles, Shots 11–12): Expressive optical axis banking including static +16° Dutch cant (50mm) and dynamic -18° to +18° kinetic roll swing (35mm).
+    - Module 4 (Off-Frame & Target Offsets, Shots 13–16): Compositional negative space and target offsets including horizontal Rule-of-Thirds lead room (+0.45m X), vertical headroom bias (-0.40m Y), animated boots-to-eyes pedestal reveal (-1.15m to +0.25m Y), and a 3-actor ensemble master resolve (24mm).
+  - Staged across a single actor (Hero), two-shot duo (Hero & Partner), 3-actor ensemble (Hero, Partner, Director), and production prop (Film Slate).
+  - Configured decoupled 20-second continuous Observer Camera orbit move (`observer_shots:`) sweeping smoothly from high-angle distance $27.93\text{m}$, yaw $69.2^\circ$, pitch $24.8^\circ$ down to $11.63\text{m}$, yaw $171.7^\circ$, pitch $28.0^\circ$ around the stage center.
+  - Registered Blueprint 04 in `src/core/scoreCatalog.ts` and added comprehensive deterministic unit tests in `tests/unit/scoreParser.test.ts` and `tests/unit/frameEngine.test.ts`.
 - **Camera Target Offset (`target_offset`, `target_offset_start`, `target_offset_end`) Support**:
   - Extended `CameraCueSpec` and `CameraWaypointSpec` (`src/core/types.ts`) with world-space metric offset vectors (`targetOffset`, `targetOffsetStart`, `targetOffsetEnd`).
   - Implemented Option A shot-boundary offset reset and cross-shot recovery (`resolveShotStartOffset`, `resolveShotDestOffset`, and offset-aware `resolveTargetPoint3D` in `src/core/trajectoryChain.ts`), supporting static offsets, animated intra-shot pedestal/pan offsets, and Catmull-Rom spline waypoint offsets.

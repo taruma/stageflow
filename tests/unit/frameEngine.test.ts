@@ -717,4 +717,116 @@ shots:
     const f8 = computeStageFrame(8.0, score!);
     expect(f8.stageCamera.transform.target.y).toBeCloseTo(baseAnchorY, 5);
   });
+
+  it('validates Blueprint 04 Cinematography Tutorial 20s timeline across all 16 pedagogical shots', () => {
+    const bp4Item = INITIAL_CATALOG_ITEMS.find(
+      (item) => item.id === 'blueprint-04-cinematography-tutorial'
+    );
+    expect(bp4Item).toBeDefined();
+    const score = bp4Item!.score;
+
+    expect(score.durationSec).toBe(20.0);
+    expect(score.shots).toHaveLength(16);
+    expect(score.observerShots).toBeDefined();
+    expect(score.observerShots).toHaveLength(1);
+
+    // Module 1: The Framing Ladder (Shots 1 to 6)
+    // Shot 01: 18mm EWS
+    const f1 = computeStageFrame(0.5, score);
+    expect(f1.stageCamera.shotId).toBe('shot-01');
+    expect(f1.stageCamera.transform.pose.focalLengthMm).toBe(18);
+    expect(f1.stageCamera.transform.pose.distance).toBe(9.5);
+
+    // Shot 02: 28mm WS on Hero
+    const f2 = computeStageFrame(1.8, score);
+    expect(f2.stageCamera.shotId).toBe('shot-02');
+    expect(f2.stageCamera.transform.pose.focalLengthMm).toBe(28);
+
+    // Shot 04: 50mm MS
+    const f4 = computeStageFrame(4.2, score);
+    expect(f4.stageCamera.shotId).toBe('shot-04');
+    expect(f4.stageCamera.transform.pose.focalLengthMm).toBe(50);
+
+    // Shot 06: 100mm ECU
+    const f6 = computeStageFrame(6.8, score);
+    expect(f6.stageCamera.shotId).toBe('shot-06');
+    expect(f6.stageCamera.transform.pose.focalLengthMm).toBe(100);
+
+    // Module 2: 3D Movement Tracking (Shots 7 to 10)
+    // Shot 07: Dolly in (3.6m -> 1.7m)
+    const f7Start = computeStageFrame(7.51, score);
+    const f7End = computeStageFrame(8.74, score);
+    expect(f7Start.stageCamera.shotId).toBe('shot-07');
+    expect(f7Start.stageCamera.transform.pose.distance).toBeGreaterThan(3.0);
+    expect(f7End.stageCamera.transform.pose.distance).toBeLessThan(2.0);
+
+    // Shot 09: Dynamic Arc
+    const f9 = computeStageFrame(10.6, score);
+    expect(f9.stageCamera.shotId).toBe('shot-09');
+    expect(f9.stageCamera.maneuver).toBe('arc');
+
+    // Shot 10: Crane Swoop
+    const f10 = computeStageFrame(11.8, score);
+    expect(f10.stageCamera.shotId).toBe('shot-10');
+    expect(f10.stageCamera.maneuver).toBe('swoop');
+
+    // Module 3: Camera Roll & Dutch Angles (Shots 11 to 12)
+    // Shot 11: Static +16 deg Dutch Angle
+    const f11 = computeStageFrame(13.1, score);
+    expect(f11.stageCamera.shotId).toBe('shot-11');
+    expect(f11.stageCamera.transform.pose.roll).toBeCloseTo(
+      16 * (Math.PI / 180),
+      3
+    );
+
+    // Shot 12: Dynamic Banking Swing (-18 deg to +18 deg)
+    const f12Mid = computeStageFrame(14.375, score);
+    expect(f12Mid.stageCamera.shotId).toBe('shot-12');
+    expect(Math.abs(f12Mid.stageCamera.transform.pose.roll)).toBeLessThan(
+      5 * (Math.PI / 180)
+    );
+
+    // Module 4: Off-Frame Target Offsets (Shots 13 to 16)
+    // Shot 13: Rule-of-Thirds Lead Room (+0.45m X offset on Hero [-1.2])
+    const f13 = computeStageFrame(15.5, score);
+    expect(f13.stageCamera.shotId).toBe('shot-13');
+    expect(f13.stageCamera.transform.target.x).toBeCloseTo(-1.2 + 0.45, 2);
+    expect(f13.stageCamera.transform.pose.roll).toBeCloseTo(0, 3); // Reset to 0
+
+    // Shot 14: Headroom Bias (-0.40m Y offset on Partner)
+    const f14 = computeStageFrame(16.8, score);
+    const heroAnchorY = 1.75 * 0.78;
+    expect(f14.stageCamera.shotId).toBe('shot-14');
+    expect(f14.stageCamera.transform.target.y).toBeCloseTo(heroAnchorY - 0.4, 2);
+
+    // Shot 15: Animated Reveal (Boots to Eyes)
+    const f15Start = computeStageFrame(17.51, score);
+    const f15End = computeStageFrame(18.74, score);
+    expect(f15Start.stageCamera.shotId).toBe('shot-15');
+    expect(f15Start.stageCamera.transform.target.y).toBeCloseTo(
+      heroAnchorY - 1.15,
+      2
+    );
+    expect(f15End.stageCamera.transform.target.y).toBeCloseTo(
+      heroAnchorY + 0.25,
+      2
+    );
+
+    // Shot 16: Ensemble Master Resolve
+    const f16 = computeStageFrame(19.5, score);
+    expect(f16.stageCamera.shotId).toBe('shot-16');
+    expect(f16.stageCamera.transform.pose.focalLengthMm).toBe(24);
+
+    // Decoupled Observer Camera: Smooth Orbit across all 16 cuts
+    const obsStart = computeStageFrame(0.0, score).observerCamera.transform.pose;
+    const obsEnd = computeStageFrame(20.0, score).observerCamera.transform.pose;
+
+    expect(obsStart.distance).toBeCloseTo(27.93, 2);
+    expect(obsStart.pitch).toBeCloseTo(24.8 * (Math.PI / 180), 3);
+    expect(obsStart.yaw).toBeCloseTo(69.2 * (Math.PI / 180), 3);
+
+    expect(obsEnd.distance).toBeCloseTo(11.63, 2);
+    expect(obsEnd.pitch).toBeCloseTo(28.0 * (Math.PI / 180), 3);
+    expect(obsEnd.yaw).toBeCloseTo(171.7 * (Math.PI / 180), 3);
+  });
 });

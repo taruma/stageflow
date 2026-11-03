@@ -5,6 +5,7 @@
 import demoBlueprintRaw from '../../public/scores/demo_blueprint.yaml?raw';
 import blueprint02Raw from '../../public/scores/blueprint_02_dialogue.yaml?raw';
 import blueprint03Raw from '../../public/scores/blueprint_03_ball_pass.yaml?raw';
+import blueprint04Raw from '../../public/scores/blueprint_04_cinematography_tutorial.yaml?raw';
 import type { StageScore } from './types';
 import { parseStageScore } from './scoreParser';
 
@@ -38,6 +39,16 @@ if (!parsed03.score) {
   );
 }
 
+const parsed04 = parseStageScore(
+  blueprint04Raw,
+  'blueprint-04-cinematography-tutorial'
+);
+if (!parsed04.score) {
+  throw new Error(
+    `Failed to parse bundled blueprint_04_cinematography_tutorial.yaml: ${parsed04.error}`
+  );
+}
+
 export const INITIAL_CATALOG_ITEMS: ScoreCatalogItem[] = [
   {
     id: parsedDemo.score.id,
@@ -59,5 +70,12 @@ export const INITIAL_CATALOG_ITEMS: ScoreCatalogItem[] = [
     subtitle: parsed03.score.subtitle,
     rawYaml: blueprint03Raw,
     score: parsed03.score,
+  },
+  {
+    id: parsed04.score.id,
+    title: parsed04.score.title,
+    subtitle: parsed04.score.subtitle,
+    rawYaml: blueprint04Raw,
+    score: parsed04.score,
   },
 ];

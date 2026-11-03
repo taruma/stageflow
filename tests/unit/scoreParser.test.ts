@@ -132,8 +132,8 @@ shots:
     expect(res2.score?.videoUrl).toBe('https://youtu.be/dQw4w9WgXcQ');
   });
 
-  it('registers and bundles Blueprint 01, Blueprint 02, and Blueprint 03 in the initial catalog', () => {
-    expect(INITIAL_CATALOG_ITEMS).toHaveLength(3);
+  it('registers and bundles Blueprint 01, Blueprint 02, Blueprint 03, and Blueprint 04 in the initial catalog', () => {
+    expect(INITIAL_CATALOG_ITEMS).toHaveLength(4);
 
     const bp01 = INITIAL_CATALOG_ITEMS[0];
     expect(bp01.id).toBe('demo-blueprint');
@@ -167,6 +167,13 @@ shots:
       'dolly',
       'recoil',
     ]);
+
+    const bp04 = INITIAL_CATALOG_ITEMS[3];
+    expect(bp04.id).toBe('blueprint-04-cinematography-tutorial');
+    expect(bp04.score.durationSec).toBe(20.0);
+    expect(bp04.score.shots).toHaveLength(16);
+    expect(bp04.score.observerShots).toBeDefined();
+    expect(bp04.score.observerShots).toHaveLength(1);
   });
 
   it('parses root-level observer_shots with flattened camera properties into ObserverShotCue[]', () => {
