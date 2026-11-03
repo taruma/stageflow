@@ -135,6 +135,7 @@ stageflow/
 │   │   ├── BlueprintFloorGrid.tsx   # Metric floor grid (1m / 0.25m), perimeter frame & compass labels
 │   │   ├── ObserverCameraRig.tsx    # Viewport PerspectiveCamera + OrbitControls handover & POV cuts
 │   │   ├── StageCameraRig.tsx       # 3D camera prop, rectangular gate frustum, focus plane & path line
+│   │   ├── StageCameraOffsetTether.tsx # 3D cyan anchor beacon & dashed tether line for target offsets
 │   │   ├── StageCamViewRig.tsx      # Stage Camera POV lock controller for procedural monitor
 │   │   ├── StageCamMonitorCanvas.tsx# True 3D Stage Cam monitor with optical safe-action HUD
 │   │   ├── DirectionalMannequin.tsx # Stylized character/prop proxies with facing visor & floor trails

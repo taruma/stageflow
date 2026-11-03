@@ -196,6 +196,8 @@ export interface EvaluatedCameraTrack {
   maneuver: CameraManeuver;
   transform: CameraTransform3D;
   trajectoryPoints: Vec3[]; // 3D world points showing the camera's movement path
+  baseTarget?: Vec3;        // Anchor point before target_offset displacement
+  targetOffset?: Vec3;      // Active world-space target offset vector at this frame
 }
 
 export interface StageFrame {

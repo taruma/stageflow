@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Camera Target Offset Visual Indicators & Core Telemetry**:
+  - Added `baseTarget?: Vec3` and `targetOffset?: Vec3` to `EvaluatedCameraTrack` (`src/core/types.ts`) and forward-chaining evaluator (`src/core/trajectoryChain.ts`), providing live un-offset anchor points and active displacement vectors at native 60fps.
+  - Implemented `StageCameraOffsetTether` (`src/stage/StageCameraOffsetTether.tsx`), rendering a 3D cyan anchor beacon at the subject's look anchor and a subtle dashed blueprint tether line connecting `baseTarget -> target` inside the diorama whenever target offset is active ($\ge 0.01\text{m}$).
+  - Wired `StageCameraOffsetTether` into `StageCameraRig.tsx` using native Three.js primitives for zero React reconciliation overhead.
+  - Added visual HUD pills in `ShotBreakdownHud.tsx`: a top-row cyan `OFFSET <magnitude>m` badge with crosshair icon and an optics-row metric vector readout `Δ [+X, +Y, +Z]m`.
+  - Added live `OFFSET <magnitude>m` telemetry readout in `StageCamMonitorCanvas.tsx` optical director's monitor bar.
+  - Added unit test assertions in `tests/unit/frameEngine.test.ts` verifying `baseTarget` and `targetOffset` evaluation.
 - **Blueprint 04 Tutorial Example: "Cinematography & Framing Tutorial" (`public/scores/blueprint_04_cinematography_tutorial.yaml`)**:
   - Authored a 20-second, 16-shot pedagogical tutorial score systematically teaching visual staging grammar:
     - Module 1 (The Framing Ladder, Shots 1–6): Normal static framing sizes from Extreme Wide Shot (18mm) down through WS (28mm), Cowboy MFS (35mm), MS (50mm), MCU (65mm), to Extreme Close-Up (100mm).

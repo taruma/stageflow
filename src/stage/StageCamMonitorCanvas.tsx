@@ -115,6 +115,25 @@ export const StageCamMonitorCanvas: React.FC<StageCamMonitorCanvasProps> = ({
                 </span>
               </>
             )}
+            {uiFrame.stageCamera.targetOffset &&
+              Math.hypot(
+                uiFrame.stageCamera.targetOffset.x,
+                uiFrame.stageCamera.targetOffset.y,
+                uiFrame.stageCamera.targetOffset.z
+              ) >= 0.01 && (
+                <>
+                  <span className="text-slate-500">·</span>
+                  <span className="text-cyan-300">
+                    OFFSET{' '}
+                    {Math.hypot(
+                      uiFrame.stageCamera.targetOffset.x,
+                      uiFrame.stageCamera.targetOffset.y,
+                      uiFrame.stageCamera.targetOffset.z
+                    ).toFixed(2)}
+                    m
+                  </span>
+                </>
+              )}
           </div>
           <div className="text-sky-400 font-semibold">
             T+ {uiFrame.timestampSec.toFixed(2)}s

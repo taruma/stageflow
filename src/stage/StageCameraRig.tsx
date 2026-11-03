@@ -20,6 +20,7 @@ import * as THREE from 'three';
 import type { CameraViewMode, StageFrame } from '../core/types';
 import { computeFrustumGateDimensions } from '../core/opticsMath';
 import { StageBillboardLabel } from './StageBillboardLabel';
+import { StageCameraOffsetTether } from './StageCameraOffsetTether';
 
 /**
  * Static normalized unit frustum pyramid coordinates (depth Z = 1, bounds [-1, 1]).
@@ -225,7 +226,15 @@ export const StageCameraRig: React.FC<StageCameraRigProps> = ({
         </group>
       )}
 
-      {/* 2. 60fps/144fps Animated Stage Camera Rig Group */}
+      {/* 2. World-Space 3D Target Offset Tether & Anchor Beacon */}
+      <StageCameraOffsetTether
+        frameRef={frameRef}
+        uiFrame={uiFrame}
+        visible={isBodyVisible}
+        color="#06b6d4"
+      />
+
+      {/* 3. 60fps/144fps Animated Stage Camera Rig Group */}
       <group ref={rigGroupRef}>
         {/* Floating Camera Lens & Maneuver Badge stays upright in unrolled parent group */}
         {isBodyVisible && (

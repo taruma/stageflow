@@ -417,6 +417,8 @@ export function evaluateCameraTrack(
       maneuver: 'cut',
       transform: sphericalToCartesian(baselinePose, score.aspectRatio),
       trajectoryPoints: [],
+      baseTarget: { ...baselinePose.target },
+      targetOffset: ZERO_OFFSET,
     };
   }
 
@@ -528,6 +530,19 @@ export function evaluateCameraTrack(
       startOffset
     );
 
+    const u = evaluateCameraEasing(spec.easing, tRaw);
+    const endOffset = resolveShotDestOffset(spec);
+    const liveOffset: Vec3 = {
+      x: startOffset.x + (endOffset.x - startOffset.x) * u,
+      y: startOffset.y + (endOffset.y - startOffset.y) * u,
+      z: startOffset.z + (endOffset.z - startOffset.z) * u,
+    };
+    const baseTarget: Vec3 = {
+      x: livePose.target.x - liveOffset.x,
+      y: livePose.target.y - liveOffset.y,
+      z: livePose.target.z - liveOffset.z,
+    };
+
     return {
       active: true,
       isHold: false,
@@ -535,12 +550,15 @@ export function evaluateCameraTrack(
       maneuver: spec.maneuver,
       transform: sphericalToCartesian(livePose, score.aspectRatio),
       trajectoryPoints,
+      baseTarget,
+      targetOffset: liveOffset,
     };
   }
 
   // 2. Before first cue starts
   if (elapsedSec < cues[0].startSec) {
     const firstStart = cueStartPoses.get(cues[0]) ?? baselinePose;
+    const firstOffset = cueStartOffsets.get(cues[0]) ?? ZERO_OFFSET;
     return {
       active: false,
       isHold: true,
@@ -548,6 +566,12 @@ export function evaluateCameraTrack(
       maneuver: 'cut',
       transform: sphericalToCartesian(firstStart, score.aspectRatio),
       trajectoryPoints: [],
+      baseTarget: {
+        x: firstStart.target.x - firstOffset.x,
+        y: firstStart.target.y - firstOffset.y,
+        z: firstStart.target.z - firstOffset.z,
+      },
+      targetOffset: firstOffset,
     };
   }
 
@@ -565,6 +589,7 @@ export function evaluateCameraTrack(
   const heldStartOffset =
     (lastFinished ? cueStartOffsets.get(lastFinished) : undefined) ??
     ZERO_OFFSET;
+  const heldEndOffset = heldSpec ? resolveShotDestOffset(heldSpec) : ZERO_OFFSET;
   const heldDuration = lastFinished
     ? Math.max(0.016, lastFinished.endSec - lastFinished.startSec)
     : 1.0;
@@ -586,5 +611,11 @@ export function evaluateCameraTrack(
           heldStartOffset
         )
       : [],
+    baseTarget: {
+      x: heldPose.target.x - heldEndOffset.x,
+      y: heldPose.target.y - heldEndOffset.y,
+      z: heldPose.target.z - heldEndOffset.z,
+    },
+    targetOffset: heldEndOffset,
   };
 }

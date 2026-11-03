@@ -40,6 +40,9 @@ Visualizes the physical camera filming the shot inside the 3D diorama:
   - Renders a luminous **Focus Plane Frame** with subtle rule-of-thirds horizon guides, translucent glass fill, and a target center crosshair ring right at the subject's focus plane.
 - **3D Trajectory Path Curve**:
   - When moving (`maneuver !== 'cut'` and `showPath === true`), renders a dashed 3D curve along `stageCamera.trajectoryPoints` with start (sphere) and end (octahedron) waypoint beacons.
+- **3D Target Offset Tether & Anchor Beacon (`StageCameraOffsetTether.tsx`)**:
+  - When a shot has an active world-space `target_offset` ($\ge 0.01\text{m}$), renders a cyan anchor beacon at the subject's un-offset look anchor (`baseTarget`) and a subtle dashed blueprint tether line connecting `baseTarget -> target`, making negative space composition, lead room, and headroom bias immediately readable in 3D.
+  - Automatically hidden when `target_offset` magnitude is zero or when viewing through `'stage-pov'`.
 
 ### 2.3 Shared 3D Scene & Stage Cam Monitor Viewport (`BlueprintStageScene.tsx`, `StageCamMonitorCanvas.tsx`)
 To enforce strict DRY principles and visual parity:
@@ -110,6 +113,13 @@ Scene entities (`character`, `prop`, `marker`) are rendered with unambiguous ori
 
 ### 4.6 Reset Confirmation Modal (`ConfirmResetModal.tsx`)
 - Accessible modal dialog protecting against accidental data loss.
+
+### 4.7 Directorial HUD & Optical Telemetry (`ShotBreakdownHud.tsx`, `StageCamMonitorCanvas.tsx`)
+- **Top-Left Shot Breakdown HUD (`ShotBreakdownHud.tsx`)**:
+  - Displays active shot number, label, prime lens focal length, gate aspect ratio, and active maneuver.
+  - When `target_offset` is active ($\ge 0.01\text{m}$), automatically surfaces a cyan `OFFSET <magnitude>m` badge with crosshair icon and displays the exact world displacement vector `Δ [+X, +Y, +Z]m` in the optics row.
+- **Stage Cam Monitor Optical HUD (`StageCamMonitorCanvas.tsx`)**:
+  - Displays live lens focal length, distance, yaw, roll degrees, and metric `OFFSET` magnitude in the bottom status bar.
 - Triggered when clicking "Reset" in the YAML drawer.
 - Confirms the deletion of the active draft from IndexedDB before reverting the score to its original bundled baseline.
 

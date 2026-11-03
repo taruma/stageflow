@@ -792,12 +792,17 @@ shots:
     expect(f13.stageCamera.shotId).toBe('shot-13');
     expect(f13.stageCamera.transform.target.x).toBeCloseTo(-1.2 + 0.45, 2);
     expect(f13.stageCamera.transform.pose.roll).toBeCloseTo(0, 3); // Reset to 0
+    expect(f13.stageCamera.baseTarget).toBeDefined();
+    expect(f13.stageCamera.baseTarget!.x).toBeCloseTo(-1.2, 2);
+    expect(f13.stageCamera.targetOffset).toBeDefined();
+    expect(f13.stageCamera.targetOffset!.x).toBeCloseTo(0.45, 2);
 
     // Shot 14: Headroom Bias (-0.40m Y offset on Partner)
     const f14 = computeStageFrame(16.8, score);
     const heroAnchorY = 1.75 * 0.78;
     expect(f14.stageCamera.shotId).toBe('shot-14');
     expect(f14.stageCamera.transform.target.y).toBeCloseTo(heroAnchorY - 0.4, 2);
+    expect(f14.stageCamera.targetOffset!.y).toBeCloseTo(-0.4, 2);
 
     // Shot 15: Animated Reveal (Boots to Eyes)
     const f15Start = computeStageFrame(17.51, score);
@@ -811,6 +816,8 @@ shots:
       heroAnchorY + 0.25,
       2
     );
+    expect(f15Start.stageCamera.targetOffset!.y).toBeCloseTo(-1.15, 2);
+    expect(f15End.stageCamera.targetOffset!.y).toBeCloseTo(0.25, 2);
 
     // Shot 16: Ensemble Master Resolve
     const f16 = computeStageFrame(19.5, score);
