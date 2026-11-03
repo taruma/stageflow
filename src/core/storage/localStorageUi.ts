@@ -11,6 +11,7 @@ const STORAGE_KEYS = {
   DRAWER_OPEN: 'stageflow:ui:yaml-drawer-open',
   ACTIVE_SCENE_ID: 'stageflow:ui:active-scene-id',
   LABEL_MODE: 'stageflow:ui:label-mode',
+  VIEWFINDER_GUIDES: 'stageflow:ui:viewfinder-guides',
 } as const;
 
 export function loadStoredSplitPreset(): SplitPreset | null {
@@ -89,6 +90,25 @@ export function loadStoredLabelMode(): LabelDisplayMode | null {
 export function saveStoredLabelMode(mode: LabelDisplayMode): void {
   try {
     localStorage.setItem(STORAGE_KEYS.LABEL_MODE, mode);
+  } catch {
+    // Ignore storage quota or access errors
+  }
+}
+
+export function loadStoredViewfinderGuides(): boolean | null {
+  try {
+    const val = localStorage.getItem(STORAGE_KEYS.VIEWFINDER_GUIDES);
+    if (val === 'true') return true;
+    if (val === 'false') return false;
+  } catch {
+    // Ignore localStorage access restrictions
+  }
+  return null;
+}
+
+export function saveStoredViewfinderGuides(showGuides: boolean): void {
+  try {
+    localStorage.setItem(STORAGE_KEYS.VIEWFINDER_GUIDES, String(showGuides));
   } catch {
     // Ignore storage quota or access errors
   }

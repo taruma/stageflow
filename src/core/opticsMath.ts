@@ -9,6 +9,7 @@ import {
   DEFAULT_ASPECT_RATIO,
   FULL_FRAME_SENSOR_WIDTH_MM,
   RAD_TO_DEG,
+  VIEWFINDER_GATE_SCALE,
 } from './constants';
 
 /**
@@ -120,4 +121,58 @@ export function computeFrustumGateDimensions(
     halfWidth: gateWidth * 0.5,
     halfHeight: gateHeight * 0.5,
   };
+}
+
+/**
+ * Computes the pixel width and height of a film gate of `gateAspect` contained within
+ * a viewport of `(containerWidth, containerHeight)` scaled by `gateScale`.
+ */
+export function computeContainedGateDimensionsPx(
+  containerWidth: number,
+  containerHeight: number,
+  gateAspect = DEFAULT_ASPECT_RATIO,
+  gateScale = VIEWFINDER_GATE_SCALE
+): { width: number; height: number } {
+  const safeW = Math.max(1, containerWidth);
+  const safeH = Math.max(1, containerHeight);
+  const safeAspect = gateAspect > 0.1 ? gateAspect : DEFAULT_ASPECT_RATIO;
+  const availW = safeW * gateScale;
+  const availH = safeH * gateScale;
+
+  if (availW / availH > safeAspect) {
+    return {
+      width: availH * safeAspect,
+      height: availH,
+    };
+  }
+  return {
+    width: availW,
+    height: availW / safeAspect,
+  };
+}
+
+/**
+ * Computes the compensated Three.js PerspectiveCamera vertical FOV (in degrees)
+ * for the full canvas so that the vertical and horizontal FOV inside the contained
+ * active film gate matches `gateFovDeg` and `gateAspect` across any viewport aspect ratio.
+ */
+export function computeViewfinderCanvasFovDeg(
+  gateFovDeg: number,
+  canvasWidth: number,
+  canvasHeight: number,
+  gateAspect = DEFAULT_ASPECT_RATIO,
+  gateScale = VIEWFINDER_GATE_SCALE
+): number {
+  const safeGateFov = Math.max(1, Math.min(160, gateFovDeg));
+  const { height: gateHeight } = computeContainedGateDimensionsPx(
+    canvasWidth,
+    canvasHeight,
+    gateAspect,
+    gateScale
+  );
+  const safeCanvasH = Math.max(1, canvasHeight);
+  const heightRatio = safeCanvasH / Math.max(1, gateHeight);
+  const halfGateFovRad = (safeGateFov * 0.5) / RAD_TO_DEG;
+  const canvasFovRad = 2 * Math.atan(heightRatio * Math.tan(halfGateFovRad));
+  return Math.max(1, Math.min(165, canvasFovRad * RAD_TO_DEG));
 }

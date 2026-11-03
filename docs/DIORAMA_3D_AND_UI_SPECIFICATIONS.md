@@ -27,7 +27,8 @@ Controls the main Three.js `PerspectiveCamera` through which the user views the 
 2. **`'free'` (Free Orbit View)**:
    - Keeps `OrbitControls` unlocked at all times—even while the video is actively playing.
 3. **`'stage-pov'` (Stage Camera POV)**:
-   - Locks the viewport camera directly to `frame.stageCamera.transform` (`position`, `target`, `fovDeg`) so the user looks directly through the illustrative Stage Camera's lens.
+   - Locks the viewport camera directly to `frame.stageCamera.transform` (`position`, `target`, `fovDeg`) with analytical vertical FOV compensation (`computeViewfinderCanvasFovDeg`), guaranteeing that the 3D scene inside the contained active film gate matches the lens focal length across any split workspace width with zero distortion.
+   - Automatically activates the Director's Optical Viewfinder Overlay (`StageCamViewfinderOverlay.tsx`), featuring an 82% obsidian Look-Around veil outside the gate, active framing brackets, and toggleable composition guides.
 
 > [!IMPORTANT]
 > **Instant Cut Invariant (0ms Transition)**: Switching between `'scripted'`, `'free'`, and `'stage-pov'` applies an instantaneous cut on the very next animation frame without slerp/lerp transition lag.
@@ -123,12 +124,20 @@ Scene entities (`character`, `prop`, `marker`) are rendered with unambiguous ori
 - **Stage Cam Monitor Optical HUD (`StageCamMonitorCanvas.tsx`)**:
   - Displays live lens focal length, distance, yaw, roll degrees, and metric `OFFSET` magnitude in the bottom status bar.
 
-### 4.8 Viewport Label Visibility Toggle & Hotkey L (`LabelDisplayModeToggle.tsx`)
+### 4.8 Viewport Label & Composition Guides Controls (`LabelDisplayModeToggle.tsx`)
 - Floating top-right glassmorphic pill overlay mounted on the 3D diorama canvas.
 - Supports 3 distinct directorial visibility modes (`LabelDisplayMode`):
   - **`All`**: Displays both actor/prop mannequins and Stage Camera labels with playback auto-ghosting.
   - **`Cam` (`camera-only`)**: Hides actor/prop labels, keeping only the illustrative Stage Camera lens & maneuver badge.
   - **`Off`**: Hides all 3D labels (including floor cardinal orientation tags) for an unobstructed geometric diorama.
 - **Global Hotkey `L`**: Cycles through `'all' -> 'camera-only' -> 'off' -> 'all'` at any time (ignored while typing in text inputs or code editors).
-- **Synchronous Persistence**: Preference is remembered across reloads via `localStorage` (`stageflow:ui:label-mode`).
+- **Composition Guides Toggle (`[ Guides ]` / Hotkey `G`)**: Toggles the 90% safe-action boundary, rule-of-thirds grid, and center reticle across both the right Viewfinder and the left Procedural Monitor.
+- **Synchronous Persistence**: Preferences are remembered across reloads via `localStorage` (`stageflow:ui:label-mode`, `stageflow:ui:viewfinder-guides`).
+
+### 4.9 Director's Optical Viewfinder Overlay (`StageCamViewfinderOverlay.tsx`)
+- Engages automatically whenever the 3D diorama switches to **`Stage Cam POV`** (`cameraMode === 'stage-pov'`).
+- **Centered Film Gate**: Sized to `score.aspectRatio` (`16:9`, `2.39:1`) and scaled to 84% of the viewport (`VIEWFINDER_GATE_SCALE = 0.84`), auto-scaling cleanly when the split divider is dragged.
+- **Semi-Translucent Look-Around Mask**: Renders an 82% darkened obsidian veil (`rgba(5, 8, 17, 0.82)`) outside the active gate boundary so off-camera actors and props waiting in the wings remain faintly visible while the active frame pops with commanding contrast.
+- **Framing Brackets & Stamp**: Luminous corner brackets and a top-left micro-stamp (`REC GATE · 16:9 · 50mm`).
+- **Toggleable Guides**: 90% Safe-Action dashed frame, Rule-of-Thirds 3x3 grid, and Center Optical Crosshairs.
 

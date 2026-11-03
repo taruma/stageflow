@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
+  computeContainedGateDimensionsPx,
   computeFrustumGateDimensions,
+  computeViewfinderCanvasFovDeg,
   focalLengthToVerticalFovDeg,
   parseAspectRatio,
   verticalFovDegToFocalLengthMm,
@@ -41,5 +43,28 @@ describe('opticsMath — Directorial Lens & Frustum Gate Calculations', () => {
 
     const gateScope = computeFrustumGateDimensions(35, 6.5, 2.39);
     expect(gateScope.gateWidth / gateScope.gateHeight).toBeCloseTo(2.39, 5);
+  });
+
+  it('computes contained viewfinder gate pixel dimensions across wide and tall viewports', () => {
+    // 16:9 gate in a wide 1600x900 viewport (scale = 0.84)
+    const wide = computeContainedGateDimensionsPx(1600, 900, 16 / 9, 0.84);
+    expect(wide.height).toBeCloseTo(900 * 0.84, 5);
+    expect(wide.width).toBeCloseTo(wide.height * (16 / 9), 5);
+
+    // 16:9 gate in a narrow 500x1000 viewport (scale = 0.84)
+    const tall = computeContainedGateDimensionsPx(500, 1000, 16 / 9, 0.84);
+    expect(tall.width).toBeCloseTo(500 * 0.84, 5);
+    expect(tall.height).toBeCloseTo(tall.width / (16 / 9), 5);
+  });
+
+  it('calculates compensated canvas FOV so framing inside the contained gate matches target lens FOV', () => {
+    // In a wide canvas (height constrained), canvas FOV must scale with canvasHeight / gateHeight
+    const targetGateFov = 39.6; // ~50mm lens vertical FOV
+    const canvasFov = computeViewfinderCanvasFovDeg(targetGateFov, 1600, 900, 16 / 9, 0.84);
+    expect(canvasFov).toBeGreaterThan(targetGateFov);
+
+    // In a tall canvas where gate height is much smaller than canvas height, canvas FOV widens further
+    const tallCanvasFov = computeViewfinderCanvasFovDeg(targetGateFov, 500, 1000, 16 / 9, 0.84);
+    expect(tallCanvasFov).toBeGreaterThan(canvasFov);
   });
 });

@@ -16,10 +16,12 @@ import {
   loadStoredActiveSceneId,
   loadStoredLabelMode,
   loadStoredSplitPreset,
+  loadStoredViewfinderGuides,
   loadStoredYamlDrawerOpen,
   saveStoredActiveSceneId,
   saveStoredLabelMode,
   saveStoredSplitPreset,
+  saveStoredViewfinderGuides,
   saveStoredYamlDrawerOpen,
 } from './core/storage/localStorageUi';
 import { saveStoredScore } from './core/storage/scoreDb';
@@ -40,6 +42,7 @@ import { DirectorialTransportBar } from './ui/DirectorialTransportBar';
 import { YamlInspectorDrawer } from './ui/YamlInspectorDrawer';
 import { ConfirmResetModal } from './ui/ConfirmResetModal';
 import { LabelDisplayModeToggle } from './ui/LabelDisplayModeToggle';
+import { StageCamViewfinderOverlay } from './ui/StageCamViewfinderOverlay';
 
 export const App: React.FC = () => {
   const [catalog, setCatalog] = useState<ScoreCatalogItem[]>(
@@ -65,6 +68,10 @@ export const App: React.FC = () => {
 
   const [labelMode, setLabelModeState] = useState<LabelDisplayMode>(
     () => loadStoredLabelMode() ?? 'all'
+  );
+
+  const [showGuides, setShowGuidesState] = useState<boolean>(
+    () => loadStoredViewfinderGuides() ?? true
   );
 
   const initialItem =
@@ -110,7 +117,15 @@ export const App: React.FC = () => {
     });
   }, []);
 
-  // Global hotkey 'L' to cycle label modes ('all' -> 'camera-only' -> 'off' -> 'all')
+  const handleToggleGuides = useCallback(() => {
+    setShowGuidesState((prev) => {
+      const next = !prev;
+      saveStoredViewfinderGuides(next);
+      return next;
+    });
+  }, []);
+
+  // Global hotkeys: 'L' cycles label modes, 'G' toggles composition guides
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
@@ -127,12 +142,15 @@ export const App: React.FC = () => {
       if (e.key === 'l' || e.key === 'L') {
         e.preventDefault();
         handleCycleLabelMode();
+      } else if (e.key === 'g' || e.key === 'G') {
+        e.preventDefault();
+        handleToggleGuides();
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleCycleLabelMode]);
+  }, [handleCycleLabelMode, handleToggleGuides]);
 
   // IndexedDB Score Persistence Hook (Hydration, Draft Auto-saving, Confirmed Reset)
   const scorePersistence = useScorePersistence({
@@ -324,6 +342,7 @@ export const App: React.FC = () => {
             uiFrame={stageLoop.uiSnapshot.frame}
             isPlaying={mediaClock.isPlaying}
             labelMode={labelMode}
+            showGuides={showGuides}
             onApplyVideoUrlOverride={(url) => {
               setVideoOverrideUrl(url);
               mediaClock.seek(0);
@@ -345,6 +364,15 @@ export const App: React.FC = () => {
               labelMode={labelMode}
             />
 
+            {/* Stage Camera POV Director's Optical Viewfinder Overlay */}
+            {stageLoop.cameraMode === 'stage-pov' && (
+              <StageCamViewfinderOverlay
+                score={activeScore}
+                frame={stageLoop.uiSnapshot.frame}
+                showGuides={showGuides}
+              />
+            )}
+
             {/* Top-Left Shot & Lens Breakdown HUD */}
             <ShotBreakdownHud
               score={activeScore}
@@ -353,10 +381,13 @@ export const App: React.FC = () => {
               isPlaying={mediaClock.isPlaying}
             />
 
-            {/* Top-Right Label Visibility Toggle Overlay (Hotkey: L) */}
+            {/* Top-Right Label & Guides Viewport Overlay Controls (Hotkeys: L, G) */}
             <LabelDisplayModeToggle
               labelMode={labelMode}
               onSelectLabelMode={handleSelectLabelMode}
+              showGuides={showGuides}
+              onToggleGuides={handleToggleGuides}
+              cameraMode={stageLoop.cameraMode}
             />
 
             {/* Bottom-Right Authoring Telemetry Capsule + 1-Click YAML Copy */}

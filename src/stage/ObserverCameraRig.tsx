@@ -18,7 +18,10 @@ import type {
   StageFrame,
 } from '../core/types';
 import { cartesianToSpherical } from '../core/sphericalMath';
-import { verticalFovDegToFocalLengthMm } from '../core/opticsMath';
+import {
+  computeViewfinderCanvasFovDeg,
+  verticalFovDegToFocalLengthMm,
+} from '../core/opticsMath';
 
 export interface ObserverCameraRigProps {
   cameraMode: CameraViewMode;
@@ -37,22 +40,37 @@ export const ObserverCameraRig: React.FC<ObserverCameraRigProps> = ({
   lastManualSeekIdRef,
   onFreeOrbitPoseChange,
 }) => {
-  const { camera } = useThree();
+  const { camera, size } = useThree();
   const controlsRef = useRef<OrbitControlsImpl | null>(null);
   const lastHandledSeekIdRef = useRef<number>(lastManualSeekIdRef.current);
   const lastModeRef = useRef<CameraViewMode>(cameraMode);
   const wasPlayingRef = useRef<boolean>(isPlaying);
 
   // Helper to apply a CameraTransform3D directly to Three.js PerspectiveCamera + OrbitControls
-  const applyTransformImperatively = (transform: CameraTransform3D) => {
+  const applyTransformImperatively = (
+    transform: CameraTransform3D,
+    mode: CameraViewMode
+  ) => {
     const persp = camera as THREE.PerspectiveCamera;
     persp.position.set(
       transform.position.x,
       transform.position.y,
       transform.position.z
     );
-    if (Math.abs(persp.fov - transform.fovDeg) > 0.05) {
-      persp.fov = transform.fovDeg;
+
+    // In Stage Cam POV, compensate canvas vertical FOV for the contained film gate
+    const targetFovDeg =
+      mode === 'stage-pov'
+        ? computeViewfinderCanvasFovDeg(
+            transform.fovDeg,
+            size.width,
+            size.height,
+            transform.aspectRatio
+          )
+        : transform.fovDeg;
+
+    if (Math.abs(persp.fov - targetFovDeg) > 0.05) {
+      persp.fov = targetFovDeg;
       persp.updateProjectionMatrix();
     }
     if (controlsRef.current) {
@@ -82,7 +100,7 @@ export const ObserverCameraRig: React.FC<ObserverCameraRigProps> = ({
       cameraMode === 'stage-pov'
         ? initialFrame.stageCamera.transform
         : initialFrame.observerCamera.transform;
-    applyTransformImperatively(targetTransform);
+    applyTransformImperatively(targetTransform, cameraMode);
   }, []);
 
   useFrame(() => {
@@ -111,7 +129,7 @@ export const ObserverCameraRig: React.FC<ObserverCameraRigProps> = ({
         ? uiFrame.stageCamera.transform
         : frame.stageCamera.transform;
 
-      applyTransformImperatively(transform);
+      applyTransformImperatively(transform, 'stage-pov');
       return;
     }
 
@@ -131,7 +149,7 @@ export const ObserverCameraRig: React.FC<ObserverCameraRigProps> = ({
           ? uiFrame.observerCamera.transform
           : frame.observerCamera.transform;
 
-        applyTransformImperatively(transform);
+        applyTransformImperatively(transform, 'scripted');
       }
       return;
     }

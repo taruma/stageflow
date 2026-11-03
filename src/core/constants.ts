@@ -19,6 +19,12 @@ export const FULL_FRAME_SENSOR_WIDTH_MM = 36.0;
 export const DEFAULT_ASPECT_RATIO = 16 / 9;
 
 /**
+ * Proportion of the diorama viewport occupied by the active film gate in Stage Cam POV,
+ * leaving a minimum 8% Look-Around margin on all sides for off-frame staging & HUD chrome.
+ */
+export const VIEWFINDER_GATE_SCALE = 0.84;
+
+/**
  * Metric camera and pitch boundaries.
  */
 export const CAMERA_LIMITS = {

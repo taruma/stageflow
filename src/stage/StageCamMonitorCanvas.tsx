@@ -17,6 +17,7 @@ export interface StageCamMonitorCanvasProps {
   uiFrame: StageFrame;
   labelMode?: LabelDisplayMode;
   isPlaying?: boolean;
+  showGuides?: boolean;
 }
 
 export const StageCamMonitorCanvas: React.FC<StageCamMonitorCanvasProps> = ({
@@ -25,6 +26,7 @@ export const StageCamMonitorCanvas: React.FC<StageCamMonitorCanvasProps> = ({
   uiFrame,
   labelMode = 'all',
   isPlaying = false,
+  showGuides = true,
 }) => {
   const pose = uiFrame.stageCamera.transform.pose;
   const yawDeg = radToDeg(pose.yaw);
@@ -72,30 +74,32 @@ export const StageCamMonitorCanvas: React.FC<StageCamMonitorCanvasProps> = ({
           </div>
         </div>
 
-        {/* Center Optical Reticle & Safe-Action Box */}
-        <div className="absolute inset-4 sm:inset-6 border border-amber-500/25 pointer-events-none flex items-center justify-center">
-          {/* Rule of Thirds Guides */}
-          <div className="absolute inset-0 grid grid-cols-3 grid-rows-3 pointer-events-none opacity-20">
-            <div className="border-r border-b border-amber-400" />
-            <div className="border-r border-b border-amber-400" />
-            <div className="border-b border-amber-400" />
-            <div className="border-r border-b border-amber-400" />
-            <div className="border-r border-b border-amber-400" />
-            <div className="border-b border-amber-400" />
-            <div className="border-r border-b border-amber-400" />
-            <div className="border-r border-b border-amber-400" />
-            <div />
-          </div>
+        {/* Center Optical Reticle & Safe-Action Box (Toggleable via showGuides) */}
+        {showGuides && (
+          <div className="absolute inset-4 sm:inset-6 border border-amber-500/25 pointer-events-none flex items-center justify-center">
+            {/* Rule of Thirds Guides */}
+            <div className="absolute inset-0 grid grid-cols-3 grid-rows-3 pointer-events-none opacity-20">
+              <div className="border-r border-b border-amber-400" />
+              <div className="border-r border-b border-amber-400" />
+              <div className="border-b border-amber-400" />
+              <div className="border-r border-b border-amber-400" />
+              <div className="border-r border-b border-amber-400" />
+              <div className="border-b border-amber-400" />
+              <div className="border-r border-b border-amber-400" />
+              <div className="border-r border-b border-amber-400" />
+              <div />
+            </div>
 
-          {/* Center Crosshair Ring */}
-          <div className="relative w-6 h-6 rounded-full border border-amber-400/60 flex items-center justify-center">
-            <div className="w-1.5 h-1.5 rounded-full bg-amber-400/80" />
-            <div className="absolute -top-2 w-[1px] h-2 bg-amber-400/60" />
-            <div className="absolute -bottom-2 w-[1px] h-2 bg-amber-400/60" />
-            <div className="absolute -left-2 h-[1px] w-2 bg-amber-400/60" />
-            <div className="absolute -right-2 h-[1px] w-2 bg-amber-400/60" />
+            {/* Center Crosshair Ring */}
+            <div className="relative w-6 h-6 rounded-full border border-amber-400/60 flex items-center justify-center">
+              <div className="w-1.5 h-1.5 rounded-full bg-amber-400/80" />
+              <div className="absolute -top-2 w-[1px] h-2 bg-amber-400/60" />
+              <div className="absolute -bottom-2 w-[1px] h-2 bg-amber-400/60" />
+              <div className="absolute -left-2 h-[1px] w-2 bg-amber-400/60" />
+              <div className="absolute -right-2 h-[1px] w-2 bg-amber-400/60" />
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Bottom Optical Telemetry Bar */}
         <div className="flex items-center justify-between px-3 py-1.5 rounded bg-slate-950/90 border border-amber-500/30 text-[11px] font-mono shadow-md">

@@ -21,6 +21,7 @@ export interface UniversalVideoViewportProps {
   uiFrame: StageFrame;
   isPlaying: boolean;
   labelMode?: LabelDisplayMode;
+  showGuides?: boolean;
   onApplyVideoUrlOverride: (url: string) => void;
 }
 
@@ -33,6 +34,7 @@ export const UniversalVideoViewport: React.FC<UniversalVideoViewportProps> = ({
   uiFrame,
   isPlaying,
   labelMode,
+  showGuides = true,
   onApplyVideoUrlOverride,
 }) => {
   const [isUrlPopoverOpen, setIsUrlPopoverOpen] = useState(false);
@@ -164,6 +166,7 @@ export const UniversalVideoViewport: React.FC<UniversalVideoViewportProps> = ({
               uiFrame={uiFrame}
               labelMode={labelMode}
               isPlaying={isPlaying}
+              showGuides={showGuides}
             />
           )}
         </div>

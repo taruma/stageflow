@@ -81,14 +81,21 @@ export const ShotBreakdownHud: React.FC<ShotBreakdownHudProps> = ({
             </>
           )}
           <span className="text-slate-700">|</span>
-          <span className="text-slate-400">
-            {cameraMode === 'scripted'
-              ? isPlaying
-                ? 'Locked Observer'
-                : 'Paused · Free Orbit'
-              : cameraMode === 'stage-pov'
-              ? 'Stage Camera POV'
-              : 'Free Orbit Unlocked'}
+          <span>
+            {cameraMode === 'scripted' ? (
+              isPlaying ? (
+                'Locked Observer'
+              ) : (
+                'Paused · Free Orbit'
+              )
+            ) : cameraMode === 'stage-pov' ? (
+              <span className="text-amber-300 font-semibold inline-flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                Stage Cam Viewfinder
+              </span>
+            ) : (
+              'Free Orbit Unlocked'
+            )}
           </span>
         </div>
 

@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Stage Cam POV Director's Optical Viewfinder & Composition Guides**:
+  - Implemented `StageCamViewfinderOverlay` (`src/ui/StageCamViewfinderOverlay.tsx`), an optical viewfinder overlay automatically engaging in `Stage Cam POV` (`cameraMode === 'stage-pov'`).
+  - Added an active film gate frame matching `score.aspectRatio` (`16:9`, `2.39:1`) with luminous corner brackets, an optical gate stamp (`REC GATE · 16:9 · 50mm`), and an **82% darkened blueprint obsidian Look-Around veil** (`rgba(5, 8, 17, 0.82)`) shading the off-camera perimeter.
+  - Implemented analytical vertical FOV compensation `computeViewfinderCanvasFovDeg` (`src/core/opticsMath.ts` and `src/stage/ObserverCameraRig.tsx`) so that dragging the split divider between narrow (`30%`) and wide (`70%` / `100%`) scales the active gate smoothly without horizontal distortion or lens crop.
+  - Introduced `VIEWFINDER_GATE_SCALE = 0.84` in `src/core/constants.ts` and helper `computeContainedGateDimensionsPx` in `src/core/opticsMath.ts`.
+  - Added toggleable composition guides (90% Safe-Action dashed frame, Rule-of-Thirds 3x3 grid, and Center Optical Crosshairs), switchable via a `[ Guides ]` button in `src/ui/LabelDisplayModeToggle.tsx` and global hotkey **`G`**.
+  - Synchronized `showGuides` state with `src/stage/StageCamMonitorCanvas.tsx` and persisted preferences via `loadStoredViewfinderGuides` / `saveStoredViewfinderGuides` (`stageflow:ui:viewfinder-guides`) in `src/core/storage/localStorageUi.ts`.
+  - Updated `ShotBreakdownHud.tsx` to highlight `● STAGE CAM VIEWFINDER` in amber when in `stage-pov` mode.
+  - Added unit test suites in `tests/unit/opticsMath.test.ts` and `tests/unit/storage.test.ts`.
 - **Opt-In Contiguous Shot Chaining & Physical Oner Trajectory (`continuous: true`)**:
   - Implemented `continuous: boolean` score configuration (`src/core/types.ts` and `src/core/scoreParser.ts`). When declared `continuous: true` at the score root, any shot in `shots:` that omits its `start` (or `_start`) timestamp automatically inherits the preceding shot's `end` timestamp (`startSec = shots[k-1].endSec`), while `shots[0]` defaults to `0.0`.
   - Implemented **Physical Camera Rig Trajectory Chaining** (`src/core/trajectoryChain.ts`): for moving maneuvers (`arc`, `dolly`, `swoop`, `orbit`, `pan`, `tilt`, `roll`, `path`) under `continuous: true`, the camera's physical spherical coordinates (`distance`, `pitch`, `yaw`) seamlessly chain starting from the terminal pose ($P_{\text{prev}}$) of the preceding shot to travel smoothly toward the new shot's authored destination, eliminating sudden spatial teleportation or snaps at shot boundaries in continuous takes ("oners").

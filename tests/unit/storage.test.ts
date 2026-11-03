@@ -8,6 +8,8 @@ import {
   saveStoredActiveSceneId,
   loadStoredLabelMode,
   saveStoredLabelMode,
+  loadStoredViewfinderGuides,
+  saveStoredViewfinderGuides,
 } from '../../src/core/storage/localStorageUi';
 
 describe('localStorageUi — Synchronous UI Preferences Persistence', () => {
@@ -90,5 +92,15 @@ describe('localStorageUi — Synchronous UI Preferences Persistence', () => {
     // Invalid value fallback
     globalThis.localStorage.setItem('stageflow:ui:label-mode', 'invalid-mode');
     expect(loadStoredLabelMode()).toBeNull();
+  });
+
+  it('saves and loads viewfinder composition guides toggle state', () => {
+    expect(loadStoredViewfinderGuides()).toBeNull();
+
+    saveStoredViewfinderGuides(true);
+    expect(loadStoredViewfinderGuides()).toBe(true);
+
+    saveStoredViewfinderGuides(false);
+    expect(loadStoredViewfinderGuides()).toBe(false);
   });
 });
