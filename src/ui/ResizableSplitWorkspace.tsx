@@ -69,17 +69,22 @@ export const ResizableSplitWorkspace: React.FC<
       ref={containerRef}
       className="relative flex-1 min-h-0 w-full flex flex-col lg:flex-row overflow-hidden bg-[#050811]"
     >
-      {/* Left / Top: Reference Video Viewport */}
-      {!isVideoHidden && (
-        <div
-          style={
-            { '--video-pct': `${videoWidthPct}%` } as React.CSSProperties
-          }
-          className="w-full h-[38%] lg:h-full lg:w-[var(--video-pct)] shrink-0 flex flex-col bg-[#070b16] border-b lg:border-b-0 border-slate-800/80 overflow-hidden"
-        >
-          {leftVideoPane}
-        </div>
-      )}
+      {/* Left / Top: Reference Video Viewport (Continuously mounted so media clock & audio never pause or reset) */}
+      <div
+        style={
+          isVideoHidden
+            ? undefined
+            : ({ '--video-pct': `${videoWidthPct}%` } as React.CSSProperties)
+        }
+        className={
+          isVideoHidden
+            ? 'fixed -left-[99999px] top-0 w-[320px] h-[180px] opacity-0 pointer-events-none overflow-hidden -z-50'
+            : 'w-full h-[38%] lg:h-full lg:w-[var(--video-pct)] shrink-0 flex flex-col bg-[#070b16] border-b lg:border-b-0 border-slate-800/80 overflow-hidden'
+        }
+        aria-hidden={isVideoHidden}
+      >
+        {leftVideoPane}
+      </div>
 
       {/* Draggable Split Divider Bar (Desktop lg+) */}
       {!isVideoHidden && (

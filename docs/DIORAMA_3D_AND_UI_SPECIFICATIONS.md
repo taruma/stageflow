@@ -70,7 +70,7 @@ Scene entities (`character`, `prop`, `marker`) are rendered with unambiguous ori
   - `50/50`: Balanced 50% Video / 50% 3D Stage.
   - `70/30 Stage`: 32% Video / 68% 3D Diorama Focus.
   - `70/30 Video`: 68% Video / 32% 3D Stage.
-  - `100% Stage`: Collapses the video panel to 0% for full-viewport 3D inspection.
+  - `100% Stage`: Collapses the video panel to 0% for full-viewport 3D inspection while keeping the reference video/YouTube player mounted off-screen so background media playback, audio, and clock sync continue seamlessly.
 - **Narrow Screens (`< lg`)**: Responsively stacks the Video Panel (`38%` height) above the 3D Diorama Stage (`62%` height).
 
 ### 4.2 Authoring Telemetry Capsule (`CameraTelemetryCapsule.tsx`)
