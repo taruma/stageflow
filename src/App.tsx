@@ -45,7 +45,7 @@ export const App: React.FC = () => {
   // Hydrate initial UI preferences synchronously from localStorage
   const [activeSceneId, setActiveSceneIdState] = useState<string>(() => {
     const stored = loadStoredActiveSceneId();
-    if (stored && INITIAL_CATALOG_ITEMS.some((item) => item.id === stored)) {
+    if (stored) {
       return stored;
     }
     return INITIAL_CATALOG_ITEMS[0].id;

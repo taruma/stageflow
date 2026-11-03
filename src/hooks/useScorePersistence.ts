@@ -1,5 +1,5 @@
 /**
- * Hook orchestrating IndexedDB persistence for StageFlow scores.
+ * Hook orchestrating IndexedDB persistence for Stageplay scores.
  * Handles startup hydration, debounced draft auto-saving, and modal-confirmed resets.
  */
 
@@ -15,6 +15,7 @@ import {
   listAllStoredScores,
   saveStoredScore,
 } from '../core/storage/scoreDb';
+import { loadStoredActiveSceneId } from '../core/storage/localStorageUi';
 import type { StoragePersistenceStatus } from '../ui/StorageStatusBadge';
 
 export interface UseScorePersistenceOptions {
@@ -49,44 +50,60 @@ export function useScorePersistence({
 
     async function hydrateFromStorage() {
       const stored = await listAllStoredScores();
-      if (isCancelled || stored.length === 0) return;
+      if (isCancelled) return;
 
-      setCatalog((prevCatalog) => {
-        let updatedCatalog = [...prevCatalog];
+      const storedItems: ScoreCatalogItem[] = [];
+      for (const record of stored) {
+        const parsed = parseStageScore(record.rawYaml, record.id);
+        if (!parsed.score) continue;
+        storedItems.push({
+          id: record.id,
+          title: record.title,
+          subtitle: record.subtitle,
+          rawYaml: record.rawYaml,
+          score: parsed.score,
+          isCustom: record.isCustom,
+        });
+      }
 
-        for (const record of stored) {
-          const parsed = parseStageScore(record.rawYaml, record.id);
-          if (!parsed.score) continue;
-
-          const existingIndex = updatedCatalog.findIndex(
-            (c) => c.id === record.id
-          );
-          const catalogItem: ScoreCatalogItem = {
-            id: record.id,
-            title: record.title,
-            subtitle: record.subtitle,
-            rawYaml: record.rawYaml,
-            score: parsed.score,
-            isCustom: record.isCustom,
-          };
-
-          if (existingIndex >= 0) {
-            updatedCatalog[existingIndex] = catalogItem;
-          } else {
-            updatedCatalog.push(catalogItem);
-          }
+      // Merge bundled items with stored items
+      const mergedCatalog = [...INITIAL_CATALOG_ITEMS];
+      for (const item of storedItems) {
+        const existingIndex = mergedCatalog.findIndex((c) => c.id === item.id);
+        if (existingIndex >= 0) {
+          mergedCatalog[existingIndex] = item;
+        } else {
+          mergedCatalog.push(item);
         }
-        return updatedCatalog;
-      });
+      }
 
-      // If active scene has a stored draft, hydrate active score & rawYaml
-      const activeRecord = stored.find((r) => r.id === activeSceneId);
-      if (activeRecord) {
-        const parsed = parseStageScore(activeRecord.rawYaml, activeRecord.id);
-        if (parsed.score) {
-          setRawYaml(activeRecord.rawYaml);
-          setActiveScore(parsed.score);
-          setStorageStatus(activeRecord.isCustom ? 'custom' : 'draft-saved');
+      setCatalog(mergedCatalog);
+
+      // Reconcile active scene: honor localStorage pointer across custom and bundled scenes
+      const preferredId = loadStoredActiveSceneId() ?? activeSceneId;
+      const targetItem =
+        mergedCatalog.find((item) => item.id === preferredId) ??
+        mergedCatalog[0];
+
+      if (targetItem) {
+        setActiveSceneId(targetItem.id);
+        setRawYaml(targetItem.rawYaml);
+        setActiveScore(targetItem.score);
+
+        if (targetItem.isCustom) {
+          setStorageStatus('custom');
+        } else {
+          const bundledBaseline = INITIAL_CATALOG_ITEMS.find(
+            (b) => b.id === targetItem.id
+          );
+          if (
+            bundledBaseline &&
+            targetItem.rawYaml.trim() !== bundledBaseline.rawYaml.trim()
+          ) {
+            setStorageStatus('draft-saved');
+          } else {
+            setStorageStatus('bundled');
+          }
         }
       }
     }
