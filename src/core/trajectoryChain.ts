@@ -7,7 +7,6 @@ import type {
   CameraCueSpec,
   EvaluatedCameraTrack,
   EvaluatedEntityState,
-  ShotCue,
   SphericalPose,
   StageScore,
   Vec3,
@@ -231,6 +230,43 @@ function sampleTrajectoryPoints(
   return points;
 }
 
+interface NormalizedCameraCue {
+  id: string;
+  startSec: number;
+  endSec: number;
+  spec: CameraCueSpec;
+}
+
+function extractTrackCues(
+  role: TrackRole,
+  score: StageScore
+): NormalizedCameraCue[] {
+  if (role === 'observer' && score.observerShots !== undefined) {
+    return score.observerShots
+      .map((os) => ({
+        id: os.id,
+        startSec: os.startSec,
+        endSec: os.endSec,
+        spec: os.camera,
+      }))
+      .sort((a, b) => a.startSec - b.startSec);
+  }
+
+  const cues: NormalizedCameraCue[] = [];
+  for (const s of score.shots) {
+    const spec = role === 'observer' ? s.observerCamera : s.stageCamera;
+    if (spec !== undefined) {
+      cues.push({
+        id: s.id,
+        startSec: s.startSec,
+        endSec: s.endSec,
+        spec,
+      });
+    }
+  }
+  return cues.sort((a, b) => a.startSec - b.startSec);
+}
+
 /**
  * Evaluates the complete deterministic camera trajectory chain for either 'observer' or 'stage'.
  */
@@ -248,15 +284,9 @@ export function evaluateCameraTrack(
 
   const baselinePose = cloneSphericalPose(defaultPose);
 
-  const shotsWithCue = score.shots
-    .filter((s) =>
-      role === 'observer'
-        ? s.observerCamera !== undefined
-        : s.stageCamera !== undefined
-    )
-    .sort((a, b) => a.startSec - b.startSec);
+  const cues = extractTrackCues(role, score);
 
-  if (shotsWithCue.length === 0) {
+  if (cues.length === 0) {
     return {
       active: false,
       isHold: true,
@@ -267,17 +297,15 @@ export function evaluateCameraTrack(
     };
   }
 
-  const shotStartPoses = new Map<ShotCue, SphericalPose>();
-  const shotEndPoses = new Map<ShotCue, SphericalPose>();
+  const cueStartPoses = new Map<NormalizedCameraCue, SphericalPose>();
+  const cueEndPoses = new Map<NormalizedCameraCue, SphericalPose>();
 
-  for (let i = 0; i < shotsWithCue.length; i++) {
-    const shot = shotsWithCue[i];
-    const spec = (
-      role === 'observer' ? shot.observerCamera : shot.stageCamera
-    )!;
+  for (let i = 0; i < cues.length; i++) {
+    const cue = cues[i];
+    const spec = cue.spec;
     const prevPose =
       i > 0
-        ? shotEndPoses.get(shotsWithCue[i - 1]) ?? baselinePose
+        ? cueEndPoses.get(cues[i - 1]) ?? baselinePose
         : baselinePose;
 
     const startTarget = spec.from
@@ -295,9 +323,9 @@ export function evaluateCameraTrack(
         spec.focalLengthStartMm ?? spec.focalLengthMm ?? prevPose.focalLengthMm,
     });
 
-    shotStartPoses.set(shot, P_start);
+    cueStartPoses.set(cue, P_start);
 
-    const durationSec = Math.max(0.016, shot.endSec - shot.startSec);
+    const durationSec = Math.max(0.016, cue.endSec - cue.startSec);
     const P_end = evaluateShotCameraPose(
       P_start,
       spec,
@@ -305,24 +333,22 @@ export function evaluateCameraTrack(
       durationSec,
       entitiesById
     );
-    shotEndPoses.set(shot, P_end);
+    cueEndPoses.set(cue, P_end);
   }
 
-  // 1. Check if a shot cue is currently active at elapsedSec
-  const activeShot = shotsWithCue
+  // 1. Check if a cue is currently active at elapsedSec
+  const activeCue = cues
     .slice()
     .reverse()
-    .find((s) => elapsedSec >= s.startSec && elapsedSec < s.endSec);
+    .find((c) => elapsedSec >= c.startSec && elapsedSec < c.endSec);
 
-  if (activeShot) {
-    const spec = (
-      role === 'observer' ? activeShot.observerCamera : activeShot.stageCamera
-    )!;
-    const startPose = shotStartPoses.get(activeShot) ?? baselinePose;
-    const durationSec = Math.max(0.016, activeShot.endSec - activeShot.startSec);
+  if (activeCue) {
+    const spec = activeCue.spec;
+    const startPose = cueStartPoses.get(activeCue) ?? baselinePose;
+    const durationSec = Math.max(0.016, activeCue.endSec - activeCue.startSec);
     const tRaw = Math.min(
       1,
-      Math.max(0, (elapsedSec - activeShot.startSec) / durationSec)
+      Math.max(0, (elapsedSec - activeCue.startSec) / durationSec)
     );
     const livePose = evaluateShotCameraPose(
       startPose,
@@ -342,16 +368,16 @@ export function evaluateCameraTrack(
     return {
       active: true,
       isHold: false,
-      shotId: activeShot.id,
+      shotId: activeCue.id,
       maneuver: spec.maneuver,
       transform: sphericalToCartesian(livePose, score.aspectRatio),
       trajectoryPoints,
     };
   }
 
-  // 2. Before first shot starts
-  if (elapsedSec < shotsWithCue[0].startSec) {
-    const firstStart = shotStartPoses.get(shotsWithCue[0]) ?? baselinePose;
+  // 2. Before first cue starts
+  if (elapsedSec < cues[0].startSec) {
+    const firstStart = cueStartPoses.get(cues[0]) ?? baselinePose;
     return {
       active: false,
       isHold: true,
@@ -362,21 +388,17 @@ export function evaluateCameraTrack(
     };
   }
 
-  // 3. In a gap between shots or at/after the end of the timeline
-  const lastFinished = shotsWithCue
+  // 3. In a gap between cues or at/after the end of the timeline
+  const lastFinished = cues
     .slice()
     .reverse()
-    .find((s) => elapsedSec >= s.endSec);
+    .find((c) => elapsedSec >= c.endSec);
 
   const heldPose =
-    (lastFinished ? shotEndPoses.get(lastFinished) : undefined) ?? baselinePose;
-  const heldSpec = lastFinished
-    ? role === 'observer'
-      ? lastFinished.observerCamera
-      : lastFinished.stageCamera
-    : undefined;
+    (lastFinished ? cueEndPoses.get(lastFinished) : undefined) ?? baselinePose;
+  const heldSpec = lastFinished?.spec;
   const heldStart =
-    (lastFinished ? shotStartPoses.get(lastFinished) : undefined) ?? heldPose;
+    (lastFinished ? cueStartPoses.get(lastFinished) : undefined) ?? heldPose;
   const heldDuration = lastFinished
     ? Math.max(0.016, lastFinished.endSec - lastFinished.startSec)
     : 1.0;

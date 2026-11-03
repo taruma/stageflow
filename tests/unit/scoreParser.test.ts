@@ -152,4 +152,101 @@ shots:
       'orbit',
     ]);
   });
+
+  it('parses root-level observer_shots with flattened camera properties into ObserverShotCue[]', () => {
+    const yamlWithObserverShots = `
+version: "1.0"
+id: "decoupled-observer-test"
+title: "Decoupled Observer Test"
+duration: 20.0
+stage:
+  width: 10
+  depth: 10
+  observer_camera:
+    target: [0, 1.0, 0]
+    distance: 8.0
+    pitch: 25
+    yaw: 30
+    lens: 35mm
+shots:
+  - id: "film-shot-1"
+    shot: 1
+    start: 0
+    end: 10
+    stage_camera:
+      target: [0, 1.0, 0]
+      lens: 50mm
+  - id: "film-shot-2"
+    shot: 2
+    start: 10
+    end: 20
+    stage_camera:
+      target: [0, 1.0, 0]
+      lens: 85mm
+observer_shots:
+  - id: "obs-01"
+    label: "Continuous Sweep"
+    start: 0.0
+    end: 12.0
+    maneuver: "orbit"
+    easing: "cruise"
+    target: [0, 1.2, 0]
+    distance: 9.5
+    pitch: 32
+    yaw_start: 15
+    yaw_end: 105
+    lens: 28mm
+  - id: "obs-02"
+    start: 12.0
+    end: 20.0
+    maneuver: "dolly"
+    distance: 6.0
+    pitch: 45
+    yaw: 120
+    lens: 50mm
+`;
+    const { score, error } = parseStageScore(yamlWithObserverShots);
+    expect(error).toBeNull();
+    expect(score).not.toBeNull();
+    expect(score!.observerShots).toBeDefined();
+    expect(score!.observerShots).toHaveLength(2);
+
+    const obs1 = score!.observerShots![0];
+    expect(obs1.id).toBe('obs-01');
+    expect(obs1.label).toBe('Continuous Sweep');
+    expect(obs1.startSec).toBe(0.0);
+    expect(obs1.endSec).toBe(12.0);
+    expect(obs1.camera.maneuver).toBe('orbit');
+    expect(obs1.camera.easing).toBe('cruise');
+    expect(obs1.camera.distance).toBe(9.5);
+    expect(radToDeg(obs1.camera.pitchRad!)).toBeCloseTo(32, 4);
+    expect(radToDeg(obs1.camera.yawStartRad!)).toBeCloseTo(15, 4);
+    expect(radToDeg(obs1.camera.yawEndRad!)).toBeCloseTo(105, 4);
+    expect(obs1.camera.focalLengthMm).toBe(28);
+
+    const obs2 = score!.observerShots![1];
+    expect(obs2.id).toBe('obs-02');
+    expect(obs2.startSec).toBe(12.0);
+    expect(obs2.endSec).toBe(20.0);
+    expect(obs2.camera.maneuver).toBe('dolly');
+    expect(obs2.camera.distance).toBe(6.0);
+    expect(radToDeg(obs2.camera.pitchRad!)).toBeCloseTo(45, 4);
+    expect(radToDeg(obs2.camera.yawRad!)).toBeCloseTo(120, 4);
+    expect(obs2.camera.focalLengthMm).toBe(50);
+  });
+
+  it('rejects scores without any film shots in shots: even if observer_shots: is present', () => {
+    const yamlWithoutFilmShots = `
+version: "1.0"
+id: "no-film-shots"
+title: "No Film Shots"
+observer_shots:
+  - start: 0
+    end: 10
+    maneuver: "orbit"
+`;
+    const { score, error } = parseStageScore(yamlWithoutFilmShots);
+    expect(score).toBeNull();
+    expect(error).toContain('Score must define at least one shot in "shots:".');
+  });
 });

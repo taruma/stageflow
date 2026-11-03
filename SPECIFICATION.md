@@ -90,6 +90,8 @@ Design a clean, human-readable score format inspired by `taruma-film`'s YAML sco
 
 &#x20; - `entities` (optional): Per-shot position overrides, movements, or visual highlights for subjects in the scene.
 
+&#x20; - observer_shots (optional): Root-level decoupled viewport timeline for diorama moves (start, end, maneuver, target, distance, pitch, yaw, lens) that span smoothly across multiple film cuts with complete precedence over per-shot cues.
+
 
 
 \---

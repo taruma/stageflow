@@ -101,7 +101,7 @@ stageflow/
 │       └── blueprint_02_dialogue.yaml # Blueprint 02: 6-shot dialogue coverage flow
 ├── src/
 │   ├── core/                        # Layer 1: Pure TypeScript Math, Optics & Stateless Frame Engine
-│   │   ├── types.ts                 # Canonical interfaces (StageScore, ShotCue, SphericalPose, StageFrame)
+│   │   ├── types.ts                 # Canonical interfaces (StageScore, ShotCue, ObserverShotCue, StageFrame)
 │   │   ├── constants.ts             # Metric bounds, sensor constants, blueprint color palette
 │   │   ├── opticsMath.ts            # Focal length (mm) <-> Vertical FOV (deg) & Rectangular Gate math
 │   │   ├── sphericalMath.ts         # Degrees <-> Radians, Spherical <-> Cartesian, shortestAngleDiff

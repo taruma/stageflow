@@ -74,10 +74,14 @@ StageFlow models camera framing using standard **35mm Full-Frame Sensor Gate Wid
 - It never mutates external state or relies on previous frame deltas.
 - Calling `computeStageFrame(5.0, score)` after playing forward ($0 \to 5$) or scrubbing backward ($10 \to 5$) produces the exact same 3D coordinates bit-for-bit.
 
-### 4.2 Forward Pose Chaining ($P_0 \to P_1 \to \dots \to P_k$)
+### 4.2 Forward Pose Chaining ($P_0 \to P_1 \to \dots \to P_k$) & Track Normalization
 In [`trajectoryChain.ts`](../src/core/trajectoryChain.ts) and [`entityEngine.ts`](../src/core/entityEngine.ts):
 - Each shot inherits the terminal resting pose $P_{\text{end}}$ of the preceding shot as its starting pose $P_{\text{start}}$, unless explicitly overridden by `from:`, `distance_start:`, `pitch_start:`, or `yaw_start:`.
 - For the active shot, `sampleTrajectoryPoints()` samples $N = 32$ 3D world-space eye coordinates along $u \in [0, 1]$ so moving cameras render a smooth 3D trajectory curve in the diorama.
+- **3-Tier Observer Camera Normalization**:
+  1. **Tier 1 (Root `observer_shots:`)**: If `score.observerShots` is defined, the Observer Camera evaluates exclusively across these decoupled cues, allowing diorama viewport moves to span smoothly across film cuts. During any time gap between observer shots, the camera holds the terminal resting pose $P_{\text{end}}$ of the last completed cue and forward-chains into the next cue.
+  2. **Tier 2 (Per-Shot `shots[].observer_camera`)**: If root `observer_shots:` is omitted, the engine extracts observer cues from `shots:`.
+  3. **Tier 3 (Baseline Default)**: If neither is defined, the camera holds steady at `stage.defaultObserverPose`.
 
 ### 4.3 Supported Easing Curves & Trajectory Maneuvers (`maneuvers.ts`)
 - **9 Easing Curves (`CameraEasing`)**: `smooth` (raised cosine default), `linear`, `ease-in`, `ease-out`, `expo`, `pop`, `accel`, `deccel`, `cruise`.
@@ -166,6 +170,20 @@ shots:
         position: [-0.9, 0, 0]       # Optional target position by end of shot
         look_at: "interlocutor"      # Dynamic facing toward another entity or [x, y, z]
         highlighted: true
+
+# Optional Decoupled Viewport Observer Timeline (takes complete precedence over per-shot observer_camera)
+observer_shots:
+  - id: "diorama-orbit"
+    start: 0.0
+    end: 10.0
+    target: "center"
+    maneuver: "orbit"
+    easing: "smooth"
+    distance: 7.5
+    pitch: 26
+    yaw_start: 35
+    yaw_end: 55
+    lens: 35mm
 ```
 
 ---

@@ -94,4 +94,167 @@ shots:
       4
     );
   });
+
+  it('evaluates a single continuous observer_shots move across multiple rapid film cuts smoothly', () => {
+    const scoreYaml = `
+version: "1.0"
+id: "continuous-observer-test"
+title: "Continuous Observer Across Film Cuts"
+duration: 8.0
+stage:
+  observer_camera:
+    target: [0, 1.0, 0]
+    distance: 10.0
+    pitch: 30
+    yaw: 0
+    lens: 35mm
+shots:
+  - id: "cut-1"
+    shot: 1
+    start: 0.0
+    end: 2.0
+    stage_camera: { target: [0, 1, 0], lens: 35mm }
+  - id: "cut-2"
+    shot: 2
+    start: 2.0
+    end: 4.0
+    stage_camera: { target: [0, 1, 0], lens: 50mm }
+  - id: "cut-3"
+    shot: 3
+    start: 4.0
+    end: 6.0
+    stage_camera: { target: [0, 1, 0], lens: 85mm }
+  - id: "cut-4"
+    shot: 4
+    start: 6.0
+    end: 8.0
+    stage_camera: { target: [0, 1, 0], lens: 135mm }
+observer_shots:
+  - id: "single-master-orbit"
+    start: 0.0
+    end: 8.0
+    maneuver: "orbit"
+    easing: "linear"
+    target: [0, 1.0, 0]
+    distance: 8.0
+    pitch: 20
+    yaw_start: 0
+    yaw_end: 180
+    lens: 28mm
+`;
+    const { score, error } = parseStageScore(scoreYaml);
+    expect(error).toBeNull();
+    expect(score).not.toBeNull();
+
+    // At t = 0.0s (start)
+    const f0 = computeStageFrame(0.0, score!);
+    expect(f0.observerCamera.transform.pose.yaw).toBeCloseTo(0.0, 3);
+    expect(f0.observerCamera.transform.pose.focalLengthMm).toBe(28);
+
+    // At t = 2.0s (boundary of cut 1 -> 2), observer should be at 25% progress (45 deg = PI / 4)
+    const f2 = computeStageFrame(2.0, score!);
+    expect(f2.observerCamera.transform.pose.yaw).toBeCloseTo(Math.PI / 4, 3);
+
+    // At t = 4.0s (boundary of cut 2 -> 3), observer should be at 50% progress (90 deg = PI / 2)
+    const f4 = computeStageFrame(4.0, score!);
+    expect(f4.observerCamera.transform.pose.yaw).toBeCloseTo(Math.PI / 2, 3);
+
+    // At t = 8.0s (end of timeline), observer should reach 180 deg (PI)
+    const f8 = computeStageFrame(8.0, score!);
+    expect(f8.observerCamera.transform.pose.yaw).toBeCloseTo(Math.PI, 3);
+  });
+
+  it('gives complete precedence to root-level observer_shots over per-shot observer_camera cues', () => {
+    const conflictYaml = `
+version: "1.0"
+id: "conflict-test"
+title: "Conflict Resolution Test"
+duration: 6.0
+shots:
+  - id: "shot-1"
+    shot: 1
+    start: 0.0
+    end: 6.0
+    stage_camera:
+      target: [0, 1, 0]
+    observer_camera:
+      target: [0, 1, 0]
+      distance: 2.0
+      pitch: 10
+      yaw: 45
+      lens: 85mm
+observer_shots:
+  - id: "root-obs-1"
+    start: 0.0
+    end: 6.0
+    maneuver: "dolly"
+    target: [0, 1, 0]
+    distance: 9.0
+    pitch: 40
+    yaw: 90
+    lens: 24mm
+`;
+    const { score, error } = parseStageScore(conflictYaml);
+    expect(error).toBeNull();
+    expect(score).not.toBeNull();
+
+    const frame = computeStageFrame(3.0, score!);
+    // Must strictly follow root observer_shots (distance 9.0m, pitch 40 deg, lens 24mm)
+    expect(frame.observerCamera.transform.pose.distance).toBeCloseTo(9.0, 3);
+    expect(frame.observerCamera.transform.pose.focalLengthMm).toBe(24);
+    expect(frame.observerCamera.shotId).toBe('root-obs-1');
+  });
+
+  it('holds resting pose during time gaps and forward-chains into subsequent observer_shots', () => {
+    const gapYaml = `
+version: "1.0"
+id: "gap-test"
+title: "Gap and Chaining Test"
+duration: 10.0
+shots:
+  - id: "film-shot"
+    shot: 1
+    start: 0.0
+    end: 10.0
+    stage_camera: { target: [0, 1, 0] }
+observer_shots:
+  - id: "move-1"
+    start: 0.0
+    end: 4.0
+    maneuver: "dolly"
+    distance_start: 10.0
+    distance_end: 6.0
+    pitch: 25
+    yaw: 30
+    lens: 35mm
+  - id: "move-2"
+    start: 7.0
+    end: 10.0
+    maneuver: "orbit"
+    yaw_delta: 60
+    lens: 50mm
+`;
+    const { score, error } = parseStageScore(gapYaml);
+    expect(error).toBeNull();
+    expect(score).not.toBeNull();
+
+    // At t = 4.0s (end of move-1), distance is 6.0m, yaw is 30 deg
+    const f4 = computeStageFrame(4.0, score!);
+    expect(f4.observerCamera.transform.pose.distance).toBeCloseTo(6.0, 3);
+
+    // At t = 5.5s (inside the 4.0s -> 7.0s gap), camera must HOLD move-1's terminal pose
+    const f5_5 = computeStageFrame(5.5, score!);
+    expect(f5_5.observerCamera.isHold).toBe(true);
+    expect(f5_5.observerCamera.transform.pose.distance).toBeCloseTo(6.0, 3);
+    expect(f5_5.observerCamera.shotId).toBe('move-1');
+
+    // At t = 7.0s (start of move-2), it forward-chains from move-1's terminal pose (distance: 6.0m)
+    const f7 = computeStageFrame(7.0, score!);
+    expect(f7.observerCamera.transform.pose.distance).toBeCloseTo(6.0, 3);
+    expect(f7.observerCamera.shotId).toBe('move-2');
+
+    // At t = 10.0s (end of move-2), lens is 50mm
+    const f10 = computeStageFrame(10.0, score!);
+    expect(f10.observerCamera.transform.pose.focalLengthMm).toBe(50);
+  });
 });

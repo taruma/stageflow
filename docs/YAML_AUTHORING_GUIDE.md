@@ -162,13 +162,51 @@ entities:
 
 ---
 
-## 5. Shot Timeline & Dual-Camera Cues (`shots:`)
+## 5. Shot Timeline & Dual-Camera Cues (`shots:` & `observer_shots:`)
 
-The `shots:` list defines the sequential (or overlapping) shots of your scene. Each shot can choreograph:
-1. **`stage_camera:`** — The physical camera filming the scene inside the 3D diorama (with its rectangular frustum cone and trajectory path).
-2. **`observer_camera:`** — The external 3D viewport camera through which the user watches the diorama.
-3. **`entities:`** — Per-shot actor movements, `look_at` gaze tracking, and active spotlight highlights.
+StageFlow supports two complementary ways to choreograph cameras across time:
+1. **Film Coverage (`shots:`) [Mandatory]**: Defines the editorial cuts and staging of the recorded scene. Each shot includes `start`, `end`, `stage_camera:` (the physical camera in the diorama), and optional per-shot `entities:` overrides.
+2. **Decoupled Viewport Moves (`observer_shots:`) [Recommended for Multi-Cut Sequences]**: Defines independent diorama viewport motions that glide smoothly across film cuts without being chopped into pieces every time a film cut occurs.
 
+### The 3-Tier Observer Camera Resolution Hierarchy
+When evaluating the Observer Camera (viewport diorama view) at any timestamp $t$:
+- **Tier 1 (Root `observer_shots:`)**: If `observer_shots:` is defined at the root of the YAML score, it takes **complete precedence**. Any legacy `observer_camera:` blocks inside `shots:` are ignored.
+- **Tier 2 (Per-Shot `shots[].observer_camera`)**: If root `observer_shots:` is omitted, the engine evaluates `observer_camera:` blocks defined inside each film shot (legacy behavior).
+- **Tier 3 (Baseline Default)**: If neither is defined, the viewport camera holds steady at `stage.observer_camera`.
+
+### Decoupled `observer_shots:` Schema
+Authored as a top-level list with flattened camera properties:
+```yaml
+observer_shots:
+  # Move 1: Continuous 180° diorama orbit over the first 12 seconds (spanning film shots 1-6)
+  - id: "obs-01"
+    start: 0.0
+    end: 12.0
+    target: "center"
+    maneuver: "orbit"
+    easing: "cruise"
+    distance: 8.5
+    pitch: 28
+    yaw_start: 30
+    yaw_end: 120
+    lens: 35mm
+
+  # Move 2: Push-in to an overhead tactical view for the remaining 8 seconds
+  - id: "obs-02"
+    start: 12.0
+    end: 20.0
+    target: "hero"
+    maneuver: "dolly"
+    distance: 5.0
+    pitch: 50
+    yaw: 90
+    lens: 50mm
+```
+
+> [!NOTE]
+> **Gap Semantics**: During any time gap between two `observer_shots`, the observer camera holds the terminal resting pose ($P_{\text{end}}$) of the last completed observer shot and automatically forward-chains into the next shot unless explicitly overridden.
+
+### Film Coverage Cues (`shots:`)
 ```yaml
 shots:
   - id: "shot-1"
@@ -180,7 +218,7 @@ shots:
     stage_camera:
       # ... Stage Camera choreography ...
     observer_camera:
-      # ... Observer Camera choreography ...
+      # ... Legacy per-shot Observer Camera (used when root observer_shots is omitted) ...
     entities:
       # ... Actor movements & highlights ...
 ```
@@ -461,4 +499,58 @@ Smoothly threads a single continuous camera move from a wide establishing view, 
           pitch: 4
           yaw: 25
           lens: 50mm
+
+### Recipe 6: Multi-Cut Scene with Decoupled Continuous Observer Master Orbit (`observer_shots:`)
+Allows 4 rapid film cuts to occur inside the diorama while a single, seamless 180° diorama master orbit rotates overhead across all cuts without interruption:
+```yaml
+version: "1.0"
+id: "action-dialogue-orbit"
+title: "Multi-Cut Confrontation with Master Orbit"
+duration: 12.0
+
+stage:
+  observer_camera:
+    target: "center"
+    distance: 9.0
+    pitch: 28
+    yaw: 30
+    lens: 35mm
+
+# --- Film Coverage (4 rapid camera cuts) ---
+shots:
+  - id: "shot-1-master"
+    shot: 1
+    start: 0.0
+    end: 3.0
+    stage_camera: { target: "center", distance: 5.5, pitch: 10, yaw: 0, lens: 35mm }
+  - id: "shot-2-ots-a"
+    shot: 2
+    start: 3.0
+    end: 6.0
+    stage_camera: { target: "protagonist", distance: 2.2, pitch: 6, yaw: 65, lens: 85mm }
+  - id: "shot-3-ots-b"
+    shot: 3
+    start: 6.0
+    end: 9.0
+    stage_camera: { target: "interlocutor", distance: 2.2, pitch: 6, yaw: -65, lens: 85mm }
+  - id: "shot-4-tight-a"
+    shot: 4
+    start: 9.0
+    end: 12.0
+    stage_camera: { target: "protagonist", distance: 1.8, pitch: 2, yaw: 45, lens: 135mm }
+
+# --- Decoupled Diorama Observer Track (Smooth 180° turntable sweep) ---
+observer_shots:
+  - id: "diorama-turntable"
+    start: 0.0
+    end: 12.0
+    maneuver: "orbit"
+    easing: "cruise"
+    target: "center"
+    distance: 8.5
+    pitch: 26
+    yaw_start: 25
+    yaw_end: 205
+    lens: 35mm
+```
 ```

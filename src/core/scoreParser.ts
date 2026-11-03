@@ -11,6 +11,7 @@ import type {
   CameraWaypointSpec,
   EntityCueOverride,
   EntityKind,
+  ObserverShotCue,
   SceneEntityDef,
   ShotCue,
   SphericalPose,
@@ -543,12 +544,58 @@ export function parseStageScore(
       };
     });
 
-  const maxShotEnd =
-    shots.length > 0 ? Math.max(...shots.map((s) => s.endSec)) : 10.0;
+  if (shots.length === 0) {
+    return {
+      score: null,
+      error: 'Score must define at least one shot in "shots:".',
+    };
+  }
+
+  // Parse optional decoupled root-level observer_shots
+  let observerShots: ObserverShotCue[] | undefined;
+  const rawObserverShots = root.observer_shots ?? root.observerShots;
+  if (Array.isArray(rawObserverShots)) {
+    observerShots = rawObserverShots
+      .filter((item) => item && typeof item === 'object')
+      .map((item, idx) => {
+        const os = item as Record<string, unknown>;
+        const startSec =
+          typeof os.start === 'number' && Number.isFinite(os.start)
+            ? Math.max(0, os.start)
+            : 0;
+        const endSec =
+          typeof os.end === 'number' && Number.isFinite(os.end)
+            ? Math.max(startSec + 0.1, os.end)
+            : startSec + 5.0;
+        const cameraSource =
+          os.observer_camera ?? os.observerCamera ?? os.camera ?? os;
+        const camera =
+          parseCameraCueSpec(cameraSource, defaultObserverPose.focalLengthMm) ??
+          parseCameraCueSpec({}, defaultObserverPose.focalLengthMm)!;
+        return {
+          id: String(os.id ?? `obs-shot-${idx + 1}`),
+          label:
+            typeof (os.label ?? os.name) === 'string'
+              ? String(os.label ?? os.name)
+              : undefined,
+          startSec,
+          endSec,
+          camera,
+        };
+      });
+  }
+
+  const maxFilmShotEnd = Math.max(...shots.map((s) => s.endSec));
+  const maxObserverShotEnd =
+    observerShots && observerShots.length > 0
+      ? Math.max(...observerShots.map((s) => s.endSec))
+      : 0;
+  const maxTimelineEnd = Math.max(maxFilmShotEnd, maxObserverShotEnd);
+
   const durationSec =
     typeof root.duration === 'number' && root.duration > 0
       ? root.duration
-      : maxShotEnd;
+      : maxTimelineEnd;
   const offsetSec =
     typeof root.offset === 'number' && Number.isFinite(root.offset)
       ? root.offset
@@ -573,6 +620,7 @@ export function parseStageScore(
       },
       entities,
       shots,
+      observerShots,
     },
     error: null,
   };

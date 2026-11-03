@@ -145,6 +145,18 @@ export interface ShotCue {
   entities: Record<string, EntityCueOverride>;
 }
 
+/**
+ * An independent observer camera cue with its own start/end time window,
+ * decoupled from the film coverage shots.
+ */
+export interface ObserverShotCue {
+  id: string;
+  label?: string;
+  startSec: number;
+  endSec: number;
+  camera: CameraCueSpec;
+}
+
 export interface StageScore {
   version: string;
   id: string;
@@ -163,6 +175,7 @@ export interface StageScore {
   };
   entities: SceneEntityDef[];
   shots: ShotCue[];
+  observerShots?: ObserverShotCue[];
 }
 
 export interface EvaluatedCameraTrack {
