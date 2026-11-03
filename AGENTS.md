@@ -87,7 +87,8 @@ stageplay/
 │   └── DIORAMA_3D_AND_UI_SPECIFICATIONS.md
 ├── public/
 │   └── scores/
-│       └── demo_blueprint.yaml      # Minimal single-shot blueprint demo score
+│       ├── demo_blueprint.yaml      # Blueprint 01: Single-shot two-shot arc score
+│       └── blueprint_02_dialogue.yaml # Blueprint 02: 6-shot dialogue coverage flow
 ├── src/
 │   ├── core/                        # Layer 1: Pure TypeScript Math, Optics & Stateless Frame Engine
 │   │   ├── types.ts                 # Canonical interfaces (StageScore, ShotCue, SphericalPose, StageFrame)

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { parseStageScore } from '../../src/core/scoreParser';
+import { INITIAL_CATALOG_ITEMS } from '../../src/core/scoreCatalog';
 import { classifyMediaSource, extractYouTubeId } from '../../src/media/mediaTypes';
 import { radToDeg } from '../../src/core/sphericalMath';
 
@@ -85,5 +86,26 @@ shots: [1, 2
 
     const procSource = classifyMediaSource('procedural://demo-blueprint');
     expect(procSource.kind).toBe('procedural');
+  });
+
+  it('registers and bundles Blueprint 01 and Blueprint 02 in the initial catalog', () => {
+    expect(INITIAL_CATALOG_ITEMS).toHaveLength(2);
+
+    const bp01 = INITIAL_CATALOG_ITEMS[0];
+    expect(bp01.id).toBe('demo-blueprint');
+    expect(bp01.score.shots).toHaveLength(1);
+
+    const bp02 = INITIAL_CATALOG_ITEMS[1];
+    expect(bp02.id).toBe('blueprint-02-dialogue');
+    expect(bp02.score.durationSec).toBe(26);
+    expect(bp02.score.shots).toHaveLength(6);
+    expect(bp02.score.shots.map((s) => s.stageCamera?.maneuver)).toEqual([
+      'dolly',
+      'dolly',
+      'dolly',
+      'arc',
+      'spline',
+      'orbit',
+    ]);
   });
 });
