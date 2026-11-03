@@ -14,9 +14,9 @@ StageFlow compiles a declarative `.yaml` score into a deterministic, 60fps 3D sp
 2. **Human Degrees (`deg`)**: Every angle in YAML (`pitch`, `yaw`, `yaw_start`, `yaw_end`, `yaw_delta`, `rotation`, `orbit_speed`) is authored in **intuitive degrees** (e.g., `yaw: -45`, `pitch: 15`, `rotation: 90`). You never need to calculate radians by hand. *(Note: if you ever wish to pass raw radians, append `"rad"`, e.g. `"1.57rad"`).*
 3. **Pure Decimal Seconds (`s`)**: Every timestamp (`duration`, `offset`, `start`, `end`) is in decimal seconds (e.g., `0.0`, `4.25`, `12.5`).
 4. **Cinematic Full-Frame Lenses (`mm`)**: Camera optics are specified using real full-frame focal lengths (`24mm`, `35mm`, `50mm`, `85mm`), which mathematically drive both the Three.js vertical Field of View and the 3D rectangular film gate frustum.
-5. **Forward Pose Chaining ($P_0 \to P_1 \to \dots \to P_k$)**:
-   - **You do not need to re-declare unchanged properties in every shot.**
-   - At the start of Shot $k$, both cameras and all scene entities automatically inherit their terminal resting position, rotation, distance, pitch, yaw, and lens from the end of Shot $k - 1$, unless explicitly overridden.
+5. **Forward Pose Chaining & Continuous Oner Mode ($P_0 \to P_1 \to \dots \to P_k$)**:
+   - **Static Properties & Entities**: At the start of Shot $k$, all scene entities automatically inherit their terminal resting position and rotation from Shot $k - 1$ unless explicitly overridden.
+   - **Continuous Takes (`continuous: true`)**: When `continuous: true` is set at the score root, the **Stage Camera** (`shots:`) seamlessly chains physical coordinates (`distance`, `pitch`, `yaw`) from the preceding shot's terminal pose for all moving maneuvers (`maneuver !== 'cut'`). Lenses mount discretely at shot boundaries, and target framing snaps to new subjects unless an explicit `from:` subject is authored. `observer_shots:` remains decoupled with explicit start/end spans.
 
 ---
 
@@ -225,8 +225,42 @@ shots:
       # ... Actor movements & highlights ...
 ```
 
-> [!TIP]
-> **Continuous Oner Mode (`continuous: true`)**: When writing continuous takes or contiguous cuts, add `continuous: true` to the score root. You can then omit `start:` on shots; each shot automatically starts at the previous shot's `end` (`shots[0]` starts at `0.0`). Any shot with an explicit `start:` will still honor it, preserving intentional holding gaps.
+### 5.1 Continuous Take ("Oner") Mode (`continuous: true`)
+
+When authoring a continuous single-take sequence ("oner") or contiguous multi-shot sequence, add `continuous: true` to the root of your YAML score:
+
+```yaml
+version: "1.0"
+id: "continuous-oner-sequence"
+continuous: true
+# ...
+shots:
+  - id: "shot-1"
+    end: 6.0
+    stage_camera: { target: "hero", maneuver: "dolly", distance: 3.5, pitch: 12, yaw: 0, lens: 35mm }
+  - id: "shot-2"
+    end: 12.0
+    stage_camera: { target: "hero", maneuver: "orbit", distance: 2.2, pitch: 6, yaw: 180, direction: "ccw", lens: 50mm }
+```
+
+#### Core Mechanics of `continuous: true`
+1. **Contiguous Timeline Chaining**:
+   - `shots[0]` automatically defaults omitted `start` to `0.0`.
+   - Subsequent shots (`shots[k > 0]`) with omitted `start` automatically inherit the previous shot's `end` (`startSec = shots[k-1].endSec`).
+   - **Explicit `start:` is Always Honored**: If you explicitly author `start: 15.0` on a shot, the engine honors it, allowing deliberate stationary camera holds or gaps between action blocks.
+2. **Physical Parameter Chaining (Stage Camera)**:
+   - For moving maneuvers (`maneuver !== 'cut'`), omitting `distance_start`, `pitch_start`, or `yaw_start` automatically pulls starting values from the previous shot's terminal pose ($P_{\text{prev}}$). The camera glides seamlessly to the newly authored destination without teleporting.
+   - **Stage Camera Exclusive**: Continuous parameter chaining applies strictly to the Stage Camera (`shots:`). In `observer_shots:`, diorama viewport moves remain explicit with declared start/end poses so diorama staging holds its intended composition.
+3. **Discrete Prime Lens Selection**:
+   - Setting `lens: 50mm` on a subsequent shot mounts that prime lens immediately at the shot boundary and holds it steady throughout the shot. This prevents unintended motorized zooming. For deliberate motorized focal length sweeps, author explicit `lens_start` + `lens_end`.
+4. **Target Snapping vs. Smooth Glides (`from:`)**:
+   - Changing `target` without `from:` instantly cuts camera look-at tracking to the new target at the shot boundary.
+   - To smoothly pan or dolly from the previous subject to a new subject, author `from: "<previous_target>"`.
+5. **Declaration Order Overlap Priority**:
+   - If two shots overlap in time, the later shot declared in YAML order takes precedence across the 3D diorama camera, the 2D HUD breakdown, and the transport scrubber.
+6. **Typo Clamping & Non-Blocking Diagnostics**:
+   - `endSec` is clamped to $\ge \text{startSec} + 0.1\text{s}$ for safety.
+   - If `continuous` is omitted or `false` and a subsequent shot omits `start`, `scoreParser.ts` displays a non-blocking amber warning in the Live YAML Drawer advising you to add `start:` or enable `continuous: true`.
 
 ---
 
@@ -266,7 +300,7 @@ You can write camera cues in two intuitive ways:
 | `lens` (or `focal_length`) | `number \| string` | `mm` | Full-frame lens focal length (e.g. `35mm`, `50`, `85mm`). Swaps immediately to this prime lens and holds steady. |
 | `lens_start` / `lens_end` | `number \| string` | `mm` | Start and end focal lengths for deliberate dynamic zoom or Vertigo dolly-zoom shots. |
 | `breathe` | `number` | multiplier | Mid-flight arc pullback factor for `arc`, `swoop`, and `recoil` (default `1.12`). |
-| `direction` | `"cw" \| "ccw"` | — | Rotation direction for `orbit`, `sweep`, and `spiral` (default `"cw"`). Enforced strictly via `directedAngleDiff`. |
+| `direction` | `"cw" \| "ccw"` | — | Physical rotation direction for `orbit`, `sweep`, and `spiral` (default `"cw"`). Supports aliases `"clockwise"`, `"counterclockwise"`, `"counter-clockwise"`, `"counter_clockwise"`. When a destination `yaw` is specified, `direction` strictly forces rotation in that physical direction (up to $360^\circ$) via `directedAngleDiff` instead of collapsing to the shortest arc $\le 180^\circ$. |
 | `revolutions` | `number` | turns | Number of full $360^\circ$ revolutions for `orbit` or `spiral` (e.g. `0.5` = $180^\circ$, `1.0` = $360^\circ$). |
 | `orbit_speed` | `number` | `deg/s` | Continuous angular speed in degrees per second for `orbit`. |
 | `waypoints` | `Array` | — | Multi-point control stops for `maneuver: "spline"` (see §6.5). |
@@ -563,4 +597,83 @@ observer_shots:
     yaw_end: 205
     lens: 35mm
 ```
+
+### Recipe 7: Continuous Single-Take Oner (`continuous: true`)
+A seamless multi-phase continuous take without editing cuts. Omitted `start` timestamps automatically chain from the preceding shot's `end`, and moving maneuvers (`arc`, `dolly`, `orbit`) smoothly chain `distance`, `pitch`, and `yaw` from the preceding shot's terminal pose while mounting prime lenses discretely:
+
+```yaml
+version: "1.0"
+id: "continuous-oner-breakthrough"
+title: "The Breakthrough — Continuous Steadicam Oner"
+continuous: true # Activates contiguous shot chaining & physical parameter flow
+aspect_ratio: "2.39:1"
+duration: 24.0
+
+entities:
+  - id: "scientist"
+    label: "Dr. Aris"
+    kind: "character"
+    position: [-1.2, 0, -0.5]
+    rotation: 90
+    color: "#38bdf8"
+  - id: "terminal"
+    label: "Mainframe Terminal"
+    kind: "prop"
+    position: [0.8, 0, -0.5]
+    rotation: 0
+    height: 1.1
+    color: "#94a3b8"
+
+shots:
+  # Shot 1: Establishing Arc (0.0s to 7.0s)
+  - id: "shot-1-arc"
+    shot: 1
+    label: "Phase 1: Establishing Arc"
+    # start: 0.0 (omitted: automatically defaults to 0.0 under continuous: true)
+    end: 7.0
+    stage_camera:
+      target: "scientist"
+      maneuver: "arc"
+      distance_start: 4.5
+      distance_end: 3.2
+      pitch_start: 18
+      pitch_end: 10
+      yaw_start: -40
+      yaw_end: 30
+      lens: 35mm
+
+  # Shot 2: Push-in Dolly (7.0s to 14.0s)
+  # - start omitted: automatically chains to 7.0s
+  # - distance/pitch/yaw start omitted: automatically chains from Shot 1's end pose (3.2m, 10°, 30°)
+  # - lens swaps immediately to 50mm prime and holds steady without motorized zoom
+  - id: "shot-2-push"
+    shot: 2
+    label: "Phase 2: Push-In to Close Profile"
+    end: 14.0
+    stage_camera:
+      target: "scientist"
+      maneuver: "dolly"
+      easing: "cruise"
+      distance: 1.8
+      pitch: 4
+      yaw: 65
+      lens: 50mm
+
+  # Shot 3: 180° Counter-Clockwise Orbit around Dr. Aris to reveal Mainframe Terminal (14.0s to 24.0s)
+  # - start omitted: automatically chains to 14.0s
+  # - direction: "ccw" forces rotation counter-clockwise past Dr. Aris's face rather than behind his back
+  # - from: "scientist" smoothly pans camera look-at from Dr. Aris to the Mainframe Terminal
+  - id: "shot-3-reveal-orbit"
+    shot: 3
+    label: "Phase 3: 180° CCW Orbit & Pan to Terminal"
+    end: 24.0
+    stage_camera:
+      from: "scientist"
+      target: "terminal"
+      maneuver: "orbit"
+      direction: "ccw"
+      distance: 2.8
+      pitch: 12
+      yaw: 220
+      lens: 35mm
 ```
