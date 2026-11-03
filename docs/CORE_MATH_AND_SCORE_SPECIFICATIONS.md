@@ -176,7 +176,7 @@ shots:
 Live YAML edits and custom imported score files are persisted to an IndexedDB object store (`'stageflow-db'` $\to$ `'scores'`) using the [`idb`](https://github.com/jakearchibald/idb) promise library:
 - **Record Structure**: `{ id, title, subtitle, rawYaml, isCustom, updatedAt }`.
 - **Auto-save**: Debounced at `350ms` on every valid YAML edit.
-- **Hydration**: On application mount, saved score drafts merge over bundled defaults and restore custom scenes to the catalog.
+- **Hydration & Deferred Invalidation**: On application mount, initial state preserves stored scene pointers without premature fallback. When IndexedDB hydration finishes, it reconciles the active scene pointer against the fully merged catalog.
 - **Confirmed Reset**: Resetting a score deletes its IndexedDB record via `deleteStoredScore()` and reverts state to the bundled YAML.
 
 ### 6.2 Video Format Support & YAML SSOT Authority

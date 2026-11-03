@@ -42,6 +42,15 @@ This is the authoritative operating guide for AI agents working in **StageFlow**
 
 Types: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`.
 
+### 2.5 Dual-Tier Lifecycle & Deferred Invalidation (Zero Premature Fallback)
+- **Never discard stored state pointers against partial synchronous data.** When pairing fast synchronous pointers (`localStorage`, URL query params) with asynchronous storage (`IndexedDB`, network), initial frame-$0$ state must preserve the raw pointer without discarding it or prematurely falling back to index $0$.
+- **Always reconcile post-hydration.** When asynchronous data finishes loading, reconcile the active pointer against the complete merged dataset before applying fallbacks.
+- **Mandatory 4-State Persistence Testing**:
+  1. Cold start with empty storage (default fallback)
+  2. Cold start with bundled scene pointer
+  3. Cold start with custom/IndexedDB scene pointer
+  4. Cold start with active draft edits
+
 ---
 
 ## 3. Mandatory Pre-Flight Domain Specification Lookup Gate
@@ -68,7 +77,7 @@ Types: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`.
 | 10 | **Directional Mannequins & Trails** | Character proxies render a torso column, head sphere, forward $+Z$ eye-visor wedge, ground chevron, and dashed floor movement trails | [3D & UI Specs](docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md) |
 | 11 | **Resizable Split Workspace** | Draggable split divider ($18\%$–$82\%$) with 1-click header presets (`50/50`, `70/30 Stage`, `70/30 Video`, `100% Stage`) | [3D & UI Specs](docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md) |
 | 12 | **Telemetry Capsule & Live YAML** | Bottom-right capsule copies formatted YAML (`target`, `distance`, `pitch`, `yaw`, `lens`); YAML Drawer re-evaluates stage live without crashing | [3D & UI Specs](docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md) |
-| 13 | **Dual-Tier Storage & YAML SSOT** | Scores & drafts persist in IndexedDB (`idb`); UI preferences in `localStorage`; local dropped videos remain in-memory only; YAML remains the authoritative source for video playback | [Core Math Specs](docs/CORE_MATH_AND_SCORE_SPECIFICATIONS.md) |
+| 13 | **Dual-Tier Storage & Deferred Invalidation** | Scores & drafts persist in IndexedDB (`idb`); UI preferences in `localStorage`; local dropped videos remain in-memory only; YAML is SSOT; synchronous initializers must never discard stored pointers before asynchronous hydration completes | [Core Math Specs](docs/CORE_MATH_AND_SCORE_SPECIFICATIONS.md) |
 
 ---
 
