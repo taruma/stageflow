@@ -84,6 +84,32 @@ export function shortestAngleDiff(targetRad: number, currentRad: number): number
 }
 
 /**
+ * Calculates signed angular difference from `currentRad` to `targetRad`.
+ * When `direction` is explicitly provided ('cw' or 'ccw'), forces the rotation
+ * along that direction in (0, 2*PI] or [-2*PI, 0); otherwise falls back to shortest arc [-PI, PI].
+ *
+ * In Three.js right-handed Y-up space (+X = stage right, +Z = downstage front):
+ * - Yaw = 0 faces -Z (downstage front, 6:00 on floor clock).
+ * - Yaw = +90° moves camera toward +X (stage right, 3:00 on floor clock).
+ * - Increasing yaw (diff > 0) moves 6:00 -> 3:00 -> 12:00 (Counter-Clockwise / CCW).
+ * - Decreasing yaw (diff < 0) moves 12:00 -> 3:00 -> 6:00 (Clockwise / CW).
+ */
+export function directedAngleDiff(
+  targetRad: number,
+  currentRad: number,
+  direction?: 'cw' | 'ccw'
+): number {
+  const shortDiff = shortestAngleDiff(targetRad, currentRad);
+  if (!direction || Math.abs(shortDiff) < 1e-6) {
+    return shortDiff;
+  }
+  if (direction === 'ccw') {
+    return shortDiff > 0 ? shortDiff : shortDiff + Math.PI * 2;
+  }
+  return shortDiff < 0 ? shortDiff : shortDiff - Math.PI * 2;
+}
+
+/**
  * Converts a SphericalPose into a 3D world-space CameraTransform3D.
  *
  * Equations:

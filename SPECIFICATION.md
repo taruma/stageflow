@@ -90,7 +90,9 @@ Design a clean, human-readable score format inspired by `taruma-film`'s YAML sco
 
 &#x20; - `entities` (optional): Per-shot position overrides, movements, or visual highlights for subjects in the scene.
 
-&#x20; - observer_shots (optional): Root-level decoupled viewport timeline for diorama moves (start, end, maneuver, target, distance, pitch, yaw, lens) that span smoothly across multiple film cuts with complete precedence over per-shot cues.
+&#x20; - `continuous` (optional): Opt-in flag (`continuous: true`) enabling automatic contiguous shot chaining where shots omitting `start` inherit the previous shot's `end` timestamp (`shots[0]` defaults to `0.0`). Deliberate gaps via explicit `start:` are preserved.
+
+&#x20; - `observer_shots` (optional): Root-level decoupled viewport timeline for diorama moves (start, end, maneuver, target, distance, pitch, yaw, lens) that span smoothly across multiple film cuts with complete precedence over per-shot cues. Overlapping shots prioritize the latest declaration in the YAML structure.
 
 
 

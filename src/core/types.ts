@@ -134,6 +134,7 @@ export interface CameraCueSpec {
   focalLengthEndMm?: number;
   breathe: number;
   direction: 'cw' | 'ccw';
+  hasExplicitDirection?: boolean;
   revolutions?: number;
   orbitSpeedRad?: number;
   waypoints?: CameraWaypointSpec[];
@@ -175,6 +176,7 @@ export interface StageScore {
   id: string;
   title: string;
   subtitle?: string;
+  continuous?: boolean; // When true, shots omitting `start` automatically chain from preceding shot's `end`
   videoUrl: string;    // Local path (/media/...), blob: URL, YouTube URL, or 'procedural://demo'
   aspectRatio: number; // Default 16 / 9 (1.7777778) or 2.39
   durationSec: number;

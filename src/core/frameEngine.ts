@@ -20,10 +20,15 @@ export function computeStageFrame(
   );
   const progress = Math.max(0, Math.min(1, clampedSec / durationSec));
 
-  // Find active shot at clampedSec (or fallback to last shot when parked right at durationSec)
-  let shotIndex = score.shots.findIndex(
-    (s) => clampedSec >= s.startSec && clampedSec < s.endSec
-  );
+  // Find active shot at clampedSec (latest matching shot in YAML order takes priority on overlap)
+  let shotIndex = -1;
+  for (let i = score.shots.length - 1; i >= 0; i--) {
+    const s = score.shots[i];
+    if (clampedSec >= s.startSec && clampedSec < s.endSec) {
+      shotIndex = i;
+      break;
+    }
+  }
   if (shotIndex === -1 && clampedSec >= durationSec && score.shots.length > 0) {
     shotIndex = score.shots.length - 1;
   }

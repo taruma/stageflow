@@ -836,4 +836,346 @@ shots:
     expect(obsEnd.pitch).toBeCloseTo(28.0 * (Math.PI / 180), 3);
     expect(obsEnd.yaw).toBeCloseTo(171.7 * (Math.PI / 180), 3);
   });
+
+  describe('YAML Order Priority & Gap Holding', () => {
+    it('prioritizes the later shot in YAML order when two shots overlap', () => {
+      const overlapYaml = `
+version: "1.0"
+id: "overlap-priority-test"
+title: "Overlap Priority Test"
+duration: 25.0
+stage:
+  width: 10
+  depth: 10
+shots:
+  - id: "shot-2"
+    shot: 2
+    label: "Shot 2 Wide"
+    start: 0.0
+    end: 18.0
+    stage_camera:
+      target: [0, 1.0, 0]
+      distance: 8.0
+      pitch: 20
+      yaw: 45
+      lens: 35mm
+  - id: "shot-3"
+    shot: 3
+    label: "Shot 3 Close"
+    start: 15.0
+    end: 25.0
+    stage_camera:
+      target: [0, 1.0, 0]
+      distance: 2.5
+      pitch: 5
+      yaw: -30
+      lens: 85mm
+`;
+      const { score } = parseStageScore(overlapYaml);
+      expect(score).not.toBeNull();
+
+      // At t = 10.0s (only Shot 2 is active)
+      const f10 = computeStageFrame(10.0, score!);
+      expect(f10.activeShot?.id).toBe('shot-2');
+      expect(f10.stageCamera.shotId).toBe('shot-2');
+      expect(f10.stageCamera.transform.pose.distance).toBeCloseTo(8.0, 3);
+      expect(f10.stageCamera.transform.pose.focalLengthMm).toBe(35);
+
+      // At t = 16.0s (overlap zone: 15.0 to 18.0): Shot 3 MUST win across HUD and 3D camera
+      const f16 = computeStageFrame(16.0, score!);
+      expect(f16.activeShot?.id).toBe('shot-3');
+      expect(f16.stageCamera.shotId).toBe('shot-3');
+      expect(f16.stageCamera.transform.pose.distance).toBeCloseTo(2.5, 3);
+      expect(f16.stageCamera.transform.pose.focalLengthMm).toBe(85);
+
+      // At t = 20.0s (only Shot 3 is active)
+      const f20 = computeStageFrame(20.0, score!);
+      expect(f20.activeShot?.id).toBe('shot-3');
+      expect(f20.stageCamera.shotId).toBe('shot-3');
+    });
+
+    it('holds terminal camera pose and actor positions during intentional time gaps between shots', () => {
+      const gapYaml = `
+version: "1.0"
+id: "gap-hold-test"
+title: "Gap Hold Test"
+duration: 25.0
+entities:
+  - id: "actor"
+    label: "Actor"
+    kind: "character"
+    position: [0, 0, 0]
+    rotation: 0
+shots:
+  - id: "shot-1"
+    shot: 1
+    start: 0.0
+    end: 10.0
+    stage_camera:
+      target: [0, 1.0, 0]
+      distance: 4.0
+      pitch: 10
+      yaw: 0
+      lens: 50mm
+    entities:
+      actor:
+        position: [3.0, 0, 0]
+        rotation: 90
+  - id: "shot-2"
+    shot: 2
+    start: 15.0
+    end: 20.0
+    stage_camera:
+      target: [0, 1.0, 0]
+      distance: 2.0
+      pitch: 0
+      yaw: 180
+      lens: 85mm
+`;
+      const { score } = parseStageScore(gapYaml);
+      expect(score).not.toBeNull();
+
+      // At t = 12.5s (in the 5-second gap between shot 1 and shot 2)
+      const fGap = computeStageFrame(12.5, score!);
+      expect(fGap.activeShot).toBeNull(); // No active shot during gap
+      expect(fGap.stageCamera.isHold).toBe(true);
+      expect(fGap.stageCamera.transform.pose.distance).toBeCloseTo(4.0, 3);
+      expect(fGap.stageCamera.transform.pose.focalLengthMm).toBe(50);
+
+      const actor = fGap.entitiesById.get('actor');
+      expect(actor).toBeDefined();
+      expect(actor!.position.x).toBeCloseTo(3.0, 3);
+    });
+
+    it('evaluates a continuous: true chained score with seamless 3D camera and HUD synchronization', () => {
+      const chainedScoreYaml = `
+version: "1.0"
+id: "expansion-mini"
+title: "Expansion Mini"
+continuous: true
+shots:
+  - id: "shot-1"
+    shot: 1
+    end: 6.0
+    stage_camera:
+      target: [0, 1.0, 0]
+      distance: 5.0
+      pitch: 10
+      yaw: 45
+      lens: 35mm
+  - id: "shot-2"
+    shot: 2
+    end: 15.0
+    stage_camera:
+      target: [0, 1.0, 0]
+      distance: 2.0
+      pitch: 0
+      yaw: 90
+      lens: 50mm
+`;
+      const { score } = parseStageScore(chainedScoreYaml);
+      expect(score).not.toBeNull();
+
+      // At t = 3.0s: Shot 1 is active on both HUD and 3D stage camera
+      const f3 = computeStageFrame(3.0, score!);
+      expect(f3.activeShot?.id).toBe('shot-1');
+      expect(f3.stageCamera.shotId).toBe('shot-1');
+      expect(f3.stageCamera.transform.pose.distance).toBeCloseTo(5.0, 3);
+      expect(f3.stageCamera.transform.pose.focalLengthMm).toBe(35);
+
+      // At t = 6.0s (exact boundary): instantaneous cut to Shot 2 on HUD,
+      // and camera begins dollying from Shot 1's distance (5.0m) toward 2.0m
+      const f6 = computeStageFrame(6.0, score!);
+      expect(f6.activeShot?.id).toBe('shot-2');
+      expect(f6.stageCamera.shotId).toBe('shot-2');
+      expect(f6.stageCamera.transform.pose.distance).toBeCloseTo(5.0, 3);
+      expect(f6.stageCamera.transform.pose.focalLengthMm).toBe(50);
+
+      // At t = 10.5s (midpoint of Shot 2): distance is (5 + 2) / 2 = 3.5m
+      const f10 = computeStageFrame(10.5, score!);
+      expect(f10.activeShot?.id).toBe('shot-2');
+      expect(f10.stageCamera.shotId).toBe('shot-2');
+      expect(f10.stageCamera.transform.pose.distance).toBeCloseTo(3.5, 2);
+
+      // At t = 15.0s (end of Shot 2): distance reaches destination 2.0m
+      const f15 = computeStageFrame(15.0, score!);
+      expect(f15.stageCamera.transform.pose.distance).toBeCloseTo(2.0, 3);
+    });
+
+    it('chains physical camera parameters (distance, pitch, yaw) while swapping lens discretely under continuous: true', () => {
+      const continuousCameraYaml = `
+version: "1.0"
+id: "continuous-camera-chain-test"
+title: "Continuous Camera Chain Test"
+continuous: true
+shots:
+  - id: "shot-1"
+    shot: 1
+    end: 6.0
+    stage_camera:
+      target: [0, 1.0, 0]
+      distance: 1.8
+      pitch: 4
+      yaw: 90
+      lens: 35mm
+  - id: "shot-2"
+    shot: 2
+    end: 15.0
+    stage_camera:
+      target: [0, 1.0, 0]
+      maneuver: "arc"
+      easing: "linear"
+      distance: 1.5
+      pitch: -6
+      yaw: 175
+      lens: 50mm
+`;
+      const { score } = parseStageScore(continuousCameraYaml);
+      expect(score).not.toBeNull();
+
+      // At t = 6.0s (start of Shot 2):
+      // Camera distance, pitch, yaw start at Shot 1's terminal values
+      const f6 = computeStageFrame(6.0, score!);
+      expect(f6.stageCamera.shotId).toBe('shot-2');
+      expect(f6.stageCamera.transform.pose.distance).toBeCloseTo(1.8, 3);
+      expect(f6.stageCamera.transform.pose.pitch).toBeCloseTo(4 * (Math.PI / 180), 3);
+      expect(f6.stageCamera.transform.pose.yaw).toBeCloseTo(90 * (Math.PI / 180), 3);
+      // Lens swaps immediately to 50mm (no unwanted slow zoom)
+      expect(f6.stageCamera.transform.pose.focalLengthMm).toBe(50);
+
+      // At t = 10.5s (midpoint of Shot 2, linear easing):
+      // distance: (1.8 + 1.5) / 2 = 1.65m
+      // pitch: (4 + -6) / 2 = -1 deg
+      // yaw: (90 + 175) / 2 = 132.5 deg
+      const fMid = computeStageFrame(10.5, score!);
+      expect(fMid.stageCamera.transform.pose.pitch).toBeCloseTo(-1 * (Math.PI / 180), 2);
+      expect(fMid.stageCamera.transform.pose.yaw).toBeCloseTo(132.5 * (Math.PI / 180), 2);
+      expect(fMid.stageCamera.transform.pose.focalLengthMm).toBe(50);
+
+      // At t = 15.0s (end of Shot 2):
+      // Reaches destination pose
+      const f15 = computeStageFrame(15.0, score!);
+      expect(f15.stageCamera.transform.pose.distance).toBeCloseTo(1.5, 3);
+      expect(f15.stageCamera.transform.pose.pitch).toBeCloseTo(-6 * (Math.PI / 180), 3);
+      expect(f15.stageCamera.transform.pose.yaw).toBeCloseTo(175 * (Math.PI / 180), 3);
+      expect(f15.stageCamera.transform.pose.focalLengthMm).toBe(50);
+    });
+
+    it('orbits strictly counter-clockwise when direction: ccw is specified', () => {
+      const ccwOrbitYaml = `
+version: "1.0"
+id: "ccw-orbit-test"
+title: "CCW Orbit Test"
+shots:
+  - id: "orbit-ccw"
+    start: 0.0
+    end: 10.0
+    stage_camera:
+      target: [0, 1.0, 0]
+      maneuver: "orbit"
+      direction: "ccw"
+      easing: "linear"
+      yaw_start: 180
+      yaw: 225
+`;
+      const { score } = parseStageScore(ccwOrbitYaml);
+      expect(score).not.toBeNull();
+
+      // At t = 0s: yaw = 180 deg
+      const f0 = computeStageFrame(0.0, score!);
+      expect(f0.stageCamera.transform.pose.yaw).toBeCloseTo(180 * (Math.PI / 180), 3);
+
+      // At midpoint t = 5.0s: CCW rotation from 180 deg to 225 deg travels along +45 deg arc (180 + 22.5 = 202.5 deg)
+      const f5 = computeStageFrame(5.0, score!);
+      expect(f5.stageCamera.transform.pose.yaw).toBeCloseTo(202.5 * (Math.PI / 180), 3);
+
+      // At t = 10s: reaches 225 deg
+      const f10 = computeStageFrame(10.0, score!);
+      expect(f10.stageCamera.transform.pose.yaw).toBeCloseTo(225 * (Math.PI / 180), 3);
+    });
+
+    it('orbits strictly clockwise when direction: cw is specified', () => {
+      const cwOrbitYaml = `
+version: "1.0"
+id: "cw-orbit-test"
+title: "CW Orbit Test"
+shots:
+  - id: "orbit-cw"
+    start: 0.0
+    end: 10.0
+    stage_camera:
+      target: [0, 1.0, 0]
+      maneuver: "orbit"
+      direction: "cw"
+      easing: "linear"
+      yaw_start: 175
+      yaw: 0
+`;
+      const { score } = parseStageScore(cwOrbitYaml);
+      expect(score).not.toBeNull();
+
+      // At midpoint t = 5.0s: CW rotation from 175 deg to 0 deg travels along -175 deg arc (175 - 87.5 = 87.5 deg)
+      const f5 = computeStageFrame(5.0, score!);
+      expect(f5.stageCamera.transform.pose.yaw).toBeCloseTo(87.5 * (Math.PI / 180), 3);
+
+      // At t = 10s: reaches 0 deg
+      const f10 = computeStageFrame(10.0, score!);
+      expect(f10.stageCamera.transform.pose.yaw).toBeCloseTo(0, 3);
+    });
+
+    it('evaluates The Expansion oner score with continuous chaining and CCW orbit maneuver', () => {
+      const expansionYaml = `
+version: "1.0"
+id: "the-expansion-oner"
+title: "The Expansion"
+continuous: true
+shots:
+  - id: "shot-1"
+    end: 6.0
+    stage_camera:
+      target: [0, 1.0, 0]
+      distance: 1.8
+      pitch: 0
+      yaw: 180
+      lens: 50
+      maneuver: "static"
+  - id: "shot-2"
+    end: 15.0
+    stage_camera:
+      target: [0, 1.0, 0]
+      distance: 1.5
+      pitch: -15
+      yaw: 225
+      direction: "ccw"
+      easing: "linear"
+      lens: 35
+      maneuver: "orbit"
+`;
+      const { score } = parseStageScore(expansionYaml);
+      expect(score).not.toBeNull();
+
+      // At t = 6.0s (start of Shot 2):
+      const f6 = computeStageFrame(6.0, score!);
+      expect(f6.stageCamera.shotId).toBe('shot-2');
+      expect(f6.stageCamera.transform.pose.distance).toBeCloseTo(1.8, 3);
+      expect(f6.stageCamera.transform.pose.pitch).toBeCloseTo(0, 3);
+      expect(f6.stageCamera.transform.pose.yaw).toBeCloseTo(180 * (Math.PI / 180), 3);
+      expect(f6.stageCamera.transform.pose.focalLengthMm).toBe(35); // discrete prime lens swap
+
+      // At midpoint t = 10.5s:
+      const fMid = computeStageFrame(10.5, score!);
+      expect(fMid.stageCamera.transform.pose.distance).toBeCloseTo(1.65, 3);
+      expect(fMid.stageCamera.transform.pose.pitch).toBeCloseTo(-7.5 * (Math.PI / 180), 3);
+      // Smooth 45 deg CCW arc: 180 + 22.5 = 202.5 deg
+      expect(fMid.stageCamera.transform.pose.yaw).toBeCloseTo(202.5 * (Math.PI / 180), 3);
+      expect(fMid.stageCamera.transform.pose.focalLengthMm).toBe(35);
+
+      // At t = 15.0s:
+      const f15 = computeStageFrame(15.0, score!);
+      expect(f15.stageCamera.transform.pose.distance).toBeCloseTo(1.5, 3);
+      expect(f15.stageCamera.transform.pose.pitch).toBeCloseTo(-15 * (Math.PI / 180), 3);
+      expect(f15.stageCamera.transform.pose.yaw).toBeCloseTo(225 * (Math.PI / 180), 3);
+      expect(f15.stageCamera.transform.pose.focalLengthMm).toBe(35);
+    });
+  });
 });

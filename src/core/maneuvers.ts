@@ -7,6 +7,7 @@ import type { CameraCueSpec, CameraEasing, SphericalPose } from './types';
 import {
   clampSphericalPose,
   cloneSphericalPose,
+  directedAngleDiff,
   shortestAngleDiff,
 } from './sphericalMath';
 
@@ -193,7 +194,7 @@ export function evaluateManeuverPose(
 
   // 4. 'orbit' / 'sweep': Continuous azimuthal turntable revolution
   if (maneuver === 'orbit' || maneuver === 'sweep') {
-    const dirSign = spec.direction === 'ccw' ? -1 : 1;
+    const dirSign = spec.direction === 'cw' ? -1 : 1;
     let deltaTheta: number;
 
     if (spec.revolutions !== undefined) {
@@ -207,7 +208,8 @@ export function evaluateManeuverPose(
     } else if (spec.yawRad !== undefined || spec.yawEndRad !== undefined) {
       const targetYaw = spec.yawEndRad ?? spec.yawRad!;
       const startYaw = spec.yawStartRad ?? P0.yaw;
-      deltaTheta = shortestAngleDiff(targetYaw, startYaw) * u;
+      const effectiveDir = spec.hasExplicitDirection ? spec.direction : undefined;
+      deltaTheta = directedAngleDiff(targetYaw, startYaw, effectiveDir) * u;
     } else {
       deltaTheta = dirSign * (Math.PI / 4) * u;
     }
@@ -226,7 +228,7 @@ export function evaluateManeuverPose(
 
   // 5. 'spiral': Helical zoom & elevation orbit
   if (maneuver === 'spiral') {
-    const dirSign = spec.direction === 'ccw' ? -1 : 1;
+    const dirSign = spec.direction === 'cw' ? -1 : 1;
     const defaultRevs = spec.revolutions ?? 0.5;
     const deltaTheta = dirSign * defaultRevs * Math.PI * 2 * u;
 

@@ -32,6 +32,7 @@ export interface YamlInspectorDrawerProps {
   isOpen: boolean;
   rawYaml: string;
   parseError: string | null;
+  parseWarning?: string | null;
   storageStatus?: StoragePersistenceStatus;
   onChangeYaml: (newYaml: string) => void;
   onResetDefault: () => void;
@@ -42,6 +43,7 @@ export const YamlInspectorDrawer: React.FC<YamlInspectorDrawerProps> = ({
   isOpen,
   rawYaml,
   parseError,
+  parseWarning,
   storageStatus = 'bundled',
   onChangeYaml,
   onResetDefault,
@@ -136,7 +138,7 @@ export const YamlInspectorDrawer: React.FC<YamlInspectorDrawerProps> = ({
         </div>
       </div>
 
-      {/* Syntax Status / Error Banner */}
+      {/* Syntax Status / Error / Warning Banner */}
       {parseError ? (
         <div className="px-3.5 py-2 bg-rose-950/80 border-b border-rose-500/40 flex items-start gap-2 text-xs font-mono text-rose-200">
           <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
@@ -145,13 +147,23 @@ export const YamlInspectorDrawer: React.FC<YamlInspectorDrawerProps> = ({
           </div>
         </div>
       ) : (
-        <div className="px-3.5 py-1.5 bg-emerald-950/30 border-b border-emerald-500/20 flex items-center justify-between text-[10px] font-mono text-emerald-300/90 select-none">
-          <div className="flex items-center gap-2">
-            <span>● Live Sync Active</span>
-            <StorageStatusBadge status={storageStatus} />
+        <>
+          <div className="px-3.5 py-1.5 bg-emerald-950/30 border-b border-emerald-500/20 flex items-center justify-between text-[10px] font-mono text-emerald-300/90 select-none">
+            <div className="flex items-center gap-2">
+              <span>● Live Sync Active</span>
+              <StorageStatusBadge status={storageStatus} />
+            </div>
+            <span className="text-slate-500">Frame_t = f(t)</span>
           </div>
-          <span className="text-slate-500">Frame_t = f(t)</span>
-        </div>
+          {parseWarning && (
+            <div className="px-3.5 py-1.5 bg-amber-950/40 border-b border-amber-500/30 flex items-start gap-2 text-[11px] font-mono text-amber-200/90">
+              <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
+              <div className="flex-1 min-w-0 break-words">
+                {parseWarning}
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       {/* Monospace Editable Textarea */}

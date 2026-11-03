@@ -3,6 +3,7 @@ import {
   cartesianToSpherical,
   computeLookAtYawRad,
   degToRad,
+  directedAngleDiff,
   radToDeg,
   shortestAngleDiff,
   sphericalToCartesian,
@@ -176,5 +177,43 @@ describe('sphericalMath — Metric Coordinates & Shortest-Angle Unwrapping', () 
     expect(
       radToDeg(computeLookAtYawRad({ x: 0, y: 0, z: 0 }, { x: -5, y: 0, z: 0 }))
     ).toBeCloseTo(-90, 5);
+  });
+
+  it('calculates directedAngleDiff according to explicit cw and ccw directions', () => {
+    // 1. From 30 deg to 330 deg:
+    // On Three.js floor, 30 deg (~5:00) to 330 deg (~7:00) moves with the clock (CW) along -60 deg
+    const start = degToRad(30);
+    const target = degToRad(330);
+
+    // Without direction (fallback to shortest arc)
+    expect(radToDeg(directedAngleDiff(target, start))).toBeCloseTo(-60, 4);
+
+    // With explicit CW: moves directly along negative arc (-60 deg)
+    expect(radToDeg(directedAngleDiff(target, start, 'cw'))).toBeCloseTo(-60, 4);
+
+    // With explicit CCW: must take the positive long way around (+300 deg)
+    expect(radToDeg(directedAngleDiff(target, start, 'ccw'))).toBeCloseTo(300, 4);
+
+    // 2. The Expansion case: from 180 deg (12:00) to 225 deg (10:30)
+    // Moving 12:00 -> 10:30 is counter-clockwise (CCW) along positive arc (+45 deg)
+    const startOner = degToRad(180);
+    const targetOner = degToRad(225);
+
+    // Without direction: shortest arc is +45 deg
+    expect(radToDeg(directedAngleDiff(targetOner, startOner))).toBeCloseTo(45, 4);
+
+    // With explicit CCW: directly along positive arc (+45 deg)
+    expect(radToDeg(directedAngleDiff(targetOner, startOner, 'ccw'))).toBeCloseTo(45, 4);
+
+    // With explicit CW: long way around clockwise (-315 deg)
+    expect(radToDeg(directedAngleDiff(targetOner, startOner, 'cw'))).toBeCloseTo(-315, 4);
+
+    // 3. From 175 deg to 0 deg:
+    const start2 = degToRad(175);
+    const target2 = degToRad(0);
+    // CW: moves along negative arc (-175 deg)
+    expect(radToDeg(directedAngleDiff(target2, start2, 'cw'))).toBeCloseTo(-175, 4);
+    // CCW: moves along positive arc (+185 deg)
+    expect(radToDeg(directedAngleDiff(target2, start2, 'ccw'))).toBeCloseTo(185, 4);
   });
 });

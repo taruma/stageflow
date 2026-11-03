@@ -74,6 +74,7 @@ export const App: React.FC = () => {
   const [rawYaml, setRawYaml] = useState<string>(initialItem.rawYaml);
   const [activeScore, setActiveScore] = useState(initialItem.score);
   const [parseError, setParseError] = useState<string | null>(null);
+  const [parseWarning, setParseWarning] = useState<string | null>(null);
   const [videoOverrideUrl, setVideoOverrideUrl] = useState<string | null>(null);
 
   // Sync wrappers that persist UI preferences to localStorage
@@ -166,6 +167,7 @@ export const App: React.FC = () => {
       setRawYaml(found.rawYaml);
       setActiveScore(found.score);
       setParseError(null);
+      setParseWarning(null);
       setVideoOverrideUrl(null);
       mediaClock.seek(0);
     },
@@ -180,6 +182,7 @@ export const App: React.FC = () => {
       if (result.score) {
         setActiveScore(result.score);
         setParseError(null);
+        setParseWarning(result.warning ?? null);
 
         // If YAML score specifies a video URL or changed it, clear ephemeral video override
         if (
@@ -193,6 +196,7 @@ export const App: React.FC = () => {
         scorePersistence.saveYamlDraftDebounced(nextYaml, result.score);
       } else {
         setParseError(result.error);
+        setParseWarning(null);
       }
     },
     [activeSceneId, scorePersistence]
@@ -220,6 +224,7 @@ export const App: React.FC = () => {
         setRawYaml(yamlText);
         setActiveScore(parsed.score);
         setParseError(null);
+        setParseWarning(parsed.warning ?? null);
         setVideoOverrideUrl(null);
         mediaClock.seek(0);
 
@@ -235,6 +240,7 @@ export const App: React.FC = () => {
       } else {
         setRawYaml(yamlText);
         setParseError(parsed.error);
+        setParseWarning(null);
         setIsYamlDrawerOpenState(true);
       }
     },
@@ -385,6 +391,7 @@ export const App: React.FC = () => {
         isOpen={isYamlDrawerOpen}
         rawYaml={rawYaml}
         parseError={parseError}
+        parseWarning={parseWarning}
         storageStatus={scorePersistence.storageStatus}
         onChangeYaml={handleChangeYaml}
         onResetDefault={() => scorePersistence.setIsResetModalOpen(true)}

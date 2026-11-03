@@ -373,4 +373,146 @@ shots:
     const s3Cam = score!.shots[2].stageCamera!;
     expect(s3Cam.waypoints?.[0].targetOffset).toEqual({ x: 0, y: 0.4, z: 0 });
   });
+
+  describe('continuous: true — Opt-In Contiguous Shot Chaining', () => {
+    it('chains consecutive shots with omitted start when continuous: true is enabled', () => {
+      const chainedYaml = `
+version: "1.0"
+id: "continuous-chain-test"
+title: "Continuous Oner Chain"
+continuous: true
+shots:
+  - id: "s1"
+    end: 6.0
+  - id: "s2"
+    end: 15.0
+  - id: "s3"
+    end: 27.0
+`;
+      const { score, error, warning } = parseStageScore(chainedYaml);
+      expect(error).toBeNull();
+      expect(warning).toBeNull();
+      expect(score).not.toBeNull();
+      expect(score!.continuous).toBe(true);
+
+      const shots = score!.shots;
+      expect(shots).toHaveLength(3);
+
+      expect(shots[0].startSec).toBe(0.0);
+      expect(shots[0].endSec).toBe(6.0);
+
+      expect(shots[1].startSec).toBe(6.0);
+      expect(shots[1].endSec).toBe(15.0);
+
+      expect(shots[2].startSec).toBe(15.0);
+      expect(shots[2].endSec).toBe(27.0);
+
+      // Duration should auto-compute from final shot end
+      expect(score!.durationSec).toBe(27.0);
+    });
+
+    it('honors explicit start on shot 1 and mid-sequence gap overrides in continuous mode', () => {
+      const overrideYaml = `
+version: "1.0"
+id: "override-test"
+title: "Override Test"
+continuous: true
+shots:
+  - id: "s1"
+    start: 4.0
+    end: 10.0
+  - id: "s2"
+    end: 18.0
+  - id: "s3"
+    start: 24.0
+    end: 30.0
+`;
+      const { score, error } = parseStageScore(overrideYaml);
+      expect(error).toBeNull();
+      expect(score).not.toBeNull();
+
+      const shots = score!.shots;
+      // Shot 1 honors explicit start: 4.0
+      expect(shots[0].startSec).toBe(4.0);
+      expect(shots[0].endSec).toBe(10.0);
+
+      // Shot 2 chains from shot 1's end: 10.0
+      expect(shots[1].startSec).toBe(10.0);
+      expect(shots[1].endSec).toBe(18.0);
+
+      // Shot 3 honors explicit start override: 24.0 (creating a 6s holding gap: 18 -> 24)
+      expect(shots[2].startSec).toBe(24.0);
+      expect(shots[2].endSec).toBe(30.0);
+    });
+
+    it('clamps endSec to startSec + 0.1 on typo where end is earlier than chained start', () => {
+      const typoYaml = `
+version: "1.0"
+id: "typo-test"
+title: "Typo Clamp Test"
+continuous: true
+shots:
+  - id: "s1"
+    end: 15.0
+  - id: "s2"
+    end: 8.0
+`;
+      const { score, error } = parseStageScore(typoYaml);
+      expect(error).toBeNull();
+      expect(score).not.toBeNull();
+
+      expect(score!.shots[0].startSec).toBe(0.0);
+      expect(score!.shots[0].endSec).toBe(15.0);
+
+      // Shot 2 starts at 15.0; end 8.0 is clamped to 15.1
+      expect(score!.shots[1].startSec).toBe(15.0);
+      expect(score!.shots[1].endSec).toBeCloseTo(15.1, 4);
+    });
+
+    it('emits a non-blocking diagnostic warning when continuous is false and start is omitted on shot 2+', () => {
+      const unchainedYaml = `
+version: "1.0"
+id: "unchained-test"
+title: "Unchained Test"
+shots:
+  - id: "shot-1"
+    end: 6.0
+  - id: "shot-2"
+    end: 15.0
+`;
+      const { score, error, warning } = parseStageScore(unchainedYaml);
+      expect(error).toBeNull();
+      expect(score).not.toBeNull();
+      expect(warning).toContain('Shot "shot-2" omits "start" (defaulted to 0.0s)');
+
+      // Legacy fallback behavior preserved
+      expect(score!.shots[0].startSec).toBe(0.0);
+      expect(score!.shots[0].endSec).toBe(6.0);
+      expect(score!.shots[1].startSec).toBe(0.0);
+      expect(score!.shots[1].endSec).toBe(15.0);
+    });
+
+    it('keeps observer_shots decoupled and explicit even when continuous: true is declared', () => {
+      const scoreWithObs = `
+version: "1.0"
+id: "obs-decoupled-test"
+title: "Observer Decoupled Test"
+continuous: true
+shots:
+  - id: "s1"
+    end: 6.0
+  - id: "s2"
+    end: 15.0
+observer_shots:
+  - id: "obs-1"
+    start: 0.0
+    end: 27.0
+`;
+      const { score, error } = parseStageScore(scoreWithObs);
+      expect(error).toBeNull();
+      expect(score!.shots[1].startSec).toBe(6.0);
+      expect(score!.observerShots![0].startSec).toBe(0.0);
+      expect(score!.observerShots![0].endSec).toBe(27.0);
+    });
+  });
 });

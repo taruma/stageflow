@@ -101,6 +101,7 @@ stage:
 | `id` | `string` | `"custom-scene"` | Unique scene identifier in the catalog dropdown. |
 | `title` | `string` | `"Untitled..."` | Primary title shown in the header selector and HUD. |
 | `subtitle` | `string` | `undefined` | Optional secondary descriptor. |
+| `continuous` | `boolean` | `false` | When `true`, shots in `shots:` omitting `start` automatically chain from the preceding shot's `end` (`shots[0]` defaults to `0.0`). Ideal for oners and contiguous takes. |
 | `video` | `string` | `"procedural://demo"` | Video URL. Automatically selects `Html5MediaDriver`, `YouTubeMediaDriver`, or `ProceduralMediaDriver`. |
 | `aspect_ratio` | `string \| number` | `"16:9"` | Controls both the Video Panel container aspect ratio and the 3D Stage Camera's rectangular film gate frustum. |
 | `duration` | `number` | `max(shot.end)` | Total timeline length in seconds. |
@@ -224,6 +225,9 @@ shots:
       # ... Actor movements & highlights ...
 ```
 
+> [!TIP]
+> **Continuous Oner Mode (`continuous: true`)**: When writing continuous takes or contiguous cuts, add `continuous: true` to the score root. You can then omit `start:` on shots; each shot automatically starts at the previous shot's `end` (`shots[0]` starts at `0.0`). Any shot with an explicit `start:` will still honor it, preserving intentional holding gaps.
+
 ---
 
 ## 6. Complete Camera Choreography Reference (`stage_camera:` & `observer_camera:`)
@@ -238,7 +242,7 @@ You can point a camera at any subject or coordinate in 3 ways:
 
 ### 6.2 Pose & Span Parameters (Option A vs. Option B)
 You can write camera cues in two intuitive ways:
-- **Option A (Destination Only — Chained from Previous Shot)**: Specify `target`, `distance`, `pitch`, `yaw`, and `lens`. The camera smoothly interpolates from wherever the previous shot ended ($P_0$) to your new destination ($P_1$).
+- **Option A (Destination Only — Chained from Previous Shot)**: With `continuous: true`, specify `distance`, `pitch`, and `yaw` for moving maneuvers (`arc`, `dolly`, `swoop`, `orbit`). The camera smoothly travels from wherever the previous shot ended ($P_0$) to your new destination ($P_1$). `lens: 50mm` establishes the prime lens for that shot without unwanted slow zooming. Changing `target` without `from:` instantly cuts to the new subject at the shot boundary.
 - **Option B (Explicit Start $\to$ End Span)**: Specify `from`, `distance_start` / `distance_end`, `pitch_start` / `pitch_end`, `yaw_start` / `yaw_end`, and `lens_start` / `lens_end` to define an exact self-contained span for the shot.
 
 | YAML Field | Type | Units | Description |
@@ -246,23 +250,23 @@ You can write camera cues in two intuitive ways:
 | `maneuver` (or `style`) | `string` | — | Trajectory path geometry (`cut`, `dolly`, `straight`, `arc`, `swoop`, `orbit`, `sweep`, `spiral`, `dive`, `recoil`, `spline`). Default: `dolly`. |
 | `easing` | `string` | — | Temporal velocity curve (`smooth`, `linear`, `ease-in`, `ease-out`, `expo`, `pop`, `accel`, `deccel`, `cruise`). Default: `smooth`. |
 | `target` | `string \| [x,y,z]` | `m` | Destination look-at anchor (entity ID, `"center"`, or `[x, y, z]`). |
-| `from` | `string \| [x,y,z]` | `m` | Optional explicit starting look-at anchor at `start` of shot. |
+| `from` | `string \| [x,y,z]` | `m` | Optional explicit starting look-at anchor at `start` of shot (omitting `from:` cuts look-at target immediately to `target`). |
 | `target_offset` | `[dx, dy, dz]` | `m` | World-space metric offset added to `target` (e.g. `[0, 0.25, 0]` for headroom). Defaults to `[0, 0, 0]` (Option A reset when omitted). |
 | `target_offset_start` / `target_offset_end` | `[dx, dy, dz]` | `m` | Explicit start and end world-space target offsets in meters across the shot (e.g. vertical pedestal tilt from boots to face). |
-| `distance` | `number` | `m` | Target radial distance from `target` in meters. |
+| `distance` | `number` | `m` | Target radial distance from `target` in meters (in `continuous: true` mode with moving maneuvers, camera starts from previous distance and moves to this destination). |
 | `distance_start` / `distance_end` | `number` | `m` | Explicit start and end distances in meters across the shot. |
-| `pitch` | `number` | `deg` | Target vertical elevation angle in degrees (`-85°` to `+85°`). |
+| `pitch` | `number` | `deg` | Target vertical elevation angle in degrees (`-85°` to `+85°`). In `continuous: true` mode with moving maneuvers, camera starts from previous pitch and tilts to this destination. |
 | `pitch_start` / `pitch_end` | `number` | `deg` | Explicit start and end elevation angles in degrees. |
-| `yaw` | `number` | `deg` | Target horizontal azimuth angle in degrees. Interpolates via shortest arc (`shortestAngleDiff`). |
+| `yaw` | `number` | `deg` | Target horizontal azimuth angle in degrees. In `continuous: true` mode with moving maneuvers, camera starts from previous yaw and rotates to this destination. |
 | `yaw_start` / `yaw_end` | `number` | `deg` | Explicit start and end azimuth angles in degrees. |
 | `yaw_delta` | `number` | `deg` | Relative angular offset from starting yaw (e.g. `yaw_delta: 45` or `-90`). |
 | `roll` (or `dutch`) | `number` | `deg` | Optical axis roll angle in degrees (Dutch angle / banking). Defaults to `0°` (Option A reset when omitted). |
 | `roll_start` / `roll_end` | `number` | `deg` | Explicit start and end roll angles in degrees across the shot. |
 | `roll_delta` | `number` | `deg` | Relative roll offset in degrees (e.g. `roll_delta: 360` for a complete barrel roll). |
-| `lens` (or `focal_length`) | `number \| string` | `mm` | Full-frame lens focal length (e.g. `35mm`, `50`, `85mm`). |
-| `lens_start` / `lens_end` | `number \| string` | `mm` | Start and end focal lengths for zoom or Vertigo dolly-zoom shots. |
+| `lens` (or `focal_length`) | `number \| string` | `mm` | Full-frame lens focal length (e.g. `35mm`, `50`, `85mm`). Swaps immediately to this prime lens and holds steady. |
+| `lens_start` / `lens_end` | `number \| string` | `mm` | Start and end focal lengths for deliberate dynamic zoom or Vertigo dolly-zoom shots. |
 | `breathe` | `number` | multiplier | Mid-flight arc pullback factor for `arc`, `swoop`, and `recoil` (default `1.12`). |
-| `direction` | `"cw" \| "ccw"` | — | Rotation direction for `orbit`, `sweep`, and `spiral` (default `"cw"`). |
+| `direction` | `"cw" \| "ccw"` | — | Rotation direction for `orbit`, `sweep`, and `spiral` (default `"cw"`). Enforced strictly via `directedAngleDiff`. |
 | `revolutions` | `number` | turns | Number of full $360^\circ$ revolutions for `orbit` or `spiral` (e.g. `0.5` = $180^\circ$, `1.0` = $360^\circ$). |
 | `orbit_speed` | `number` | `deg/s` | Continuous angular speed in degrees per second for `orbit`. |
 | `waypoints` | `Array` | — | Multi-point control stops for `maneuver: "spline"` (see §6.5). |

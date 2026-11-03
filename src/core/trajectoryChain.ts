@@ -464,17 +464,36 @@ export function evaluateCameraTrack(
           z: prevPose.target.z + startOffset.z,
         };
 
+    const isContinuousStageMove =
+      role === 'stage' &&
+      Boolean(score.continuous) &&
+      i > 0 &&
+      spec.maneuver !== 'cut';
+
+    const startDistance =
+      spec.distanceStart ??
+      (isContinuousStageMove
+        ? prevPose.distance
+        : spec.distance ?? prevPose.distance);
+
+    const startPitch =
+      spec.pitchStartRad ??
+      (isContinuousStageMove
+        ? prevPose.pitch
+        : spec.pitchRad ?? prevPose.pitch);
+
     const startYaw =
       spec.yawStartRad ??
-      (spec.yawDeltaRad === undefined ? spec.yawRad : undefined) ??
-      prevPose.yaw;
+      (isContinuousStageMove || spec.yawDeltaRad !== undefined
+        ? prevPose.yaw
+        : spec.yawRad ?? prevPose.yaw);
 
     const startRoll = resolveShotStartRoll(spec, prevPose, baselinePose);
 
     const P_start = clampSphericalPose({
       target: startTarget,
-      distance: spec.distanceStart ?? spec.distance ?? prevPose.distance,
-      pitch: spec.pitchStartRad ?? spec.pitchRad ?? prevPose.pitch,
+      distance: startDistance,
+      pitch: startPitch,
       yaw: startYaw,
       roll: startRoll,
       focalLengthMm:

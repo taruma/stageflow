@@ -59,6 +59,9 @@ When the user freely orbits or pans the viewport via `OrbitControls`, [`cartesia
 ### 2.3 Shortest-Arc Angular Unwrapping (`shortestAngleDiff`)
 All angular interpolations (`yaw`, `roll`, and entity `rotationYRad`) use [`shortestAngleDiff(targetRad, currentRad)`](../src/core/sphericalMath.ts), which wraps $\Delta\theta$ onto $[-\pi, \pi]$ to prevent $360^\circ$ spin artifacts across the $-\pi / +\pi$ boundary. Explicit multi-turn rotations authored with `roll_delta` or `roll_start`/`roll_end` bypass modulo wrapping to execute complete deliberate barrel rolls.
 
+### 2.4 Directed Orbit Angular Differences (`directedAngleDiff`)
+When authoring `maneuver: "orbit"` or `"sweep"` with an explicit `direction: "cw"` or `"ccw"` alongside a destination `yaw`, [`directedAngleDiff(targetRad, currentRad, direction)`](../src/core/sphericalMath.ts) forces the angular rotation along the commanded azimuthal direction ($[-2\pi, 0]$ for clockwise, $[0, +2\pi]$ for counter-clockwise) rather than blindly defaulting to the shortest Euclidean arc. When `direction` is omitted, it falls back to `shortestAngleDiff`.
+
 ---
 
 ## 3. Directorial Lens Optics & Frustum Gate Geometry (`opticsMath.ts`)
@@ -106,6 +109,15 @@ In [`trajectoryChain.ts`](../src/core/trajectoryChain.ts) and [`entityEngine.ts`
   - `dive`: Fast perigee dip toward subject.
   - `recoil`: Immediate shockwave impulse kick.
   - `spline`: Multi-waypoint Catmull-Rom spline with automatic yaw unwrapping.
+
+### 4.4 Opt-In Contiguous Shot Chaining (`continuous: true`) & YAML Order Priority
+- **Contiguous Timeline Chaining**: When `continuous: true` is set at the score root, any shot in `shots:` omitting `start` automatically inherits the previous shot's `end` timestamp (`startSec = shots[k-1].endSec`), while `shots[0]` defaults to `0.0`. Explicit `start` declarations always take precedence to allow deliberate gaps.
+- **Physical Camera Rig Chaining**: For any shot $k \ge 1$ with a moving maneuver (`arc`, `dolly`, `swoop`, `orbit`, etc.), omitting `distance_start`, `pitch_start`, or `yaw_start` causes the camera to start at $P_{\text{prev}}$ (the previous shot's terminal pose) and smoothly travel to the newly authored destination (`distance`, `pitch`, `yaw`). Opening shot (`k = 0`) values establish the baseline framing. Instantaneous cuts (`maneuver: cut`) snap directly to the authored values.
+- **Discrete Optical Prime Lenses**: In accordance with cinema prime lens grammar, specifying `lens: 50mm` mounts that lens for the shot and holds it steady (no unwanted slow zoom). Omitting `lens` preserves the mounted lens from the previous shot. Dynamic zooming requires explicit `lens_start` and `lens_end`.
+- **Explicit Look-At Retargeting**: Changing `target` without `from:` cuts the look-at anchor immediately at the shot boundary (`0ms`), preventing unintended diagonal room drifting. Specifying `from:` smoothly tracks from `from` to `target`.
+- **Decoupled Observer Isolation**: `observer_shots:` remains strictly explicit (`start:` and `end:`) to preserve stationary diorama inspection periods.
+- **YAML Declaration Order Overlap Priority**: When multiple shots overlap in time, the later shot in the YAML structure takes precedence across `frameEngine` (`activeShot`), `trajectoryChain` (camera track), and `entityEngine` (character kinematics).
+- **Non-Blocking Typo Warnings**: In non-continuous mode (`continuous: false`), omitting `start` on `shots[k > 0]` surfaces an informative warning in the YAML Drawer rather than crashing.
 
 ---
 

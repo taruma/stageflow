@@ -201,10 +201,16 @@ function parseCameraCueSpec(
 
   const maneuver = normalizeCameraManeuver(obj.maneuver ?? obj.style ?? 'dolly');
   const easing = normalizeCameraEasing(obj.easing);
+  const rawDir =
+    typeof obj.direction === 'string' ? obj.direction.trim().toLowerCase() : '';
+  const cleanDir = rawDir.replace(/[-_\s]/g, '');
+  const hasExplicitDirection =
+    cleanDir === 'cw' ||
+    cleanDir === 'clockwise' ||
+    cleanDir === 'ccw' ||
+    cleanDir === 'counterclockwise';
   const direction =
-    obj.direction === 'ccw' || obj.direction === 'counterclockwise'
-      ? 'ccw'
-      : 'cw';
+    cleanDir === 'ccw' || cleanDir === 'counterclockwise' ? 'ccw' : 'cw';
 
   const defaultBreathe =
     maneuver === 'arc' || maneuver === 'swoop' ? 1.12 : 1.0;
@@ -321,6 +327,7 @@ function parseCameraCueSpec(
         : undefined,
     breathe,
     direction,
+    hasExplicitDirection,
     revolutions:
       typeof obj.revolutions === 'number' && Number.isFinite(obj.revolutions)
         ? obj.revolutions
@@ -364,7 +371,7 @@ function parseStageCameraCueSpec(raw: unknown): StageCameraCueSpec | undefined {
 export function parseStageScore(
   rawText: string,
   fallbackId = 'custom-scene'
-): { score: StageScore | null; error: string | null } {
+): { score: StageScore | null; error: string | null; warning?: string | null } {
   if (!rawText || typeof rawText !== 'string' || rawText.trim().length === 0) {
     return { score: null, error: 'Score content is empty.' };
   }
@@ -390,6 +397,10 @@ export function parseStageScore(
   const title = String(root.title ?? 'Untitled StageFlow Scene');
   const subtitle =
     typeof root.subtitle === 'string' ? root.subtitle : undefined;
+  const continuous =
+    root.continuous === true ||
+    root.continuous === 'true' ||
+    root.continuous === 'yes';
   let videoUrl = 'procedural://demo';
   let videoAspectRatio: string | number | undefined;
 
@@ -549,18 +560,37 @@ export function parseStageScore(
     ? ((root.shots ?? root.score) as unknown[])
     : [];
 
+  let prevShotEndSec = 0;
+  const missingStartShotIds: string[] = [];
+
   const shots: ShotCue[] = rawShots
     .filter((item) => item && typeof item === 'object')
     .map((item, idx) => {
       const sh = item as Record<string, unknown>;
-      const startSec =
-        typeof sh.start === 'number' && Number.isFinite(sh.start)
-          ? Math.max(0, sh.start)
-          : 0;
+      const rawStartCandidate = sh.start ?? sh._start;
+      const rawEndCandidate = sh.end ?? sh._end;
+      const hasExplicitStart =
+        typeof rawStartCandidate === 'number' &&
+        Number.isFinite(rawStartCandidate);
+
+      let startSec: number;
+      if (hasExplicitStart) {
+        startSec = Math.max(0, rawStartCandidate);
+      } else if (continuous) {
+        startSec = prevShotEndSec;
+      } else {
+        startSec = 0;
+        if (idx > 0) {
+          missingStartShotIds.push(String(sh.id ?? `shot-${idx + 1}`));
+        }
+      }
+
       const endSec =
-        typeof sh.end === 'number' && Number.isFinite(sh.end)
-          ? Math.max(startSec + 0.1, sh.end)
+        typeof rawEndCandidate === 'number' && Number.isFinite(rawEndCandidate)
+          ? Math.max(startSec + 0.1, rawEndCandidate)
           : startSec + 5.0;
+
+      prevShotEndSec = endSec;
 
       const entityOverrides: Record<string, EntityCueOverride> = {};
       if (sh.entities && typeof sh.entities === 'object') {
@@ -664,12 +694,18 @@ export function parseStageScore(
       ? root.offset
       : 0;
 
+  const warning =
+    !continuous && missingStartShotIds.length > 0
+      ? `Shot "${missingStartShotIds[0]}" omits "start" (defaulted to 0.0s). Add "start:" or declare "continuous: true" at root to auto-chain.`
+      : null;
+
   return {
     score: {
       version,
       id,
       title,
       subtitle,
+      continuous: continuous || undefined,
       videoUrl,
       aspectRatio,
       durationSec,
@@ -686,5 +722,6 @@ export function parseStageScore(
       observerShots,
     },
     error: null,
+    warning,
   };
 }
