@@ -11,12 +11,14 @@ export interface BlueprintFloorGridProps {
   width: number;
   depth: number;
   gridStep: number;
+  showLabels?: boolean;
 }
 
 export const BlueprintFloorGrid: React.FC<BlueprintFloorGridProps> = ({
   width,
   depth,
   gridStep,
+  showLabels = true,
 }) => {
   const halfW = width * 0.5;
   const halfD = depth * 0.5;
@@ -117,27 +119,31 @@ export const BlueprintFloorGrid: React.FC<BlueprintFloorGridProps> = ({
       </mesh>
 
       {/* Cardinal Stage Orientation Markers */}
-      <Html
-        position={[0, 0.02, halfD + 0.45]}
-        center
-        distanceFactor={12}
-        zIndexRange={[10, 0]}
-      >
-        <div className="px-1.5 py-0.5 rounded bg-slate-950/80 border border-sky-500/25 text-[9px] font-mono text-sky-400/70 tracking-widest uppercase select-none pointer-events-none whitespace-nowrap">
-          +Z · Downstage / Front
-        </div>
-      </Html>
+      {showLabels && (
+        <>
+          <Html
+            position={[0, 0.02, halfD + 0.45]}
+            center
+            distanceFactor={12}
+            zIndexRange={[10, 0]}
+          >
+            <div className="px-2 py-0.5 rounded-full bg-slate-950/65 backdrop-blur-sm text-[8px] font-mono text-sky-400/80 tracking-widest uppercase select-none pointer-events-none whitespace-nowrap">
+              +Z · Downstage / Front
+            </div>
+          </Html>
 
-      <Html
-        position={[0, 0.02, -halfD - 0.45]}
-        center
-        distanceFactor={12}
-        zIndexRange={[10, 0]}
-      >
-        <div className="px-1.5 py-0.5 rounded bg-slate-950/80 border border-slate-800 text-[9px] font-mono text-slate-500 tracking-widest uppercase select-none pointer-events-none whitespace-nowrap">
-          -Z · Upstage / Back
-        </div>
-      </Html>
+          <Html
+            position={[0, 0.02, -halfD - 0.45]}
+            center
+            distanceFactor={12}
+            zIndexRange={[10, 0]}
+          >
+            <div className="px-2 py-0.5 rounded-full bg-slate-950/65 backdrop-blur-sm text-[8px] font-mono text-slate-500 tracking-widest uppercase select-none pointer-events-none whitespace-nowrap">
+              -Z · Upstage / Back
+            </div>
+          </Html>
+        </>
+      )}
     </group>
   );
 };

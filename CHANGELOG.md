@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **3D Label Cleanup & Viewport Visibility Control**:
+  - Redesigned `StageBillboardLabel` (`src/stage/StageBillboardLabel.tsx`) into an ultra-compact, borderless micro-pill (`rounded-full bg-slate-950/70 backdrop-blur-sm px-2 py-0.5 text-[9px] font-mono`), eliminating bulky dark boxes, borders, and heavy drop shadows.
+  - Implemented **Selective Playback Ghosting**: actor and prop mannequin labels smoothly fade down to 20% opacity (`opacity-20 transition-opacity duration-200`) during active playback (`isPlaying === true`) so blocking motion and character trajectories take center stage; the Stage Camera label (`STAGE CAM · 50mm · ARC`) remains at 100% opacity for continuous optical telemetry legibility.
+  - Added subtle active focus accent glow on the mannequin's colored identity dot (`boxShadow: 0 0 6px <color>`) when highlighted as the active camera target, while passive actors stay soft and muted without redundant text banners.
+  - Created `LabelDisplayModeToggle` (`src/ui/LabelDisplayModeToggle.tsx`), a floating glassmorphic toggle in the top-right of the 3D diorama canvas supporting 3 modes: `'all'` (Actors + Camera), `'camera-only'` (Camera only), and `'off'` (hides all labels including floor cardinal orientation tags for an unobstructed geometric stage).
+  - Added global hotkey **`L`** listener to cycle through label visibility modes (`all` -> `camera-only` -> `off` -> `all`), ignoring keypresses when typing in inputs/textareas.
+  - Extended `localStorageUi.ts` with `loadStoredLabelMode` and `saveStoredLabelMode` (`stageflow:ui:label-mode`), persisting the user's label visibility preference across page reloads.
+  - Updated `BlueprintFloorGrid.tsx` with `showLabels` toggle and borderless micro-pill styling for the cardinal downstage/upstage markers.
+  - Added unit test coverage in `tests/unit/storage.test.ts` verifying label mode persistence and fallback.
 - **Camera Target Offset Visual Indicators & Core Telemetry**:
   - Added `baseTarget?: Vec3` and `targetOffset?: Vec3` to `EvaluatedCameraTrack` (`src/core/types.ts`) and forward-chaining evaluator (`src/core/trajectoryChain.ts`), providing live un-offset anchor points and active displacement vectors at native 60fps.
   - Implemented `StageCameraOffsetTether` (`src/stage/StageCameraOffsetTether.tsx`), rendering a 3D cyan anchor beacon at the subject's look anchor and a subtle dashed blueprint tether line connecting `baseTarget -> target` inside the diorama whenever target offset is active ($\ge 0.01\text{m}$).

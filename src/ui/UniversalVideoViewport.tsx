@@ -8,7 +8,7 @@
 
 import React, { useState } from 'react';
 import { Film, Globe, Sparkles, Check, Link2 } from 'lucide-react';
-import type { StageFrame, StageScore } from '../core/types';
+import type { LabelDisplayMode, StageFrame, StageScore } from '../core/types';
 import type { MediaSourceInfo } from '../media/mediaTypes';
 import { StageCamMonitorCanvas } from '../stage/StageCamMonitorCanvas';
 
@@ -20,6 +20,7 @@ export interface UniversalVideoViewportProps {
   frameRef: React.RefObject<StageFrame>;
   uiFrame: StageFrame;
   isPlaying: boolean;
+  labelMode?: LabelDisplayMode;
   onApplyVideoUrlOverride: (url: string) => void;
 }
 
@@ -30,6 +31,8 @@ export const UniversalVideoViewport: React.FC<UniversalVideoViewportProps> = ({
   youtubeContainerRef,
   frameRef,
   uiFrame,
+  isPlaying,
+  labelMode,
   onApplyVideoUrlOverride,
 }) => {
   const [isUrlPopoverOpen, setIsUrlPopoverOpen] = useState(false);
@@ -159,6 +162,8 @@ export const UniversalVideoViewport: React.FC<UniversalVideoViewportProps> = ({
               score={score}
               frameRef={frameRef}
               uiFrame={uiFrame}
+              labelMode={labelMode}
+              isPlaying={isPlaying}
             />
           )}
         </div>

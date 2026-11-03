@@ -67,7 +67,9 @@ Scene entities (`character`, `prop`, `marker`) are rendered with unambiguous ori
 - **Dynamic Floor Movement Trail**:
   - When an entity moves during the active shot (`trailPoints.length >= 2`), renders a dashed floor trajectory curve tracing their path across the stage.
 - **Floating Identity Badges (`StageBillboardLabel.tsx`)**:
-  - Uses `@react-three/drei` `<Html center distanceFactor={9}>` to float crisp monospace labels above each mannequin (`Subject A (Lead)`) and above the Stage Camera (`STAGE CAM · 50mm · ARC`).
+  - Uses `@react-three/drei` `<Html center distanceFactor={9}>` to render ultra-compact, borderless micro-pills (`rounded-full bg-slate-950/70 backdrop-blur-sm px-2 py-0.5 text-[9px] font-mono`) above each mannequin (`Subject A`) and above the Stage Camera (`STAGE CAM · 50mm · ARC`).
+  - **Selective Playback Ghosting**: While the scene is actively playing (`isPlaying === true`), actor/prop mannequin labels smoothly fade down to `20%` opacity (`opacity-20 transition-opacity duration-200`) so spatial trajectories and character blocking take center stage without visual clutter. The Stage Camera label remains at `100%` opacity so optical focal length and maneuver telemetry remain readable. When paused or scrubbing, all visible labels restore to full crispness.
+  - **Active Camera Focus Highlight**: When an entity is the active focus target of the camera (`highlighted === true`), its colored dot renders an accent glow (`boxShadow: 0 0 6px <color>`) with higher text brightness. Passive actors remain soft and muted.
 
 ---
 
@@ -120,6 +122,13 @@ Scene entities (`character`, `prop`, `marker`) are rendered with unambiguous ori
   - When `target_offset` is active ($\ge 0.01\text{m}$), automatically surfaces a cyan `OFFSET <magnitude>m` badge with crosshair icon and displays the exact world displacement vector `Δ [+X, +Y, +Z]m` in the optics row.
 - **Stage Cam Monitor Optical HUD (`StageCamMonitorCanvas.tsx`)**:
   - Displays live lens focal length, distance, yaw, roll degrees, and metric `OFFSET` magnitude in the bottom status bar.
-- Triggered when clicking "Reset" in the YAML drawer.
-- Confirms the deletion of the active draft from IndexedDB before reverting the score to its original bundled baseline.
+
+### 4.8 Viewport Label Visibility Toggle & Hotkey L (`LabelDisplayModeToggle.tsx`)
+- Floating top-right glassmorphic pill overlay mounted on the 3D diorama canvas.
+- Supports 3 distinct directorial visibility modes (`LabelDisplayMode`):
+  - **`All`**: Displays both actor/prop mannequins and Stage Camera labels with playback auto-ghosting.
+  - **`Cam` (`camera-only`)**: Hides actor/prop labels, keeping only the illustrative Stage Camera lens & maneuver badge.
+  - **`Off`**: Hides all 3D labels (including floor cardinal orientation tags) for an unobstructed geometric diorama.
+- **Global Hotkey `L`**: Cycles through `'all' -> 'camera-only' -> 'off' -> 'all'` at any time (ignored while typing in text inputs or code editors).
+- **Synchronous Persistence**: Preference is remembered across reloads via `localStorage` (`stageflow:ui:label-mode`).
 

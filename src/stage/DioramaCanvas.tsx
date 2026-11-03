@@ -8,6 +8,7 @@ import React from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import type {
   CameraViewMode,
+  LabelDisplayMode,
   SphericalPose,
   StageFrame,
   StageScore,
@@ -25,6 +26,7 @@ export interface DioramaCanvasProps {
   lastManualSeekIdRef: React.RefObject<number>;
   evaluateTick60fps: () => StageFrame;
   onFreeOrbitPoseChange: (pose: SphericalPose) => void;
+  labelMode?: LabelDisplayMode;
 }
 
 const FrameLoopTicker: React.FC<{ onTick: () => void }> = ({ onTick }) => {
@@ -44,6 +46,7 @@ export const DioramaCanvas: React.FC<DioramaCanvasProps> = ({
   lastManualSeekIdRef,
   evaluateTick60fps,
   onFreeOrbitPoseChange,
+  labelMode = 'all',
 }) => {
   return (
     <div className="relative w-full h-full bg-[#050811] select-none overflow-hidden">
@@ -68,6 +71,8 @@ export const DioramaCanvas: React.FC<DioramaCanvasProps> = ({
           score={score}
           frameRef={frameRef}
           uiFrame={uiFrame}
+          labelMode={labelMode}
+          isPlaying={isPlaying}
         />
 
         {/* 2. Viewport Observer Camera & Free-Orbit Handover Rig */}
@@ -85,6 +90,7 @@ export const DioramaCanvas: React.FC<DioramaCanvasProps> = ({
           frameRef={frameRef}
           cameraMode={cameraMode}
           uiFrame={uiFrame}
+          labelMode={labelMode}
         />
       </Canvas>
     </div>

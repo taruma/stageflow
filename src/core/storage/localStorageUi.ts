@@ -3,12 +3,14 @@
  * Safely handles environments where localStorage is disabled or restricted.
  */
 
+import type { LabelDisplayMode } from '../types';
 import type { SplitPreset } from '../../ui/WorkspaceHeader';
 
 const STORAGE_KEYS = {
   SPLIT_PRESET: 'stageflow:ui:split-preset',
   DRAWER_OPEN: 'stageflow:ui:yaml-drawer-open',
   ACTIVE_SCENE_ID: 'stageflow:ui:active-scene-id',
+  LABEL_MODE: 'stageflow:ui:label-mode',
 } as const;
 
 export function loadStoredSplitPreset(): SplitPreset | null {
@@ -67,6 +69,26 @@ export function loadStoredActiveSceneId(): string | null {
 export function saveStoredActiveSceneId(sceneId: string): void {
   try {
     localStorage.setItem(STORAGE_KEYS.ACTIVE_SCENE_ID, sceneId);
+  } catch {
+    // Ignore storage quota or access errors
+  }
+}
+
+export function loadStoredLabelMode(): LabelDisplayMode | null {
+  try {
+    const val = localStorage.getItem(STORAGE_KEYS.LABEL_MODE);
+    if (val === 'all' || val === 'camera-only' || val === 'off') {
+      return val;
+    }
+  } catch {
+    // Ignore localStorage access restrictions
+  }
+  return null;
+}
+
+export function saveStoredLabelMode(mode: LabelDisplayMode): void {
+  try {
+    localStorage.setItem(STORAGE_KEYS.LABEL_MODE, mode);
   } catch {
     // Ignore storage quota or access errors
   }

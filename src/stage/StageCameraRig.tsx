@@ -17,7 +17,7 @@ import React, { useRef, useMemo, useLayoutEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Line } from '@react-three/drei';
 import * as THREE from 'three';
-import type { CameraViewMode, StageFrame } from '../core/types';
+import type { CameraViewMode, LabelDisplayMode, StageFrame } from '../core/types';
 import { computeFrustumGateDimensions } from '../core/opticsMath';
 import { StageBillboardLabel } from './StageBillboardLabel';
 import { StageCameraOffsetTether } from './StageCameraOffsetTether';
@@ -58,12 +58,14 @@ export interface StageCameraRigProps {
   frameRef: React.RefObject<StageFrame>;
   cameraMode: CameraViewMode;
   uiFrame: StageFrame;
+  labelMode?: LabelDisplayMode;
 }
 
 export const StageCameraRig: React.FC<StageCameraRigProps> = ({
   frameRef,
   cameraMode,
   uiFrame,
+  labelMode = 'all',
 }) => {
   const rigGroupRef = useRef<THREE.Group | null>(null);
   const rollGroupRef = useRef<THREE.Group | null>(null);
@@ -244,6 +246,8 @@ export const StageCameraRig: React.FC<StageCameraRigProps> = ({
             sublabel={`${Math.round(pose.focalLengthMm)}mm · ${stageCam.maneuver.toUpperCase()}`}
             accentColor={color}
             highlighted
+            ghosted={false}
+            visible={labelMode !== 'off'}
           />
         )}
 

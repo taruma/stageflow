@@ -6,6 +6,8 @@ import {
   saveStoredYamlDrawerOpen,
   loadStoredActiveSceneId,
   saveStoredActiveSceneId,
+  loadStoredLabelMode,
+  saveStoredLabelMode,
 } from '../../src/core/storage/localStorageUi';
 
 describe('localStorageUi — Synchronous UI Preferences Persistence', () => {
@@ -71,5 +73,22 @@ describe('localStorageUi — Synchronous UI Preferences Persistence', () => {
 
     saveStoredActiveSceneId('blueprint-02-dialogue');
     expect(loadStoredActiveSceneId()).toBe('blueprint-02-dialogue');
+  });
+
+  it('saves and loads label display mode with fallback', () => {
+    expect(loadStoredLabelMode()).toBeNull();
+
+    saveStoredLabelMode('camera-only');
+    expect(loadStoredLabelMode()).toBe('camera-only');
+
+    saveStoredLabelMode('off');
+    expect(loadStoredLabelMode()).toBe('off');
+
+    saveStoredLabelMode('all');
+    expect(loadStoredLabelMode()).toBe('all');
+
+    // Invalid value fallback
+    globalThis.localStorage.setItem('stageflow:ui:label-mode', 'invalid-mode');
+    expect(loadStoredLabelMode()).toBeNull();
   });
 });

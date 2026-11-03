@@ -5,7 +5,8 @@
  * and Persistent Storage (IndexedDB scores + localStorage UI preferences).
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
+import type { LabelDisplayMode } from './core/types';
 import {
   INITIAL_CATALOG_ITEMS,
   type ScoreCatalogItem,
@@ -13,9 +14,11 @@ import {
 import { parseStageScore } from './core/scoreParser';
 import {
   loadStoredActiveSceneId,
+  loadStoredLabelMode,
   loadStoredSplitPreset,
   loadStoredYamlDrawerOpen,
   saveStoredActiveSceneId,
+  saveStoredLabelMode,
   saveStoredSplitPreset,
   saveStoredYamlDrawerOpen,
 } from './core/storage/localStorageUi';
@@ -36,6 +39,7 @@ import { CameraTelemetryCapsule } from './ui/CameraTelemetryCapsule';
 import { DirectorialTransportBar } from './ui/DirectorialTransportBar';
 import { YamlInspectorDrawer } from './ui/YamlInspectorDrawer';
 import { ConfirmResetModal } from './ui/ConfirmResetModal';
+import { LabelDisplayModeToggle } from './ui/LabelDisplayModeToggle';
 
 export const App: React.FC = () => {
   const [catalog, setCatalog] = useState<ScoreCatalogItem[]>(
@@ -57,6 +61,10 @@ export const App: React.FC = () => {
 
   const [isYamlDrawerOpen, setIsYamlDrawerOpenState] = useState<boolean>(
     () => loadStoredYamlDrawerOpen() ?? false
+  );
+
+  const [labelMode, setLabelModeState] = useState<LabelDisplayMode>(
+    () => loadStoredLabelMode() ?? 'all'
   );
 
   const initialItem =
@@ -86,6 +94,44 @@ export const App: React.FC = () => {
       return next;
     });
   }, []);
+
+  const handleSelectLabelMode = useCallback((mode: LabelDisplayMode) => {
+    setLabelModeState(mode);
+    saveStoredLabelMode(mode);
+  }, []);
+
+  const handleCycleLabelMode = useCallback(() => {
+    setLabelModeState((prev) => {
+      const next: LabelDisplayMode =
+        prev === 'all' ? 'camera-only' : prev === 'camera-only' ? 'off' : 'all';
+      saveStoredLabelMode(next);
+      return next;
+    });
+  }, []);
+
+  // Global hotkey 'L' to cycle label modes ('all' -> 'camera-only' -> 'off' -> 'all')
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.tagName === 'SELECT' ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+
+      if (e.key === 'l' || e.key === 'L') {
+        e.preventDefault();
+        handleCycleLabelMode();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleCycleLabelMode]);
 
   // IndexedDB Score Persistence Hook (Hydration, Draft Auto-saving, Confirmed Reset)
   const scorePersistence = useScorePersistence({
@@ -271,6 +317,7 @@ export const App: React.FC = () => {
             frameRef={stageLoop.frameRef}
             uiFrame={stageLoop.uiSnapshot.frame}
             isPlaying={mediaClock.isPlaying}
+            labelMode={labelMode}
             onApplyVideoUrlOverride={(url) => {
               setVideoOverrideUrl(url);
               mediaClock.seek(0);
@@ -289,6 +336,7 @@ export const App: React.FC = () => {
               lastManualSeekIdRef={mediaClock.lastManualSeekIdRef}
               evaluateTick60fps={stageLoop.evaluateTick60fps}
               onFreeOrbitPoseChange={stageLoop.notifyFreeOrbitChange}
+              labelMode={labelMode}
             />
 
             {/* Top-Left Shot & Lens Breakdown HUD */}
@@ -297,6 +345,12 @@ export const App: React.FC = () => {
               frame={stageLoop.uiSnapshot.frame}
               cameraMode={stageLoop.cameraMode}
               isPlaying={mediaClock.isPlaying}
+            />
+
+            {/* Top-Right Label Visibility Toggle Overlay (Hotkey: L) */}
+            <LabelDisplayModeToggle
+              labelMode={labelMode}
+              onSelectLabelMode={handleSelectLabelMode}
             />
 
             {/* Bottom-Right Authoring Telemetry Capsule + 1-Click YAML Copy */}

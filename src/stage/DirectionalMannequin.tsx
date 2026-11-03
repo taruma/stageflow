@@ -13,7 +13,7 @@ import React, { useRef, useMemo, useLayoutEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Line } from '@react-three/drei';
 import * as THREE from 'three';
-import type { EvaluatedEntityState, StageFrame } from '../core/types';
+import type { EvaluatedEntityState, LabelDisplayMode, StageFrame } from '../core/types';
 import { StageBillboardLabel } from './StageBillboardLabel';
 
 export interface DirectionalMannequinProps {
@@ -21,6 +21,8 @@ export interface DirectionalMannequinProps {
   initialState: EvaluatedEntityState;
   frameRef: React.RefObject<StageFrame>;
   uiFrame?: StageFrame;
+  labelMode?: LabelDisplayMode;
+  isPlaying?: boolean;
 }
 
 export const DirectionalMannequin: React.FC<DirectionalMannequinProps> = ({
@@ -28,6 +30,8 @@ export const DirectionalMannequin: React.FC<DirectionalMannequinProps> = ({
   initialState,
   frameRef,
   uiFrame,
+  labelMode = 'all',
+  isPlaying = false,
 }) => {
   const groupRef = useRef<THREE.Group | null>(null);
   const { def, highlighted, trailPoints } = initialState;
@@ -211,13 +215,14 @@ export const DirectionalMannequin: React.FC<DirectionalMannequinProps> = ({
           </mesh>
         )}
 
-        {/* Floating Identity Badge */}
+        {/* Floating Identity Badge (Ultra-Compact Micro-Pill) */}
         <StageBillboardLabel
           position={[0, height + 0.28, 0]}
           label={def.label}
-          sublabel={highlighted ? 'ACTIVE FOCUS' : undefined}
           accentColor={color}
           highlighted={highlighted}
+          ghosted={isPlaying}
+          visible={labelMode === 'all'}
         />
       </group>
     </group>

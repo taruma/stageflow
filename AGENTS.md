@@ -148,6 +148,7 @@ stageflow/
 │   │   ├── CameraTelemetryCapsule.tsx  # Live degree/meter readout with 1-click YAML snippet copy
 │   │   ├── DirectorialTransportBar.tsx # Shot-marker scrubber, shot chips, speed (0.25x-2x) & POV toggle
 │   │   ├── YamlInspectorDrawer.tsx  # Slide-out live YAML editor with non-blocking syntax diagnostics
+│   │   ├── LabelDisplayModeToggle.tsx # Floating 3-mode 3D diorama label toggle (All / Cam / Off)
 │   │   ├── ConfirmResetModal.tsx    # Accessible confirmation dialog modal for discarding drafts
 │   │   └── StorageStatusBadge.tsx   # Visual status badge (Bundled vs. IndexedDB draft)
 │   ├── App.tsx                      # Root application state wiring

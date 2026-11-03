@@ -59,6 +59,8 @@ export type CameraEasing =
 
 export type CameraViewMode = 'scripted' | 'free' | 'stage-pov';
 
+export type LabelDisplayMode = 'all' | 'camera-only' | 'off';
+
 export type EntityKind = 'character' | 'prop' | 'marker';
 
 export interface SceneEntityDef {

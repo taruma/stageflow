@@ -6,7 +6,7 @@
 
 import React from 'react';
 import { Canvas } from '@react-three/fiber';
-import type { StageFrame, StageScore } from '../core/types';
+import type { LabelDisplayMode, StageFrame, StageScore } from '../core/types';
 import { radToDeg } from '../core/sphericalMath';
 import { BlueprintStageScene } from './BlueprintStageScene';
 import { StageCamViewRig } from './StageCamViewRig';
@@ -15,12 +15,16 @@ export interface StageCamMonitorCanvasProps {
   score: StageScore;
   frameRef: React.RefObject<StageFrame>;
   uiFrame: StageFrame;
+  labelMode?: LabelDisplayMode;
+  isPlaying?: boolean;
 }
 
 export const StageCamMonitorCanvas: React.FC<StageCamMonitorCanvasProps> = ({
   score,
   frameRef,
   uiFrame,
+  labelMode = 'all',
+  isPlaying = false,
 }) => {
   const pose = uiFrame.stageCamera.transform.pose;
   const yawDeg = radToDeg(pose.yaw);
@@ -46,6 +50,8 @@ export const StageCamMonitorCanvas: React.FC<StageCamMonitorCanvasProps> = ({
           score={score}
           frameRef={frameRef}
           uiFrame={uiFrame}
+          labelMode={labelMode}
+          isPlaying={isPlaying}
         />
 
         {/* 60fps Stage Camera View Controller (Gated to cut atomically with UI state) */}
