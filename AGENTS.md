@@ -101,7 +101,8 @@ stageflow/
 ├── public/
 │   └── scores/
 │       ├── demo_blueprint.yaml      # Blueprint 01: Single-shot two-shot arc score
-│       └── blueprint_02_dialogue.yaml # Blueprint 02: 6-shot dialogue coverage flow
+│       ├── blueprint_02_dialogue.yaml # Blueprint 02: 6-shot dialogue coverage flow
+│       └── blueprint_03_ball_pass.yaml # Blueprint 03: 30m 3-actor ball pass, parabolic arc & roll tracking
 ├── src/
 │   ├── core/                        # Layer 1: Pure TypeScript Math, Optics & Stateless Frame Engine
 │   │   ├── types.ts                 # Canonical interfaces (StageScore, ShotCue, ObserverShotCue, StageFrame)

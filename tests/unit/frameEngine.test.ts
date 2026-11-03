@@ -490,4 +490,114 @@ shots:
     const fEndRecover = computeStageFrame(8.0, score!);
     expect(fEndRecover.stageCamera.transform.pose.roll).toBeCloseTo(0, 5);
   });
+
+  it('validates Blueprint 03 30m ball-pass choreography, parabolic arc, Ruby orbit, straight pass and camera roll tracking', () => {
+    const bp3Item = INITIAL_CATALOG_ITEMS.find(
+      (item) => item.id === 'blueprint-03-ball-pass'
+    );
+    expect(bp3Item).toBeDefined();
+    const score = bp3Item!.score;
+
+    expect(score.durationSec).toBe(16.0);
+    expect(score.shots).toHaveLength(6);
+    expect(score.observerShots).toBeUndefined();
+
+    // Verify 3 actors and prop
+    const arthur = score.entities.find((e) => e.id === 'arthur');
+    const ruby = score.entities.find((e) => e.id === 'ruby');
+    const mark = score.entities.find((e) => e.id === 'mark');
+    const ball = score.entities.find((e) => e.id === 'ball');
+
+    expect(arthur).toBeDefined();
+    expect(ruby).toBeDefined();
+    expect(mark).toBeDefined();
+    expect(ball).toBeDefined();
+
+    // Spatial distances: 20m Arthur to Ruby, 10m Ruby to Mark
+    expect(arthur!.position.x).toBe(-15);
+    expect(ruby!.position.x).toBe(5);
+    expect(mark!.position.x).toBe(15);
+    expect(ruby!.position.x - arthur!.position.x).toBe(20);
+    expect(mark!.position.x - ruby!.position.x).toBe(10);
+
+    // Frame at t = 0.0s (Arthur holds ball)
+    const f0 = computeStageFrame(0.0, score);
+    const ballPos0 = f0.entitiesById.get('ball')!.position;
+    expect(ballPos0.x).toBeCloseTo(-14.5, 2);
+    expect(ballPos0.y).toBeCloseTo(1.25, 2);
+
+    // Frame at t = 3.0s (Apex crest between Arthur and Ruby)
+    const f3 = computeStageFrame(3.0, score);
+    const ballPos3 = f3.entitiesById.get('ball')!.position;
+    expect(ballPos3.x).toBeCloseTo(-5.0, 2);
+    expect(ballPos3.y).toBeCloseTo(5.2, 2); // Peak parabolic elevation
+
+    // Frame at t = 6.0s (Ball reaches Ruby at hand height)
+    const f6 = computeStageFrame(6.0, score);
+    const ballPos6 = f6.entitiesById.get('ball')!.position;
+    expect(ballPos6.x).toBeCloseTo(4.6, 2);
+    expect(ballPos6.y).toBeCloseTo(1.25, 2);
+
+    // Frame at t = 8.5s (End of Orbit Shot 1, ball at flank of Ruby)
+    const f8_5 = computeStageFrame(8.5, score);
+    const ballPos8_5 = f8_5.entitiesById.get('ball')!.position;
+    expect(ballPos8_5.x).toBeCloseTo(6.4, 2);
+    expect(ballPos8_5.z).toBeCloseTo(0.2, 2);
+
+    // Frame at t = 11.0s (End of Orbit Shot 2, ball aligned at release point)
+    const f11 = computeStageFrame(11.0, score);
+    const ballPos11 = f11.entitiesById.get('ball')!.position;
+    expect(ballPos11.x).toBeCloseTo(5.6, 2);
+    expect(ballPos11.y).toBeCloseTo(1.25, 2);
+
+    // Frame at t = 16.0s (Straight bullet arrival at Mark)
+    const f16 = computeStageFrame(16.0, score);
+    const ballPos16 = f16.entitiesById.get('ball')!.position;
+    expect(ballPos16.x).toBeCloseTo(14.6, 2);
+    expect(ballPos16.y).toBeCloseTo(1.25, 2);
+    expect(ballPos16.z).toBeCloseTo(0.0, 2);
+
+    // Camera Sole Ball Tracking & Roll Across Shots
+    // In every shot, target points directly to the ball's look-at anchor
+    for (let t = 0.5; t < 16.0; t += 2.5) {
+      const ft = computeStageFrame(t, score);
+      const liveBall = ft.entitiesById.get('ball')!;
+      const camTarget = ft.stageCamera.transform.target;
+      expect(camTarget.x).toBeCloseTo(liveBall.position.x, 2);
+      expect(camTarget.z).toBeCloseTo(liveBall.position.z, 2);
+    }
+
+    // Shot 1 has positive roll (+14 deg = ~0.244 rad)
+    const fShot1 = computeStageFrame(1.5, score);
+    expect(fShot1.stageCamera.transform.pose.roll).toBeCloseTo(
+      14 * (Math.PI / 180),
+      3
+    );
+
+    // Shot 2 has negative roll (-18 deg = ~-0.314 rad)
+    const fShot2 = computeStageFrame(4.5, score);
+    expect(fShot2.stageCamera.transform.pose.roll).toBeCloseTo(
+      -18 * (Math.PI / 180),
+      3
+    );
+
+    // Shot 3 has positive roll (+22 deg = ~0.384 rad)
+    const fShot3 = computeStageFrame(7.0, score);
+    expect(fShot3.stageCamera.transform.pose.roll).toBeCloseTo(
+      22 * (Math.PI / 180),
+      3
+    );
+
+    // Shot 6 settles back to 0 roll on final catch
+    const fShot6 = computeStageFrame(15.9, score);
+    expect(fShot6.stageCamera.transform.pose.roll).toBeCloseTo(0, 3);
+
+    // Observer Camera has no scripted cuts and holds steady at stage baseline
+    const obsPose0 = f0.observerCamera.transform.pose;
+    const obsPose16 = f16.observerCamera.transform.pose;
+    expect(obsPose0.distance).toBe(30.0);
+    expect(obsPose16.distance).toBe(30.0);
+    expect(obsPose0.pitch).toBeCloseTo(obsPose16.pitch, 5);
+    expect(obsPose0.yaw).toBeCloseTo(obsPose16.yaw, 5);
+  });
 });

@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Blueprint 03 Choreography Example: "The Long Distance Pass" (`public/scores/blueprint_03_ball_pass.yaml`)**:
+  - Authored a 30-meter, 3-actor, 6-shot dynamic choreography score illustrating:
+    - Wide-span spatial staging with three characters aligned along the $X$-axis: Arthur at $X = -15\text{m}$, Ruby at $X = +5\text{m}$ ($20\text{m}$ span), and Mark at $X = +15\text{m}$ ($10\text{m}$ span).
+    - Parabolic projectile arc for the ball pass from Arthur to Ruby utilizing gravity deceleration and acceleration: Shot 1 ascent to $5.2\text{m}$ apex using `ease-out`, followed by Shot 2 steep descent into Ruby's hands using `ease-in`.
+    - Multi-second centrifugal ball orbit around Ruby across Shots 3 and 4 ($t = 6.0\text{s} \to 11.0\text{s}$) with dynamic actor gaze tracking (`look_at: "ball"`).
+    - High-speed straight-line bullet pass from Ruby to Mark across Shots 5 and 6 ($10\text{m}$ direct horizontal trajectory at $Y = 1.25\text{m}$).
+    - Stage camera solely tracking the ball (`target: "ball"`) across all 6 shots with varied lenses ($28\text{mm}$, $35\text{mm}$, $50\text{mm}$, $65\text{mm}$, $85\text{mm}$) and expressive Dutch roll angles ($+14^\circ$, $-18^\circ$, $+22^\circ$, $-16^\circ$, dynamic roll swing $-12^\circ \to +12^\circ$, and settling to $0^\circ$ on catch).
+    - Viewport diorama camera left unscripted (omitted `observer_shots:`), enabling full free orbit inspection at all times.
+  - Registered Blueprint 03 in `src/core/scoreCatalog.ts` alongside Blueprint 01 and 02.
+  - Updated unit test catalog assertions in `tests/unit/scoreParser.test.ts` and added comprehensive deterministic choreography verification in `tests/unit/frameEngine.test.ts`.
 - **Camera Roll (Dutch Angle / Banking) Support across Layers 1–5**:
   - `SphericalPose.roll` added in radians (`src/core/types.ts`), parameterizing camera rotation around the optical sightline with zero position drift.
   - Orthonormal rolled up-vector `CameraTransform3D.up` derived analytically in `sphericalToCartesian` (`src/core/sphericalMath.ts`) using $\vec{U}_{\text{rolled}} = \cos(\gamma)\vec{U}_0 + \sin(\gamma)\vec{R}_0$.

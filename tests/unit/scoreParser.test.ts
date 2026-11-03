@@ -132,8 +132,8 @@ shots:
     expect(res2.score?.videoUrl).toBe('https://youtu.be/dQw4w9WgXcQ');
   });
 
-  it('registers and bundles Blueprint 01 and Blueprint 02 in the initial catalog', () => {
-    expect(INITIAL_CATALOG_ITEMS).toHaveLength(2);
+  it('registers and bundles Blueprint 01, Blueprint 02, and Blueprint 03 in the initial catalog', () => {
+    expect(INITIAL_CATALOG_ITEMS).toHaveLength(3);
 
     const bp01 = INITIAL_CATALOG_ITEMS[0];
     expect(bp01.id).toBe('demo-blueprint');
@@ -153,6 +153,20 @@ shots:
     ]);
     expect(bp02.score.observerShots).toBeDefined();
     expect(bp02.score.observerShots).toHaveLength(3);
+
+    const bp03 = INITIAL_CATALOG_ITEMS[2];
+    expect(bp03.id).toBe('blueprint-03-ball-pass');
+    expect(bp03.score.durationSec).toBe(16);
+    expect(bp03.score.shots).toHaveLength(6);
+    expect(bp03.score.observerShots).toBeUndefined();
+    expect(bp03.score.shots.map((s) => s.stageCamera?.maneuver)).toEqual([
+      'dolly',
+      'swoop',
+      'arc',
+      'dolly',
+      'dolly',
+      'recoil',
+    ]);
   });
 
   it('parses root-level observer_shots with flattened camera properties into ObserverShotCue[]', () => {

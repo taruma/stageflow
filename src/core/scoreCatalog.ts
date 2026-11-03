@@ -4,6 +4,7 @@
 
 import demoBlueprintRaw from '../../public/scores/demo_blueprint.yaml?raw';
 import blueprint02Raw from '../../public/scores/blueprint_02_dialogue.yaml?raw';
+import blueprint03Raw from '../../public/scores/blueprint_03_ball_pass.yaml?raw';
 import type { StageScore } from './types';
 import { parseStageScore } from './scoreParser';
 
@@ -30,6 +31,13 @@ if (!parsed02.score) {
   );
 }
 
+const parsed03 = parseStageScore(blueprint03Raw, 'blueprint-03-ball-pass');
+if (!parsed03.score) {
+  throw new Error(
+    `Failed to parse bundled blueprint_03_ball_pass.yaml: ${parsed03.error}`
+  );
+}
+
 export const INITIAL_CATALOG_ITEMS: ScoreCatalogItem[] = [
   {
     id: parsedDemo.score.id,
@@ -44,5 +52,12 @@ export const INITIAL_CATALOG_ITEMS: ScoreCatalogItem[] = [
     subtitle: parsed02.score.subtitle,
     rawYaml: blueprint02Raw,
     score: parsed02.score,
+  },
+  {
+    id: parsed03.score.id,
+    title: parsed03.score.title,
+    subtitle: parsed03.score.subtitle,
+    rawYaml: blueprint03Raw,
+    score: parsed03.score,
   },
 ];
