@@ -27,11 +27,13 @@ This is the authoritative operating guide for AI agents working in **StageFlow**
 
 ### 2.3 Living Documentation as Single Source of Truth (SSOT)
 - **Documentation and codebase must never drift.** With **every code change**, the agent MUST proactively audit and update [`AGENTS.md`](AGENTS.md), [`README.md`](README.md), [`SPECIFICATION.md`](SPECIFICATION.md), and the domain specifications in [`docs/`](docs/) as part of completing the task.
+- **Detailed `CHANGELOG.md` Tracking (`## [Unreleased]`)**: Every change must be recorded in [`CHANGELOG.md`](CHANGELOG.md) under the `## [Unreleased]` section. Bullet points must reflect granular details derived directly from pending file diffs (`git diff HEAD`).
+- **Showrunner Versioning & Release Authority**: Version numbers, release checkpoints, and Git tagging (`git tag`) are strictly decided and executed by Taruma. The agent never increments version numbers or tags releases autonomously.
 - Always cross-verify documentation claims against the **actual current state of the codebase** before and after implementation. Taruma should never have to remind the agent to update docs.
 - **Strict 24,000-Byte Root Cap (`AGENTS.md` vs. `docs/*.md`)**: Antigravity enforces a hard `24,000-byte` per-file inline rule limit on `AGENTS.md`. Keep `AGENTS.md` concise (holding universal governance, architecture maps, and invariant digests) and place deep technical specifications verbatim inside the corresponding `docs/*.md` files.
 
 ### 2.4 Never Commit Autonomously
-- Never run `git commit` or `git push`. Committing and pushing are strictly human-in-the-loop actions reserved for Taruma.
+- Never run `git commit`, `git push`, or `git tag`. Committing, pushing, and tagging are strictly human-in-the-loop actions reserved for Taruma.
 - Upon concluding every verified task, run `git status` and `git diff HEAD`, then **propose a ready-to-copy Conventional Commit message** derived strictly from the full pending diff:
 
 ```text
@@ -88,6 +90,7 @@ Each layer depends only on the layers below it.
 ```text
 stageflow/
 ├── AGENTS.md                        # Root governance, workflow rules & invariant router (< 24 KB)
+├── CHANGELOG.md                     # Semantic version release log & unreleased change tracking
 ├── SPECIFICATION.md                 # Foundational product vision & system mechanics
 ├── README.md                        # Quickstart overview & CLI command reference
 ├── docs/                            # Detailed technical & architectural specifications (SSOT)
@@ -174,4 +177,5 @@ Before reporting completion of any task:
 1. Run `npm test`, `npm run build`, and `npm run lint`.
 2. Verify that no monolithic files were introduced and layer boundaries remain pure.
 3. Audit [`AGENTS.md`](AGENTS.md) and [`docs/*.md`](docs/) against the current state of the app and update any affected specifications or file maps.
-4. Run `git status` and `git diff HEAD` and provide a ready-to-copy Conventional Commit message.
+4. Record granular change bullets in [`CHANGELOG.md`](CHANGELOG.md) under `## [Unreleased]` based directly on pending diffs (`git diff HEAD`).
+5. Run `git status` and `git diff HEAD` and provide a ready-to-copy Conventional Commit message.

@@ -31,6 +31,7 @@ It synchronizes a universal video player (**Local `.mp4`/`.webm`**, **YouTube UR
 StageFlow is organized into a strictly decoupled **5-Layer Architecture** (`core/` $\to$ `media/` $\to$ `hooks/` $\to$ `stage/` & `ui/`). See the living specification suite for complete details:
 
 - [**`AGENTS.md`**](AGENTS.md) — Repository governance, non-negotiable invariants, and 5-layer architecture map.
+- [**`CHANGELOG.md`**](CHANGELOG.md) — Semantic version release history, milestone checkpoints, and unreleased change tracking.
 - [**`SPECIFICATION.md`**](SPECIFICATION.md) — Product vision and core system mechanics.
 - [**`docs/YAML_AUTHORING_GUIDE.md`**](docs/YAML_AUTHORING_GUIDE.md) — Comprehensive YAML choreography score manual, coordinate compass, lens table, maneuvers, and cinematography recipes.
 - [**`docs/CORE_MATH_AND_SCORE_SPECIFICATIONS.md`**](docs/CORE_MATH_AND_SCORE_SPECIFICATIONS.md) — Layer 1 stateless math (`Frame_t = f(t)`), metric/degree conventions, lens optics (`mm`), and YAML score schema.
