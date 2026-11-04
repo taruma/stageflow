@@ -1,6 +1,6 @@
 # Core Math, Optics & Choreography Score Specifications
 
-This document is the authoritative technical specification for **Layer 1 (`src/core/`)** and the **YAML Choreography Score Schema (`public/scores/*.yaml`)** in **StageFlow**. It is governed by [`AGENTS.md`](../AGENTS.md).
+This document is the authoritative technical specification for **Layer 1 (`src/core/`)** and the **YAML Choreography Score Schema (`src/scores/*.yaml`)** in **StageFlow**. It is governed by [`AGENTS.md`](../AGENTS.md).
 
 ---
 
@@ -123,7 +123,7 @@ In [`trajectoryChain.ts`](../src/core/trajectoryChain.ts) and [`entityEngine.ts`
 
 ## 5. Declarative YAML Choreography Schema (`scoreParser.ts`)
 
-Scores are authored in human-readable YAML (see [`public/scores/demo_blueprint.yaml`](../public/scores/demo_blueprint.yaml)):
+Scores are authored in human-readable YAML (see [`src/scores/demo_blueprint.yaml`](../src/scores/demo_blueprint.yaml)):
 
 ```yaml
 version: "1.0"

@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Refactored
+- **Relocated Bundled Scores to `src/scores/` (`scoreCatalog.ts`)**:
+  - Moved default choreography scores from `public/scores/` to `src/scores/` (`demo_blueprint.yaml`, `blueprint_02_dialogue.yaml`, `blueprint_03_ball_pass.yaml`, `blueprint_04_cinematography_tutorial.yaml`).
+  - Updated bundled raw YAML string imports in `src/core/scoreCatalog.ts` from `../../public/scores/*.yaml?raw` to `../scores/*.yaml?raw`.
+  - Resolved Vite dev server warning (`Assets in public directory cannot be imported from JavaScript`), aligning bundled asset structure with Vite module bundling standards.
+  - Synchronized file tree references in `AGENTS.md` and `docs/CORE_MATH_AND_SCORE_SPECIFICATIONS.md`.
+
 ### Fixed
 - **Explicit `direction: "ccw" | "cw"` Priority on Spanned Orbits (`maneuver: "orbit"` with `yaw_start` & `yaw_end`)**:
   - Resolved an evaluation order issue in `src/core/maneuvers.ts` where shots declaring both `yaw_start` and `yaw_end` executed raw linear subtraction `(yaw_end - yaw_start) * u`, inadvertently short-circuiting `directedAngleDiff` and causing `yaw_start: 175` -> `yaw_end: 0` with `direction: "ccw"` to rotate clockwise ($-175^\circ$) instead of counter-clockwise ($+185^\circ$).

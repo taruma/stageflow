@@ -2,10 +2,10 @@
  * Bundled scene catalog registry for StageFlow.
  */
 
-import demoBlueprintRaw from '../../public/scores/demo_blueprint.yaml?raw';
-import blueprint02Raw from '../../public/scores/blueprint_02_dialogue.yaml?raw';
-import blueprint03Raw from '../../public/scores/blueprint_03_ball_pass.yaml?raw';
-import blueprint04Raw from '../../public/scores/blueprint_04_cinematography_tutorial.yaml?raw';
+import demoBlueprintRaw from '../scores/demo_blueprint.yaml?raw';
+import blueprint02Raw from '../scores/blueprint_02_dialogue.yaml?raw';
+import blueprint03Raw from '../scores/blueprint_03_ball_pass.yaml?raw';
+import blueprint04Raw from '../scores/blueprint_04_cinematography_tutorial.yaml?raw';
 import type { StageScore } from './types';
 import { parseStageScore } from './scoreParser';
 

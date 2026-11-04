@@ -59,7 +59,7 @@ Types: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`.
 
 > [!IMPORTANT]
 > Detailed technical specifications are modularized under [`docs/`](docs/). Before planning, inspecting, or modifying files in any domain below, the agent **MUST** call `read_file` on the corresponding specification document:
-> - **Layer 1: Core Math, Optics, Trajectories & YAML Score Schema** (`src/core/*`, `public/scores/*.yaml`, `tests/unit/*`): Read [`docs/CORE_MATH_AND_SCORE_SPECIFICATIONS.md`](docs/CORE_MATH_AND_SCORE_SPECIFICATIONS.md) and [`docs/YAML_AUTHORING_GUIDE.md`](docs/YAML_AUTHORING_GUIDE.md).
+> - **Layer 1: Core Math, Optics, Trajectories & YAML Score Schema** (`src/core/*`, `src/scores/*.yaml`, `tests/unit/*`): Read [`docs/CORE_MATH_AND_SCORE_SPECIFICATIONS.md`](docs/CORE_MATH_AND_SCORE_SPECIFICATIONS.md) and [`docs/YAML_AUTHORING_GUIDE.md`](docs/YAML_AUTHORING_GUIDE.md).
 > - **Layer 2 & 3: Universal Media Clock, YouTube Sync & Dual-Tier 60fps Loop** (`src/media/*`, `src/hooks/*`): Read [`docs/MEDIA_CLOCK_AND_SYNC_SPECIFICATIONS.md`](docs/MEDIA_CLOCK_AND_SYNC_SPECIFICATIONS.md).
 > - **Layer 4 & 5: 3D Blueprint Diorama, Dual-Camera Rigs & 2D Workspace UI** (`src/stage/*`, `src/ui/*`, `src/App.tsx`): Read [`docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md`](docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md).
 
@@ -98,13 +98,13 @@ stageflow/
 │   ├── CORE_MATH_AND_SCORE_SPECIFICATIONS.md
 │   ├── MEDIA_CLOCK_AND_SYNC_SPECIFICATIONS.md
 │   └── DIORAMA_3D_AND_UI_SPECIFICATIONS.md
-├── public/
-│   └── scores/
-│       ├── demo_blueprint.yaml      # Blueprint 01: Single-shot two-shot arc score
-│       ├── blueprint_02_dialogue.yaml # Blueprint 02: 6-shot dialogue coverage flow
-│       ├── blueprint_03_ball_pass.yaml # Blueprint 03: 30m 3-actor ball pass, parabolic arc & roll tracking
-│       └── blueprint_04_cinematography_tutorial.yaml # Blueprint 04: 16-shot framing, movement, roll & offset tutorial
+├── public/                          # Static web assets & media files
 ├── src/
+│   ├── scores/                      # Bundled Choreography Scores (*.yaml)
+│   │   ├── demo_blueprint.yaml      # Blueprint 01: Single-shot two-shot arc score
+│   │   ├── blueprint_02_dialogue.yaml # Blueprint 02: 6-shot dialogue coverage flow
+│   │   ├── blueprint_03_ball_pass.yaml # Blueprint 03: 30m 3-actor ball pass, parabolic arc & roll tracking
+│   │   └── blueprint_04_cinematography_tutorial.yaml # Blueprint 04: 16-shot framing, movement, roll & offset tutorial
 │   ├── core/                        # Layer 1: Pure TypeScript Math, Optics & Stateless Frame Engine
 │   │   ├── types.ts                 # Canonical interfaces (StageScore, ShotCue, ObserverShotCue, StageFrame)
 │   │   ├── constants.ts             # Metric bounds, sensor constants, blueprint color palette
