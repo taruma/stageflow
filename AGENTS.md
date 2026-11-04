@@ -98,6 +98,10 @@ stageflow/
 │   ├── CORE_MATH_AND_SCORE_SPECIFICATIONS.md
 │   ├── MEDIA_CLOCK_AND_SYNC_SPECIFICATIONS.md
 │   └── DIORAMA_3D_AND_UI_SPECIFICATIONS.md
+├── .agents/                         # Autonomous agent workspace & toolkits
+│   └── skills/
+│       └── scene-score-decoder/     # Multimodal Vector Film video-to-score compiler skill
+│           └── SKILL.md
 ├── public/                          # Static web assets & media files
 ├── src/
 │   ├── scores/                      # Bundled Choreography Scores (*.yaml)
