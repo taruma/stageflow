@@ -7,11 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-- **Vector Film to StageFlow Choreography Decoder Skill (`.agents/skills/scene-score-decoder/SKILL.md`)**:
-  - Authored a Video-First multimodal video-to-score compilation runbook: (1) native video inspection via `read_file` on `.mp4` as SSOT, (2) studio metadata and cast reference portrait grounding (`scene.md`, `casting.md`, `cast/<ACTOR>/reference.*`), and (3) cache-first `PySceneDetect` (`detect-adaptive`) cut detection and `ffmpeg` keyframe extraction for final anatomical Left/Right (`yaw`) verification.
-  - Standardized organized, reusable per-scene cache directories under `vector-film/_dropbox/_stageflow/<SCENE-ID>-<slug>/` (`scenes.csv`, `frames/`, and downloadable `<SCENE-ID>-<slug>.yaml`), keeping all git repositories 100% clean while binding the score's root `video:` key to the canonical YouTube URL (`video_url`).
-
 ### Refactored
 - **Modularized Trajectory Chain Submodules (`trajectoryChain.ts` -> `cameraTargetResolver.ts` + `shotPoseEvaluator.ts`)**:
   - Decomposed 640-line `src/core/trajectoryChain.ts` into three single-responsibility, strictly acyclic Layer 1 submodules:
