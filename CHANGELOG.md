@@ -23,6 +23,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added unit test coverage in `tests/unit/frameEngine.test.ts`.
 
 ### Added
+- **Dynamic Floor-Clamped 3D Orbit Navigation (`computeFloorClampedMaxPolarAngle`)**:
+  - Replaced the static `maxPolarAngle = 0.49π` (~$88.2^\circ$) limit on `OrbitControls` in `ObserverCameraRig.tsx` with height-aware floor clearance calculations.
+  - Implemented `computeFloorClampedMaxPolarAngle` in `src/core/sphericalMath.ts` alongside constants `MIN_FLOOR_CLEARANCE_M = 0.05` and `MAX_SAFE_POLAR_ANGLE_RAD = Math.PI * 0.98` (~$176.4^\circ$).
+  - Unlocked full $360^\circ$ vertical orbit inspection around flying, aerial, and elevated entities in 3D air without bottom-pole gimbal locks.
+  - Enabled true directorial low-angle / worm's-eye views down to floor level ($Y = 0.05\text{m}$) looking up at actors, while stopping smoothly at the floor plane without clipping through the stage grid into the underground void.
+  - Added pan target and camera position guards in `ObserverCameraRig.tsx` to prevent panning into negative $Y$.
+  - Added 6 unit tests in `tests/unit/sphericalMath.test.ts` verifying clearance calculations across ground, aerial, balcony, and floor targets.
+  - Updated Layer 4 diorama specifications in `docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md`.
 - **Stage Cam POV Director's Optical Viewfinder & Composition Guides**:
   - Implemented `StageCamViewfinderOverlay` (`src/ui/StageCamViewfinderOverlay.tsx`), an optical viewfinder overlay automatically engaging in `Stage Cam POV` (`cameraMode === 'stage-pov'`).
   - Added an active film gate frame matching `score.aspectRatio` (`16:9`, `2.39:1`) with luminous corner brackets, an optical gate stamp (`REC GATE · 16:9 · 50mm`), and an **82% darkened blueprint obsidian Look-Around veil** (`rgba(5, 8, 17, 0.82)`) shading the off-camera perimeter.

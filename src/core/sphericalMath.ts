@@ -203,3 +203,48 @@ export function computeLookAtYawRad(from: Vec3, to: Vec3): number {
   }
   return Math.atan2(dx, dz);
 }
+
+/**
+ * Minimum allowable camera elevation in meters above the ground floor (Y = 0).
+ */
+export const MIN_FLOOR_CLEARANCE_M = 0.05;
+
+/**
+ * Maximum safe polar angle in radians (~176.4°) to prevent bottom-pole gimbal singularities.
+ */
+export const MAX_SAFE_POLAR_ANGLE_RAD = Math.PI * 0.98;
+
+/**
+ * Computes the maximum allowable OrbitControls polar angle (in radians) such that
+ * the camera's world-space elevation never drops below `minFloorY`.
+ *
+ * Mathematical derivation:
+ *   Y_cam = target.y + R * cos(phi) >= minFloorY
+ *   cos(phi) >= (minFloorY - target.y) / R
+ *
+ * When the target is high in the air (target.y - minFloorY >= R), full vertical orbit
+ * (up to MAX_SAFE_POLAR_ANGLE_RAD) is unlocked.
+ */
+export function computeFloorClampedMaxPolarAngle(
+  targetY: number,
+  distance: number,
+  minFloorY: number = MIN_FLOOR_CLEARANCE_M,
+  maxSafeAngleRad: number = MAX_SAFE_POLAR_ANGLE_RAD
+): number {
+  const safeDist = Math.max(0.001, distance);
+  const cosMax = (minFloorY - targetY) / safeDist;
+
+  // Fully elevated: even looking directly from below, camera remains above minFloorY
+  if (cosMax <= -1.0) {
+    return maxSafeAngleRad;
+  }
+
+  // Target is at or below floor clearance: clamp to horizontal or tighter
+  if (cosMax >= 1.0) {
+    return 0.01;
+  }
+
+  const calculatedAngle = Math.acos(cosMax);
+  return Math.min(maxSafeAngleRad, calculatedAngle);
+}
+

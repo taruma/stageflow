@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
   cartesianToSpherical,
+  computeFloorClampedMaxPolarAngle,
   computeLookAtYawRad,
   degToRad,
   directedAngleDiff,
+  MAX_SAFE_POLAR_ANGLE_RAD,
+  MIN_FLOOR_CLEARANCE_M,
   radToDeg,
   shortestAngleDiff,
   sphericalToCartesian,
@@ -215,5 +218,65 @@ describe('sphericalMath — Metric Coordinates & Shortest-Angle Unwrapping', () 
     expect(radToDeg(directedAngleDiff(target2, start2, 'cw'))).toBeCloseTo(-175, 4);
     // CCW: moves along positive arc (+185 deg)
     expect(radToDeg(directedAngleDiff(target2, start2, 'ccw'))).toBeCloseTo(185, 4);
+  });
+
+  describe('computeFloorClampedMaxPolarAngle — Dynamic Floor Clearance', () => {
+    it('allows ground actor to be viewed from knee/floor level (> 90 deg)', () => {
+      // Actor chest at Y = 1.2m, camera distance = 4.0m
+      const maxAngle = computeFloorClampedMaxPolarAngle(1.2, 4.0);
+      const angleDeg = radToDeg(maxAngle);
+
+      // (0.05 - 1.2) / 4.0 = -0.2875 -> acos(-0.2875) = ~106.7 deg
+      expect(angleDeg).toBeGreaterThan(90);
+      expect(angleDeg).toBeCloseTo(106.71, 1);
+
+      // Verify camera at this max angle sits exactly at MIN_FLOOR_CLEARANCE_M (0.05m)
+      const camY = 1.2 + 4.0 * Math.cos(maxAngle);
+      expect(camY).toBeCloseTo(MIN_FLOOR_CLEARANCE_M, 4);
+    });
+
+    it('unlocks full bottom view (~176.4 deg) for high aerial / flying entities', () => {
+      // Flying entity at Y = 10.0m, camera distance = 4.0m
+      // Lowest camera point at bottom pole would be Y = 10 - 4 = 6.0m (well above 0.05m)
+      const maxAngle = computeFloorClampedMaxPolarAngle(10.0, 4.0);
+      expect(maxAngle).toBeCloseTo(MAX_SAFE_POLAR_ANGLE_RAD, 6);
+      expect(radToDeg(maxAngle)).toBeCloseTo(176.4, 1);
+    });
+
+    it('dynamically tightens allowed polar angle as distance to elevated subject increases', () => {
+      // Balcony / 2nd-floor actor at Y = 3.5m
+      // At distance = 2.0m: min cam Y is 1.5m -> full bottom orbit unlocked
+      const angleClose = computeFloorClampedMaxPolarAngle(3.5, 2.0);
+      expect(angleClose).toBeCloseTo(MAX_SAFE_POLAR_ANGLE_RAD, 5);
+
+      // At distance = 5.0m: min cam Y would dip below ground -> clamped to ~133.6 deg
+      const angleFar = computeFloorClampedMaxPolarAngle(3.5, 5.0);
+      expect(radToDeg(angleFar)).toBeLessThan(176.4);
+      expect(radToDeg(angleFar)).toBeCloseTo(133.63, 1);
+
+      const camYFar = 3.5 + 5.0 * Math.cos(angleFar);
+      expect(camYFar).toBeCloseTo(MIN_FLOOR_CLEARANCE_M, 4);
+    });
+
+    it('clamps to horizontal (90 deg) when target is exactly at floor clearance', () => {
+      // Object on floor at Y = 0.05m
+      const maxAngle = computeFloorClampedMaxPolarAngle(0.05, 3.0);
+      expect(radToDeg(maxAngle)).toBeCloseTo(90, 4);
+    });
+
+    it('clamps tightly when target is at or below floor level', () => {
+      // Target below floor clearance (e.g. Y = 0.0m or Y = -0.5m)
+      const maxAngleZero = computeFloorClampedMaxPolarAngle(0.0, 3.0);
+      expect(radToDeg(maxAngleZero)).toBeLessThan(90);
+
+      const maxAngleDeep = computeFloorClampedMaxPolarAngle(-1.0, 0.5);
+      expect(maxAngleDeep).toBe(0.01);
+    });
+
+    it('handles near-zero distance gracefully without NaN', () => {
+      const angle = computeFloorClampedMaxPolarAngle(1.0, 0.0);
+      expect(Number.isFinite(angle)).toBe(true);
+      expect(angle).toBeGreaterThan(0);
+    });
   });
 });

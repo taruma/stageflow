@@ -17,7 +17,12 @@ import type {
   SphericalPose,
   StageFrame,
 } from '../core/types';
-import { cartesianToSpherical } from '../core/sphericalMath';
+import {
+  cartesianToSpherical,
+  computeFloorClampedMaxPolarAngle,
+  MAX_SAFE_POLAR_ANGLE_RAD,
+  MIN_FLOOR_CLEARANCE_M,
+} from '../core/sphericalMath';
 import {
   computeViewfinderCanvasFovDeg,
   verticalFovDegToFocalLengthMm,
@@ -78,6 +83,13 @@ export const ObserverCameraRig: React.FC<ObserverCameraRigProps> = ({
         transform.target.x,
         transform.target.y,
         transform.target.z
+      );
+      const dist = persp.position.distanceTo(controlsRef.current.target);
+      controlsRef.current.maxPolarAngle = computeFloorClampedMaxPolarAngle(
+        transform.target.y,
+        dist,
+        MIN_FLOOR_CLEARANCE_M,
+        MAX_SAFE_POLAR_ANGLE_RAD
       );
       controlsRef.current.update();
     } else {
@@ -150,12 +162,33 @@ export const ObserverCameraRig: React.FC<ObserverCameraRigProps> = ({
           : frame.observerCamera.transform;
 
         applyTransformImperatively(transform, 'scripted');
+        return;
       }
-      return;
     }
 
-    // 3. FREE ORBIT MODE:
-    //    - OrbitControls remains in full user control even while playing
+    // 3. FREE ORBIT MODE / PAUSED SCRIPTED MODE:
+    // Update dynamic floor clearance and enforce ground safety clamp
+    if (isOrbitEnabled && controlsRef.current) {
+      const controls = controlsRef.current;
+      const dist = camera.position.distanceTo(controls.target);
+      controls.maxPolarAngle = computeFloorClampedMaxPolarAngle(
+        controls.target.y,
+        dist,
+        MIN_FLOOR_CLEARANCE_M,
+        MAX_SAFE_POLAR_ANGLE_RAD
+      );
+
+      // Hardware floor clearance clamp: ensure camera position never drops below MIN_FLOOR_CLEARANCE_M
+      if (camera.position.y < MIN_FLOOR_CLEARANCE_M) {
+        camera.position.y = MIN_FLOOR_CLEARANCE_M;
+        camera.updateMatrixWorld();
+      }
+
+      // Prevent panning target into the underground void
+      if (controls.target.y < MIN_FLOOR_CLEARANCE_M) {
+        controls.target.y = MIN_FLOOR_CLEARANCE_M;
+      }
+    }
   });
 
   // OrbitControls is enabled in 'free' mode or in 'scripted' mode while paused
@@ -166,6 +199,24 @@ export const ObserverCameraRig: React.FC<ObserverCameraRigProps> = ({
     if (!isOrbitEnabled || !controlsRef.current) return;
     const persp = camera as THREE.PerspectiveCamera;
     const tgt = controlsRef.current.target;
+
+    // Guard target and camera from sinking into the underground void
+    if (tgt.y < MIN_FLOOR_CLEARANCE_M) {
+      tgt.y = MIN_FLOOR_CLEARANCE_M;
+    }
+    if (persp.position.y < MIN_FLOOR_CLEARANCE_M) {
+      persp.position.y = MIN_FLOOR_CLEARANCE_M;
+      persp.updateMatrixWorld();
+    }
+
+    const dist = persp.position.distanceTo(tgt);
+    controlsRef.current.maxPolarAngle = computeFloorClampedMaxPolarAngle(
+      tgt.y,
+      dist,
+      MIN_FLOOR_CLEARANCE_M,
+      MAX_SAFE_POLAR_ANGLE_RAD
+    );
+
     const aspect = frameRef.current?.observerCamera.transform.aspectRatio ?? 16 / 9;
     const focalMm = verticalFovDegToFocalLengthMm(persp.fov, aspect);
     const livePose = cartesianToSpherical(
@@ -184,7 +235,7 @@ export const ObserverCameraRig: React.FC<ObserverCameraRigProps> = ({
       dampingFactor={0.08}
       minDistance={0.5}
       maxDistance={38}
-      maxPolarAngle={Math.PI * 0.49}
+      maxPolarAngle={MAX_SAFE_POLAR_ANGLE_RAD}
       onChange={handleControlsChange}
     />
   );
