@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Workspace Skill: StageFlow Choreography Score Debugger (`.agents/skills/stageflow-score-debugger/SKILL.md`)**:
+  - Authored a dedicated workspace skill providing systematic diagnostic methodology to inspect, debug, and smooth StageFlow YAML scores (`*.yaml`).
+  - Added a 5-step diagnostic decision tree and runbook covering $C^0$ positional matching, $C^1$ velocity step derivative checks ($\frac{du}{dt}$ across differing easing curves and shot durations), actor vs. camera kinetic desyncs (stop-and-lurch detection), camera maneuver/look-at audits (`from:` vs `target:`, radial `breathe` expansion tuning), and spline vs. contiguous shot evaluation.
+  - Included microsecond boundary sampling test script template using `computeStageFrame(t, score)` and a comprehensive cinematography smoothing cheat-sheet.
 - **Workspace Skill: StageFlow Viewport Video Recorder (`.agents/skills/stageflow-viewport-recorder/SKILL.md`)**:
   - Authored a dedicated workspace skill providing agents with progressive disclosure runbooks, CLI flags, directorial recipes (Scripted Observer, Stage Cam POV, clean geometry, reference audio slapping, single-shot slicing), and stream verification commands for `npm run record`.
 - **Deterministic 60fps Headless Viewport Recorder CLI (`npm run record`)**:
