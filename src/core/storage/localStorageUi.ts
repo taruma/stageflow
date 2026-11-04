@@ -3,8 +3,7 @@
  * Safely handles environments where localStorage is disabled or restricted.
  */
 
-import type { LabelDisplayMode } from '../types';
-import type { SplitPreset } from '../../ui/WorkspaceHeader';
+import type { LabelDisplayMode, SplitPreset } from '../types';
 
 const STORAGE_KEYS = {
   SPLIT_PRESET: 'stageflow:ui:split-preset',

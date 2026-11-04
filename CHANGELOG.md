@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Refactored
+- **Unidirectional Layer Boundary Integrity & Reverse Import Cleanup**:
+  - Relocated shared persistence types `SplitPreset` (`'50-50' | '30-70' | '70-30' | '0-100'`) and `StoragePersistenceStatus` (`'bundled' | 'draft-saved' | 'custom' | 'saving'`) from Layer 5 UI components into foundational Layer 1 [`src/core/types.ts`](src/core/types.ts).
+  - Eliminated reverse upward layer dependency in Layer 1 [`src/core/storage/localStorageUi.ts`](src/core/storage/localStorageUi.ts), which previously imported `SplitPreset` from Layer 5 `WorkspaceHeader.tsx`.
+  - Eliminated reverse upward layer dependency in Layer 3 [`src/hooks/useScorePersistence.ts`](src/hooks/useScorePersistence.ts), which previously imported `StoragePersistenceStatus` from Layer 5 `StorageStatusBadge.tsx`.
+  - Maintained backward compatibility by re-exporting `SplitPreset` and `StoragePersistenceStatus` from [`src/ui/WorkspaceHeader.tsx`](src/ui/WorkspaceHeader.tsx) and [`src/ui/StorageStatusBadge.tsx`](src/ui/StorageStatusBadge.tsx).
+  - Validated strict unidirectional layer flow (`Layer 1 -> Layer 2 -> Layer 3 -> Layer 4 & Layer 5`) with automated AST layer analysis reporting 0 violations.
 - **Relocated Bundled Scores to `src/scores/` (`scoreCatalog.ts`)**:
   - Moved default choreography scores from `public/scores/` to `src/scores/` (`demo_blueprint.yaml`, `blueprint_02_dialogue.yaml`, `blueprint_03_ball_pass.yaml`, `blueprint_04_cinematography_tutorial.yaml`).
   - Updated bundled raw YAML string imports in `src/core/scoreCatalog.ts` from `../../public/scores/*.yaml?raw` to `../scores/*.yaml?raw`.

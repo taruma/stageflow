@@ -4,12 +4,9 @@
 
 import React from 'react';
 import { Database, FileCode2, Sparkles, RefreshCw } from 'lucide-react';
+import type { StoragePersistenceStatus } from '../core/types';
 
-export type StoragePersistenceStatus =
-  | 'bundled'
-  | 'draft-saved'
-  | 'custom'
-  | 'saving';
+export type { StoragePersistenceStatus };
 
 export interface StorageStatusBadgeProps {
   status: StoragePersistenceStatus;

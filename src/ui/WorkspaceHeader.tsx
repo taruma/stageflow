@@ -16,12 +16,10 @@ import {
   Upload,
 } from 'lucide-react';
 import type { ScoreCatalogItem } from '../core/scoreCatalog';
-import {
-  StorageStatusBadge,
-  type StoragePersistenceStatus,
-} from './StorageStatusBadge';
+import type { SplitPreset, StoragePersistenceStatus } from '../core/types';
+import { StorageStatusBadge } from './StorageStatusBadge';
 
-export type SplitPreset = '50-50' | '30-70' | '70-30' | '0-100';
+export type { SplitPreset, StoragePersistenceStatus };
 
 export interface WorkspaceHeaderProps {
   catalog: ScoreCatalogItem[];

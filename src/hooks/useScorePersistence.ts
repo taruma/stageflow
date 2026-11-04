@@ -9,14 +9,13 @@ import {
   type ScoreCatalogItem,
 } from '../core/scoreCatalog';
 import { parseStageScore } from '../core/scoreParser';
-import type { StageScore } from '../core/types';
+import type { StageScore, StoragePersistenceStatus } from '../core/types';
 import {
   deleteStoredScore,
   listAllStoredScores,
   saveStoredScore,
 } from '../core/storage/scoreDb';
 import { loadStoredActiveSceneId } from '../core/storage/localStorageUi';
-import type { StoragePersistenceStatus } from '../ui/StorageStatusBadge';
 
 export interface UseScorePersistenceOptions {
   catalog: ScoreCatalogItem[];

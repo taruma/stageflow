@@ -61,6 +61,14 @@ export type CameraViewMode = 'scripted' | 'free' | 'stage-pov';
 
 export type LabelDisplayMode = 'all' | 'camera-only' | 'off';
 
+export type SplitPreset = '50-50' | '30-70' | '70-30' | '0-100';
+
+export type StoragePersistenceStatus =
+  | 'bundled'
+  | 'draft-saved'
+  | 'custom'
+  | 'saving';
+
 export type EntityKind = 'character' | 'prop' | 'marker';
 
 export interface SceneEntityDef {
