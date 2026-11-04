@@ -151,7 +151,7 @@ shots:
   });
 
   it('registers and bundles Blueprint 01, Blueprint 02, Blueprint 03, and Blueprint 04 in the initial catalog', () => {
-    expect(INITIAL_CATALOG_ITEMS).toHaveLength(4);
+    expect(INITIAL_CATALOG_ITEMS).toHaveLength(5);
 
     const bp01 = INITIAL_CATALOG_ITEMS[0];
     expect(bp01.id).toBe('demo-blueprint');
@@ -192,6 +192,21 @@ shots:
     expect(bp04.score.shots).toHaveLength(16);
     expect(bp04.score.observerShots).toBeDefined();
     expect(bp04.score.observerShots).toHaveLength(1);
+
+    const bp05 = INITIAL_CATALOG_ITEMS[4];
+    expect(bp05.id).toBe('blueprint-05-two-rooms');
+    expect(bp05.score.durationSec).toBe(30.0);
+    expect(bp05.score.shots).toHaveLength(17);
+    expect(bp05.score.blocking).toBeDefined();
+    expect(bp05.score.blocking!.length).toBeGreaterThanOrEqual(10);
+    expect(bp05.score.observerShots).toBeDefined();
+    expect(bp05.score.observerShots).toHaveLength(3);
+    const ruby = bp05.score.entities.find((e) => e.id === 'ruby');
+    const samira = bp05.score.entities.find((e) => e.id === 'samira');
+    const rosa = bp05.score.entities.find((e) => e.id === 'rosa');
+    expect(ruby?.height).toBe(1.68);
+    expect(samira?.height).toBe(1.84);
+    expect(rosa?.height).toBe(1.54);
   });
 
   it('parses root-level observer_shots with flattened camera properties into ObserverShotCue[]', () => {
@@ -610,14 +625,18 @@ observer_shots:
     });
 
     it('verifies all 4 bundled scene catalog items parse identically without errors (Golden Equivalence)', () => {
-      expect(INITIAL_CATALOG_ITEMS).toHaveLength(4);
+      expect(INITIAL_CATALOG_ITEMS).toHaveLength(5);
       for (const item of INITIAL_CATALOG_ITEMS) {
         expect(item.score).toBeDefined();
         expect(item.score.shots.length).toBeGreaterThan(0);
         expect(item.score.durationSec).toBeGreaterThan(0);
         expect(item.score.stage.width).toBeGreaterThan(0);
         expect(item.score.stage.depth).toBeGreaterThan(0);
-        expect(item.score.blocking).toBeUndefined();
+        if (item.id === 'blueprint-05-two-rooms') {
+          expect(item.score.blocking).toBeDefined();
+        } else {
+          expect(item.score.blocking).toBeUndefined();
+        }
       }
     });
 

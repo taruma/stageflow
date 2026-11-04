@@ -62,8 +62,8 @@ function resolveScoreYaml(input: string): { yaml: string; id: string } {
     return { yaml, id: filename };
   }
 
-  // Check numeric shortcuts: 01, 02, 03, 04
-  const numMatch = input.match(/^0?([1-4])$/);
+  // Check numeric shortcuts: 01, 02, 03, 04, 05
+  const numMatch = input.match(/^0?([1-9]\d*)$/);
   if (numMatch) {
     const idx = parseInt(numMatch[1], 10) - 1;
     if (INITIAL_CATALOG_ITEMS[idx]) {

@@ -1604,5 +1604,48 @@ shots:
       expect(rubyPost.position).toEqual({ x: 0, y: 0, z: 5 });
       expect(rubyPost.trailPoints).toEqual([]);
     });
+
+    it('evaluates Blueprint 05 (Two Rooms: Living Room to Bedroom Threshold Crossing) across all 17 shots', () => {
+      const bp05 = INITIAL_CATALOG_ITEMS.find(
+        (item) => item.id === 'blueprint-05-two-rooms'
+      )?.score;
+      expect(bp05).toBeDefined();
+      if (!bp05) return;
+
+      expect(bp05.durationSec).toBe(30.0);
+      expect(bp05.shots).toHaveLength(17);
+
+      // Phase 1 (t = 1.0s): Ruby and Samira in Living Room (-X), Rosa in Bedroom (+X), Cup on Living Table (y=0.78m)
+      const f1 = computeStageFrame(1.0, bp05);
+      expect(f1.entitiesById.get('ruby')!.position.x).toBeLessThan(-4.0);
+      expect(f1.entitiesById.get('samira')!.position.x).toBeLessThan(-6.0);
+      expect(f1.entitiesById.get('rosa')!.position.x).toBeGreaterThan(5.0);
+      expect(f1.entitiesById.get('cup')!.position.y).toBeCloseTo(0.78, 3);
+
+      // Phase 2 (t = 15.0s, Mid-Cross at Hallway Threshold during Shot 09 Whip-Sweep):
+      // Ruby and the carried Cup (y=1.05m) cross near X = 0 with a 17-point Option A trail
+      const fCross = computeStageFrame(15.0, bp05);
+      expect(fCross.activeShot?.id).toBe('shot-09');
+      const rubyCross = fCross.entitiesById.get('ruby')!;
+      const cupCross = fCross.entitiesById.get('cup')!;
+      expect(Math.abs(rubyCross.position.x)).toBeLessThan(1.0);
+      expect(cupCross.position.y).toBeCloseTo(1.05, 3);
+      expect(rubyCross.trailPoints).toHaveLength(17);
+      expect(rubyCross.trailPoints[0].x).toBeCloseTo(-4.9, 2);
+      expect(rubyCross.trailPoints[16].x).toBeCloseTo(4.3, 2);
+
+      // Phase 3 (t = 26.0s, Bedroom Two-Shot Orbit in Shot 16):
+      // Ruby and Rosa are in the Bedroom (+X), Cup rests on Bedroom Desk (y=0.75m), Samira at Threshold
+      const fTwoShot = computeStageFrame(26.0, bp05);
+      expect(fTwoShot.activeShot?.id).toBe('shot-16');
+      expect(fTwoShot.entitiesById.get('ruby')!.position.x).toBeCloseTo(4.4, 2);
+      expect(fTwoShot.entitiesById.get('rosa')!.position.x).toBeCloseTo(5.7, 2);
+      expect(fTwoShot.entitiesById.get('cup')!.position).toEqual({
+        x: 5.2,
+        y: 0.75,
+        z: 0.5,
+      });
+      expect(fTwoShot.entitiesById.get('samira')!.position.x).toBeCloseTo(-1.4, 2);
+    });
   });
 });

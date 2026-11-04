@@ -6,6 +6,7 @@ import demoBlueprintRaw from '../scores/demo_blueprint.yaml?raw';
 import blueprint02Raw from '../scores/blueprint_02_dialogue.yaml?raw';
 import blueprint03Raw from '../scores/blueprint_03_ball_pass.yaml?raw';
 import blueprint04Raw from '../scores/blueprint_04_cinematography_tutorial.yaml?raw';
+import blueprint05Raw from '../scores/blueprint_05_two_rooms.yaml?raw';
 import type { StageScore } from './types';
 import { parseStageScore } from './scoreParser';
 
@@ -49,6 +50,13 @@ if (!parsed04.score) {
   );
 }
 
+const parsed05 = parseStageScore(blueprint05Raw, 'blueprint-05-two-rooms');
+if (!parsed05.score) {
+  throw new Error(
+    `Failed to parse bundled blueprint_05_two_rooms.yaml: ${parsed05.error}`
+  );
+}
+
 export const INITIAL_CATALOG_ITEMS: ScoreCatalogItem[] = [
   {
     id: parsedDemo.score.id,
@@ -77,5 +85,12 @@ export const INITIAL_CATALOG_ITEMS: ScoreCatalogItem[] = [
     subtitle: parsed04.score.subtitle,
     rawYaml: blueprint04Raw,
     score: parsed04.score,
+  },
+  {
+    id: parsed05.score.id,
+    title: parsed05.score.title,
+    subtitle: parsed05.score.subtitle,
+    rawYaml: blueprint05Raw,
+    score: parsed05.score,
   },
 ];
