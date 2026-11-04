@@ -5,7 +5,12 @@
  */
 
 import React from 'react';
-import type { LabelDisplayMode, StageFrame, StageScore } from '../core/types';
+import type {
+  CameraViewMode,
+  LabelDisplayMode,
+  StageFrame,
+  StageScore,
+} from '../core/types';
 import { BlueprintFloorGrid } from './BlueprintFloorGrid';
 import { DirectionalMannequin } from './DirectionalMannequin';
 
@@ -15,6 +20,7 @@ export interface BlueprintStageSceneProps {
   uiFrame: StageFrame;
   labelMode?: LabelDisplayMode;
   isPlaying?: boolean;
+  cameraMode?: CameraViewMode;
 }
 
 export const BlueprintStageScene: React.FC<BlueprintStageSceneProps> = ({
@@ -23,6 +29,7 @@ export const BlueprintStageScene: React.FC<BlueprintStageSceneProps> = ({
   uiFrame,
   labelMode = 'all',
   isPlaying = false,
+  cameraMode,
 }) => {
   return (
     <group>
@@ -41,6 +48,7 @@ export const BlueprintStageScene: React.FC<BlueprintStageSceneProps> = ({
         depth={score.stage.depth}
         gridStep={score.stage.gridStep}
         showLabels={labelMode !== 'off'}
+        cameraMode={cameraMode}
       />
 
       {/* Directional Character Mannequins & Stage Props */}
@@ -53,6 +61,7 @@ export const BlueprintStageScene: React.FC<BlueprintStageSceneProps> = ({
           uiFrame={uiFrame}
           labelMode={labelMode}
           isPlaying={isPlaying}
+          cameraMode={cameraMode}
         />
       ))}
     </group>

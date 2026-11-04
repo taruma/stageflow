@@ -13,7 +13,12 @@ import React, { useRef, useMemo, useLayoutEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Line } from '@react-three/drei';
 import * as THREE from 'three';
-import type { EvaluatedEntityState, LabelDisplayMode, StageFrame } from '../core/types';
+import type {
+  CameraViewMode,
+  EvaluatedEntityState,
+  LabelDisplayMode,
+  StageFrame,
+} from '../core/types';
 import { StageBillboardLabel } from './StageBillboardLabel';
 
 export interface DirectionalMannequinProps {
@@ -23,6 +28,7 @@ export interface DirectionalMannequinProps {
   uiFrame?: StageFrame;
   labelMode?: LabelDisplayMode;
   isPlaying?: boolean;
+  cameraMode?: CameraViewMode;
 }
 
 export const DirectionalMannequin: React.FC<DirectionalMannequinProps> = ({
@@ -32,6 +38,7 @@ export const DirectionalMannequin: React.FC<DirectionalMannequinProps> = ({
   uiFrame,
   labelMode = 'all',
   isPlaying = false,
+  cameraMode,
 }) => {
   const groupRef = useRef<THREE.Group | null>(null);
   const { def, highlighted, trailPoints } = initialState;
@@ -222,7 +229,7 @@ export const DirectionalMannequin: React.FC<DirectionalMannequinProps> = ({
           accentColor={color}
           highlighted={highlighted}
           ghosted={isPlaying}
-          visible={labelMode === 'all'}
+          visible={labelMode === 'all' && cameraMode !== 'stage-pov'}
         />
       </group>
     </group>

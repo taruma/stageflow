@@ -54,6 +54,7 @@ export const StageCamMonitorCanvas: React.FC<StageCamMonitorCanvasProps> = ({
           uiFrame={uiFrame}
           labelMode={labelMode}
           isPlaying={isPlaying}
+          cameraMode="stage-pov"
         />
 
         {/* 60fps Stage Camera View Controller (Gated to cut atomically with UI state) */}

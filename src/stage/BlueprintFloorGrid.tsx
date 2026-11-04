@@ -6,12 +6,14 @@
 import React, { useMemo } from 'react';
 import { Grid, Html, Line } from '@react-three/drei';
 import * as THREE from 'three';
+import type { CameraViewMode } from '../core/types';
 
 export interface BlueprintFloorGridProps {
   width: number;
   depth: number;
   gridStep: number;
   showLabels?: boolean;
+  cameraMode?: CameraViewMode;
 }
 
 export const BlueprintFloorGrid: React.FC<BlueprintFloorGridProps> = ({
@@ -19,9 +21,11 @@ export const BlueprintFloorGrid: React.FC<BlueprintFloorGridProps> = ({
   depth,
   gridStep,
   showLabels = true,
+  cameraMode,
 }) => {
   const halfW = width * 0.5;
   const halfD = depth * 0.5;
+  const isStagePov = cameraMode === 'stage-pov';
 
   // Perimeter stage boundary rectangle
   const borderPoints = useMemo<Array<[number, number, number]>>(
@@ -118,27 +122,29 @@ export const BlueprintFloorGrid: React.FC<BlueprintFloorGridProps> = ({
         />
       </mesh>
 
-      {/* Cardinal Stage Orientation Markers */}
-      {showLabels && (
+      {/* Cardinal Stage Orientation Markers (Lying flat on the floor perimeter; hidden in Stage Cam POV) */}
+      {showLabels && !isStagePov && (
         <>
           <Html
-            position={[0, 0.02, halfD + 0.45]}
+            position={[0, 0.005, halfD + 0.45]}
             center
-            distanceFactor={12}
+            transform
+            rotation={[-Math.PI / 2, 0, 0]}
             zIndexRange={[10, 0]}
           >
-            <div className="px-2 py-0.5 rounded-full bg-slate-950/65 backdrop-blur-sm text-[8px] font-mono text-sky-400/80 tracking-widest uppercase select-none pointer-events-none whitespace-nowrap">
+            <div className="px-2 py-0.5 rounded-full bg-slate-950/70 border border-sky-500/30 text-[8px] font-mono text-sky-400 tracking-widest uppercase select-none pointer-events-none whitespace-nowrap">
               +Z · Downstage / Front
             </div>
           </Html>
 
           <Html
-            position={[0, 0.02, -halfD - 0.45]}
+            position={[0, 0.005, -halfD - 0.45]}
             center
-            distanceFactor={12}
+            transform
+            rotation={[-Math.PI / 2, 0, 0]}
             zIndexRange={[10, 0]}
           >
-            <div className="px-2 py-0.5 rounded-full bg-slate-950/65 backdrop-blur-sm text-[8px] font-mono text-slate-500 tracking-widest uppercase select-none pointer-events-none whitespace-nowrap">
+            <div className="px-2 py-0.5 rounded-full bg-slate-950/70 border border-slate-800 text-[8px] font-mono text-slate-500 tracking-widest uppercase select-none pointer-events-none whitespace-nowrap">
               -Z · Upstage / Back
             </div>
           </Html>

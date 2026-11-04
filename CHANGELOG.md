@@ -35,6 +35,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Synchronized file tree references in `AGENTS.md` and `docs/CORE_MATH_AND_SCORE_SPECIFICATIONS.md`.
 
 ### Fixed
+- **3D Diorama Viewing Experience Overhaul (Screen-Constant Sizing, Proximity Culling & Clean Viewfinder)**:
+  - Eliminated Drei `distanceFactor={9}` ballooning on `StageBillboardLabel.tsx`, enforcing constant-size micro-pills (`scale: 1`, `text-[9px]`, 20px pill height) that never inflate into giant banners across the screen when zooming in or orbiting close.
+  - Implemented camera proximity culling in `StageBillboardLabel.tsx`: when an actor or prop is within $1.8\text{m}$ of the camera lens, their badge smoothly fades out (`opacity: 0`), preventing close foreground entities from obstructing background staging and actors.
+  - Transformed cardinal stage orientation markers (`+Z · Downstage / Front` and `-Z · Upstage / Back`) in `BlueprintFloorGrid.tsx` into flat 3D-transformed floor markings lying directly on the perimeter plane ($Y = 0.005\text{m}$, rotation $-90^\circ$ around $X$) matching architectural blueprint convention.
+  - Automatically unmounted floor compass markers and floating 3D mannequin badges in `Stage Cam POV` (`cameraMode === 'stage-pov'`) across `BlueprintFloorGrid.tsx`, `DirectionalMannequin.tsx`, `DioramaCanvas.tsx`, and `StageCamMonitorCanvas.tsx`, delivering a pristine optical director's viewfinder focused on cinematic composition and actor silhouettes.
+  - Reduced default badge width by ~50% by displaying concise names (`● Robert`, `● Mark`) by default and revealing sublabels (`· Scholar`, `· Assistant`) only when highlighted as the active camera focus target or hovered.
 - **Hide Camera Trajectory Rail & Waypoint Beacons in Stage Cam POV (`StageCameraRig.tsx`)**:
   - Gated the 3D trajectory curve and start/end waypoint beacons on `isBodyVisible &&` (`cameraMode !== 'stage-pov'`), preventing the camera's physical track and destination octahedron beacon from floating in front of the lens and obscuring the optical viewfinder during forward dolly and pedestal maneuvers.
 - **Explicit `direction: "ccw" | "cw"` Priority on Spanned Orbits (`maneuver: "orbit"` with `yaw_start` & `yaw_end`)**:

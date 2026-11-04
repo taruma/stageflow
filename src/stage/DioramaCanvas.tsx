@@ -73,6 +73,7 @@ export const DioramaCanvas: React.FC<DioramaCanvasProps> = ({
           uiFrame={uiFrame}
           labelMode={labelMode}
           isPlaying={isPlaying}
+          cameraMode={cameraMode}
         />
 
         {/* 2. Viewport Observer Camera & Free-Orbit Handover Rig */}

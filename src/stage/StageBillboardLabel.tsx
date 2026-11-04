@@ -1,10 +1,12 @@
 /**
  * Crisp 3D floating billboard badge for actors, props, and the Stage Camera.
- * Rendered as an ultra-compact borderless micro-pill with selective playback ghosting.
+ * Rendered as an ultra-compact borderless micro-pill with screen-constant scaling,
+ * proximity culling (< 1.8m), and selective playback ghosting.
  * Memoized with deep position equality to prevent redundant DOM re-paints during playback.
  */
 
-import React from 'react';
+import React, { useState } from 'react';
+import { useFrame } from '@react-three/fiber';
 import { Html } from '@react-three/drei';
 
 export interface StageBillboardLabelProps {
@@ -27,25 +29,40 @@ export const StageBillboardLabel: React.FC<StageBillboardLabelProps> = React.mem
     ghosted = false,
     visible = true,
   }) => {
+    const [isTooClose, setIsTooClose] = useState(false);
+
+    // Fade out badge if camera gets right in front of the subject (< 1.8m)
+    useFrame(({ camera }) => {
+      const dx = camera.position.x - position[0];
+      const dy = camera.position.y - position[1];
+      const dz = camera.position.z - position[2];
+      const distSq = dx * dx + dy * dy + dz * dz;
+      const tooClose = distSq < 3.24; // 1.8m squared
+      if (tooClose !== isTooClose) {
+        setIsTooClose(tooClose);
+      }
+    });
+
     if (!visible) return null;
 
-    const opacityClass = ghosted
-      ? 'opacity-20'
-      : highlighted
-        ? 'opacity-100'
-        : 'opacity-75';
+    const opacityClass = isTooClose
+      ? 'opacity-0 pointer-events-none'
+      : ghosted
+        ? 'opacity-20'
+        : highlighted
+          ? 'opacity-100'
+          : 'opacity-75';
 
     return (
       <Html
         position={position}
         center
-        distanceFactor={9}
         zIndexRange={[40, 0]}
       >
         <div
           className={`flex flex-col items-center select-none pointer-events-none transition-opacity duration-200 ${opacityClass}`}
         >
-          <div className="px-2 py-0.5 rounded-full bg-slate-950/70 backdrop-blur-sm flex items-center gap-1 whitespace-nowrap">
+          <div className="px-2 py-0.5 rounded-full bg-slate-950/75 backdrop-blur-sm flex items-center gap-1 whitespace-nowrap shadow-md border border-slate-800/60">
             <span
               className="w-1.5 h-1.5 rounded-full shrink-0 transition-shadow duration-200"
               style={{
@@ -62,8 +79,8 @@ export const StageBillboardLabel: React.FC<StageBillboardLabelProps> = React.mem
             >
               {label}
             </span>
-            {sublabel && (
-              <span className="text-[8px] font-mono text-slate-400/90 pl-1">
+            {sublabel && highlighted && (
+              <span className="text-[8px] font-mono text-slate-400/90 pl-0.5">
                 · {sublabel}
               </span>
             )}

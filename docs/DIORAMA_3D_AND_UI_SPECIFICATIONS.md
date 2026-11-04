@@ -9,7 +9,7 @@ This document is the authoritative technical specification for **Layer 4 (`src/s
 StageFlow's 3D stage is engineered for maximum spatial legibility and zero visual clutter:
 - **Studio Void Background**: Deep blueprint obsidian (`#050811`) with subtle depth fog (`16m` to `42m`).
 - **Dual-Cadence Metric Floor Grid (`BlueprintFloorGrid.tsx`)**:
-  - Renders a precision ground plane at $Y = 0$ with `1.0m` primary section lines (`#1e293b`), `0.25m` minor sub-grid lines (`#0f172a`), an active stage perimeter frame (`#38bdf8`), center $X/Z$ axis crosshairs, an origin reticle at `(0, 0, 0)`, and cardinal stage labels (`+Z · Downstage / Front`, `-Z · Upstage / Back`).
+  - Renders a precision ground plane at $Y = 0$ with `1.0m` primary section lines (`#1e293b`), `0.25m` minor sub-grid lines (`#0f172a`), an active stage perimeter frame (`#38bdf8`), center $X/Z$ axis crosshairs, an origin reticle at `(0, 0, 0)`, and cardinal stage labels (`+Z · Downstage / Front`, `-Z · Upstage / Back`). Cardinal labels are rendered as flat 3D-transformed floor markings lying directly on the perimeter plane ($Y = 0.005\text{m}$, rotation $-90^\circ$ around $X$) matching architectural blueprint convention; automatically unmounted in `Stage Cam POV` (`cameraMode === 'stage-pov'`) to keep the viewfinder composition 100% clean.
 
 ---
 
@@ -72,7 +72,10 @@ Scene entities (`character`, `prop`, `marker`) are rendered with unambiguous ori
 - **Dynamic Floor Movement Trail**:
   - When an entity moves during the active shot (`trailPoints.length >= 2`), renders a dashed floor trajectory curve tracing their path across the stage.
 - **Floating Identity Badges (`StageBillboardLabel.tsx`)**:
-  - Uses `@react-three/drei` `<Html center distanceFactor={9}>` to render ultra-compact, borderless micro-pills (`rounded-full bg-slate-950/70 backdrop-blur-sm px-2 py-0.5 text-[9px] font-mono`) above each mannequin (`Subject A`) and above the Stage Camera (`STAGE CAM · 50mm · ARC`).
+  - Uses `@react-three/drei` `<Html center>` with **screen-constant scaling** (`scale: 1`, omitting `distanceFactor`) to render ultra-compact, borderless micro-pills (`rounded-full bg-slate-950/75 backdrop-blur-sm px-2 py-0.5 text-[9px] font-mono border border-slate-800/60 shadow-md`) above each mannequin (`Subject A`) and above the Stage Camera (`STAGE CAM · 50mm · ARC`). Badges never balloon or inflate into giant banners regardless of camera distance or lens focal length.
+  - **Camera Proximity Culling**: In `useFrame`, calculates distance to the viewport camera; if $R < 1.8\text{m}$, the badge smoothly fades to `opacity-0` so close foreground entities never block background stage action or actors.
+  - **Clean Viewfinder in Stage Cam POV**: When viewing through `Stage Cam POV` (`cameraMode === 'stage-pov'`), floating 3D mannequin badges and floor compass markers are automatically unmounted (`visible = false`) so the director's viewfinder remains 100% focused on optical composition, actor silhouettes, and safe-action guides. Shot and entity metadata remain displayed in the top-left 2D HUD.
+  - **Compact Identity-Only Default with Expand-on-Focus**: Mannequin badges display only their concise name (`● Robert`, `● Mark`) by default. Sublabels/roles (`· Scholar`, `· Assistant`) expand only when `highlighted === true` (active camera focus target) or on hover, cutting badge width by ~50% and preventing text collisions in tight two-shots.
   - **Selective Playback Ghosting**: While the scene is actively playing (`isPlaying === true`), actor/prop mannequin labels smoothly fade down to `20%` opacity (`opacity-20 transition-opacity duration-200`) so spatial trajectories and character blocking take center stage without visual clutter. The Stage Camera label remains at `100%` opacity so optical focal length and maneuver telemetry remain readable. When paused or scrubbing, all visible labels restore to full crispness.
   - **Active Camera Focus Highlight**: When an entity is the active focus target of the camera (`highlighted === true`), its colored dot renders an accent glow (`boxShadow: 0 0 6px <color>`) with higher text brightness. Passive actors remain soft and muted.
 
