@@ -14,9 +14,10 @@ StageFlow compiles a declarative `.yaml` score into a deterministic, 60fps 3D sp
 2. **Human Degrees (`deg`)**: Every angle in YAML (`pitch`, `yaw`, `yaw_start`, `yaw_end`, `yaw_delta`, `rotation`, `orbit_speed`) is authored in **intuitive degrees** (e.g., `yaw: -45`, `pitch: 15`, `rotation: 90`). You never need to calculate radians by hand. *(Note: if you ever wish to pass raw radians, append `"rad"`, e.g. `"1.57rad"`).*
 3. **Pure Decimal Seconds (`s`)**: Every timestamp (`duration`, `offset`, `start`, `end`) is in decimal seconds (e.g., `0.0`, `4.25`, `12.5`).
 4. **Cinematic Full-Frame Lenses (`mm`)**: Camera optics are specified using real full-frame focal lengths (`24mm`, `35mm`, `50mm`, `85mm`), which mathematically drive both the Three.js vertical Field of View and the 3D rectangular film gate frustum.
-5. **Forward Pose Chaining & Continuous Oner Mode ($P_0 \to P_1 \to \dots \to P_k$)**:
-   - **Static Properties & Entities**: At the start of Shot $k$, all scene entities automatically inherit their terminal resting position and rotation from Shot $k - 1$ unless explicitly overridden.
-   - **Continuous Takes (`continuous: true`)**: When `continuous: true` is set at the score root, the **Stage Camera** (`shots:`) seamlessly chains physical coordinates (`distance`, `pitch`, `yaw`) from the preceding shot's terminal pose for all moving maneuvers (`maneuver !== 'cut'`). Lenses mount discretely at shot boundaries, and target framing snaps to new subjects unless an explicit `from:` subject is authored. `observer_shots:` remains decoupled with explicit start/end spans.
+5. **Forward Pose Chaining, Decoupled Blocking & Continuous Oner Mode ($P_0 \to P_1 \to \dots \to P_k$)**:
+   - **Decoupled Entity Blocking (`blocking:`)**: You can stage actors and props along an independent root-level `blocking:` timeline whose time windows (`start`, `end`) span smoothly across multiple camera cuts without stopping or resetting velocity at shot boundaries. During active blocking cues, the dashed floor movement trail displays the full path of that blocking cue across all cuts.
+   - **Per-Shot Entity Overrides (`shots[].entities`)**: When root `blocking:` is omitted, entities inherit their terminal resting position and rotation from Shot $k - 1$ across `shots:`. Even when `blocking:` is used, per-shot `highlighted: true` and `note:` in `shots[].entities` layer cleanly on top.
+   - **Continuous Takes (`continuous: true`)**: When `continuous: true` is set at the score root, the **Stage Camera** (`shots:`) seamlessly chains physical coordinates (`distance`, `pitch`, `yaw`) from the preceding shot's terminal pose for all moving maneuvers (`maneuver !== 'cut'`). Lenses mount discretely at shot boundaries, and target framing snaps to new subjects unless an explicit `from:` subject is authored. `observer_shots:` and `blocking:` remain decoupled with explicit start/end spans.
 
 ---
 
@@ -676,4 +677,73 @@ shots:
       pitch: 12
       yaw: 220
       lens: 35mm
+```
+
+### Recipe 8: Decoupled Actor & Prop Blocking Across Multiple Camera Cuts (`blocking:`)
+Stages a continuous 10-second walk for `arthur` across the room using root-level `blocking:` while the film camera cuts three times (`35mm` Wide $\to$ `50mm` Profile Arc $\to$ `85mm` Close-Up). Arthur's velocity and floor movement trail remain unbroken across every cut:
+
+```yaml
+version: "1.0"
+id: "decoupled-blocking-cross"
+title: "Continuous Actor Walk Across 3 Camera Cuts"
+duration: 14.0
+
+entities:
+  - id: "arthur"
+    label: "Arthur (Lead)"
+    kind: "character"
+    position: [-8.0, 0, 0]
+    rotation: 90
+    color: "#38bdf8"
+  - id: "ruby"
+    label: "Ruby (Partner)"
+    kind: "character"
+    position: [4.0, 0, 0]
+    rotation: -90
+    color: "#f43f5e"
+
+# --- Layer A: Decoupled Physical Blocking Timeline ---
+blocking:
+  # Single-entity cue: Arthur walks continuously from t=0.0s to t=10.0s across Shots 1, 2, and 3
+  - id: "arthur-cross-room"
+    entity: "arthur"
+    start: 0.0
+    end: 10.0
+    position: [1.5, 0, 0]
+    easing: "cruise"
+    look_at: "ruby"
+
+  # Multi-entity beat: From t=10.5s to t=14.0s, both actors turn downstage toward the audience
+  - id: "final-downstage-turn"
+    start: 10.5
+    end: 14.0
+    entities:
+      arthur: { rotation: 0, easing: "smooth" }
+      ruby: { rotation: 0, easing: "smooth" }
+
+# --- Layer B: Film Camera Coverage (Cuts freely across the continuous walk) ---
+shots:
+  - id: "shot-1-wide"
+    shot: 1
+    label: "Shot 01 · Wide Establishing"
+    start: 0.0
+    end: 3.5
+    stage_camera: { target: "arthur", maneuver: "dolly", distance_start: 5.5, distance_end: 4.2, pitch: 10, yaw: 0, lens: 35mm }
+
+  - id: "shot-2-profile"
+    shot: 2
+    label: "Shot 02 · Tight Profile Arc"
+    start: 3.5
+    end: 7.5
+    stage_camera: { target: "arthur", maneuver: "arc", distance: 2.8, pitch: 6, yaw_start: -25, yaw_end: 25, lens: 50mm }
+    entities:
+      arthur:
+        highlighted: true   # Highlights Arthur during Shot 2 without interrupting his 0..10s walk!
+
+  - id: "shot-3-closeup"
+    shot: 3
+    label: "Shot 03 · 85mm Arrival & Turn"
+    start: 7.5
+    end: 14.0
+    stage_camera: { target: "arthur", maneuver: "orbit", distance: 2.0, pitch: 4, yaw_start: 25, yaw_end: 0, lens: 85mm }
 ```

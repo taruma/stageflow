@@ -1424,4 +1424,185 @@ shots:
       }
     });
   });
+
+  describe('Decoupled Entity Blocking (blocking:) — Continuous Multi-Cut Kinematics & Option A Trails', () => {
+    it('evaluates a continuous actor walk across multiple rapid camera cuts without velocity resets or snaps', () => {
+      const yaml = `
+version: "1.0"
+id: "decoupled-blocking-walk"
+title: "Decoupled Blocking Walk Across Cuts"
+duration: 9.0
+entities:
+  - id: "arthur"
+    label: "Arthur"
+    kind: "character"
+    position: [-10, 0, 0]
+    rotation: 90
+  - id: "ruby"
+    label: "Ruby"
+    kind: "character"
+    position: [6, 0, 0]
+    rotation: -90
+
+blocking:
+  - id: "arthur-cross-room"
+    entity: "arthur"
+    start: 0.0
+    end: 9.0
+    position: [2, 0, 0]
+    easing: "linear"
+    look_at: "ruby"
+
+shots:
+  - id: "shot-1"
+    shot: 1
+    start: 0.0
+    end: 3.0
+    stage_camera: { target: "arthur", maneuver: "dolly", distance: 4.0, lens: 35mm }
+  - id: "shot-2"
+    shot: 2
+    start: 3.0
+    end: 6.0
+    stage_camera: { target: "arthur", maneuver: "arc", distance: 2.8, lens: 50mm }
+    entities:
+      arthur:
+        highlighted: true
+        note: "Hero profile"
+  - id: "shot-3"
+    shot: 3
+    start: 6.0
+    end: 9.0
+    stage_camera: { target: "arthur", maneuver: "orbit", distance: 2.2, lens: 85mm }
+`;
+      const { score, error } = parseStageScore(yaml);
+      expect(error).toBeNull();
+      expect(score).not.toBeNull();
+
+      // At t = 0.0s (start of Shot 1): Arthur is at [-10, 0, 0]
+      const f0 = computeStageFrame(0.0, score!);
+      const a0 = f0.entitiesById.get('arthur')!;
+      expect(a0.position.x).toBeCloseTo(-10, 4);
+      expect(a0.cueId).toBe('arthur-cross-room');
+      expect(a0.highlighted).toBe(false);
+
+      // At t = 3.0s (exact cut boundary Shot 1 -> Shot 2, 1/3 of 9s linear walk):
+      // x = -10 + (1/3) * 12 = -6.0m
+      const f3Before = computeStageFrame(2.999, score!);
+      const f3After = computeStageFrame(3.0, score!);
+      expect(f3Before.activeShot?.id).toBe('shot-1');
+      expect(f3After.activeShot?.id).toBe('shot-2');
+      expect(f3After.entitiesById.get('arthur')!.position.x).toBeCloseTo(-6.0, 3);
+      expect(
+        Math.abs(
+          f3After.entitiesById.get('arthur')!.position.x -
+            f3Before.entitiesById.get('arthur')!.position.x
+        )
+      ).toBeLessThan(0.005);
+
+      // Hybrid Shot 2 metadata overlays cleanly onto continuous blocking walk
+      expect(f3After.entitiesById.get('arthur')!.highlighted).toBe(true);
+      expect(f3After.entitiesById.get('arthur')!.note).toBe('Hero profile');
+      expect(f3After.entitiesById.get('arthur')!.cueId).toBe('arthur-cross-room');
+
+      // At t = 6.0s (exact cut boundary Shot 2 -> Shot 3, 2/3 of 9s linear walk):
+      // x = -10 + (2/3) * 12 = -2.0m
+      const f6 = computeStageFrame(6.0, score!);
+      expect(f6.activeShot?.id).toBe('shot-3');
+      expect(f6.entitiesById.get('arthur')!.position.x).toBeCloseTo(-2.0, 3);
+      expect(f6.entitiesById.get('arthur')!.highlighted).toBe(false);
+
+      // Option A Trail: Across all 3 shots (t=1.5s, t=4.5s, t=7.5s), Arthur's floor trail
+      // reflects the full active blocking cue path [-10, 0.02, 0] -> [2, 0.02, 0] (17 points)
+      for (const sampleT of [1.5, 4.5, 7.5]) {
+        const frame = computeStageFrame(sampleT, score!);
+        const trail = frame.entitiesById.get('arthur')!.trailPoints;
+        expect(trail).toHaveLength(17);
+        expect(trail[0]).toEqual({ x: -10, y: 0.02, z: 0 });
+        expect(trail[16]).toEqual({ x: 2, y: 0.02, z: 0 });
+      }
+    });
+
+    it('holds terminal pose across temporal gaps and resolves two-pass mutual gaze with C0 rotation continuity', () => {
+      const yaml = `
+version: "1.0"
+id: "blocking-gaps-and-gaze"
+title: "Blocking Gaps & Two-Pass Gaze"
+duration: 12.0
+entities:
+  - id: "arthur"
+    label: "Arthur"
+    kind: "character"
+    position: [-5, 0, 0]
+    rotation: 0
+  - id: "ruby"
+    label: "Ruby"
+    kind: "character"
+    position: [0, 0, -5]
+    rotation: 0
+
+blocking:
+  # Ruby walks along Z from -5 to +5 over 0..10s (at t=5.0s, Ruby is at [0, 0, 0])
+  - id: "ruby-walk-z"
+    entity: "ruby"
+    start: 0.0
+    end: 10.0
+    position: [0, 0, 5]
+    easing: "linear"
+    look_at: "arthur"
+
+  # Arthur tracks Ruby from 0..5s, holds in a gap from 5..8s, then turns to 0 deg from 8..10s
+  - id: "arthur-gaze-ruby"
+    entity: "arthur"
+    start: 0.0
+    end: 5.0
+    look_at: "ruby"
+
+  - id: "arthur-turn-front"
+    entity: "arthur"
+    start: 8.0
+    end: 10.0
+    rotation: 0
+    easing: "linear"
+
+shots:
+  - id: "master"
+    shot: 1
+    start: 0.0
+    end: 12.0
+    stage_camera: { target: "center", distance: 10.0, lens: 35mm }
+`;
+      const { score, error } = parseStageScore(yaml);
+      expect(error).toBeNull();
+      expect(score).not.toBeNull();
+
+      // At t = 4.999s (end of Arthur's gaze cue): Ruby is at ~[0, 0, 0], so Arthur at [-5, 0, 0] faces +X (+90 deg = PI/2)
+      const fBeforeGap = computeStageFrame(4.999, score!);
+      expect(fBeforeGap.entitiesById.get('arthur')!.rotationYRad).toBeCloseTo(
+        Math.PI / 2,
+        2
+      );
+
+      // During the un-cued gap (t = 6.5s): Arthur holds his terminal rotation (+PI/2) and position [-5, 0, 0]
+      const fInGap = computeStageFrame(6.5, score!);
+      const arthurGap = fInGap.entitiesById.get('arthur')!;
+      expect(arthurGap.position).toEqual({ x: -5, y: 0, z: 0 });
+      expect(arthurGap.rotationYRad).toBeCloseTo(Math.PI / 2, 3);
+      expect(arthurGap.trailPoints).toEqual([]);
+      expect(arthurGap.cueId).toBe('hold:arthur-gaze-ruby');
+
+      // At t = 9.0s (midpoint of arthur-turn-front 8..10s from +90 deg to 0 deg):
+      // Arthur is smoothly at +45 deg (PI/4) with zero snap at t = 8.0s
+      const fTurnMid = computeStageFrame(9.0, score!);
+      expect(fTurnMid.entitiesById.get('arthur')!.rotationYRad).toBeCloseTo(
+        Math.PI / 4,
+        3
+      );
+
+      // At t = 11.0s (after all cues finish): Ruby holds [0, 0, 5] with empty trailPoints
+      const fPost = computeStageFrame(11.0, score!);
+      const rubyPost = fPost.entitiesById.get('ruby')!;
+      expect(rubyPost.position).toEqual({ x: 0, y: 0, z: 5 });
+      expect(rubyPost.trailPoints).toEqual([]);
+    });
+  });
 });

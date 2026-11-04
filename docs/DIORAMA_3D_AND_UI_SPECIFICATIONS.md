@@ -54,11 +54,11 @@ To enforce strict DRY principles and visual parity:
 - **`BlueprintStageScene.tsx`**: Renders studio lighting, the metric floor grid (`BlueprintFloorGrid.tsx`), and directional mannequins (`DirectionalMannequin.tsx`), shared identically by both the 3D Diorama and the Stage Cam Viewport.
 - **`StageCamMonitorCanvas.tsx` & `StageCamViewRig.tsx`**: When `score.video` uses `procedural://`, mounts an R3F `<Canvas>` locked directly to `frame.stageCamera.transform` (`position`, `target`, `fovDeg`), overlaid with a director's optical monitor HUD (90% safe-action frame, rule-of-thirds grid guides, optical reticle, and live focal length/distance telemetry). When video playback uses local `.mp4` or YouTube, the 3D canvas is unmounted (0% GPU overhead).
 
-### 2.4 Dual-Tier State Gating on Camera Cuts (Atomic Handover)
+### 2.4 Dual-Tier State Gating on Camera & Blocking Cuts (Atomic Handover)
 To eliminate 1-frame asynchronous ghosting between 60fps WebGL transforms (`frameRef.current`) and batched React 19 UI state (`uiFrame`):
 - All 3D stage components ([`StageCameraRig.tsx`](../src/stage/StageCameraRig.tsx), [`ObserverCameraRig.tsx`](../src/stage/ObserverCameraRig.tsx), [`StageCamViewRig.tsx`](../src/stage/StageCamViewRig.tsx), and [`DirectionalMannequin.tsx`](../src/stage/DirectionalMannequin.tsx)) implement **Gated Frame Cuts**.
-- If the 60fps clock crosses a shot boundary (`liveFrame.stageCamera.shotId !== uiFrame.stageCamera.shotId`) before React commits its render cycle (~16ms), the 3D rigs hold their transforms at `uiFrame`'s committed shot.
-- On the subsequent frame, when React re-renders with the new shot's props, the 3D position, rectangular frustum gate, lens badge text, and 2D HUD switch **atomically on the exact same frame** with zero intermediate ghosting.
+- Camera rigs gate on `shotId` (`liveFrame.stageCamera.shotId !== uiFrame.stageCamera.shotId`), while [`DirectionalMannequin.tsx`](../src/stage/DirectionalMannequin.tsx) gates on each entity's active `cueId` (`liveEntity.cueId !== initialState.cueId`). When an entity walks continuously across camera cuts via root `blocking:`, its `cueId` remains unchanged across the cut, ensuring zero frame freeze while still synchronizing instantaneous cue boundary transitions (`useStageFrameLoop.ts` flushes `uiSnapshot` immediately on both `shotChanged` and `entityCueChanged`).
+- On the subsequent frame, when React re-renders with the new shot or blocking cue's props, the 3D position, rectangular frustum gate, floor movement trail, lens badge text, and 2D HUD switch **atomically on the exact same frame** with zero intermediate ghosting.
 
 ---
 
@@ -70,7 +70,7 @@ Scene entities (`character`, `prop`, `marker`) are rendered with unambiguous ori
   - **Directional Eye-Visor Wedge & Ground Chevron**: A white visor cone on the front of the head (`+Z` local forward) paired with a ground chevron arrow pointing along `rotationYRad`, making character gaze and body facing immediately readable from overhead or side angles.
   - **Ground Contact Ring**: Circular base disc at `y = 0.012m` that expands and brightens when `highlighted === true`.
 - **Dynamic Floor Movement Trail**:
-  - When an entity moves during the active shot (`trailPoints.length >= 2`), renders a dashed floor trajectory curve tracing their path across the stage.
+  - When an entity moves during the active blocking cue or shot (`trailPoints.length >= 2`), renders a dashed floor trajectory curve tracing their full active movement path across the stage (persisting across camera cuts when driven by decoupled `blocking:`, and clearing during stationary holds/gaps).
 - **Floating Identity Badges (`StageBillboardLabel.tsx`)**:
   - Uses `@react-three/drei` `<Html center>` with **Clamped Perspective Scaling** ($1.65\times$ near to $0.80\times$ far, anchored at $12\text{m}$) and prominent HUD-grade typography (`rounded-full bg-slate-950/90 backdrop-blur-md px-3.5 py-1.5 text-sm font-mono border border-slate-700/80 shadow-2xl`) above each mannequin (`Subject A`) and above the Stage Camera (`STAGE CAM · 50mm · ARC`). Perspective transforms mutate imperatively in `useFrame` directly on the inner DOM element style with zero React re-renders, delivering crisp 60fps/144fps responsiveness that eliminates microscopic text at mid/far distances while hard-capping near scaling to prevent close-up ballooning.
   - **Camera Proximity Culling**: In `useFrame`, calculates true 3D world-space distance via `groupRef.current.getWorldPosition()`; if $R < 1.2\text{m}$, the badge smoothly fades to `opacity-0` so close foreground entities never block background stage action or actors.

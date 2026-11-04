@@ -49,18 +49,20 @@ export const DirectionalMannequin: React.FC<DirectionalMannequinProps> = ({
   // Helper to get synchronized live entity state
   const getSynchronizedEntity = (liveFrame: StageFrame | null) => {
     if (!liveFrame) return initialState;
+    const liveEntity = liveFrame.entitiesById.get(entityId);
+    if (!liveEntity) return initialState;
 
-    const isShotDesynced =
+    const isCueDesynced =
       uiFrame !== undefined &&
-      Boolean(liveFrame.activeShot?.id) &&
-      Boolean(uiFrame.activeShot?.id) &&
-      liveFrame.activeShot?.id !== uiFrame.activeShot?.id;
+      liveEntity.cueId !== undefined &&
+      initialState.cueId !== undefined &&
+      liveEntity.cueId !== initialState.cueId;
 
-    if (isShotDesynced) {
+    if (isCueDesynced) {
       return initialState;
     }
 
-    return liveFrame.entitiesById.get(entityId) ?? initialState;
+    return liveEntity;
   };
 
   // Ensure synchronous pre-paint alignment so React reconciler never resets 60fps transform

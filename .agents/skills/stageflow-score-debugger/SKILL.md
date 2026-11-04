@@ -69,18 +69,18 @@ If $\Delta T_{\text{shot 1}} \neq \Delta T_{\text{shot 2}}$, the factor $\frac{1
 ### Step 3: Audit Actor Kinematics vs. Camera Motion
 * **Stop-then-Lurch Pattern**: Does the actor come to a stop in Shot 1 (`cruise` / `smooth`) and then immediately use `ease-out` in Shot 2?
   * **Fix**: Change Shot 2 actor easing to `smooth` so both actor and camera accelerate together from rest.
-* **Continuous Walk Pattern**: Does the actor maintain walking pace through the cut?
-  * **Fix**: Use matching constant velocity (e.g. `accel` in Shot 1 entering constant speed, and `deccel` in Shot 2 beginning at that same constant speed).
+* **Continuous Walk Across Multiple Camera Cuts**: Does the actor walk continuously across multiple shots?
+  * **Best Fix**: Extract the actor's movement into a decoupled root-level `blocking:` cue spanning the full duration of the walk (`start` to `end`) so the actor moves along a single continuous easing curve (`cruise` or `smooth`) with a unified Option A ground movement trail while `shots:` cuts freely around them.
+  * **Legacy Per-Shot Fix**: Use matching constant velocity (e.g. `accel` in Shot 1 entering constant speed, and `deccel` in Shot 2 beginning at that same constant speed).
 
 ### Step 4: Audit Camera Maneuver & Look-At Semantics
 * **Redundant `from:`**: In StageFlow, `from:` is intended for smoothly swinging camera look-at *from one entity to a different entity or position*. If both shots track the same entity, omit `from:`.
 * **Arc Bulging (`breathe`)**: In `maneuver: "arc"` or `"swoop"`, the default `breathe: 1.12` creates a $+12\%$ radial bulge. For tight follow shots, tame `breathe` to `1.01` or `1.0`.
 
-### Step 5: Evaluate Spline vs. Contiguous Shots
+### Step 5: Evaluate Spline vs. Contiguous Shots vs. Decoupled `blocking:`
 When considering merging shots into a single Catmull-Rom spline (`maneuver: "spline"`):
 * **Camera Benefit**: Guarantees unbroken $C^1$ path and velocity continuity; keeps a single 3D yellow trajectory rail.
-* **Actor Blocking Limitation**: StageFlow character mannequins do **not** support intra-shot waypoints. In a single shot, an entity's `rotationYRad` interpolates across the entire shot duration. If an actor must walk facing a subject and *then* spin around, merging into a single shot will cause them to spin continuously while walking.
-* **Rule**: Keep shots distinct if the actor has sequential staging beats (e.g. walk up, pause, then turn).
+* **Decoupling Actor Beats via `blocking:`**: By authoring actor movements in root `blocking:` with independent `[start, end]` windows, you can combine camera shots into a single `spline` while giving actors multi-phase staging beats (e.g. walk up from `0..5s`, pause from `5..7s`, then turn from `7..10s`), or conversely cut across multiple shots while an actor executes a single continuous cross.
 
 ---
 
@@ -88,8 +88,9 @@ When considering merging shots into a single Catmull-Rom spline (`maneuver: "spl
 
 | Problem | Root Cause | Solution |
 | :--- | :--- | :--- |
-| **Actor lurches across boundary** | Actor uses `ease-out` entering at $3\times$ speed after resting | Change actor easing to `smooth` |
+| **Actor stops/restarts at every camera cut** | Actor walk is split across `shots[].entities` | Move actor choreography to root-level `blocking:` spanning the full walk window |
+| **Actor lurches across boundary** | Actor uses `ease-out` entering at $3\times$ speed after resting | Change actor easing to `smooth` or use a single `blocking:` cue |
 | **Camera pushes backward mid-arc** | Default `breathe: 1.12` bulges outward | Set `breathe: 1.0` or `1.01` |
 | **Camera jerks across boundary** | Mismatched easing derivatives or durations | Harmonize easing curves (`smooth` into `smooth` or matched $\frac{du}{dt}$) |
-| **3D trajectory rail swaps abruptly** | Visual consequence of discrete editorial shots | If actor blocking is stationary/monotonic, combine with `maneuver: "spline"` |
+| **3D trajectory rail swaps abruptly** | Visual consequence of discrete editorial shots | Combine camera shots with `maneuver: "spline"` and stage actors in `blocking:` |
 | **Look-at snaps diagonally** | Target entity switched without `from:` | Add `from: "<previous_target>"` |

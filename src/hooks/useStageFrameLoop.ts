@@ -144,8 +144,9 @@ export function useStageFrameLoop(
       }
     }
 
-    const prevShotId = frameRef.current.activeShot?.id ?? null;
-    const prevTime = frameRef.current.timestampSec;
+    const prevFrame = frameRef.current;
+    const prevShotId = prevFrame.activeShot?.id ?? null;
+    const prevTime = prevFrame.timestampSec;
     const nextFrame = computeStageFrame(currentSec, score);
     frameRef.current = nextFrame;
 
@@ -161,10 +162,14 @@ export function useStageFrameLoop(
 
     const now = performance.now();
     const shotChanged = (nextFrame.activeShot?.id ?? null) !== prevShotId;
+    const entityCueChanged = nextFrame.entitiesList.some(
+      (ent) => ent.cueId !== prevFrame.entitiesById.get(ent.id)?.cueId
+    );
     const timeChanged = Math.abs(currentSec - prevTime) > 0.0005;
 
     if (
       shotChanged ||
+      entityCueChanged ||
       (timeChanged && now - lastUiSyncPerfMsRef.current >= 95)
     ) {
       lastUiSyncPerfMsRef.current = now;

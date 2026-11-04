@@ -23,10 +23,12 @@ import {
   normalizeCameraManeuver,
   normalizeEntityKind,
   parseAngleToRad,
+  parseBlockingCues,
   parseLensFocalLengthMm,
   parseOptionalVec3,
   parseTargetOrVec3,
   parseVec3,
+  resolveEntityIdentifier,
 } from './scorePrimitives';
 import {
   parseBaseSphericalPose,
@@ -42,10 +44,12 @@ export {
   normalizeCameraManeuver,
   normalizeEntityKind,
   parseAngleToRad,
+  parseBlockingCues,
   parseLensFocalLengthMm,
   parseOptionalVec3,
   parseTargetOrVec3,
   parseVec3,
+  resolveEntityIdentifier,
 };
 
 // Re-export camera cue parsing helpers for downstream usage and tests
@@ -302,18 +306,27 @@ export function parseStageScore(
     };
   }
 
-  // Parse optional decoupled root-level observer_shots
+  // Parse optional decoupled root-level observer_shots and blocking
   const observerShots = parseObserverShots(
     root.observer_shots ?? root.observerShots,
     defaultObserverPose.focalLengthMm
   );
+  const blocking = parseBlockingCues(root.blocking, entities);
 
   const maxFilmShotEnd = Math.max(...shots.map((s) => s.endSec));
   const maxObserverShotEnd =
     observerShots && observerShots.length > 0
       ? Math.max(...observerShots.map((s) => s.endSec))
       : 0;
-  const maxTimelineEnd = Math.max(maxFilmShotEnd, maxObserverShotEnd);
+  const maxBlockingEnd =
+    blocking && blocking.length > 0
+      ? Math.max(...blocking.map((b) => b.endSec))
+      : 0;
+  const maxTimelineEnd = Math.max(
+    maxFilmShotEnd,
+    maxObserverShotEnd,
+    maxBlockingEnd
+  );
 
   const durationSec =
     typeof root.duration === 'number' && root.duration > 0
@@ -350,6 +363,7 @@ export function parseStageScore(
       entities,
       shots,
       observerShots,
+      blocking,
     },
     error: null,
     warning,

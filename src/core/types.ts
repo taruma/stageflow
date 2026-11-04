@@ -93,15 +93,36 @@ export interface EntityCueOverride {
   note?: string;
 }
 
+/**
+ * An independent entity blocking cue with its own start/end time window,
+ * decoupled from the film coverage shots.
+ */
+export interface BlockingCueSpec {
+  id: string;
+  label?: string;
+  entityId: string;
+  startSec: number;
+  endSec: number;
+  fromPosition?: Vec3;
+  position?: Vec3;
+  rotationYRad?: number;
+  lookAt?: string | Vec3;
+  easing: CameraEasing;
+  highlighted?: boolean;
+  visible?: boolean;
+  note?: string;
+}
+
 export interface EvaluatedEntityState {
   id: string;
   def: SceneEntityDef;
+  cueId?: string | null;
   position: Vec3;
   rotationYRad: number;
   highlighted: boolean;
   visible: boolean;
   note?: string;
-  trailPoints: Vec3[]; // Sampled ground trail when moving during active shot
+  trailPoints: Vec3[]; // Sampled ground trail when moving during active cue/shot
 }
 
 export interface CameraWaypointSpec {
@@ -199,6 +220,7 @@ export interface StageScore {
   entities: SceneEntityDef[];
   shots: ShotCue[];
   observerShots?: ObserverShotCue[];
+  blocking?: BlockingCueSpec[];
 }
 
 export interface EvaluatedCameraTrack {

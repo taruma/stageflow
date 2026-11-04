@@ -122,12 +122,12 @@ stageflow/
 │   │   ├── blueprint_03_ball_pass.yaml # Blueprint 03: 30m 3-actor ball pass, parabolic arc & roll tracking
 │   │   └── blueprint_04_cinematography_tutorial.yaml # Blueprint 04: 16-shot framing, movement, roll & offset tutorial
 │   ├── core/                        # Layer 1: Pure TypeScript Math, Optics & Stateless Frame Engine
-│   │   ├── types.ts                 # Canonical interfaces (StageScore, ShotCue, ObserverShotCue, StageFrame)
+│   │   ├── types.ts                 # Canonical interfaces (StageScore, ShotCue, ObserverShotCue, BlockingCueSpec, StageFrame)
 │   │   ├── constants.ts             # Metric bounds, sensor constants, blueprint color palette
 │   │   ├── opticsMath.ts            # Focal length (mm) <-> Vertical FOV (deg) & Rectangular Gate math
 │   │   ├── sphericalMath.ts         # Degrees <-> Radians, Spherical <-> Cartesian, shortestAngleDiff
 │   │   ├── maneuvers.ts             # 9 easing curves & 11 3D camera trajectory maneuvers
-│   │   ├── entityEngine.ts          # Per-shot character blocking, look_at rotation & floor trails
+│   │   ├── entityEngine.ts          # Decoupled root blocking: & per-shot character kinematics, look_at & floor trails
 │   │   ├── cameraTargetResolver.ts  # Target anchor resolution, 3D offsets & shot-boundary roll resets
 │   │   ├── shotPoseEvaluator.ts     # Single-shot pose evaluation, Catmull-Rom splines & 3D path sampling
 │   │   ├── trajectoryChain.ts       # Forward pose chaining (P_0 -> P_k) & multi-shot timeline tracks

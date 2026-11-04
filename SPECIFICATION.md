@@ -94,6 +94,8 @@ Design a clean, human-readable score format inspired by `taruma-film`'s YAML sco
 
 &#x20; - `observer_shots` (optional): Root-level decoupled viewport timeline for diorama moves (start, end, maneuver, target, distance, pitch, yaw, lens) that span smoothly across multiple film cuts with complete precedence over per-shot cues. Overlapping shots prioritize the latest declaration in the YAML structure.
 
+&#x20; - `blocking` (optional): Root-level decoupled entity blocking timeline (`start`, `end`, `entity`, `from`, `position`, `rotation`, `look_at`, `easing`, `highlighted`, `visible`, `note`) allowing continuous actor and prop movements across multiple film cuts with full-cue floor movement trails and two-pass gaze evaluation.
+
 
 
 \---

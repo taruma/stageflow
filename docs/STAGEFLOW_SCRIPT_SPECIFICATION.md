@@ -153,9 +153,14 @@ $$f_{\text{mm}}(u) = f_0 + u(f_1 - f_0), \qquad \gamma(u) = \begin{cases} \gamma
 
 StageFlow is a **stateless functional evaluator** (`Frame_t = f(t, score)`). State at shot $k$ is deterministically chained forward from shot $k - 1$:
 
-1. **Entity State Persistence**:
-   - At the start of shot $k$, every entity inherits its terminal position $\vec{p}_{\text{end}, k-1}$, facing angle $\psi_{\text{end}, k-1}$, and `visible` flag from shot $k - 1$, unless overridden by `from:` in `shots[k].entities.<id>`.
-   - `highlighted` is evaluated per-shot (defaults to `false` if omitted in shot $k$).
+1. **3-Tier Entity Blocking Resolution & State Persistence**:
+   - **Tier 1 (Root `blocking:`)**: When `blocking:` is defined and non-empty at the score root, entity movement and orientation evaluate across these decoupled time windows $[t_{\text{start}, c}, t_{\text{end}, c}]$ in a **Two-Pass Kinematic Evaluator**:
+     - **Pass 1 (World Positions & Visibility)**: For each entity $i$, chronological cues $c_{i, 1} \dots c_{i, m}$ forward-chain $\vec{p}_{\text{start}, k} \to \vec{p}_{\text{end}, k}$ and `visible` starting from `entities[i]`. During un-cued gaps or after the final cue, the entity holds its preceding terminal pose $\vec{p}_{\text{end}, k}$.
+     - **Pass 2 (Rotation & $C^0$ Gaze Handoff)**: Once all entity world positions $\vec{P}(j, t)$ are solvable for any $t$, each entity forward-chains $\psi_{\text{start}, k} \to \psi_{\text{end}, k}$. If cue $k$ specifies `look_at`, $\psi_{\text{end}, k}$ is sampled against $\vec{P}(\text{target}, t_{\text{end}, k})$, guaranteeing a $0\text{ rad}$ continuous handoff into subsequent holds or turns.
+     - **Option A Ground Movement Trails**: While an entity is inside an active blocking cue ($t \in [t_{\text{start}, k}, t_{\text{end}, k})$) with displacement $> 0.05\text{ m}$, `trailPoints` renders the full 16-segment path of that blocking cue across any camera cuts, and clears (`[]`) during holds/gaps.
+     - **Hybrid Per-Shot Focus Layering**: Per-shot `shots[k].entities.<id>.highlighted` and `note` overlay non-destructively onto the continuous blocking state.
+   - **Tier 2 (Per-Shot `shots[].entities`)**: When root `blocking:` is omitted, at the start of shot $k$, every entity inherits its terminal position $\vec{p}_{\text{end}, k-1}$, facing angle $\psi_{\text{end}, k-1}$, and `visible` flag from shot $k - 1$, unless overridden by `from:` in `shots[k].entities.<id>`. `highlighted` is evaluated per-shot (defaults to `false` if omitted in shot $k$).
+   - **Tier 3 (Static `entities:`)**: Holds baseline position and rotation.
 2. **Camera Spatial Chaining (`continuous: false` vs. `continuous: true`)**:
    - **Standard Mode (`continuous: false`, default)**: Each shot explicitly declares `start` and `end`. If a shot specifies single-value `distance`, `pitch`, or `yaw` without `*_start`, the camera starts and ends the shot at that value (unless `*_end` is also provided). Omitting a parameter inherits the previous shot's terminal value.
    - **Continuous Mode (`continuous: true` at root)**:
@@ -331,4 +336,29 @@ observer_shots:
     yaw_start: 25
     yaw_end: 145
     lens: 35mm
+
+# ============================================================================
+# 6. DECOUPLED ENTITY BLOCKING TIMELINE (OPTIONAL — OVERRIDES PER-SHOT KINEMATICS)
+# ============================================================================
+blocking:
+  # Single-entity cue format
+  - id: "actor-cross"
+    entity: "actor_a"                 # entity id or label
+    start: 0.0
+    end: 9.0
+    from: [-1.2, 0, 0]                # optional explicit start position
+    position: [2.0, 0, 0]             # destination floor position at cue end
+    rotation: 45                      # optional destination facing yaw in deg
+    look_at: "actor_b"                # optional dynamic gaze target (entity id | [x, y, z])
+    easing: "cruise"                  # CameraEasing curve
+    highlighted: true                 # optional focus highlight
+    visible: true                     # optional visibility toggle
+    note: "Crosses stage across cuts" # optional staging note
+
+  # Multi-entity beat format
+  - id: "beat-2"
+    start: 10.0
+    end: 16.0
+    entities:
+      actor_a: { rotation: 0, easing: "smooth" }
 ```

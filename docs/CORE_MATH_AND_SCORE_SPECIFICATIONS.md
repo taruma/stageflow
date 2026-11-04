@@ -97,6 +97,10 @@ In [`trajectoryChain.ts`](../src/core/trajectoryChain.ts), [`cameraTargetResolve
   1. **Tier 1 (Root `observer_shots:`)**: If `score.observerShots` is defined, the Observer Camera evaluates exclusively across these decoupled cues, allowing diorama viewport moves to span smoothly across film cuts. During any time gap between observer shots, the camera holds the terminal resting pose $P_{\text{end}}$ of the last completed cue and forward-chains into the next cue.
   2. **Tier 2 (Per-Shot `shots[].observer_camera`)**: If root `observer_shots:` is omitted, the engine extracts observer cues from `shots:`.
   3. **Tier 3 (Baseline Default)**: If neither is defined, the camera holds steady at `stage.defaultObserverPose`.
+- **3-Tier Entity Blocking Normalization (`entityEngine.ts`)**:
+  1. **Tier 1 (Root `blocking:`)**: If `score.blocking` is defined and non-empty, scene entities evaluate across these decoupled time windows (`startSec`, `endSec`) via a **Two-Pass Kinematic Evaluator** (Pass 1 resolves all entity 3D positions and visibility chains; Pass 2 resolves facing rotations and $C^0$ continuous `look_at` handoffs). During un-cued gaps, entities hold their preceding terminal pose ($P_{\text{end}, k-1}$). While an entity is inside an active blocking cue with displacement $> 0.05\text{m}$, its floor trail (`trailPoints`) reflects the full 16-segment path of that blocking cue across any camera cuts (Option A). Per-shot `shots[k].entities.<id>.highlighted` and `note` overlay non-destructively on top.
+  2. **Tier 2 (Per-Shot `shots[].entities`)**: If root `blocking:` is omitted, entity movements chain across `shots:`.
+  3. **Tier 3 (Baseline Default)**: If neither provides movement, entities hold their initial pose from `entities:`.
 
 ### 4.3 Supported Easing Curves & Trajectory Maneuvers (`maneuvers.ts`)
 - **9 Easing Curves (`CameraEasing`)**: `smooth` (raised cosine default), `linear`, `ease-in`, `ease-out`, `expo`, `pop`, `accel`, `deccel`, `cruise`.
@@ -115,8 +119,8 @@ In [`trajectoryChain.ts`](../src/core/trajectoryChain.ts), [`cameraTargetResolve
 - **Physical Camera Rig Chaining**: For any shot $k \ge 1$ with a moving maneuver (`arc`, `dolly`, `swoop`, `orbit`, etc.), omitting `distance_start`, `pitch_start`, or `yaw_start` causes the camera to start at $P_{\text{prev}}$ (the previous shot's terminal pose) and smoothly travel to the newly authored destination (`distance`, `pitch`, `yaw`). Opening shot (`k = 0`) values establish the baseline framing. Instantaneous cuts (`maneuver: cut`) snap directly to the authored values.
 - **Discrete Optical Prime Lenses**: In accordance with cinema prime lens grammar, specifying `lens: 50mm` mounts that lens for the shot and holds it steady (no unwanted slow zoom). Omitting `lens` preserves the mounted lens from the previous shot. Dynamic zooming requires explicit `lens_start` and `lens_end`.
 - **Explicit Look-At Retargeting**: Changing `target` without `from:` cuts the look-at anchor immediately at the shot boundary (`0ms`), preventing unintended diagonal room drifting. Specifying `from:` smoothly tracks from `from` to `target`.
-- **Decoupled Observer Isolation**: `observer_shots:` remains strictly explicit (`start:` and `end:`) to preserve stationary diorama inspection periods.
-- **YAML Declaration Order Overlap Priority**: When multiple shots overlap in time, the later shot in the YAML structure takes precedence across `frameEngine` (`activeShot`), `trajectoryChain` (camera track), and `entityEngine` (character kinematics).
+- **Decoupled Observer & Blocking Isolation**: Both `observer_shots:` and `blocking:` remain strictly explicit (`start:` and `end:`) to preserve independent timing and stationary hold periods across film cuts.
+- **YAML Declaration Order Overlap Priority**: When multiple shots or blocking cues overlap in time, the later item in the YAML structure takes precedence across `frameEngine` (`activeShot`), `trajectoryChain` (camera track), and `entityEngine` (character kinematics).
 - **Non-Blocking Typo Warnings**: In non-continuous mode (`continuous: false`), omitting `start` on `shots[k > 0]` surfaces an informative warning in the YAML Drawer rather than crashing.
 
 ---
@@ -160,6 +164,16 @@ entities:
     rotation: 90                     # Facing angle in degrees
     color: "#38bdf8"
 
+# Optional Decoupled Entity Blocking Timeline (spans continuously across film cuts)
+blocking:
+  - id: "protagonist-cross"
+    entity: "protagonist"
+    start: 0.0
+    end: 10.0
+    position: [0.5, 0, 0]
+    look_at: "interlocutor"
+    easing: "smooth"
+
 shots:
   - id: "shot-1"
     shot: 1
@@ -191,7 +205,7 @@ shots:
       lens: 35mm
     entities:
       protagonist:
-        position: [-0.9, 0, 0]       # Optional target position by end of shot
+        position: [-0.9, 0, 0]       # Optional target position by end of shot (when root blocking: is omitted)
         look_at: "interlocutor"      # Dynamic facing toward another entity or [x, y, z]
         highlighted: true
 
@@ -233,4 +247,3 @@ video:
   aspect_ratio: "16:9"
 ```
 **YAML as Single Source of Truth**: Whenever the YAML score specifies or changes a video URL, any active in-memory dropped video override is automatically cleared so the score's video is played. Local dropped video files (`.mp4`, `.webm`) are maintained strictly in temporary session memory and are never written to `IndexedDB` or `localStorage`.
-

@@ -617,7 +617,104 @@ observer_shots:
         expect(item.score.durationSec).toBeGreaterThan(0);
         expect(item.score.stage.width).toBeGreaterThan(0);
         expect(item.score.stage.depth).toBeGreaterThan(0);
+        expect(item.score.blocking).toBeUndefined();
       }
+    });
+
+    it('parses root-level blocking: cues in both single-entity and multi-entity beat formats', () => {
+      const yamlWithBlocking = `
+version: "1.0"
+id: "blocking-parse-test"
+title: "Blocking Parse Test"
+entities:
+  - id: "arthur"
+    label: "Arthur (Lead)"
+    kind: "character"
+    position: [-10, 0, 0]
+    rotation: 90
+  - id: "ruby"
+    label: "Ruby (Partner)"
+    kind: "character"
+    position: [6, 0, 0]
+    rotation: -90
+
+blocking:
+  - id: "arthur-cross"
+    label: "Room Cross"
+    entity: "Arthur (Lead)"
+    start: 0.0
+    end: 9.0
+    from: [-10, 0, 0]
+    position: [2, 0, 0]
+    rotation: 45
+    look_at: "ruby"
+    easing: "cruise"
+    highlighted: true
+    visible: true
+    note: "Walks across stage"
+
+  - id: "beat-2"
+    label: "Mutual Turn"
+    start: 10.0
+    end: 18.0
+    entities:
+      arthur:
+        rotation: 0
+        easing: "smooth"
+      ruby:
+        position: [3, 0, 1]
+        look_at: "arthur"
+        easing: "ease-out"
+        visible: false
+
+shots:
+  - id: "shot-1"
+    shot: 1
+    start: 0.0
+    end: 6.0
+    stage_camera:
+      target: "arthur"
+      lens: 35mm
+`;
+      const { score, error } = parseStageScore(yamlWithBlocking);
+      expect(error).toBeNull();
+      expect(score).not.toBeNull();
+      expect(score!.blocking).toBeDefined();
+      expect(score!.blocking).toHaveLength(3);
+
+      // Duration auto-extends to maxBlockingEnd (18.0s) when root duration is omitted
+      expect(score!.durationSec).toBe(18.0);
+
+      const c1 = score!.blocking![0];
+      expect(c1.id).toBe('arthur-cross');
+      expect(c1.label).toBe('Room Cross');
+      expect(c1.entityId).toBe('arthur'); // Resolved from label "Arthur (Lead)"
+      expect(c1.startSec).toBe(0.0);
+      expect(c1.endSec).toBe(9.0);
+      expect(c1.fromPosition).toEqual({ x: -10, y: 0, z: 0 });
+      expect(c1.position).toEqual({ x: 2, y: 0, z: 0 });
+      expect(radToDeg(c1.rotationYRad!)).toBeCloseTo(45, 4);
+      expect(c1.lookAt).toBe('ruby');
+      expect(c1.easing).toBe('cruise');
+      expect(c1.highlighted).toBe(true);
+      expect(c1.visible).toBe(true);
+      expect(c1.note).toBe('Walks across stage');
+
+      const c2 = score!.blocking![1];
+      expect(c2.id).toBe('beat-2:arthur');
+      expect(c2.entityId).toBe('arthur');
+      expect(c2.startSec).toBe(10.0);
+      expect(c2.endSec).toBe(18.0);
+      expect(radToDeg(c2.rotationYRad!)).toBeCloseTo(0, 4);
+      expect(c2.easing).toBe('smooth');
+
+      const c3 = score!.blocking![2];
+      expect(c3.id).toBe('beat-2:ruby');
+      expect(c3.entityId).toBe('ruby');
+      expect(c3.position).toEqual({ x: 3, y: 0, z: 1 });
+      expect(c3.lookAt).toBe('arthur');
+      expect(c3.easing).toBe('ease-out');
+      expect(c3.visible).toBe(false);
     });
   });
 });

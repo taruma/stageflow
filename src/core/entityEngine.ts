@@ -1,9 +1,14 @@
 /**
- * Deterministic per-shot entity kinematics evaluator.
- * Traces entity positions, facing rotations, look_at targets, and ground trails across shots.
+ * Deterministic entity kinematics evaluator.
+ * Supports:
+ *   - Tier 1: Decoupled root `blocking:` timeline (two-pass continuous multi-cut evaluation,
+ *             Option A full-cue floor trails, pose hold persistence across gaps, and hybrid
+ *             per-shot highlight/note overlays).
+ *   - Tier 2: Legacy per-shot `shots[].entities` evaluation (100% backward compatible).
  */
 
 import type {
+  BlockingCueSpec,
   EvaluatedEntityState,
   SceneEntityDef,
   ShotCue,
@@ -23,29 +28,274 @@ interface EntityPoseSnapshot {
   visible: boolean;
 }
 
+interface ChainedBlockingCueEntry {
+  cue: BlockingCueSpec;
+  startPos: Vec3;
+  endPos: Vec3;
+  startRot: number;
+  endRot: number;
+  visible: boolean;
+}
+
 /**
- * Resolves a lookAt target (either an entity ID or explicit Vec3) into world coordinates.
+ * Resolves a lookAt target (entity ID, entity label, "center", or explicit Vec3) into world coordinates.
  */
 function resolveLookAtPoint(
   lookAt: string | Vec3 | undefined,
-  currentPositions: Map<string, Vec3>
+  currentPositions: Map<string, Vec3>,
+  entities?: SceneEntityDef[]
 ): Vec3 | null {
   if (!lookAt) return null;
   if (typeof lookAt === 'object') {
     return lookAt;
   }
   const trimmed = lookAt.trim().toLowerCase();
+  if (trimmed === 'center' || trimmed === 'origin' || trimmed === 'stage') {
+    return { x: 0, y: 0, z: 0 };
+  }
   for (const [id, pos] of currentPositions.entries()) {
     if (id.toLowerCase() === trimmed) {
       return pos;
+    }
+  }
+  if (entities) {
+    const matched = entities.find((e) => e.label.toLowerCase() === trimmed);
+    if (matched) {
+      return currentPositions.get(matched.id) ?? matched.position;
     }
   }
   return null;
 }
 
 /**
+ * Generates a 16-segment ground movement trail when displacement exceeds 0.05m.
+ */
+function buildGroundTrailPoints(startPos: Vec3, endPos: Vec3): Vec3[] {
+  const moveDist = Math.hypot(
+    endPos.x - startPos.x,
+    endPos.y - startPos.y,
+    endPos.z - startPos.z
+  );
+  if (moveDist <= 0.05) return [];
+
+  const trailPoints: Vec3[] = [];
+  const steps = 16;
+  for (let i = 0; i <= steps; i++) {
+    const frac = i / steps;
+    trailPoints.push({
+      x: startPos.x + frac * (endPos.x - startPos.x),
+      y: 0.02, // Slightly above floor plane to avoid z-fighting
+      z: startPos.z + frac * (endPos.z - startPos.z),
+    });
+  }
+  return trailPoints;
+}
+
+/**
+ * Tier 1: Evaluates entities against the decoupled root `blocking:` timeline.
+ */
+function evaluateBlockingEntitiesAtTime(
+  elapsedSec: number,
+  score: StageScore
+): {
+  entitiesById: Map<string, EvaluatedEntityState>;
+  entitiesList: EvaluatedEntityState[];
+} {
+  const blockingCues = score.blocking ?? [];
+  const chainsByEntity = new Map<string, ChainedBlockingCueEntry[]>();
+
+  // Pass 1: Build forward-chained 3D world position & visibility tracks per entity
+  for (const def of score.entities) {
+    const entityCues = blockingCues
+      .filter((c) => c.entityId.toLowerCase() === def.id.toLowerCase())
+      .sort((a, b) => a.startSec - b.startSec);
+
+    let prevPos: Vec3 = cloneVec3(def.position);
+    let prevVis: boolean = true;
+    const entries: ChainedBlockingCueEntry[] = [];
+
+    for (const cue of entityCues) {
+      const startPos = cue.fromPosition
+        ? cloneVec3(cue.fromPosition)
+        : cloneVec3(prevPos);
+      const endPos = cue.position
+        ? cloneVec3(cue.position)
+        : cloneVec3(startPos);
+      const visible: boolean = cue.visible ?? prevVis;
+
+      entries.push({
+        cue,
+        startPos,
+        endPos,
+        startRot: def.rotationYRad,
+        endRot: def.rotationYRad,
+        visible,
+      });
+
+      prevPos = cloneVec3(endPos);
+      prevVis = visible;
+    }
+
+    chainsByEntity.set(def.id, entries);
+  }
+
+  // Helper to evaluate all entity positions at any arbitrary timestamp t
+  const evaluatePositionsAt = (t: number): Map<string, Vec3> => {
+    const posMap = new Map<string, Vec3>();
+    for (const def of score.entities) {
+      const chain = chainsByEntity.get(def.id) ?? [];
+      const active = chain
+        .slice()
+        .reverse()
+        .find((e) => t >= e.cue.startSec && t < e.cue.endSec);
+      const lastFinished = chain
+        .slice()
+        .reverse()
+        .find((e) => t >= e.cue.endSec);
+
+      if (active) {
+        const dur = Math.max(0.016, active.cue.endSec - active.cue.startSec);
+        const tau = Math.min(1, Math.max(0, (t - active.cue.startSec) / dur));
+        const u = evaluateCameraEasing(active.cue.easing, tau);
+        posMap.set(def.id, {
+          x: active.startPos.x + u * (active.endPos.x - active.startPos.x),
+          y: active.startPos.y + u * (active.endPos.y - active.startPos.y),
+          z: active.startPos.z + u * (active.endPos.z - active.startPos.z),
+        });
+      } else if (lastFinished) {
+        posMap.set(def.id, cloneVec3(lastFinished.endPos));
+      } else {
+        posMap.set(def.id, cloneVec3(def.position));
+      }
+    }
+    return posMap;
+  };
+
+  // Pass 2: Build forward-chained facing rotations (including C0 look_at handoff)
+  for (const def of score.entities) {
+    const chain = chainsByEntity.get(def.id) ?? [];
+    let prevRot = def.rotationYRad;
+
+    for (const entry of chain) {
+      entry.startRot = prevRot;
+      let endRot = entry.startRot;
+
+      if (entry.cue.rotationYRad !== undefined) {
+        endRot = entry.cue.rotationYRad;
+      } else if (entry.cue.lookAt) {
+        const sampleTime = Math.max(entry.cue.startSec, entry.cue.endSec - 1e-6);
+        const posAtEnd = evaluatePositionsAt(sampleTime);
+        const targetPt = resolveLookAtPoint(
+          entry.cue.lookAt,
+          posAtEnd,
+          score.entities
+        );
+        if (targetPt) {
+          endRot = computeLookAtYawRad(entry.endPos, targetPt);
+        }
+      } else if (
+        Math.hypot(
+          entry.endPos.x - entry.startPos.x,
+          entry.endPos.z - entry.startPos.z
+        ) > 0.05
+      ) {
+        endRot = computeLookAtYawRad(entry.startPos, entry.endPos);
+      }
+
+      entry.endRot = endRot;
+      prevRot = endRot;
+    }
+  }
+
+  // Resolve active film shot for hybrid per-shot focus metadata (highlighted / note)
+  const sortedShots = [...score.shots].sort((a, b) => a.startSec - b.startSec);
+  const activeShot = sortedShots
+    .slice()
+    .reverse()
+    .find((s) => elapsedSec >= s.startSec && elapsedSec < s.endSec);
+
+  const livePositions = evaluatePositionsAt(elapsedSec);
+  const entitiesById = new Map<string, EvaluatedEntityState>();
+  const entitiesList: EvaluatedEntityState[] = [];
+
+  for (const def of score.entities) {
+    const chain = chainsByEntity.get(def.id) ?? [];
+    const pos = livePositions.get(def.id)!;
+    const shotOv = activeShot?.entities[def.id];
+
+    const active = chain
+      .slice()
+      .reverse()
+      .find((e) => elapsedSec >= e.cue.startSec && elapsedSec < e.cue.endSec);
+    const lastFinished = chain
+      .slice()
+      .reverse()
+      .find((e) => elapsedSec >= e.cue.endSec);
+
+    let rotY = def.rotationYRad;
+    let visible = shotOv?.visible ?? true;
+    let highlighted = Boolean(shotOv?.highlighted);
+    let note = shotOv?.note;
+    let trailPoints: Vec3[] = [];
+    let cueId: string | null = 'preroll';
+
+    if (active) {
+      const dur = Math.max(0.016, active.cue.endSec - active.cue.startSec);
+      const tau = Math.min(
+        1,
+        Math.max(0, (elapsedSec - active.cue.startSec) / dur)
+      );
+      const u = evaluateCameraEasing(active.cue.easing, tau);
+
+      rotY =
+        active.startRot +
+        u * shortestAngleDiff(active.endRot, active.startRot);
+
+      if (active.cue.lookAt) {
+        const lookTarget = resolveLookAtPoint(
+          active.cue.lookAt,
+          livePositions,
+          score.entities
+        );
+        if (lookTarget) {
+          rotY = computeLookAtYawRad(pos, lookTarget);
+        }
+      }
+
+      visible = active.visible;
+      highlighted = Boolean(active.cue.highlighted ?? shotOv?.highlighted);
+      note = active.cue.note ?? shotOv?.note;
+      trailPoints = buildGroundTrailPoints(active.startPos, active.endPos);
+      cueId = active.cue.id;
+    } else if (lastFinished) {
+      rotY = lastFinished.endRot;
+      visible = lastFinished.visible;
+      cueId = `hold:${lastFinished.cue.id}`;
+    }
+
+    const state: EvaluatedEntityState = {
+      id: def.id,
+      def,
+      cueId,
+      position: pos,
+      rotationYRad: rotY,
+      highlighted,
+      visible,
+      note,
+      trailPoints,
+    };
+
+    entitiesById.set(def.id, state);
+    entitiesList.push(state);
+  }
+
+  return { entitiesById, entitiesList };
+}
+
+/**
  * Evaluates all scene entities at a given timestamp (in seconds).
- * Traces forward state across preceding shots so entity movements persist across cuts.
+ * Delegates to Tier 1 decoupled `blocking:` when present, or falls back to
+ * Tier 2 per-shot `shots[].entities` evaluation.
  */
 export function evaluateEntitiesAtTime(
   elapsedSec: number,
@@ -54,6 +304,10 @@ export function evaluateEntitiesAtTime(
   entitiesById: Map<string, EvaluatedEntityState>;
   entitiesList: EvaluatedEntityState[];
 } {
+  if (score.blocking && score.blocking.length > 0) {
+    return evaluateBlockingEntitiesAtTime(elapsedSec, score);
+  }
+
   const sortedShots = [...score.shots].sort((a, b) => a.startSec - b.startSec);
 
   // Initialize baseline poses from SceneEntityDef
@@ -114,7 +368,11 @@ export function evaluateEntitiesAtTime(
       if (override?.rotationYRad !== undefined) {
         endRot = override.rotationYRad;
       } else if (override?.lookAt) {
-        const targetPt = resolveLookAtPoint(override.lookAt, endPositions);
+        const targetPt = resolveLookAtPoint(
+          override.lookAt,
+          endPositions,
+          score.entities
+        );
         if (targetPt) {
           endRot = computeLookAtYawRad(endPos, targetPt);
         }
@@ -178,7 +436,10 @@ export function evaluateEntitiesAtTime(
       const endSnap =
         shotEndPoses.get(activeShot)?.get(def.id) ?? startSnap;
       const override = activeShot.entities[def.id];
-      const shotDuration = Math.max(0.016, activeShot.endSec - activeShot.startSec);
+      const shotDuration = Math.max(
+        0.016,
+        activeShot.endSec - activeShot.startSec
+      );
       const tRaw = Math.min(
         1,
         Math.max(0, (elapsedSec - activeShot.startSec) / shotDuration)
@@ -248,38 +509,25 @@ export function evaluateEntitiesAtTime(
         );
 
     if (override?.lookAt) {
-      const lookTarget = resolveLookAtPoint(override.lookAt, livePositions);
+      const lookTarget = resolveLookAtPoint(
+        override.lookAt,
+        livePositions,
+        score.entities
+      );
       if (lookTarget) {
         rotY = computeLookAtYawRad(pos, lookTarget);
       }
     }
 
-    // Generate ground movement trail if moving during active shot
-    const trailPoints: Vec3[] = [];
-    const moveDist = Math.hypot(
-      item.endSnap.position.x - item.startSnap.position.x,
-      item.endSnap.position.y - item.startSnap.position.y,
-      item.endSnap.position.z - item.startSnap.position.z
+    const trailPoints = buildGroundTrailPoints(
+      item.startSnap.position,
+      item.endSnap.position
     );
-    if (moveDist > 0.05) {
-      const steps = 16;
-      for (let i = 0; i <= steps; i++) {
-        const frac = i / steps;
-        trailPoints.push({
-          x:
-            item.startSnap.position.x +
-            frac * (item.endSnap.position.x - item.startSnap.position.x),
-          y: 0.02, // Slightly above floor plane to avoid z-fighting
-          z:
-            item.startSnap.position.z +
-            frac * (item.endSnap.position.z - item.startSnap.position.z),
-        });
-      }
-    }
 
     const state: EvaluatedEntityState = {
       id: def.id,
       def,
+      cueId: activeShot?.id ?? null,
       position: pos,
       rotationYRad: rotY,
       highlighted: item.highlighted,
