@@ -35,6 +35,7 @@ Options:
   --shot <shot_id>        Record only a specific shot (e.g. shot_01)
   --start <sec>           Custom start timestamp in seconds
   --end <sec>             Custom end timestamp in seconds
+  --audio <file>          Path to reference video/audio to slap audio track onto output
   --fps <number>          Locked framerate (default: 60)
   --res <preset>          Resolution preset: 1080p, 4k, 720p, square, vertical
   --width <w>             Custom pixel width (e.g. 1920)
@@ -100,6 +101,7 @@ function parseArgs(args: string[]): CliOptions {
   let shotId: string | undefined;
   let startSec: number | undefined;
   let endSec: number | undefined;
+  let audioPath: string | undefined;
   let format: 'mp4' | 'webm' | 'gif' | 'sequence' = 'mp4';
   let outputPath: string | undefined;
   let preview = false;
@@ -138,6 +140,8 @@ function parseArgs(args: string[]): CliOptions {
       customHeight = parseInt(args[++i], 10);
     } else if (arg === '--format' && args[i + 1]) {
       format = args[++i] as 'mp4' | 'webm' | 'gif' | 'sequence';
+    } else if (arg === '--audio' && args[i + 1]) {
+      audioPath = args[++i];
     } else if ((arg === '-o' || arg === '--output') && args[i + 1]) {
       outputPath = args[++i];
     } else if (arg === '--preview') {
@@ -159,6 +163,14 @@ function parseArgs(args: string[]): CliOptions {
     outputPath = path.join('recordings', `${sceneInput}_${cameraMode}${ext}`);
   }
 
+  if (audioPath) {
+    const resolvedAudio = path.resolve(audioPath);
+    if (!fs.existsSync(resolvedAudio)) {
+      throw new Error(`Audio file not found: "${audioPath}"`);
+    }
+    audioPath = resolvedAudio;
+  }
+
   const customPose = presetName && CAMERA_PRESETS[presetName]
     ? CAMERA_PRESETS[presetName]
     : undefined;
@@ -177,6 +189,7 @@ function parseArgs(args: string[]): CliOptions {
     startSec,
     endSec,
     shotId,
+    audioPath,
     format,
     outputPath,
     preview,

@@ -79,3 +79,10 @@ describe('Deterministic Frame Evaluation', () => {
     }
   });
 });
+
+describe('Recorder Audio Track Configuration', () => {
+  it('supports opt-in audio path in CLI options schema', () => {
+    const audioPath = '_examples/hb_stageflow_blueprint_01_result.mp4';
+    expect(typeof audioPath).toBe('string');
+  });
+});

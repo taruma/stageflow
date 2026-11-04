@@ -88,12 +88,16 @@ export async function runRecordSession(
       width: options.width,
       height: options.height,
       format: options.format,
+      audioPath: options.audioPath,
+      startSec: options.startSec ?? 0,
+      durationSec: sessionInfo.durationSec,
     });
 
     console.log('\n🎬 StageFlow Deterministic Viewport Recorder');
     console.log('━'.repeat(52));
     console.log(`  Camera Mode:   ${options.cameraMode.toUpperCase()}`);
     console.log(`  Labels:        ${options.labels.toUpperCase()} | HUD: ${options.hud ? 'ON' : 'OFF'} | Guides: ${options.guides ? 'ON' : 'OFF'}`);
+    console.log(`  Audio Track:   ${options.audioPath ? options.audioPath : 'NONE (silent)'}`);
     console.log(`  Framerate:     ${options.fps} fps (locked)`);
     console.log(`  Resolution:    ${options.width}x${options.height}`);
     console.log(`  Total Frames:  ${totalFrames} (${sessionInfo.durationSec.toFixed(2)}s)`);

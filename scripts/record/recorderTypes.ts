@@ -23,6 +23,7 @@ export interface CliOptions {
   startSec?: number;
   endSec?: number;
   shotId?: string;
+  audioPath?: string;
   format: 'mp4' | 'webm' | 'gif' | 'sequence';
   outputPath: string;
   preview: boolean;

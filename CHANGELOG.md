@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added granular CLI flags for full recording flexibility:
     - Camera mode: `--camera scripted` (default 3D observer diorama) or `--camera stage-pov` (director's optical lens view).
     - Label and overlay controls: `--labels all | camera-only | off`, `--guides`, and `--hud`.
+    - Opt-in reference audio slapping: `--audio <local_path>` to extract and mux the audio track from a reference video or sound file without burning in the reference video visual stream. Default output remains 100% silent for self-contained, offline speed.
     - Time windowing: `--shot <shot_id>` or `--start <sec> --end <sec>`.
     - Resolution and framerate: `--res 1080p | 4k | 720p | square | vertical`, `--fps <number>`.
   - Added Vitest unit test suite in [`tests/unit/recorder.test.ts`](tests/unit/recorder.test.ts) covering camera presets, resolution configurations, FFmpeg discovery, and deterministic stepped frame evaluation.

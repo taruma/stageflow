@@ -12,6 +12,9 @@ export interface FfmpegEncoderOptions {
   width: number;
   height: number;
   format: 'mp4' | 'webm' | 'gif' | 'sequence';
+  audioPath?: string;
+  startSec?: number;
+  durationSec?: number;
 }
 
 export interface FfmpegPipeline {
@@ -101,10 +104,21 @@ export function createFfmpegPipeline(
     };
   }
 
+  const hasAudio = Boolean(options.audioPath && fs.existsSync(options.audioPath));
   const ffmpegExe = resolveFfmpegPath();
   const args = ['-y', '-f', 'image2pipe', '-vcodec', 'png', '-r', String(fps), '-i', '-'];
 
+  if (hasAudio && options.audioPath) {
+    if (typeof options.startSec === 'number' && options.startSec > 0) {
+      args.push('-ss', options.startSec.toFixed(3));
+    }
+    args.push('-i', options.audioPath);
+  }
+
   if (format === 'mp4') {
+    if (hasAudio) {
+      args.push('-map', '0:v:0', '-map', '1:a:0?');
+    }
     args.push(
       '-c:v',
       'libx264',
@@ -113,13 +127,25 @@ export function createFfmpegPipeline(
       '-preset',
       'medium',
       '-crf',
-      '18',
+      '18'
+    );
+    if (hasAudio) {
+      args.push('-c:a', 'aac', '-b:a', '192k', '-shortest');
+    }
+    args.push(
       '-movflags',
       '+faststart',
       outputPath
     );
   } else if (format === 'webm') {
-    args.push('-c:v', 'libvpx-vp9', '-crf', '24', '-b:v', '0', outputPath);
+    if (hasAudio) {
+      args.push('-map', '0:v:0', '-map', '1:a:0?');
+    }
+    args.push('-c:v', 'libvpx-vp9', '-crf', '24', '-b:v', '0');
+    if (hasAudio) {
+      args.push('-c:a', 'libopus', '-b:a', '128k', '-shortest');
+    }
+    args.push(outputPath);
   } else if (format === 'gif') {
     args.push(
       '-filter_complex',

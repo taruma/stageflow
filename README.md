@@ -73,6 +73,9 @@ npm run record 01 -- --camera stage-pov --guides -o stage_pov.mp4
 # Record clean 3D diorama geometry only (no HTML labels)
 npm run record 02 -- --labels off -o clean.mp4
 
+# Record custom scene and slap audio track from reference video (video image excluded)
+npm run record path/to/my_scene.yaml -- --audio path/to/reference.mp4 -o my_scene.mp4
+
 # Record single shot cue with isometric schematic camera preset in 4K
 npm run record 04 -- --shot shot_01 --preset isometric --res 4k -o shot01_iso_4k.mp4
 ```
