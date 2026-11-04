@@ -50,6 +50,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added unit test coverage in `tests/unit/frameEngine.test.ts`.
 
 ### Added
+- **Pure Technical & Mathematical StageFlow Script Specification (`docs/STAGEFLOW_SCRIPT_SPECIFICATION.md`)**:
+  - Created [`docs/STAGEFLOW_SCRIPT_SPECIFICATION.md`](docs/STAGEFLOW_SCRIPT_SPECIFICATION.md) as a standalone, formal mathematical and technical specification for writing StageFlow YAML scripts without prescriptive directorial recipes.
+  - Documented the right-handed $Y$-up Cartesian coordinate space, spherical camera pose 6-tuple $P = (\vec{T}, d, \theta, \psi, \gamma, f_{\text{mm}})$, forward/inverse Cartesian projections, 35mm full-frame optical gate geometry ($W_{\text{gate}}, H_{\text{gate}}, \text{FOV}_{\text{vert}}$), intrinsic entity look-at anchors, analytical formulas for all 9 temporal easing curves and 11 3D trajectory maneuvers, forward pose chaining ($P_0 \to P_k$) and shot-boundary reset rules, and an exhaustive annotated YAML schema reference.
+  - Updated [`AGENTS.md`](AGENTS.md) and [`README.md`](README.md) documentation maps.
 - **Dynamic Floor-Clamped 3D Orbit Navigation (`computeFloorClampedMaxPolarAngle`)**:
   - Replaced the static `maxPolarAngle = 0.49π` (~$88.2^\circ$) limit on `OrbitControls` in `ObserverCameraRig.tsx` with height-aware floor clearance calculations.
   - Implemented `computeFloorClampedMaxPolarAngle` in `src/core/sphericalMath.ts` alongside constants `MIN_FLOOR_CLEARANCE_M = 0.05` and `MAX_SAFE_POLAR_ANGLE_RAD = Math.PI * 0.98` (~$176.4^\circ$).

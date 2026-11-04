@@ -94,6 +94,7 @@ stageflow/
 ├── SPECIFICATION.md                 # Foundational product vision & system mechanics
 ├── README.md                        # Quickstart overview & CLI command reference
 ├── docs/                            # Detailed technical & architectural specifications (SSOT)
+│   ├── STAGEFLOW_SCRIPT_SPECIFICATION.md # Pure mathematical & formal YAML script specification
 │   ├── YAML_AUTHORING_GUIDE.md      # Complete YAML score manual, syntax reference & recipes
 │   ├── CORE_MATH_AND_SCORE_SPECIFICATIONS.md
 │   ├── MEDIA_CLOCK_AND_SYNC_SPECIFICATIONS.md
