@@ -4,7 +4,7 @@
  */
 
 import React, { useMemo } from 'react';
-import { Grid, Html, Line } from '@react-three/drei';
+import { Grid, Line, Text } from '@react-three/drei';
 import * as THREE from 'three';
 import type { CameraViewMode } from '../core/types';
 
@@ -122,32 +122,34 @@ export const BlueprintFloorGrid: React.FC<BlueprintFloorGridProps> = ({
         />
       </mesh>
 
-      {/* Cardinal Stage Orientation Markers (Lying flat on the floor perimeter; hidden in Stage Cam POV) */}
+      {/* Cardinal Stage Orientation Markers (Native WebGL SDF mesh lying flat on floor plane; hidden in Stage Cam POV) */}
       {showLabels && !isStagePov && (
         <>
-          <Html
-            position={[0, 0.005, halfD + 0.45]}
-            center
-            transform
+          <Text
+            position={[0, 0.005, halfD + 0.55]}
             rotation={[-Math.PI / 2, 0, 0]}
-            zIndexRange={[10, 0]}
+            fontSize={0.24}
+            color="#38bdf8"
+            anchorX="center"
+            anchorY="middle"
+            letterSpacing={0.14}
+            fillOpacity={0.65}
           >
-            <div className="px-2 py-0.5 rounded-full bg-slate-950/70 border border-sky-500/30 text-[8px] font-mono text-sky-400 tracking-widest uppercase select-none pointer-events-none whitespace-nowrap">
-              +Z · Downstage / Front
-            </div>
-          </Html>
+            +Z · DOWNSTAGE / FRONT
+          </Text>
 
-          <Html
-            position={[0, 0.005, -halfD - 0.45]}
-            center
-            transform
+          <Text
+            position={[0, 0.005, -halfD - 0.55]}
             rotation={[-Math.PI / 2, 0, 0]}
-            zIndexRange={[10, 0]}
+            fontSize={0.24}
+            color="#64748b"
+            anchorX="center"
+            anchorY="middle"
+            letterSpacing={0.14}
+            fillOpacity={0.65}
           >
-            <div className="px-2 py-0.5 rounded-full bg-slate-950/70 border border-slate-800 text-[8px] font-mono text-slate-500 tracking-widest uppercase select-none pointer-events-none whitespace-nowrap">
-              -Z · Upstage / Back
-            </div>
-          </Html>
+            -Z · UPSTAGE / BACK
+          </Text>
         </>
       )}
     </group>
