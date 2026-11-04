@@ -1,9 +1,14 @@
 /**
  * Crisp 3D floating billboard badge for actors, props, and the Stage Camera.
- * Rendered with clamped perspective scaling (1.65x near -> 0.80x far) and
- * prominent HUD-grade typography (14px font-mono, glowing dot), preventing both
- * microscopic text at mid/far distances and giant ballooning close-up.
+ * Rendered with clamped perspective scaling (1.65x near -> 0.80x far, anchored at 12m)
+ * and prominent HUD-grade typography (14px font-mono, glowing dot).
  * Proximity culling (< 1.2m) smoothly fades out extreme foreground badges.
+ *
+ * Directorial 3-Tier Hierarchy:
+ *   - Stage Cam: 100% opacity always (master telemetry).
+ *   - Active Focus Subject (highlighted: true): 100% paused, 55% during playback with glowing dot & accent border.
+ *   - Passive Subjects: 85% paused, 20% ghosted during playback.
+ *
  * Memoized with deep position equality to prevent redundant DOM re-paints during playback.
  */
 
@@ -70,13 +75,24 @@ export const StageBillboardLabel: React.FC<StageBillboardLabelProps> = React.mem
 
     if (!visible) return null;
 
+    // 3-Tier Visual Hierarchy:
+    // When playing (ghosted): Active focus is 55% (distinct contrast), passive is 20% (quiet background).
+    // When paused: Active focus is 100% (prominent white + accent border), passive is 85%.
     const opacityClass = isTooClose
       ? 'opacity-0 pointer-events-none'
       : ghosted
-        ? 'opacity-20'
+        ? highlighted
+          ? 'opacity-55'
+          : 'opacity-20'
         : highlighted
           ? 'opacity-100'
           : 'opacity-85';
+
+    const isHexColor = accentColor.startsWith('#') && accentColor.length === 7;
+    const accentBorderColor = isHexColor ? `${accentColor}99` : accentColor;
+    const accentShadow = isHexColor
+      ? `0 0 14px ${accentColor}44, 0 4px 20px rgba(0, 0, 0, 0.5)`
+      : undefined;
 
     return (
       <group ref={groupRef} position={position}>
@@ -86,15 +102,21 @@ export const StageBillboardLabel: React.FC<StageBillboardLabelProps> = React.mem
           >
             <div
               ref={badgeRef}
-              style={{ transformOrigin: 'center center' }}
-              className="px-3.5 py-1.5 rounded-full bg-slate-950/90 backdrop-blur-md flex items-center gap-2 whitespace-nowrap shadow-2xl border border-slate-700/80"
+              style={{
+                transformOrigin: 'center center',
+                borderColor: highlighted ? accentBorderColor : undefined,
+                boxShadow: highlighted ? accentShadow : undefined,
+              }}
+              className={`px-3.5 py-1.5 rounded-full bg-slate-950/90 backdrop-blur-md flex items-center gap-2 whitespace-nowrap shadow-2xl border transition-colors duration-200 ${
+                highlighted ? '' : 'border-slate-700/80'
+              }`}
             >
               <span
                 className="w-2.5 h-2.5 rounded-full shrink-0 transition-shadow duration-200"
                 style={{
                   backgroundColor: accentColor,
                   boxShadow: highlighted
-                    ? `0 0 10px ${accentColor}`
+                    ? `0 0 12px ${accentColor}`
                     : `0 0 4px ${accentColor}88`,
                 }}
               />
@@ -108,7 +130,11 @@ export const StageBillboardLabel: React.FC<StageBillboardLabelProps> = React.mem
                 {label}
               </span>
               {sublabel && (
-                <span className="text-xs font-mono text-slate-400 pl-0.5">
+                <span
+                  className={`text-xs font-mono pl-0.5 ${
+                    highlighted ? 'text-slate-300' : 'text-slate-400'
+                  }`}
+                >
                   · {sublabel}
                 </span>
               )}
