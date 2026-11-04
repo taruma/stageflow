@@ -1373,6 +1373,37 @@ shots:
       }
     });
 
+    it('asserts referential stability and zero-jitter of trajectory rails across intra-shot frames', () => {
+      const blueprint03 = INITIAL_CATALOG_ITEMS.find(
+        (item) => item.id === 'blueprint-03-ball-pass'
+      )?.score;
+      expect(blueprint03).toBeDefined();
+      if (!blueprint03) return;
+
+      // In Shot 1 (0.0s to 3.0s), ball moves dynamically and camera dollies
+      const f0 = computeStageFrame(0.0, blueprint03);
+      const f0_5 = computeStageFrame(0.5, blueprint03);
+      const f1_0 = computeStageFrame(1.0, blueprint03);
+      const f2_5 = computeStageFrame(2.5, blueprint03);
+
+      // Trajectory array reference must be 100% stable across all frames of the same shot
+      expect(f0.stageCamera.trajectoryPoints).toBe(f0_5.stageCamera.trajectoryPoints);
+      expect(f0.stageCamera.trajectoryPoints).toBe(f1_0.stageCamera.trajectoryPoints);
+      expect(f0.stageCamera.trajectoryPoints).toBe(f2_5.stageCamera.trajectoryPoints);
+      expect(f0.stageCamera.trajectoryPoints.length).toBe(33);
+
+      // Trajectory endpoints match camera start (t=0) and terminal (t=3) positions
+      const traj = f0.stageCamera.trajectoryPoints;
+      expect(traj[0].x).toBeCloseTo(f0.stageCamera.transform.position.x, 2);
+      expect(traj[0].y).toBeCloseTo(f0.stageCamera.transform.position.y, 2);
+      expect(traj[0].z).toBeCloseTo(f0.stageCamera.transform.position.z, 2);
+
+      const f3 = computeStageFrame(2.999, blueprint03);
+      expect(traj[traj.length - 1].x).toBeCloseTo(f3.stageCamera.transform.position.x, 2);
+      expect(traj[traj.length - 1].y).toBeCloseTo(f3.stageCamera.transform.position.y, 2);
+      expect(traj[traj.length - 1].z).toBeCloseTo(f3.stageCamera.transform.position.z, 2);
+    });
+
     it('asserts Golden Frame Equivalence across all 4 bundled scene scores at multi-timestamps', () => {
       for (const item of INITIAL_CATALOG_ITEMS) {
         const score = item.score;
