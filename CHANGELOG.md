@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Refactored
+- **Modularized Score Parser Submodules (`scoreParser.ts` -> `scorePrimitives.ts` + `cameraCueParser.ts`)**:
+  - Decomposed monolithic 728-line `src/core/scoreParser.ts` into three single-responsibility Layer 1 submodules:
+    - [`src/core/scorePrimitives.ts`](src/core/scorePrimitives.ts) (151 lines): Pure unit converters and normalizers (`parseVec3`, `parseOptionalVec3`, `parseTargetOrVec3`, `parseLensFocalLengthMm`, `parseAngleToRad`, `normalizeCameraManeuver`, `normalizeCameraEasing`, `normalizeEntityKind`).
+    - [`src/core/cameraCueParser.ts`](src/core/cameraCueParser.ts) (308 lines): Optical camera cue specs, waypoints, base spherical poses, and observer shot arrays (`parseBaseSphericalPose`, `parseCameraCueSpec`, `parseStageCameraCueSpec`, `resolveStageCamEntityTarget`, `parseObserverShots`).
+    - [`src/core/scoreParser.ts`](src/core/scoreParser.ts) (358 lines): Root YAML document decoder, entity definitions, contiguous take chaining (`continuous: true`), duration calculation, and diagnostic warnings.
+  - Re-exported all primitive and cue parsing functions from `src/core/scoreParser.ts` to preserve 100% backward compatibility for all external callers and unit tests with zero breaking changes.
+  - Added dedicated submodule unit test suites in [`tests/unit/scoreParser.test.ts`](tests/unit/scoreParser.test.ts) covering primitive vector/angle/lens parsers, enum normalizers, and Golden Equivalence across all 4 bundled scene catalog items.
 - **Unidirectional Layer Boundary Integrity & Reverse Import Cleanup**:
   - Relocated shared persistence types `SplitPreset` (`'50-50' | '30-70' | '70-30' | '0-100'`) and `StoragePersistenceStatus` (`'bundled' | 'draft-saved' | 'custom' | 'saving'`) from Layer 5 UI components into foundational Layer 1 [`src/core/types.ts`](src/core/types.ts).
   - Eliminated reverse upward layer dependency in Layer 1 [`src/core/storage/localStorageUi.ts`](src/core/storage/localStorageUi.ts), which previously imported `SplitPreset` from Layer 5 `WorkspaceHeader.tsx`.

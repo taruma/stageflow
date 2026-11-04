@@ -114,6 +114,8 @@ stageflow/
 │   │   ├── entityEngine.ts          # Per-shot character blocking, look_at rotation & floor trails
 │   │   ├── trajectoryChain.ts       # Forward pose chaining (P_0 -> P_k) & 32-point 3D path sampling
 │   │   ├── frameEngine.ts           # Master stateless evaluator: computeStageFrame(t, score)
+│   │   ├── scorePrimitives.ts       # Low-level vector, angle, lens & enum normalizers
+│   │   ├── cameraCueParser.ts       # Camera poses, shot cue specs, waypoints & observer shots
 │   │   ├── scoreParser.ts           # Resilient YAML/JSON parser & degree/meter normalizer
 │   │   ├── scoreCatalog.ts          # Bundled & custom scene score registry
 │   │   └── storage/                 # Client persistence utilities

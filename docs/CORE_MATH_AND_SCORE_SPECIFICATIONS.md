@@ -17,7 +17,7 @@ StageFlow uses a standardized, human-intuitive metric coordinate system in YAML 
   - Default stage floor: `10m × 10m` with `1.0m` major grid sections and `0.25m` minor subdivisions.
 - **Angular Units**:
   - **In YAML Scores & UI Readouts**: Authored and displayed in **human degrees (`deg`)** (e.g., `pitch: 26`, `yaw: -35`, `rotation: 90`).
-  - **In Internal Core Math (`SphericalPose`, `SceneEntityDef`)**: Normalized to **radians (`rad`)** inside [`scoreParser.ts`](../src/core/scoreParser.ts) via `degToRad()`.
+  - **In Internal Core Math (`SphericalPose`, `SceneEntityDef`)**: Normalized to **radians (`rad`)** inside [`scorePrimitives.ts`](../src/core/scorePrimitives.ts) and [`scoreParser.ts`](../src/core/scoreParser.ts) via `degToRad()`.
 
 ---
 
@@ -121,7 +121,7 @@ In [`trajectoryChain.ts`](../src/core/trajectoryChain.ts) and [`entityEngine.ts`
 
 ---
 
-## 5. Declarative YAML Choreography Schema (`scoreParser.ts`)
+## 5. Declarative YAML Choreography Schema (`scoreParser.ts`, `scorePrimitives.ts`, `cameraCueParser.ts`)
 
 Scores are authored in human-readable YAML (see [`src/scores/demo_blueprint.yaml`](../src/scores/demo_blueprint.yaml)):
 

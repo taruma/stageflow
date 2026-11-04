@@ -1,5 +1,23 @@
 import { describe, expect, it } from 'vitest';
 import { parseStageScore } from '../../src/core/scoreParser';
+import {
+  normalizeCameraEasing,
+  normalizeCameraManeuver,
+  normalizeEntityKind,
+  parseAngleToRad,
+  parseLensFocalLengthMm,
+  parseOptionalVec3,
+  parseTargetOrVec3,
+  parseVec3,
+} from '../../src/core/scorePrimitives';
+import {
+  parseBaseSphericalPose,
+  parseCameraCueSpec,
+  parseObserverShots,
+  parseStageCameraCueSpec,
+  resolveStageCamEntityTarget,
+} from '../../src/core/cameraCueParser';
+import { DEFAULT_OBSERVER_POSE } from '../../src/core/constants';
 import { INITIAL_CATALOG_ITEMS } from '../../src/core/scoreCatalog';
 import { classifyMediaSource, extractYouTubeId } from '../../src/media/mediaTypes';
 import { radToDeg } from '../../src/core/sphericalMath';
@@ -513,6 +531,93 @@ observer_shots:
       expect(score!.shots[1].startSec).toBe(6.0);
       expect(score!.observerShots![0].startSec).toBe(0.0);
       expect(score!.observerShots![0].endSec).toBe(27.0);
+    });
+  });
+  describe('Modular Submodules — scorePrimitives & cameraCueParser Direct Unit Contracts', () => {
+    it('correctly parses vector primitives and fallbacks', () => {
+      expect(parseAngleToRad('45deg')).toBeCloseTo(Math.PI / 4, 4);
+      expect(parseLensFocalLengthMm('35mm')).toBe(35);
+      expect(parseCameraCueSpec({ maneuver: 'dolly' }, 50)?.maneuver).toBe('dolly');
+      expect(parseObserverShots([{ start: 0, end: 5 }], 35)).toHaveLength(1);
+      expect(parseVec3([1, 2, 3])).toEqual({ x: 1, y: 2, z: 3 });
+      expect(parseVec3({ x: 4, y: 5, z: 6 })).toEqual({ x: 4, y: 5, z: 6 });
+      expect(parseVec3('invalid', { x: 0, y: 1, z: 2 })).toEqual({ x: 0, y: 1, z: 2 });
+      expect(parseOptionalVec3([10, 20, 30])).toEqual({ x: 10, y: 20, z: 30 });
+      expect(parseOptionalVec3(null)).toBeUndefined();
+      expect(parseTargetOrVec3('hero')).toBe('hero');
+      expect(parseTargetOrVec3([0, 1, 0])).toEqual({ x: 0, y: 1, z: 0 });
+      expect(parseTargetOrVec3('   ')).toBeUndefined();
+    });
+
+    it('normalizes enums with case-insensitivity and aliases', () => {
+      expect(normalizeCameraManeuver('turntable')).toBe('orbit');
+      expect(normalizeCameraManeuver('push')).toBe('dolly');
+      expect(normalizeCameraManeuver('unknown')).toBe('dolly');
+      expect(normalizeCameraEasing('ramp-up')).toBe('accel');
+      expect(normalizeCameraEasing('decel')).toBe('deccel');
+      expect(normalizeCameraEasing('unknown')).toBe('smooth');
+      expect(normalizeEntityKind('prop')).toBe('prop');
+      expect(normalizeEntityKind('marker')).toBe('marker');
+      expect(normalizeEntityKind('unknown')).toBe('character');
+    });
+
+    it('parses base spherical camera pose and resolves entity targets', () => {
+      const pose = parseBaseSphericalPose(
+        { target: [1, 2, 3], distance: 5, pitch: 15, yaw: 45, roll: 10, lens: '35mm' },
+        DEFAULT_OBSERVER_POSE
+      );
+      expect(pose.distance).toBe(5);
+      expect(pose.focalLengthMm).toBe(35);
+      expect(pose.target).toEqual({ x: 1, y: 2, z: 3 });
+
+      const entities = [
+        {
+          id: 'actor',
+          label: 'Lead Actor',
+          kind: 'character' as const,
+          position: { x: 2, y: 0, z: 3 },
+          rotationYRad: 0,
+          height: 1.75,
+          radius: 0.28,
+          color: '#fff',
+        },
+      ];
+      const stageCamPose = { ...DEFAULT_OBSERVER_POSE, target: { x: 0, y: 0, z: 0 } };
+      resolveStageCamEntityTarget(
+        { target: 'actor', target_offset: [0, 0.5, 0] },
+        stageCamPose,
+        entities
+      );
+      expect(stageCamPose.target.x).toBe(2);
+      expect(stageCamPose.target.y).toBeCloseTo(0 + 1.75 * 0.78 + 0.5, 4);
+      expect(stageCamPose.target.z).toBe(3);
+    });
+
+    it('parses stage camera cue specs with frustum depth and show_path options', () => {
+      const spec = parseStageCameraCueSpec({
+        maneuver: 'arc',
+        frustum_depth: 4.5,
+        frustum_color: '#38bdf8',
+        show_path: true,
+        waypoints: [{ target: 'center', at: 0.5 }],
+      });
+      expect(spec).toBeDefined();
+      expect(spec!.maneuver).toBe('arc');
+      expect(spec!.frustumDepth).toBe(4.5);
+      expect(spec!.frustumColor).toBe('#38bdf8');
+      expect(spec!.showPath).toBe(true);
+      expect(spec!.waypoints).toHaveLength(1);
+    });
+
+    it('verifies all 4 bundled scene catalog items parse identically without errors (Golden Equivalence)', () => {
+      expect(INITIAL_CATALOG_ITEMS).toHaveLength(4);
+      for (const item of INITIAL_CATALOG_ITEMS) {
+        expect(item.score).toBeDefined();
+        expect(item.score.shots.length).toBeGreaterThan(0);
+        expect(item.score.durationSec).toBeGreaterThan(0);
+        expect(item.score.stage.width).toBeGreaterThan(0);
+        expect(item.score.stage.depth).toBeGreaterThan(0);
+      }
     });
   });
 });
