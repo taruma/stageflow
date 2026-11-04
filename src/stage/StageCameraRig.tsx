@@ -201,7 +201,7 @@ export const StageCameraRig: React.FC<StageCameraRigProps> = ({
   return (
     <group>
       {/* 1. World-Space 3D Trajectory Curve for Moving Shots */}
-      {trajectoryLinePoints.length >= 2 && (
+      {isBodyVisible && trajectoryLinePoints.length >= 2 && (
         <group ref={trajectoryGroupRef}>
           <Line
             points={trajectoryLinePoints}

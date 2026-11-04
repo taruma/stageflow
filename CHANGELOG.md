@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Synchronized file tree references in `AGENTS.md` and `docs/CORE_MATH_AND_SCORE_SPECIFICATIONS.md`.
 
 ### Fixed
+- **Hide Camera Trajectory Rail & Waypoint Beacons in Stage Cam POV (`StageCameraRig.tsx`)**:
+  - Gated the 3D trajectory curve and start/end waypoint beacons on `isBodyVisible &&` (`cameraMode !== 'stage-pov'`), preventing the camera's physical track and destination octahedron beacon from floating in front of the lens and obscuring the optical viewfinder during forward dolly and pedestal maneuvers.
 - **Explicit `direction: "ccw" | "cw"` Priority on Spanned Orbits (`maneuver: "orbit"` with `yaw_start` & `yaw_end`)**:
   - Resolved an evaluation order issue in `src/core/maneuvers.ts` where shots declaring both `yaw_start` and `yaw_end` executed raw linear subtraction `(yaw_end - yaw_start) * u`, inadvertently short-circuiting `directedAngleDiff` and causing `yaw_start: 175` -> `yaw_end: 0` with `direction: "ccw"` to rotate clockwise ($-175^\circ$) instead of counter-clockwise ($+185^\circ$).
   - Prioritized `hasExplicitDirection` so authored `direction: "ccw"` or `"cw"` always routes through `directedAngleDiff` regardless of whether `yaw_start` and `yaw_end` are both explicitly provided.
