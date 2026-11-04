@@ -89,6 +89,9 @@ Each layer depends only on the layers below it.
 
 ```text
 stageflow/
+├── .agents/                         # Workspace Skills & Customizations
+│   └── skills/
+│       └── stageflow-viewport-recorder/ # Deterministic 60fps Viewport Video Recorder Skill (SKILL.md)
 ├── AGENTS.md                        # Root governance, workflow rules & invariant router (< 24 KB)
 ├── CHANGELOG.md                     # Semantic version release log & unreleased change tracking
 ├── SPECIFICATION.md                 # Foundational product vision & system mechanics

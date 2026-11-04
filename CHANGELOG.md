@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Workspace Skill: StageFlow Viewport Video Recorder (`.agents/skills/stageflow-viewport-recorder/SKILL.md`)**:
+  - Authored a dedicated workspace skill providing agents with progressive disclosure runbooks, CLI flags, directorial recipes (Scripted Observer, Stage Cam POV, clean geometry, reference audio slapping, single-shot slicing), and stream verification commands for `npm run record`.
 - **Deterministic 60fps Headless Viewport Recorder CLI (`npm run record`)**:
   - Implemented a headless CLI recording tool in `scripts/record/` and `src/recorder/` powered by Playwright and FFmpeg to render and export viewport recordings with mathematical frame determinism ($t_i = i / 60\text{s}$) and zero dropped frames.
   - Added [`src/recorder/HeadlessRecorderView.tsx`](src/recorder/HeadlessRecorderView.tsx) and [`src/recorder/recorderTypes.ts`](src/recorder/recorderTypes.ts) mounting an isolated, chrome-free rendering environment on `?mode=headless-render` that synchronizes `computeStageFrame(t, score)` and exposes a bidirectional frame-stepping bridge via `window.__STAGEFLOW_RECORDER__`.
