@@ -53,6 +53,13 @@ export async function runRecordSession(
       deviceScaleFactor: 1,
     });
 
+    page.on('pageerror', (err) => {
+      console.error('\n⚠️ Browser Page Error:', err.message);
+    });
+    page.on('crash', () => {
+      console.error('\n❌ Browser Page Crashed!');
+    });
+
     const targetUrl = `${serverUrl}/?mode=headless-render`;
     await page.goto(targetUrl, { waitUntil: 'domcontentloaded' });
 
@@ -110,10 +117,23 @@ export async function runRecordSession(
     let currentFpsRate = 0;
 
     for (let i = 0; i < totalFrames; i++) {
-      const frameResult = await page.evaluate(
-        (frameIdx) => window.__STAGEFLOW_RECORDER__!.stepFrame(frameIdx),
-        i
-      );
+      let frameResult: RecorderFrameResult | undefined;
+      for (let attempt = 0; attempt < 5; attempt++) {
+        try {
+          frameResult = await page.evaluate(
+            (frameIdx) => window.__STAGEFLOW_RECORDER__!.stepFrame(frameIdx),
+            i
+          );
+          break;
+        } catch (err) {
+          if (attempt === 4) throw err;
+          await new Promise((r) => setTimeout(r, 120));
+        }
+      }
+
+      if (!frameResult) {
+        throw new Error(`Failed to evaluate frame ${i}`);
+      }
 
       const buffer = await page.screenshot({
         type: 'png',

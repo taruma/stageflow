@@ -59,6 +59,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Synchronized file tree references in `AGENTS.md` and `docs/CORE_MATH_AND_SCORE_SPECIFICATIONS.md`.
 
 ### Fixed
+- **Headless Recorder Stability, Windows Server Spawning & HMR Watcher Isolation (`HeadlessRecorderView.tsx`, `playwrightDriver.ts`, `serverManager.ts`, `vite.config.ts`)**:
+  - Stabilized `stepFrame` callback identity in `src/recorder/HeadlessRecorderView.tsx` by wrapping `config` and `score` in mutable React refs (`configRef`, `scoreRef`), preventing teardown and unregistering of `window.__STAGEFLOW_RECORDER__` during state updates.
+  - Implemented 5-attempt retry loop on `page.evaluate(stepFrame)` and added `pageerror`/`crash` event logging in `scripts/record/playwrightDriver.ts` to harden deterministic 60fps renders against transient microtask pauses.
+  - Switched Vite dev server background spawning in `scripts/record/serverManager.ts` to direct `process.execPath` + `node_modules/vite/bin/vite.js` execution, eliminating Windows Node 22 `spawn EINVAL` and deprecation warnings when spawning isolated port instances.
+  - Configured `server.watch.ignored` in `vite.config.ts` for `**/*.md`, `**/.agents/**`, `**/recordings/**`, and `**/_examples/**`, preventing Vite from triggering unexpected HMR full-reloads when writing output video files or updating documentation.
 - **Referentially Stable Stage Camera Trajectory Rails & Zero-Jitter Multi-Timestamp Path Sampling (`trajectoryChain.ts`)**:
   - Resolved 10Hz visual jitter and floating rail drift on moving camera shots (e.g. tracking a moving target like the ball in Blueprint 03 or walking characters in Blueprint 04).
   - Previously, `sampleTrajectoryPoints()` was invoked on every 60fps frame passing `entitiesById` evaluated at the current playback time $t$. For moving targets, this caused the entire 3D rail and waypoint beacons to drift and translate across space frame-by-frame; combined with React's ~10Hz throttled `uiFrame` state in `StageCameraRig.tsx` (`useMemo`), the shifting rail only updated every 95ms in Three.js, causing noticeable 10Hz stepping and jitter.

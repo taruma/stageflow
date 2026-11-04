@@ -34,11 +34,11 @@ export async function ensureViteServer(port = 5173): Promise<ServerInstance> {
     };
   }
 
-  // Spawn ephemeral background Vite dev server
-  const npxCmd = process.platform === 'win32' ? 'npx.cmd' : 'npx';
+  // Spawn ephemeral background Vite dev server directly via node
+  const viteBin = 'node_modules/vite/bin/vite.js';
   const child: ChildProcess = spawn(
-    npxCmd,
-    ['vite', '--port', String(port), '--strictPort'],
+    process.execPath,
+    [viteBin, '--port', String(port), '--strictPort'],
     {
       stdio: 'ignore',
       detached: false,

@@ -59,6 +59,12 @@ export const HeadlessRecorderView: React.FC = () => {
   const frameRef = useRef<StageFrame>(initialFrame);
   const lastManualSeekIdRef = useRef<number>(0);
 
+  const configRef = useRef<RecorderConfig>(config);
+  configRef.current = config;
+
+  const scoreRef = useRef<StageScore>(score);
+  scoreRef.current = score;
+
   // Synchronize ref on uiFrame change
   useEffect(() => {
     frameRef.current = uiFrame;
@@ -70,55 +76,56 @@ export const HeadlessRecorderView: React.FC = () => {
   }, []);
 
   // Frame step execution called by Playwright bridge
-  const stepFrame = useCallback(
-    (frameIndex: number): Promise<RecorderFrameResult> => {
-      return new Promise((resolve) => {
-        const timeOffsetSec = frameIndex / config.fps;
-        const currentTimestampSec = Math.min(
-          config.startSec + timeOffsetSec,
-          config.endSec > config.startSec ? config.endSec : score.durationSec
-        );
+  const stepFrame = useCallback((frameIndex: number): Promise<RecorderFrameResult> => {
+    return new Promise((resolve) => {
+      const cfg = configRef.current;
+      const currentScore = scoreRef.current;
+      const timeOffsetSec = frameIndex / cfg.fps;
+      const currentTimestampSec = Math.min(
+        cfg.startSec + timeOffsetSec,
+        cfg.endSec > cfg.startSec ? cfg.endSec : currentScore.durationSec
+      );
 
-        const nextFrame = computeStageFrame(currentTimestampSec, score);
-        frameRef.current = nextFrame;
-        setUiFrame(nextFrame);
-        lastManualSeekIdRef.current += 1;
+      const nextFrame = computeStageFrame(currentTimestampSec, currentScore);
+      frameRef.current = nextFrame;
+      setUiFrame(nextFrame);
+      lastManualSeekIdRef.current += 1;
 
-        // Two animation frames ensure React state flush + R3F WebGL draw + Drei HTML positioning
+      // Two animation frames ensure React state flush + R3F WebGL draw + Drei HTML positioning
+      requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            const shotId = nextFrame.activeShot?.id ?? null;
-            const total = Math.max(
-              1,
-              Math.ceil(
-                ((config.endSec > config.startSec
-                  ? config.endSec
-                  : score.durationSec) -
-                  config.startSec) *
-                  config.fps
-              )
-            );
-            resolve({
-              frameIndex,
-              timestampSec: currentTimestampSec,
-              shotId,
-              totalFrames: total,
-            });
+          const shotId = nextFrame.activeShot?.id ?? null;
+          const total = Math.max(
+            1,
+            Math.ceil(
+              ((cfg.endSec > cfg.startSec
+                ? cfg.endSec
+                : currentScore.durationSec) -
+                cfg.startSec) *
+                cfg.fps
+            )
+          );
+          resolve({
+            frameIndex,
+            timestampSec: currentTimestampSec,
+            shotId,
+            totalFrames: total,
           });
         });
       });
-    },
-    [config, score]
-  );
+    });
+  }, []);
 
   // Initialize and register bridge on window
   useEffect(() => {
     const bridge: HeadlessRecorderBridge = {
       ready: true,
       init: async (newConfig: RecorderConfig) => {
+        configRef.current = newConfig;
         setConfig(newConfig);
         const res = parseStageScore(newConfig.scoreYaml);
         const parsed = res.score ?? INITIAL_CATALOG_ITEMS[0].score;
+        scoreRef.current = parsed;
         const effectiveEnd =
           newConfig.endSec > newConfig.startSec
             ? newConfig.endSec
