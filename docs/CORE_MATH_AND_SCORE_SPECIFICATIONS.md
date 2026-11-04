@@ -80,7 +80,7 @@ StageFlow models camera framing using standard **35mm Full-Frame Sensor Gate Wid
 
 ---
 
-## 4. Stateless Functional Timeline & Forward Pose Chaining (`frameEngine.ts`, `trajectoryChain.ts`)
+## 4. Stateless Functional Timeline & Forward Pose Chaining (`frameEngine.ts`, `trajectoryChain.ts`, `cameraTargetResolver.ts`, `shotPoseEvaluator.ts`)
 
 ### 4.1 Zero-Drift Stateless Evaluation (`Frame_t = f(t, score)`)
 [`computeStageFrame(timestampSec, score, initialObserverPose)`](../src/core/frameEngine.ts) is a pure function:
@@ -88,7 +88,7 @@ StageFlow models camera framing using standard **35mm Full-Frame Sensor Gate Wid
 - Calling `computeStageFrame(5.0, score)` after playing forward ($0 \to 5$) or scrubbing backward ($10 \to 5$) produces the exact same 3D coordinates bit-for-bit.
 
 ### 4.2 Forward Pose Chaining ($P_0 \to P_1 \to \dots \to P_k$) & Track Normalization
-In [`trajectoryChain.ts`](../src/core/trajectoryChain.ts) and [`entityEngine.ts`](../src/core/entityEngine.ts):
+In [`trajectoryChain.ts`](../src/core/trajectoryChain.ts), [`cameraTargetResolver.ts`](../src/core/cameraTargetResolver.ts), [`shotPoseEvaluator.ts`](../src/core/shotPoseEvaluator.ts), and [`entityEngine.ts`](../src/core/entityEngine.ts):
 - Each shot cuts cleanly (`0ms`) to its target anchor point (`spec.target`) unless explicit camera travel from another anchor is authored via `from:`.
 - Continuous camera parameters (`distance`, `pitch`, `yaw`) forward-chain from the preceding shot's terminal pose $P_{\text{end}}$ when unspecified, but immediately adopt newly specified angles (`pitch`, `pitch_start`, `yaw`, `yaw_start`) without cross-shot drift.
 - **Option A Shot-Boundary Roll & Target-Offset Reset**: Unlike spatial position angles, both `roll` (Dutch angle) and `target_offset` (`[dx, dy, dz]` metric displacement from the base anchor) default to resetting to their neutral baselines (`0°` and `[0, 0, 0]`) at shot boundaries whenever a shot omits those parameters. To animate a continuous Dutch tilt or target offset across shots or smoothly recover back to neutral, authors specify `roll_start`/`roll_end` (or `roll_end: 0`) and `target_offset_start`/`target_offset_end` (or `target_offset_end: [0, 0, 0]`).

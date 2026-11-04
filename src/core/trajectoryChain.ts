@@ -1,6 +1,7 @@
 /**
  * Unified forward-chaining trajectory evaluator used by both the Observer Camera
  * and the illustrative Stage Camera.
+ * Pure Layer 1 module with zero React or DOM dependencies.
  */
 
 import type {
@@ -11,347 +12,44 @@ import type {
   StageScore,
   Vec3,
 } from './types';
-import { ENTITY_DEFAULTS } from './constants';
-import {
-  catmullRomScalar,
-  evaluateCameraEasing,
-  evaluateManeuverPose,
-} from './maneuvers';
+import { evaluateCameraEasing } from './maneuvers';
 import {
   clampSphericalPose,
   cloneSphericalPose,
-  shortestAngleDiff,
   sphericalToCartesian,
 } from './sphericalMath';
+import {
+  ZERO_OFFSET,
+  resolveShotDestOffset,
+  resolveShotDestRoll,
+  resolveShotStartOffset,
+  resolveShotStartRoll,
+  resolveTargetPoint3D,
+} from './cameraTargetResolver';
+import {
+  evaluateShotCameraPose,
+  evaluateSplineCameraPose,
+  sampleTrajectoryPoints,
+} from './shotPoseEvaluator';
+
+// Re-export target resolution and shot-boundary reset helpers for backward compatibility
+export {
+  ZERO_OFFSET,
+  resolveShotDestOffset,
+  resolveShotDestRoll,
+  resolveShotStartOffset,
+  resolveShotStartRoll,
+  resolveTargetPoint3D,
+};
+
+// Re-export single-shot pose evaluators and sampling helpers for backward compatibility
+export {
+  evaluateShotCameraPose,
+  evaluateSplineCameraPose,
+  sampleTrajectoryPoints,
+};
 
 export type TrackRole = 'observer' | 'stage';
-
-/**
- * Resolves starting roll for a shot according to Option A semantics:
- * Resets to baselinePose.roll (0 rad) unless explicitly specified or continuing a delta/end.
- */
-export function resolveShotStartRoll(
-  spec: CameraCueSpec,
-  prevPose: SphericalPose,
-  baselinePose: SphericalPose
-): number {
-  if (spec.rollStartRad !== undefined) {
-    return spec.rollStartRad;
-  }
-  if (spec.rollDeltaRad !== undefined) {
-    return spec.rollRad ?? prevPose.roll;
-  }
-  if (spec.rollEndRad !== undefined) {
-    return prevPose.roll;
-  }
-  if (spec.rollRad !== undefined) {
-    return spec.rollRad;
-  }
-  return baselinePose.roll;
-}
-
-export function resolveShotDestRoll(
-  P0: SphericalPose,
-  spec: CameraCueSpec,
-  baselinePose: SphericalPose
-): number {
-  if (spec.rollEndRad !== undefined) {
-    return spec.rollEndRad;
-  }
-  if (spec.rollDeltaRad !== undefined) {
-    return P0.roll + spec.rollDeltaRad;
-  }
-  if (spec.rollRad !== undefined) {
-    return spec.rollRad;
-  }
-  return baselinePose.roll;
-}
-
-const ZERO_OFFSET: Vec3 = { x: 0, y: 0, z: 0 };
-
-/**
- * Resolves starting 3D target offset for a shot according to Option A semantics:
- * Resets to (0, 0, 0) unless explicitly specified or continuing via target_offset_end.
- */
-export function resolveShotStartOffset(
-  spec: CameraCueSpec,
-  prevOffset: Vec3 = ZERO_OFFSET
-): Vec3 {
-  if (spec.targetOffsetStart !== undefined) {
-    return { ...spec.targetOffsetStart };
-  }
-  if (spec.targetOffsetEnd !== undefined) {
-    return spec.targetOffset ? { ...spec.targetOffset } : { ...prevOffset };
-  }
-  if (spec.targetOffset !== undefined) {
-    return { ...spec.targetOffset };
-  }
-  return { ...ZERO_OFFSET };
-}
-
-export function resolveShotDestOffset(spec: CameraCueSpec): Vec3 {
-  if (spec.targetOffsetEnd !== undefined) {
-    return { ...spec.targetOffsetEnd };
-  }
-  if (spec.targetOffset !== undefined) {
-    return { ...spec.targetOffset };
-  }
-  return { ...ZERO_OFFSET };
-}
-
-/**
- * Resolves an anchor key (entity ID, preset name, or Vec3) into a 3D world look-at point,
- * applying an optional world-space metric offset [dx, dy, dz].
- */
-export function resolveTargetPoint3D(
-  targetKey: string | Vec3 | undefined,
-  entitiesById: Map<string, EvaluatedEntityState>,
-  fallbackTarget: Vec3,
-  offset?: Vec3
-): Vec3 {
-  let base: Vec3 | undefined;
-
-  if (!targetKey) {
-    base = { ...fallbackTarget };
-  } else if (typeof targetKey === 'object') {
-    base = { ...targetKey };
-  } else {
-    const clean = targetKey.trim().toLowerCase();
-    if (clean === 'center' || clean === 'origin' || clean === 'stage') {
-      base = { x: 0, y: 1.0, z: 0 };
-    } else {
-      // Match entity by ID or label
-      for (const ent of entitiesById.values()) {
-        if (
-          ent.id.toLowerCase() === clean ||
-          ent.def.label.toLowerCase() === clean
-        ) {
-          const anchorY =
-            ent.def.kind === 'character'
-              ? ent.position.y +
-                ent.def.height * ENTITY_DEFAULTS.CHARACTER_LOOK_ANCHOR_RATIO
-              : ent.position.y + ent.def.height * 0.5;
-          base = {
-            x: ent.position.x,
-            y: anchorY,
-            z: ent.position.z,
-          };
-          break;
-        }
-      }
-    }
-  }
-
-  const resolved = base ?? { ...fallbackTarget };
-  if (!offset) {
-    return resolved;
-  }
-  return {
-    x: resolved.x + offset.x,
-    y: resolved.y + offset.y,
-    z: resolved.z + offset.z,
-  };
-}
-
-/**
- * Evaluates a Catmull-Rom spline camera path across multiple waypoints.
- */
-function evaluateSplineCameraPose(
-  startPose: SphericalPose,
-  spec: CameraCueSpec,
-  u: number,
-  entitiesById: Map<string, EvaluatedEntityState>
-): SphericalPose {
-  const rawWaypoints = spec.waypoints ?? [];
-  if (rawWaypoints.length === 0) {
-    return cloneSphericalPose(startPose);
-  }
-
-  const resolvedWaypoints: SphericalPose[] = [cloneSphericalPose(startPose)];
-  for (const wp of rawWaypoints) {
-    const prev = resolvedWaypoints[resolvedWaypoints.length - 1];
-    const target =
-      wp.target !== undefined
-        ? resolveTargetPoint3D(
-            wp.target,
-            entitiesById,
-            prev.target,
-            wp.targetOffset
-          )
-        : wp.targetOffset !== undefined
-        ? {
-            x: prev.target.x + wp.targetOffset.x,
-            y: prev.target.y + wp.targetOffset.y,
-            z: prev.target.z + wp.targetOffset.z,
-          }
-        : { ...prev.target };
-    resolvedWaypoints.push(
-      clampSphericalPose({
-        target,
-        distance: wp.distance ?? prev.distance,
-        pitch: wp.pitchRad ?? prev.pitch,
-        yaw: wp.yawRad ?? prev.yaw,
-        roll: wp.rollRad ?? prev.roll,
-        focalLengthMm: wp.focalLengthMm ?? prev.focalLengthMm,
-      })
-    );
-  }
-
-  if (resolvedWaypoints.length === 1) {
-    return resolvedWaypoints[0];
-  }
-
-  // Unwrap yaw and roll angles across waypoints to prevent 360-deg spin flips
-  for (let i = 1; i < resolvedWaypoints.length; i++) {
-    const prevYaw = resolvedWaypoints[i - 1].yaw;
-    const currYaw = resolvedWaypoints[i].yaw;
-    resolvedWaypoints[i].yaw = prevYaw + shortestAngleDiff(currYaw, prevYaw);
-
-    const prevRoll = resolvedWaypoints[i - 1].roll;
-    const currRoll = resolvedWaypoints[i].roll;
-    resolvedWaypoints[i].roll = prevRoll + shortestAngleDiff(currRoll, prevRoll);
-  }
-
-  const numSegments = resolvedWaypoints.length - 1;
-  const scaledT = Math.max(0, Math.min(1, u)) * numSegments;
-  const segIdx = Math.min(numSegments - 1, Math.floor(scaledT));
-  const segFrac = scaledT - segIdx;
-
-  const p0 = resolvedWaypoints[Math.max(0, segIdx - 1)];
-  const p1 = resolvedWaypoints[segIdx];
-  const p2 = resolvedWaypoints[Math.min(resolvedWaypoints.length - 1, segIdx + 1)];
-  const p3 = resolvedWaypoints[Math.min(resolvedWaypoints.length - 1, segIdx + 2)];
-
-  return clampSphericalPose({
-    target: {
-      x: catmullRomScalar(
-        p0.target.x,
-        p1.target.x,
-        p2.target.x,
-        p3.target.x,
-        segFrac
-      ),
-      y: catmullRomScalar(
-        p0.target.y,
-        p1.target.y,
-        p2.target.y,
-        p3.target.y,
-        segFrac
-      ),
-      z: catmullRomScalar(
-        p0.target.z,
-        p1.target.z,
-        p2.target.z,
-        p3.target.z,
-        segFrac
-      ),
-    },
-    distance: catmullRomScalar(
-      p0.distance,
-      p1.distance,
-      p2.distance,
-      p3.distance,
-      segFrac
-    ),
-    pitch: catmullRomScalar(p0.pitch, p1.pitch, p2.pitch, p3.pitch, segFrac),
-    yaw: catmullRomScalar(p0.yaw, p1.yaw, p2.yaw, p3.yaw, segFrac),
-    roll: catmullRomScalar(p0.roll, p1.roll, p2.roll, p3.roll, segFrac),
-    focalLengthMm: catmullRomScalar(
-      p0.focalLengthMm,
-      p1.focalLengthMm,
-      p2.focalLengthMm,
-      p3.focalLengthMm,
-      segFrac
-    ),
-  });
-}
-
-/**
- * Evaluates a single shot's camera pose at normalized progress tRaw in [0, 1].
- */
-export function evaluateShotCameraPose(
-  P0: SphericalPose,
-  spec: CameraCueSpec,
-  tRaw: number,
-  durationSec: number,
-  entitiesById: Map<string, EvaluatedEntityState>,
-  baselinePose?: SphericalPose,
-  startOffset: Vec3 = ZERO_OFFSET
-): SphericalPose {
-  const u = evaluateCameraEasing(spec.easing, tRaw);
-
-  if (spec.maneuver === 'spline' && spec.waypoints && spec.waypoints.length > 0) {
-    return evaluateSplineCameraPose(P0, spec, u, entitiesById);
-  }
-
-  const endOffset = resolveShotDestOffset(spec);
-  const destTarget =
-    spec.target !== undefined
-      ? resolveTargetPoint3D(spec.target, entitiesById, P0.target, endOffset)
-      : {
-          x: P0.target.x + (endOffset.x - startOffset.x),
-          y: P0.target.y + (endOffset.y - startOffset.y),
-          z: P0.target.z + (endOffset.z - startOffset.z),
-        };
-
-  let destYaw = P0.yaw;
-  if (spec.yawEndRad !== undefined) {
-    destYaw = spec.yawEndRad;
-  } else if (spec.yawRad !== undefined) {
-    destYaw = spec.yawRad;
-  } else if (spec.yawDeltaRad !== undefined) {
-    destYaw = P0.yaw + spec.yawDeltaRad;
-  }
-
-  const effectiveBaseline = baselinePose ?? { ...P0, roll: 0 };
-  const destRoll = resolveShotDestRoll(P0, spec, effectiveBaseline);
-
-  const P1: SphericalPose = clampSphericalPose({
-    target: destTarget,
-    distance: spec.distanceEnd ?? spec.distance ?? P0.distance,
-    pitch: spec.pitchEndRad ?? spec.pitchRad ?? P0.pitch,
-    yaw: destYaw,
-    roll: destRoll,
-    focalLengthMm:
-      spec.focalLengthEndMm ?? spec.focalLengthMm ?? P0.focalLengthMm,
-  });
-
-  return evaluateManeuverPose(P0, P1, spec, tRaw, u, durationSec);
-}
-
-/**
- * Samples 3D world-space camera eye positions along a shot's trajectory for visual path rendering.
- */
-function sampleTrajectoryPoints(
-  P0: SphericalPose,
-  spec: CameraCueSpec,
-  durationSec: number,
-  entitiesById: Map<string, EvaluatedEntityState>,
-  aspectRatio: number,
-  baselinePose?: SphericalPose,
-  startOffset: Vec3 = ZERO_OFFSET,
-  samples = 32
-): Vec3[] {
-  if (spec.maneuver === 'cut') {
-    return [];
-  }
-  const points: Vec3[] = [];
-  for (let i = 0; i <= samples; i++) {
-    const t = i / samples;
-    const pose = evaluateShotCameraPose(
-      P0,
-      spec,
-      t,
-      durationSec,
-      entitiesById,
-      baselinePose,
-      startOffset
-    );
-    const cart = sphericalToCartesian(pose, aspectRatio);
-    points.push(cart.position);
-  }
-  return points;
-}
 
 interface NormalizedCameraCue {
   id: string;

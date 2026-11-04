@@ -2,6 +2,19 @@ import { describe, expect, it } from 'vitest';
 import { computeStageFrame } from '../../src/core/frameEngine';
 import { parseStageScore } from '../../src/core/scoreParser';
 import { INITIAL_CATALOG_ITEMS } from '../../src/core/scoreCatalog';
+import {
+  ZERO_OFFSET,
+  resolveShotDestOffset,
+  resolveShotDestRoll,
+  resolveShotStartOffset,
+  resolveShotStartRoll,
+  resolveTargetPoint3D,
+} from '../../src/core/cameraTargetResolver';
+import {
+  evaluateShotCameraPose,
+  evaluateSplineCameraPose,
+  sampleTrajectoryPoints,
+} from '../../src/core/shotPoseEvaluator';
 
 describe('frameEngine — Stateless Functional Timeline (Frame_t = f(t))', () => {
   it('produces bit-for-bit identical 3D states at any timestamp t regardless of scrub direction', () => {
@@ -1210,6 +1223,174 @@ shots:
       expect(f15.stageCamera.transform.pose.pitch).toBeCloseTo(-15 * (Math.PI / 180), 3);
       expect(f15.stageCamera.transform.pose.yaw).toBeCloseTo(225 * (Math.PI / 180), 3);
       expect(f15.stageCamera.transform.pose.focalLengthMm).toBe(35);
+    });
+  });
+  describe('Modular Submodules — cameraTargetResolver & shotPoseEvaluator Direct Unit Contracts', () => {
+    it('resolves target point 3D for characters, props, center presets, and offsets', () => {
+      const entities = new Map([
+        [
+          'actor',
+          {
+            id: 'actor',
+            def: {
+              id: 'actor',
+              label: 'Lead Actor',
+              kind: 'character' as const,
+              position: { x: 1, y: 0, z: 2 },
+              rotationYRad: 0,
+              height: 1.75,
+              radius: 0.28,
+              color: '#38bdf8',
+            },
+            position: { x: 1, y: 0, z: 2 },
+            rotationYRad: 0,
+            highlighted: false,
+            visible: true,
+            trailPoints: [],
+          },
+        ],
+        [
+          'box',
+          {
+            id: 'box',
+            def: {
+              id: 'box',
+              label: 'Wooden Box',
+              kind: 'prop' as const,
+              position: { x: -3, y: 0, z: 1 },
+              rotationYRad: 0,
+              height: 1.0,
+              radius: 0.5,
+              color: '#f59e0b',
+            },
+            position: { x: -3, y: 0, z: 1 },
+            rotationYRad: 0,
+            highlighted: false,
+            visible: true,
+            trailPoints: [],
+          },
+        ],
+      ]);
+
+      const fallback = { x: 0, y: 0, z: 0 };
+
+      // Character look-at eye-line height: 1.75 * 0.78 = 1.365m
+      const pActor = resolveTargetPoint3D('actor', entities, fallback);
+      expect(pActor.x).toBe(1);
+      expect(pActor.y).toBeCloseTo(1.365, 3);
+      expect(pActor.z).toBe(2);
+
+      // Prop center height: 1.0 * 0.5 = 0.5m
+      const pProp = resolveTargetPoint3D('box', entities, fallback);
+      expect(pProp.x).toBe(-3);
+      expect(pProp.y).toBeCloseTo(0.5, 3);
+      expect(pProp.z).toBe(1);
+
+      // Center preset
+      const pCenter = resolveTargetPoint3D('center', entities, fallback);
+      expect(pCenter).toEqual({ x: 0, y: 1.0, z: 0 });
+
+      // Offset applied
+      const pOffset = resolveTargetPoint3D('actor', entities, fallback, { x: 0.5, y: -0.2, z: 1.0 });
+      expect(pOffset.x).toBeCloseTo(1.5, 3);
+      expect(pOffset.y).toBeCloseTo(1.165, 3);
+      expect(pOffset.z).toBeCloseTo(3.0, 3);
+    });
+
+    const mockCue = (overrides: Partial<import('../../src/core/types').CameraCueSpec> = {}): import('../../src/core/types').CameraCueSpec => ({
+      maneuver: 'dolly',
+      easing: 'smooth',
+      breathe: 1.0,
+      direction: 'cw',
+      trackTarget: true,
+      ...overrides,
+    });
+
+    it('resolves Option A roll and target offset resets vs continuations', () => {
+      const baseline = {
+        target: { x: 0, y: 1, z: 0 },
+        distance: 5,
+        pitch: 0,
+        yaw: 0,
+        roll: 0,
+        focalLengthMm: 50,
+      };
+      const prevPose = { ...baseline, roll: 0.25 };
+
+      // Roll resets to baseline (0 rad) when omitted
+      expect(resolveShotStartRoll(mockCue(), prevPose, baseline)).toBe(0);
+      expect(resolveShotDestRoll(prevPose, mockCue(), baseline)).toBe(0);
+
+      // Explicit roll preservation / delta
+      expect(resolveShotStartRoll(mockCue({ rollStartRad: 0.1 }), prevPose, baseline)).toBe(0.1);
+      expect(resolveShotDestRoll(prevPose, mockCue({ rollDeltaRad: 0.2 }), baseline)).toBeCloseTo(0.45, 4);
+
+      // Offset resets to ZERO_OFFSET when omitted
+      expect(resolveShotStartOffset(mockCue())).toEqual(ZERO_OFFSET);
+      expect(resolveShotDestOffset(mockCue())).toEqual(ZERO_OFFSET);
+
+      // Explicit target offset start / end
+      expect(resolveShotStartOffset(mockCue({ targetOffsetStart: { x: 1, y: 2, z: 3 } }))).toEqual({ x: 1, y: 2, z: 3 });
+      expect(resolveShotDestOffset(mockCue({ targetOffsetEnd: { x: 4, y: 5, z: 6 } }))).toEqual({ x: 4, y: 5, z: 6 });
+    });
+
+    it('evaluates spline camera poses and samples 3D trajectory curves', () => {
+      const startPose = {
+        target: { x: 0, y: 1, z: 0 },
+        distance: 4,
+        pitch: 0.1,
+        yaw: 0.2,
+        roll: 0,
+        focalLengthMm: 35,
+      };
+      const spec = mockCue({
+        maneuver: 'spline',
+        easing: 'smooth',
+        waypoints: [
+          { target: { x: 1, y: 1, z: 0 }, distance: 4.5, yawRad: 0.5 },
+          { target: { x: 2, y: 1, z: 1 }, distance: 5.0, yawRad: 0.8 },
+        ],
+      });
+
+      const pMid = evaluateSplineCameraPose(startPose, spec, 0.5, new Map());
+      expect(pMid.distance).toBeGreaterThan(4);
+      expect(pMid.target.x).toBeGreaterThan(0);
+
+      // evaluateShotCameraPose at t = 0 and t = 1
+      const pStart = evaluateShotCameraPose(startPose, spec, 0, 5, new Map(), startPose);
+      const pEnd = evaluateShotCameraPose(startPose, spec, 1, 5, new Map(), startPose);
+      expect(pStart.target.x).toBeCloseTo(0, 2);
+      expect(pEnd.target.x).toBeCloseTo(2, 2);
+
+      // sampleTrajectoryPoints: cut returns [], moving returns 33 points (32 segments)
+      expect(sampleTrajectoryPoints(startPose, mockCue({ maneuver: 'cut', easing: 'linear' }), 5, new Map(), 1.777)).toHaveLength(0);
+      const points = sampleTrajectoryPoints(startPose, spec, 5, new Map(), 1.777);
+      expect(points).toHaveLength(33);
+      for (const pt of points) {
+        expect(Number.isFinite(pt.x)).toBe(true);
+        expect(Number.isFinite(pt.y)).toBe(true);
+        expect(Number.isFinite(pt.z)).toBe(true);
+      }
+    });
+
+    it('asserts Golden Frame Equivalence across all 4 bundled scene scores at multi-timestamps', () => {
+      for (const item of INITIAL_CATALOG_ITEMS) {
+        const score = item.score;
+        const duration = score.durationSec;
+        const testTimestamps = [0.0, duration * 0.25, duration * 0.5, duration * 0.75, duration];
+
+        for (const t of testTimestamps) {
+          const frame = computeStageFrame(t, score);
+          expect(Number.isFinite(frame.stageCamera.transform.position.x)).toBe(true);
+          expect(Number.isFinite(frame.stageCamera.transform.position.y)).toBe(true);
+          expect(Number.isFinite(frame.stageCamera.transform.position.z)).toBe(true);
+          expect(Number.isFinite(frame.observerCamera.transform.position.x)).toBe(true);
+          expect(Number.isFinite(frame.observerCamera.transform.position.y)).toBe(true);
+          expect(Number.isFinite(frame.observerCamera.transform.position.z)).toBe(true);
+          expect(frame.stageCamera.transform.fovDeg).toBeGreaterThan(10);
+          expect(frame.stageCamera.transform.fovDeg).toBeLessThan(120);
+        }
+      }
     });
   });
 });

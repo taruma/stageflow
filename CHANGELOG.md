@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Refactored
+- **Modularized Trajectory Chain Submodules (`trajectoryChain.ts` -> `cameraTargetResolver.ts` + `shotPoseEvaluator.ts`)**:
+  - Decomposed 640-line `src/core/trajectoryChain.ts` into three single-responsibility, strictly acyclic Layer 1 submodules:
+    - [`src/core/cameraTargetResolver.ts`](src/core/cameraTargetResolver.ts) (140 lines): Target anchor resolution from entity IDs/labels/presets with eye-line anchoring (`0.78 * height`) and Option A shot-boundary roll/target-offset reset semantics (`resolveShotStartRoll`, `resolveShotDestRoll`, `resolveShotStartOffset`, `resolveShotDestOffset`, `resolveTargetPoint3D`).
+    - [`src/core/shotPoseEvaluator.ts`](src/core/shotPoseEvaluator.ts) (230 lines): Single-shot camera pose interpolation (`evaluateShotCameraPose`), multi-waypoint Catmull-Rom spline curves with shortest-arc angle unwrapping (`evaluateSplineCameraPose`), and 32-point 3D world path sampling (`sampleTrajectoryPoints`).
+    - [`src/core/trajectoryChain.ts`](src/core/trajectoryChain.ts) (339 lines): Multi-shot forward pose chaining state machine (`evaluateCameraTrack`) and observer/stage cue extraction.
+  - Re-exported all target resolution, spline evaluation, and trajectory sampling functions from `src/core/trajectoryChain.ts` for 100% backward compatibility with downstream callers (`frameEngine.ts`) and tests.
+  - Added direct unit test assertions in [`tests/unit/frameEngine.test.ts`](tests/unit/frameEngine.test.ts) covering target resolution, Option A reset semantics, spline interpolation, and Golden Frame Equivalence across all 4 bundled scene catalog items at multi-timestamps.
 - **Modularized Score Parser Submodules (`scoreParser.ts` -> `scorePrimitives.ts` + `cameraCueParser.ts`)**:
   - Decomposed monolithic 728-line `src/core/scoreParser.ts` into three single-responsibility Layer 1 submodules:
     - [`src/core/scorePrimitives.ts`](src/core/scorePrimitives.ts) (151 lines): Pure unit converters and normalizers (`parseVec3`, `parseOptionalVec3`, `parseTargetOrVec3`, `parseLensFocalLengthMm`, `parseAngleToRad`, `normalizeCameraManeuver`, `normalizeCameraEasing`, `normalizeEntityKind`).
