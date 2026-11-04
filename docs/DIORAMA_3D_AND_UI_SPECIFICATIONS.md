@@ -149,3 +149,19 @@ Scene entities (`character`, `prop`, `marker`) are rendered with unambiguous ori
 - **Semi-Translucent Look-Around Mask**: Renders an 82% darkened obsidian veil (`rgba(5, 8, 17, 0.82)`) outside the active gate boundary so off-camera actors and props waiting in the wings remain faintly visible while the active frame pops with commanding contrast.
 - **Framing Brackets & Stamp**: Luminous corner brackets and a top-left micro-stamp (`REC GATE · 16:9 · 50mm`).
 - **Toggleable Guides**: 90% Safe-Action dashed frame, Rule-of-Thirds 3x3 grid, and Center Optical Crosshairs.
+
+### 4.10 Deterministic 60fps Headless Viewport Recorder CLI (`scripts/record/`, `src/recorder/`)
+- Standalone CLI recording tool (`npm run record [scene] [options]`) driven by Playwright and FFmpeg.
+- **Stateless Frame Stepping ($t_i = i / 60\text{s}$)**: Steps through any choreography score frame-by-frame with zero dropped frames or browser pacing lag, streaming PNG frames into an FFmpeg H.264/VP9 pipe.
+- **Dedicated Headless Render Route (`?mode=headless-render`)**: `App.tsx` routes to `<HeadlessRecorderView />`, mounting a pure, chrome-free diorama canvas with zero localStorage polling, media clocks, or extraneous listeners.
+- **Two Core Directorial Recording Modes**:
+  1. **Scripted Observer View (`--camera scripted`)**: Records the 3D diorama along the authored observer camera path.
+  2. **Stage Camera POV (`--camera stage-pov`)**: Locks directly to the physical stage camera's optical sightline, focal length, and active film gate.
+- **Visual Overlays & Chrome Control**:
+  - `--labels all | camera-only | off`: Toggles 3D Drei HTML character and camera badges.
+  - `--guides`: Renders the optical viewfinder safe-action box, rule of thirds, and reticle.
+  - `--hud`: Includes top-left shot breakdown and bottom-right degree/meter telemetry badges.
+- **Cinematic Presets & Slicing**:
+  - `--preset isometric | top-down | front | side`: Sets fixed architectural perspective angles.
+  - `--shot <shot_id>` or `--start <sec> --end <sec>`: Slices exact shot cues or timestamp windows.
+  - `--res 1080p | 4k | 720p | square | vertical`, `--fps <number>`.

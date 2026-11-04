@@ -43,8 +43,13 @@ import { YamlInspectorDrawer } from './ui/YamlInspectorDrawer';
 import { ConfirmResetModal } from './ui/ConfirmResetModal';
 import { LabelDisplayModeToggle } from './ui/LabelDisplayModeToggle';
 import { StageCamViewfinderOverlay } from './ui/StageCamViewfinderOverlay';
+import { HeadlessRecorderView } from './recorder/HeadlessRecorderView';
 
-export const App: React.FC = () => {
+const isHeadlessRender =
+  typeof window !== 'undefined' &&
+  new URLSearchParams(window.location.search).get('mode') === 'headless-render';
+
+const InteractiveStudioApp: React.FC = () => {
   const [catalog, setCatalog] = useState<ScoreCatalogItem[]>(
     INITIAL_CATALOG_ITEMS
   );
@@ -441,6 +446,13 @@ export const App: React.FC = () => {
       />
     </div>
   );
+};
+
+export const App: React.FC = () => {
+  if (isHeadlessRender) {
+    return <HeadlessRecorderView />;
+  }
+  return <InteractiveStudioApp />;
 };
 
 export default App;

@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Deterministic 60fps Headless Viewport Recorder CLI (`npm run record`)**:
+  - Implemented a headless CLI recording tool in `scripts/record/` and `src/recorder/` powered by Playwright and FFmpeg to render and export viewport recordings with mathematical frame determinism ($t_i = i / 60\text{s}$) and zero dropped frames.
+  - Added [`src/recorder/HeadlessRecorderView.tsx`](src/recorder/HeadlessRecorderView.tsx) and [`src/recorder/recorderTypes.ts`](src/recorder/recorderTypes.ts) mounting an isolated, chrome-free rendering environment on `?mode=headless-render` that synchronizes `computeStageFrame(t, score)` and exposes a bidirectional frame-stepping bridge via `window.__STAGEFLOW_RECORDER__`.
+  - Added modular CLI tooling in `scripts/record/`:
+    - [`scripts/record/cli.ts`](scripts/record/cli.ts): Command-line argument parsing, bundled scene shortcut resolution (`01`, `02`, `03`, `04`, catalog IDs), and custom YAML score file loading.
+    - [`scripts/record/playwrightDriver.ts`](scripts/record/playwrightDriver.ts): Headless Chromium browser lifecycle manager with hardware WebGL flags, frame-by-frame screenshot loop, and animated terminal progress bar with active shot tracking.
+    - [`scripts/record/ffmpegPipeline.ts`](scripts/record/ffmpegPipeline.ts): Raw PNG stdin streaming pipe into FFmpeg supporting H.264 MP4 (`yuv420p`, `-crf 18`), VP9 WebM, animated GIF, or lossless PNG image sequence emission with automatic system FFmpeg resolution.
+    - [`scripts/record/serverManager.ts`](scripts/record/serverManager.ts): Automatic Vite dev server health check and background ephemeral server lifecycle management.
+    - [`scripts/record/cameraPresets.ts`](scripts/record/cameraPresets.ts): Architectural and cinematic camera angle presets (`isometric`, `top-down`, `front`, `side`).
+  - Added granular CLI flags for full recording flexibility:
+    - Camera mode: `--camera scripted` (default 3D observer diorama) or `--camera stage-pov` (director's optical lens view).
+    - Label and overlay controls: `--labels all | camera-only | off`, `--guides`, and `--hud`.
+    - Time windowing: `--shot <shot_id>` or `--start <sec> --end <sec>`.
+    - Resolution and framerate: `--res 1080p | 4k | 720p | square | vertical`, `--fps <number>`.
+  - Added Vitest unit test suite in [`tests/unit/recorder.test.ts`](tests/unit/recorder.test.ts) covering camera presets, resolution configurations, FFmpeg discovery, and deterministic stepped frame evaluation.
+
 ### Refactored
 - **Modularized Trajectory Chain Submodules (`trajectoryChain.ts` -> `cameraTargetResolver.ts` + `shotPoseEvaluator.ts`)**:
   - Decomposed 640-line `src/core/trajectoryChain.ts` into three single-responsibility, strictly acyclic Layer 1 submodules:

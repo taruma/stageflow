@@ -22,7 +22,8 @@ It synchronizes a universal video player (**Local `.mp4`/`.webm`**, **YouTube UR
    - Edit YAML scores live in the slide-out drawer with instant 3D re-evaluation, or click the floating telemetry capsule to copy live camera coordinates (`target`, `distance`, `pitch`, `yaw`, `lens`) directly to the clipboard.
 6. **Dual-Tier Storage Persistence & YAML SSOT**:
    - Automatically saves score drafts and custom imported scenes in browser **IndexedDB** (`idb`), while persisting UI layout preferences in **`localStorage`**. Heavy local dropped videos remain strictly in temporary session memory, and the YAML score remains the authoritative single source of truth for video playback.
-
+7. **Deterministic 60fps Viewport Video Recorder**:
+   - Headless CLI tool (`npm run record`) powered by Playwright and FFmpeg that steps through scores frame-by-frame ($t_i = i / 60\text{s}$) with zero dropped frames. Exports Scripted Observer or Stage Cam POV viewports in 1080p/4K MP4, WebM, animated GIF, or PNG sequence with toggleable 3D HTML labels and composition guides.
 
 ---
 
@@ -58,4 +59,20 @@ npm run build
 
 # Run fast linter (oxlint)
 npm run lint
+
+# Deterministic 60fps Viewport Video Recorder (Playwright + FFmpeg)
+npm run record [scene] [options]
+
+# Examples:
+# Record Blueprint 01 from Scripted Observer View at 1080p 60fps
+npm run record 01
+
+# Record Stage Camera POV through director's lens with safe-action guides
+npm run record 01 -- --camera stage-pov --guides -o stage_pov.mp4
+
+# Record clean 3D diorama geometry only (no HTML labels)
+npm run record 02 -- --labels off -o clean.mp4
+
+# Record single shot cue with isometric schematic camera preset in 4K
+npm run record 04 -- --shot shot_01 --preset isometric --res 4k -o shot01_iso_4k.mp4
 ```

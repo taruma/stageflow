@@ -99,8 +99,19 @@ stageflow/
 │   ├── CORE_MATH_AND_SCORE_SPECIFICATIONS.md
 │   ├── MEDIA_CLOCK_AND_SYNC_SPECIFICATIONS.md
 │   └── DIORAMA_3D_AND_UI_SPECIFICATIONS.md
+├── scripts/                         # CLI Automation & Offline Tooling
+│   └── record/                      # Deterministic 60fps Playwright + FFmpeg Viewport Recorder
+│       ├── cli.ts                   # CLI entry point, argument parsing & usage help
+│       ├── playwrightDriver.ts      # Headless Chromium lifecycle & frame-stepping loop
+│       ├── ffmpegPipeline.ts        # FFmpeg pipe encoder (libx264, VP9, GIF, PNG sequence)
+│       ├── serverManager.ts         # Vite server detection & background startup
+│       ├── cameraPresets.ts         # Camera angle presets (isometric, top-down, front, side)
+│       └── recorderTypes.ts         # Shared CLI & bridge TypeScript interfaces
 ├── public/                          # Static web assets & media files
 ├── src/
+│   ├── recorder/                    # Headless Recording Bridge & Render Environment
+│   │   ├── HeadlessRecorderView.tsx # Lightweight full-window Canvas mounted on ?mode=headless-render
+│   │   └── recorderTypes.ts         # Bridge schemas & window.__STAGEFLOW_RECORDER__ interface
 │   ├── scores/                      # Bundled Choreography Scores (*.yaml)
 │   │   ├── demo_blueprint.yaml      # Blueprint 01: Single-shot two-shot arc score
 │   │   ├── blueprint_02_dialogue.yaml # Blueprint 02: 6-shot dialogue coverage flow
@@ -166,7 +177,8 @@ stageflow/
         ├── sphericalMath.test.ts
         ├── frameEngine.test.ts
         ├── scoreParser.test.ts
-        └── storage.test.ts
+        ├── storage.test.ts
+        └── recorder.test.ts
 ```
 
 ---
@@ -181,6 +193,7 @@ Every change—whether in core math, media drivers, 3D stage components, or UI�
 | **2. Build & Typecheck** | `npm run build` | `tsc -b && vite build` must pass with **zero TypeScript errors**. |
 | **3. Linter** | `npm run lint` | `oxlint` must report **0 warnings and 0 errors**. |
 | **4. Dev Server** | `npm run dev` | Local interactive verification on `http://localhost:5173`. |
+| **5. Viewport Recorder** | `npm run record` | Deterministic 60fps Playwright + FFmpeg viewport video recorder. |
 
 ### Pre-Delivery Audit Checklist
 Before reporting completion of any task:
