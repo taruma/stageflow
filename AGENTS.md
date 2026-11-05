@@ -166,6 +166,8 @@ stageflow/
 │   │   │   ├── FileMenuDropdown.tsx # Tiered File ▾ popover menu (Open, Export, New, Manage, Guide)
 │   │   │   ├── LayoutSegmentedControl.tsx # Centered segmented split workspace layout switcher
 │   │   │   └── ActiveScoreIndicator.tsx # Interactive active score context chip with 1-click library open
+│   │   ├── library/                 # Modular score library submodules
+│   │   │   └── ScoreLibraryCard.tsx # Cinematic choreography score card with color tags & telemetry
 │   │   ├── WorkspaceHeader.tsx      # SceneFlow-aligned 3-wing orchestrator header bar
 │   │   ├── ScoreLibraryModal.tsx    # Accessible modal for browsing bundled blueprints & custom scores
 │   │   ├── ResizableSplitWorkspace.tsx # Draggable side-by-side split container

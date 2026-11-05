@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- **Choreography Score Library Aesthetic & Card Redesign (`src/ui/ScoreLibraryModal.tsx`, `src/ui/library/ScoreLibraryCard.tsx`)**:
+  - Decomposed `ScoreLibraryModal.tsx` into a modular [`src/ui/library/ScoreLibraryCard.tsx`](src/ui/library/ScoreLibraryCard.tsx) component conforming to decoupling standards ($\le 250$ lines/file).
+  - Replaced terminal-heavy 100% monospace styling with crisp typographic hierarchy: modern sans-serif (`font-sans`) for titles and subtitles, reserving `font-mono` for technical telemetry pills.
+  - Fixed aspect ratio raw float display bug (`1.7777777777777777` -> `16:9` / `2.39:1`) via robust `formatAspectRatio` helper.
+  - Added color-coded blueprint category tags (`BP 01`–`BP 05` and `CUSTOM`) with custom hover borders matching blueprint accents.
+  - Expanded modal canvas from `max-w-3xl` to `max-w-4xl` for spacious 2-column card layouts with interactive `Open →` hover cues and active scene amber halos.
 - **Studio Header Ergonomics & Layout Simplification (`src/ui/`, `src/core/`)**:
   - **Fixed File Dropdown Stacking Context Overlap**: Added `relative z-30` to `<header>` in [`src/ui/WorkspaceHeader.tsx`](src/ui/WorkspaceHeader.tsx), creating an explicit stacking context above diorama viewport canvases and preventing overlay badges (such as `STAGE CAM SIMULATOR` in `UniversalVideoViewport.tsx`) from occluding the `File` menu dropdown and its children.
   - **Clean Active Score Title Indicator**: Removed the redundant persistence state badge (`StorageStatusBadge`) from [`src/ui/header/ActiveScoreIndicator.tsx`](src/ui/header/ActiveScoreIndicator.tsx), eliminating visual noise (`Bundled Baseline` / `Custom (IndexedDB)`) from the main header and expanding the title truncation ceiling so score titles can breathe naturally, while preserving persistence telemetry in the live YAML drawer status bar and Score Library modal.

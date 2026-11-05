@@ -95,9 +95,9 @@ Scene entities (`character`, `prop`, `marker`) are rendered with unambiguous ori
   - *Media & Score I/O*: "Open Video or Score..." (file picker trigger) and "Export Active Score (.yaml)" (direct browser download).
   - *Scores*: "New Blank Score..." and "Manage Custom Scores" (with custom scores badge count).
   - *Reference*: "Score Library..." and link to the YAML Authoring Guide.
-- **Dedicated Score Library Modal (`ScoreLibraryModal.tsx`)**:
-  - Accessible dialog displaying all bundled blueprint scores (01–05) and custom user scores in a responsive card grid.
-  - Rich card telemetry: Duration (`X.Xs`), shot count (`X Shots`), aspect ratio (`16:9` / `2.39:1`), active indicator badge, and 1-click loading.
+- **Dedicated Score Library Modal (`ScoreLibraryModal.tsx`, `ScoreLibraryCard.tsx`)**:
+  - Accessible `max-w-4xl` dialog displaying all bundled blueprint scores (01–05) and custom user scores in a responsive card grid.
+  - Refined typography and card anatomy: sans-serif titles and technique summaries with color-coded blueprint tags (`BP 01`–`BP 05`, `CUSTOM`), clean monospace telemetry pills (duration in seconds, shot count, formatted aspect ratios `16:9` / `2.39:1`, entity count), active scene glow, and interactive `Open →` hover cues.
   - Category tabs (`All`, `Bundled`, `Custom`) and real-time title/subtitle search filtering.
 - **Desktop (`lg+`)**: Side-by-side split between the Left Video Viewport and Right 3D Diorama Stage, separated by a smooth pointer-drag divider bar (`18%` to `82%` clamp).
 - **Workspace Layout Modes**:
