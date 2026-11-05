@@ -129,7 +129,10 @@ stageflow/
 │   │   ├── opticsMath.ts            # Focal length (mm) <-> Vertical FOV (deg) & Rectangular Gate math
 │   │   ├── sphericalMath.ts         # Degrees <-> Radians, Spherical <-> Cartesian, shortestAngleDiff
 │   │   ├── maneuvers.ts             # 9 easing curves & 11 3D camera trajectory maneuvers
-│   │   ├── entityEngine.ts          # Decoupled root blocking: & per-shot character kinematics, look_at & floor trails
+│   │   ├── entityEngine.ts          # Facade: evaluateEntitiesAtTime dispatcher (<50 lines)
+│   │   ├── entityBlockingEvaluator.ts # Tier 1: Decoupled root blocking: timeline kinematics
+│   │   ├── entityLegacyEvaluator.ts # Tier 2: Legacy per-shot shots[].entities kinematics
+│   │   ├── entityKinematicUtils.ts  # Shared look_at target resolution & ground trail generation
 │   │   ├── cameraTargetResolver.ts  # Target anchor resolution, 3D offsets & shot-boundary roll resets
 │   │   ├── shotPoseEvaluator.ts     # Single-shot pose evaluation, Catmull-Rom splines & 3D path sampling
 │   │   ├── trajectoryChain.ts       # Forward pose chaining (P_0 -> P_k) & multi-shot timeline tracks
@@ -198,6 +201,7 @@ stageflow/
     └── unit/                        # Vitest deterministic unit test suites
         ├── opticsMath.test.ts
         ├── sphericalMath.test.ts
+        ├── entityEngine.test.ts
         ├── frameEngine.test.ts
         ├── scoreParser.test.ts
         ├── storage.test.ts

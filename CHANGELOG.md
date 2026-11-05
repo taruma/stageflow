@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Refactored
+- **Entity Engine Modularization & Decoupling (`entityEngine.ts`, `entityBlockingEvaluator.ts`, `entityLegacyEvaluator.ts`, `entityKinematicUtils.ts`)**:
+  - Decomposed the 545-line monolithic [`src/core/entityEngine.ts`](src/core/entityEngine.ts) into four strictly decoupled, single-responsibility Layer 1 submodules ($\le 250$ lines each), eliminating multi-concern entanglement while keeping the public `evaluateEntitiesAtTime` API surface 100% bit-for-bit identical.
+  - Extracted [`src/core/entityKinematicUtils.ts`](src/core/entityKinematicUtils.ts) (80 lines) housing shared kinematic interfaces (`EntityPoseSnapshot`, `ChainedBlockingCueEntry`), look-at target point resolution (`resolveLookAtPoint`), and 16-segment ground movement trail generation (`buildGroundTrailPoints`).
+  - Extracted [`src/core/entityBlockingEvaluator.ts`](src/core/entityBlockingEvaluator.ts) (229 lines) implementing Tier 1 continuous multi-cut kinematics across the root `blocking:` timeline with two-pass position and rotation chaining, Option A full-cue floor trails across camera cuts, continuous $C^0$ look-at handoffs, gap pose hold persistence, and hybrid per-shot metadata overlays.
+  - Extracted [`src/core/entityLegacyEvaluator.ts`](src/core/entityLegacyEvaluator.ts) (274 lines) implementing Tier 2 legacy per-shot kinematics for scores without root `blocking:`, resolving shot boundary start/end overrides, walking direction auto-facing, and runtime interpolation.
+  - Reduced [`src/core/entityEngine.ts`](src/core/entityEngine.ts) to a lean 48-line facade delegating between Tier 1 and Tier 2 evaluators with backward-compatible re-exports.
+  - Added dedicated unit test suite [`tests/unit/entityEngine.test.ts`](tests/unit/entityEngine.test.ts) covering target resolution variants, ground trail generation thresholds, and direct evaluator calls across all 89 test cases.
+
 ### Added
 - **3-Column Studio Layout Architecture (`ResizableSplitWorkspace.tsx`, `WorkspaceHeader.tsx`, `LayoutSegmentedControl.tsx`, `VideoWorkspaceSubpanel.tsx`, `App.tsx`)**:
   - Re-architected StageFlow's workspace into a first-class 30 / 40 / 30 three-column studio (Left: Reference Video + Directorial Subpanel, Center: 3D Blueprint Diorama, Right: Full-Height YAML Score Studio).
