@@ -32,6 +32,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **60fps Split Workspace Divider Dragging (`body.is-resizing-split`)**:
   - Integrated `is-resizing-split` class in [`src/ui/ResizableSplitWorkspace.tsx`](src/ui/ResizableSplitWorkspace.tsx) during pointer drag, suppressing transitions and iframe pointer interception across the window for butter-smooth 60fps divider resizing.
 
+### Fixed
+- **3D Drei HTML Billboard Label Stacking Context Collision (`src/stage/StageBillboardLabel.tsx`, `src/ui/tokens/ui.ts`, `src/ui/ResizableSplitWorkspace.tsx`)**:
+  - Calibrated Drei `<Html>` depth sorting in [`StageBillboardLabel.tsx`](src/stage/StageBillboardLabel.tsx) from `zIndexRange={[40, 0]}` down to `zIndexRange={[5, 0]}`, ensuring 3D character/prop identity badges never occlude 2D viewport HUDs (`z-10`), bottom telemetry (`z-20`), or header dropdowns (`z-50`).
+  - Added CSS `isolate` (`isolation: isolate`) on the 3D diorama stage container in [`ResizableSplitWorkspace.tsx`](src/ui/ResizableSplitWorkspace.tsx) and [`App.tsx`](src/App.tsx) to permanently prevent 3D canvas HTML DOM projections from escaping into the global stacking context.
+  - Added explicit `relative z-30` positioning to `UI_TOKENS.layout.appHeader` in [`src/ui/tokens/ui.ts`](src/ui/tokens/ui.ts) to guarantee studio navigation and theme dropdowns sit unconditionally above all diorama canvases.
+
 ### Changed
 - **Tactile Pill Restyling of 2D Directorial Chrome**:
   - Restyled [`src/ui/WorkspaceHeader.tsx`](src/ui/WorkspaceHeader.tsx), [`src/ui/header/FileMenuDropdown.tsx`](src/ui/header/FileMenuDropdown.tsx), [`src/ui/header/LayoutSegmentedControl.tsx`](src/ui/header/LayoutSegmentedControl.tsx), and [`src/ui/header/ActiveScoreIndicator.tsx`](src/ui/header/ActiveScoreIndicator.tsx) with rounded pill geometry and subtle borders.

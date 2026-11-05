@@ -96,7 +96,7 @@ export const StageBillboardLabel: React.FC<StageBillboardLabelProps> = React.mem
 
     return (
       <group ref={groupRef} position={position}>
-        <Html center zIndexRange={[40, 0]}>
+        <Html center zIndexRange={[5, 0]}>
           <div
             className={`flex flex-col items-center select-none pointer-events-none transition-opacity duration-200 ${opacityClass}`}
           >

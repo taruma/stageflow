@@ -467,7 +467,7 @@ const InteractiveStudioApp: React.FC = () => {
           />
         }
         rightStagePane={
-          <div className="relative w-full h-full">
+          <div className="relative w-full h-full isolate">
             {/* 3D React Three Fiber Blueprint Diorama */}
             <DioramaCanvas
               score={activeScore}

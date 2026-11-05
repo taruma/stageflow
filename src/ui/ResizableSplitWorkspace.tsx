@@ -116,7 +116,7 @@ export const ResizableSplitWorkspace: React.FC<
       )}
 
       {/* Right / Bottom: 3D Blueprint Diorama Viewport */}
-      <div className="flex-1 min-w-0 min-h-0 h-full relative overflow-hidden bg-app">
+      <div className="flex-1 min-w-0 min-h-0 h-full relative overflow-hidden bg-app isolate">
         {rightStagePane}
       </div>
     </div>
