@@ -78,7 +78,7 @@ export const StageCamViewfinderOverlay: React.FC<
             // 82% obsidian look-around mask extending infinitely outside the active gate
             boxShadow: '0 0 0 9999px rgba(5, 8, 17, 0.82)',
           }}
-          className="relative border border-amber-400/50 shadow-2xl flex items-center justify-center transition-all duration-75"
+          className="relative border border-amber-400/50 shadow-2xl flex items-center justify-center"
         >
           {/* 4 Optical Corner Framing Brackets */}
           <div className="absolute -top-1 -left-1 w-3.5 h-3.5 border-t-2 border-l-2 border-amber-400" />

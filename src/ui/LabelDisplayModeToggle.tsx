@@ -70,7 +70,7 @@ export const LabelDisplayModeToggle: React.FC<LabelDisplayModeToggleProps> = ({
               type="button"
               onClick={() => onSelectLabelMode(mode)}
               title={title}
-              className={`px-2 py-0.5 rounded-lg text-[10px] font-mono flex items-center gap-1 transition-all cursor-pointer ${
+              className={`px-2 py-0.5 rounded-lg text-[10px] font-mono flex items-center gap-1 transition-colors duration-100 cursor-pointer focus:outline-none ${
                 active
                   ? 'bg-btn-primary-bg text-btn-primary-text font-semibold shadow-2xs'
                   : 'text-text-muted hover:text-text-main'
@@ -92,7 +92,7 @@ export const LabelDisplayModeToggle: React.FC<LabelDisplayModeToggleProps> = ({
             title={`Toggle Composition Guides (90% Safe-Action, Rule-of-Thirds, Reticle) [Hotkey: G] — Currently ${
               showGuides ? 'ON' : 'OFF'
             }`}
-            className={`px-2 py-0.5 rounded-lg text-[10px] font-mono flex items-center gap-1 transition-all cursor-pointer ${
+            className={`px-2 py-0.5 rounded-lg text-[10px] font-mono flex items-center gap-1 transition-colors duration-100 cursor-pointer focus:outline-none ${
               showGuides
                 ? 'bg-amber-500 text-white font-semibold shadow-2xs'
                 : 'text-text-muted hover:text-text-main'

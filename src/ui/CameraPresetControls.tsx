@@ -47,7 +47,7 @@ export const CameraPresetControls: React.FC<CameraPresetControlsProps> = ({
             key={key}
             type="button"
             onClick={() => onSelectPreset(key)}
-            className="px-2 py-0.5 rounded-full text-text-muted hover:text-text-main hover:bg-surface-subtle transition-all cursor-pointer font-medium"
+            className="px-2 py-0.5 rounded-full text-text-muted hover:text-text-main hover:bg-surface-subtle transition-colors duration-100 cursor-pointer font-medium focus:outline-none"
             title={item.description}
           >
             {item.shortLabel}
@@ -60,7 +60,7 @@ export const CameraPresetControls: React.FC<CameraPresetControlsProps> = ({
       <button
         type="button"
         onClick={() => onSelectPreset('reset')}
-        className="px-2 py-0.5 rounded-full text-text-muted hover:text-text-main hover:bg-surface-subtle transition-all cursor-pointer flex items-center gap-1 font-medium"
+        className="px-2 py-0.5 rounded-full text-text-muted hover:text-text-main hover:bg-surface-subtle transition-colors duration-100 cursor-pointer flex items-center gap-1 font-medium focus:outline-none"
         title="Reset camera to active shot's scripted observer angle"
       >
         <RotateCcw className="w-2.5 h-2.5 text-text-faint" />

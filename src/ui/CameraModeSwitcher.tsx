@@ -29,10 +29,10 @@ export const CameraModeSwitcher: React.FC<CameraModeSwitcherProps> = ({
       <button
         type="button"
         onClick={() => onSetCameraMode('scripted')}
-        className={`px-3 py-1 rounded-full flex items-center gap-1.5 transition-all cursor-pointer ${
+        className={`px-3 py-1 rounded-full flex items-center gap-1.5 border transition-colors duration-100 cursor-pointer focus:outline-none ${
           cameraMode === 'scripted'
-            ? 'bg-surface-subtle text-text-main font-semibold shadow-2xs border border-border-subtle'
-            : 'text-text-muted hover:text-text-main hover:bg-surface-subtle/50'
+            ? 'bg-surface text-text-main font-semibold shadow-xs border-border-subtle'
+            : 'border-transparent text-text-muted hover:text-text-main hover:bg-surface-subtle/50'
         }`}
         title="Scripted Observer View (Driven by timeline while playing; releases to Free Orbit when paused)"
       >
@@ -43,10 +43,10 @@ export const CameraModeSwitcher: React.FC<CameraModeSwitcherProps> = ({
       <button
         type="button"
         onClick={() => onSetCameraMode('free')}
-        className={`px-3 py-1 rounded-full flex items-center gap-1.5 transition-all cursor-pointer ${
+        className={`px-3 py-1 rounded-full flex items-center gap-1.5 border transition-colors duration-100 cursor-pointer focus:outline-none ${
           cameraMode === 'free'
-            ? 'bg-surface-subtle text-text-main font-semibold shadow-2xs border border-border-subtle'
-            : 'text-text-muted hover:text-text-main hover:bg-surface-subtle/50'
+            ? 'bg-surface text-text-main font-semibold shadow-xs border-border-subtle'
+            : 'border-transparent text-text-muted hover:text-text-main hover:bg-surface-subtle/50'
         }`}
         title="Free Orbit View (Unlocks OrbitControls even during playback)"
       >
@@ -57,10 +57,10 @@ export const CameraModeSwitcher: React.FC<CameraModeSwitcherProps> = ({
       <button
         type="button"
         onClick={() => onSetCameraMode('stage-pov')}
-        className={`px-3 py-1 rounded-full flex items-center gap-1.5 transition-all cursor-pointer ${
+        className={`px-3 py-1 rounded-full flex items-center gap-1.5 border transition-colors duration-100 cursor-pointer focus:outline-none ${
           cameraMode === 'stage-pov'
-            ? 'bg-surface-subtle text-text-main font-semibold shadow-2xs border border-border-subtle'
-            : 'text-text-muted hover:text-text-main hover:bg-surface-subtle/50'
+            ? 'bg-surface text-text-main font-semibold shadow-xs border-border-subtle'
+            : 'border-transparent text-text-muted hover:text-text-main hover:bg-surface-subtle/50'
         }`}
         title="Stage Camera POV (Instant cut to look directly through the 3D Stage Camera lens)"
       >

@@ -117,6 +117,8 @@ export const DirectorialTransportBar: React.FC<
           <div className="flex items-center gap-1 overflow-x-auto custom-scrollbar pb-0.5">
             {score.shots.map((shot) => {
               const isActive = frame.activeShot?.id === shot.id;
+              const cleanLabel =
+                shot.label.replace(/^Shot\s*\d+\s*[·:–-]\s*/i, '').trim() || shot.label;
               return (
                 <button
                   key={shot.id}
@@ -127,10 +129,10 @@ export const DirectorialTransportBar: React.FC<
                       ? 'bg-btn-primary-bg text-btn-primary-text border-btn-primary-bg font-semibold shadow-xs'
                       : 'bg-surface hover:bg-surface-subtle border-border-main text-text-muted hover:text-text-main shadow-2xs'
                   }`}
-                  title={`Jump to Shot ${shot.shotNumber}: ${shot.label} (${shot.startSec.toFixed(1)}s – ${shot.endSec.toFixed(1)}s)`}
+                  title={`Jump to Shot #${String(shot.shotNumber).padStart(2, '0')}: ${cleanLabel} (${shot.startSec.toFixed(1)}s – ${shot.endSec.toFixed(1)}s)`}
                 >
-                  <span className="font-bold">S{String(shot.shotNumber).padStart(2, '0')}</span>
-                  <span className="truncate max-w-[140px]">{shot.label}</span>
+                  <span className="font-bold">#{String(shot.shotNumber).padStart(2, '0')}</span>
+                  <span className="truncate max-w-[140px]">{cleanLabel}</span>
                   <span className="text-[9px] opacity-70">
                     {shot.startSec.toFixed(1)}s
                   </span>

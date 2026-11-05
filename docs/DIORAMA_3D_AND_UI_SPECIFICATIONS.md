@@ -155,9 +155,10 @@ Scene entities (`character`, `prop`, `marker`) are rendered with unambiguous ori
 - **Top-Right Directorial Camera Presets (`CameraPresetControls.tsx`, `cameraPresets.ts`)**:
   - 1-click angle snaps cluster (`Top/Plan 84°`, `Iso 45°`, `Front 12°`, `Side 90°`, `Reset`) that snaps camera perspective and switches to Free Orbit without pausing playback.
 - **Top-Left Shot Breakdown HUD (`ShotBreakdownHud.tsx`)**:
-  - Displays active shot number, label, prime lens focal length, gate aspect ratio, and active maneuver.
-  - Automatically de-duplicates title prefixes (`[SHOT 01] Slow Arc...` instead of repeating `Shot 01 · `).
-  - Features a 1-click collapse/expand fold chevron shrinking the card to a sleek single-line pill, saving ~70% screen real estate.
+  - Displays active shot identifier formatted as `#xx` (`#01`–`#17`), clean un-prefixed label, prime lens focal length, gate aspect ratio, active maneuver, 3D target offset, and camera mode status.
+  - Automatically de-duplicates redundant title prefixes (`#01 Slow Arc...` instead of repeating `Shot 01 · `).
+  - **Strict 2-Line Collapsed Mode**: Features a 1-click fold chevron (and whole-card click target) shrinking the card to strictly 2 lines (`Line 1: [#xx] Title >` and `Line 2: 50mm · DOLLY · Δ 0.36m · Free Orbit`) with precision single-line truncation, saving ~70% screen real estate.
+  - **Structured Expanded Mode**: Dedicated header row for `#xx` and `OFFSET` badges, prominent full-width title row, rich optics/maneuver row with icons, and directorial description.
   - When `target_offset` is active ($\ge 0.01\text{m}$), surfaces a cyan `OFFSET <magnitude>m` badge with crosshair icon and displays the exact world displacement vector `Δ [+X, +Y, +Z]m` in the optics row.
 - **Bottom-Right Authoring Telemetry Capsule (`CameraTelemetryCapsule.tsx`)**:
   - Formatted with inline muted monospace micro-labels: `P 26.0° · Y 35.0° · [R -5.0°] · D 7.50m · TGT [0.0, 1.1, 0.0] · 50mm` for instant glanceability.
