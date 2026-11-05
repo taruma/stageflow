@@ -140,6 +140,7 @@ stageflow/
 │   │   ├── scorePrimitives.ts       # Low-level vector, angle, lens & enum normalizers
 │   │   ├── cameraCueParser.ts       # Camera poses, shot cue specs, waypoints & observer shots
 │   │   ├── scoreParser.ts           # Resilient YAML/JSON parser & degree/meter normalizer
+│   │   ├── scoreYamlUtils.ts        # Pure YAML header id/title modifiers & slug generators
 │   │   ├── scoreCatalog.ts          # Bundled & custom scene score registry
 │   │   └── storage/                 # Client persistence utilities
 │   │       ├── scoreDb.ts           # IndexedDB persistence for score drafts & custom scenes (idb)
@@ -154,6 +155,9 @@ stageflow/
 │   │   ├── useStageFrameLoop.ts     # 60fps ref evaluation tick + ~10Hz throttled React UI sync
 │   │   ├── useFileDropLoader.ts     # Drag-and-drop & file picker loader for .yaml and .mp4 pairs
 │   │   ├── useScorePersistence.ts   # Startup hydration, draft auto-saving & confirmed reset
+│   │   ├── useWorkspaceLayout.ts    # Split workspace presets, column percentages & storage sync
+│   │   ├── useStudioDisplaySettings.ts # 3D diorama label modes, guides & 'L'/'G' hotkeys
+│   │   ├── useToastNotifications.ts # Floating toast notification queue & auto-dismiss timers
 │   │   └── useAppShellTheme.ts      # SceneFlow theme hook (Auto/Dark/Warm/Light) & transition suppression
 │   ├── stage/                       # Layer 4: React Three Fiber 3D Blueprint Diorama
 │   │   ├── dioramaTheme.ts          # Adaptive theme clear colors, fog & metric grid line mapping
@@ -184,6 +188,7 @@ stageflow/
 │   │   ├── WorkspaceHeader.tsx      # SceneFlow-aligned 3-wing orchestrator header bar
 │   │   ├── ScoreLibraryModal.tsx    # Accessible 2-column master-detail score library & project hub
 │   │   ├── ResizableSplitWorkspace.tsx # Draggable 3-column studio container (30/40/30) with dual dividers
+│   │   ├── DioramaOverlayContainer.tsx # Center stage responsive HUD overlay dock
 │   │   ├── UniversalVideoViewport.tsx  # Local video, YouTube IFrame, or 60fps Stage Cam Simulator
 │   │   ├── ShotBreakdownHud.tsx     # Top-left active shot, lens, maneuver & staging note overlay
 │   │   ├── CameraTelemetryCapsule.tsx  # Live degree/meter readout with 1-click YAML snippet copy
@@ -204,6 +209,7 @@ stageflow/
         ├── entityEngine.test.ts
         ├── frameEngine.test.ts
         ├── scoreParser.test.ts
+        ├── scoreYamlUtils.test.ts
         ├── storage.test.ts
         └── recorder.test.ts
 ```

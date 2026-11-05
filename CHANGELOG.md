@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Refactored
+- **App Shell Modularization & Submodule Extraction (`App.tsx`, `useWorkspaceLayout.ts`, `useStudioDisplaySettings.ts`, `useToastNotifications.ts`, `DioramaOverlayContainer.tsx`, `scoreYamlUtils.ts`)**:
+  - Decomposed the 796-line monolith [`src/App.tsx`](src/App.tsx) into focused single-responsibility hooks and UI submodules, dropping `App.tsx` down to 556 lines while preserving 100% of workspace layout behaviors, storage keys, hotkeys, and diorama contracts.
+  - Extracted [`src/core/scoreYamlUtils.ts`](src/core/scoreYamlUtils.ts) (63 lines) for pure Layer 1 YAML header manipulation (`updateScoreYamlId`, `updateScoreYamlTitle`, `generateCustomScoreId`, `downloadYamlBlob`), centralizing project slug generation and eliminating regex string-replacement duplication between `App.tsx` and `useScorePersistence.ts`.
+  - Extracted [`src/hooks/useWorkspaceLayout.ts`](src/hooks/useWorkspaceLayout.ts) (136 lines) encapsulating split percentages (`leftSplitPct`, `rightSplitPct`, `videoHeightPct`), layout presets, subpanel expansion/collapse, layout reset, and synchronous `localStorage` persistence.
+  - Extracted [`src/hooks/useStudioDisplaySettings.ts`](src/hooks/useStudioDisplaySettings.ts) (82 lines) encapsulating 3D diorama label display modes, composition guides, and global keyboard shortcuts (`L` to cycle labels, `G` to toggle guides with input element protection).
+  - Extracted [`src/hooks/useToastNotifications.ts`](src/hooks/useToastNotifications.ts) (33 lines) managing floating toast notification alerts and 3.2s auto-dismiss timers.
+  - Extracted [`src/ui/DioramaOverlayContainer.tsx`](src/ui/DioramaOverlayContainer.tsx) (121 lines) encapsulating center stage diorama overlays with responsive narrow-viewport switching (<580px compact header vs 4-corner HUD, ViewCube presets, camera mode dock, and telemetry capsule).
+  - Added unit test suite [`tests/unit/scoreYamlUtils.test.ts`](tests/unit/scoreYamlUtils.test.ts) covering slug generation, quoted/unquoted ID replacements, title replacements, and header prepending across 7 test cases.
 - **Entity Engine Modularization & Decoupling (`entityEngine.ts`, `entityBlockingEvaluator.ts`, `entityLegacyEvaluator.ts`, `entityKinematicUtils.ts`)**:
   - Decomposed the 545-line monolithic [`src/core/entityEngine.ts`](src/core/entityEngine.ts) into four strictly decoupled, single-responsibility Layer 1 submodules ($\le 250$ lines each), eliminating multi-concern entanglement while keeping the public `evaluateEntitiesAtTime` API surface 100% bit-for-bit identical.
   - Extracted [`src/core/entityKinematicUtils.ts`](src/core/entityKinematicUtils.ts) (80 lines) housing shared kinematic interfaces (`EntityPoseSnapshot`, `ChainedBlockingCueEntry`), look-at target point resolution (`resolveLookAtPoint`), and 16-segment ground movement trail generation (`buildGroundTrailPoints`).

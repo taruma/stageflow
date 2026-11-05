@@ -19,6 +19,11 @@ import {
   saveStoredScore,
 } from '../core/storage/scoreDb';
 import { loadStoredActiveSceneId } from '../core/storage/localStorageUi';
+import {
+  generateCustomScoreId,
+  updateScoreYamlId,
+  updateScoreYamlTitle,
+} from '../core/scoreYamlUtils';
 
 export interface UseScorePersistenceOptions {
   catalog: ScoreCatalogItem[];
@@ -62,21 +67,8 @@ export function useScorePersistence({
         if (isBundledSceneId(record.id)) {
           const baseline = INITIAL_CATALOG_ITEMS.find((b) => b.id === record.id);
           if (baseline && record.rawYaml.trim() !== baseline.rawYaml.trim()) {
-            const timestamp = Date.now().toString(36);
-            const safeSlug = (record.title || record.id)
-              .toLowerCase()
-              .replace(/[^a-z0-9]+/g, '-')
-              .replace(/(^-|-$)/g, '');
-            const migratedId = `custom-${safeSlug || record.id}-${timestamp}`;
-            let updatedYaml = record.rawYaml;
-            if (/^id:\s*["']?[^"'\n\r]+["']?/m.test(updatedYaml)) {
-              updatedYaml = updatedYaml.replace(
-                /^id:\s*["']?[^"'\n\r]+["']?/m,
-                `id: "${migratedId}"`
-              );
-            } else {
-              updatedYaml = `id: "${migratedId}"\n${updatedYaml}`;
-            }
+            const migratedId = generateCustomScoreId(record.title || record.id);
+            const updatedYaml = updateScoreYamlId(record.rawYaml, migratedId);
 
             const parsedMigrated = parseStageScore(updatedYaml, migratedId);
             if (parsedMigrated.score) {
@@ -221,32 +213,11 @@ export function useScorePersistence({
       const sourceItem = catalog.find((c) => c.id === sourceId);
       if (!sourceItem) return null;
 
-      const timestamp = Date.now().toString(36);
-      const safeSlug = (sourceItem.id || 'custom')
-        .replace(/[^a-z0-9]+/gi, '-')
-        .toLowerCase();
-      const newId = `custom-${safeSlug}-${timestamp}`;
+      const newId = generateCustomScoreId(sourceItem.id || 'custom');
       const newTitle = customTitle?.trim() || `${sourceItem.title} (Copy)`;
 
-      // Replace id and title in the raw YAML score
-      let updatedYaml = sourceItem.rawYaml;
-      if (/^id:\s*["']?[^"'\n\r]+["']?/m.test(updatedYaml)) {
-        updatedYaml = updatedYaml.replace(
-          /^id:\s*["']?[^"'\n\r]+["']?/m,
-          `id: "${newId}"`
-        );
-      } else {
-        updatedYaml = `id: "${newId}"\n${updatedYaml}`;
-      }
-
-      if (/^title:\s*["']?[^"'\n\r]+["']?/m.test(updatedYaml)) {
-        updatedYaml = updatedYaml.replace(
-          /^title:\s*["']?[^"'\n\r]+["']?/m,
-          `title: "${newTitle}"`
-        );
-      } else {
-        updatedYaml = `title: "${newTitle}"\n${updatedYaml}`;
-      }
+      let updatedYaml = updateScoreYamlId(sourceItem.rawYaml, newId);
+      updatedYaml = updateScoreYamlTitle(updatedYaml, newTitle);
 
       const parsed = parseStageScore(updatedYaml, newId);
       if (!parsed.score) return null;
@@ -320,15 +291,7 @@ export function useScorePersistence({
       if (!targetItem) return false;
 
       const trimmedTitle = newTitle.trim();
-      let updatedYaml = targetItem.rawYaml;
-      if (/^title:\s*["']?[^"'\n\r]+["']?/m.test(updatedYaml)) {
-        updatedYaml = updatedYaml.replace(
-          /^title:\s*["']?[^"'\n\r]+["']?/m,
-          `title: "${trimmedTitle}"`
-        );
-      } else {
-        updatedYaml = `title: "${trimmedTitle}"\n${updatedYaml}`;
-      }
+      const updatedYaml = updateScoreYamlTitle(targetItem.rawYaml, trimmedTitle);
 
       const parsed = parseStageScore(updatedYaml, sceneId);
       if (!parsed.score) return false;
