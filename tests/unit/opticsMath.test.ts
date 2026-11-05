@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  computeAdaptiveDioramaFovDeg,
   computeContainedGateDimensionsPx,
   computeFrustumGateDimensions,
   computeViewfinderCanvasFovDeg,
@@ -66,5 +67,31 @@ describe('opticsMath — Directorial Lens & Frustum Gate Calculations', () => {
     // In a tall canvas where gate height is much smaller than canvas height, canvas FOV widens further
     const tallCanvasFov = computeViewfinderCanvasFovDeg(targetGateFov, 500, 1000, 16 / 9, 0.84);
     expect(tallCanvasFov).toBeGreaterThan(canvasFov);
+  });
+
+  it('computes adaptive diorama FOV preserving horizontal stage framing in split workspace layouts (Approach A)', () => {
+    const baseFov = 38.0; // ~35mm lens vertical FOV at 16:9
+
+    // 1. In standard 16:9 viewport (1920x1080), aspect == 16:9, must return baseFov exactly
+    const full16x9Fov = computeAdaptiveDioramaFovDeg(baseFov, 1920, 1080, 16 / 9);
+    expect(full16x9Fov).toBeCloseTo(baseFov, 5);
+
+    // 2. In ultrawide viewport (2560x1080, aspect > 16:9), must also return baseFov
+    const ultraWideFov = computeAdaptiveDioramaFovDeg(baseFov, 2560, 1080, 16 / 9);
+    expect(ultraWideFov).toBeCloseTo(baseFov, 5);
+
+    // 3. In 50/50 split workspace (960x900, aspect = 1.0667 < 16:9), vertical FOV must expand
+    const splitFov = computeAdaptiveDioramaFovDeg(baseFov, 960, 900, 16 / 9);
+    expect(splitFov).toBeGreaterThan(baseFov);
+
+    // Verify that the resulting horizontal FOV in split matches the baseline 16:9 horizontal FOV
+    const baselineHalfHRad = (baseFov * 0.5 * Math.PI) / 180;
+    const expectedHalfHorizTan = (16 / 9) * Math.tan(baselineHalfHRad);
+
+    const splitAspect = 960 / 900;
+    const splitHalfHRad = (splitFov * 0.5 * Math.PI) / 180;
+    const splitActualHorizTan = splitAspect * Math.tan(splitHalfHRad);
+
+    expect(splitActualHorizTan).toBeCloseTo(expectedHalfHorizTan, 5);
   });
 });

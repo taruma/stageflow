@@ -29,7 +29,7 @@ export interface DioramaCanvasProps {
   uiFrame: StageFrame;
   lastManualSeekIdRef: React.RefObject<number>;
   evaluateTick60fps: () => StageFrame;
-  onFreeOrbitPoseChange: (pose: SphericalPose) => void;
+  onFreeOrbitPoseChange: (pose: SphericalPose, immediate?: boolean) => void;
   labelMode?: LabelDisplayMode;
   themeCategory?: AppThemeCategory;
   cameraPresetActionRef?: React.RefObject<{

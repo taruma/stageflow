@@ -78,12 +78,13 @@ stage:
   grid_step: 1         # Major grid line spacing in meters (default: 1m; minor lines at 0.25m)
 
   # Default starting pose for the user's viewport camera (before Shot 1 or when unscripted)
+  # Note: lens is optional (defaults to standard 35mm / 40° diorama overview)
   observer_camera:
     target: [0, 1.1, 0]
     distance: 7.5
     pitch: 26
     yaw: 38
-    lens: 35mm
+    # lens: 35mm       # Optional: diorama viewport uses standard perspective
 
   # Default starting pose for the illustrative 3D camera inside the diorama
   stage_camera:
@@ -91,7 +92,7 @@ stage:
     distance: 3.5
     pitch: 8
     yaw: -20
-    lens: 50mm
+    lens: 50mm         # Mandatory: physical camera lens driving optical gate & frustum
 ```
 
 ### Root & `stage:` Fields Reference
@@ -192,7 +193,7 @@ observer_shots:
     pitch: 28
     yaw_start: 30
     yaw_end: 120
-    lens: 35mm
+    # lens: 35mm        # Optional (defaults to standard 35mm / 40° diorama overview)
 
   # Move 2: Push-in to an overhead tactical view for the remaining 8 seconds
   - id: "obs-02"
@@ -203,7 +204,7 @@ observer_shots:
     distance: 5.0
     pitch: 50
     yaw: 90
-    lens: 50mm
+    # lens: 50mm        # Optional: observer framing is primarily driven by distance
 ```
 
 > [!NOTE]

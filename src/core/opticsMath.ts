@@ -176,3 +176,34 @@ export function computeViewfinderCanvasFovDeg(
   const canvasFovRad = 2 * Math.atan(heightRatio * Math.tan(halfGateFovRad));
   return Math.max(1, Math.min(165, canvasFovRad * RAD_TO_DEG));
 }
+
+/**
+ * Computes an adaptive vertical FOV for the 3D diorama canvas so that the horizontal
+ * stage framing visible at `baselineAspect` (default 16:9) is never cropped when the
+ * canvas aspect ratio drops below baseline in split workspace layouts (Approach A).
+ */
+export function computeAdaptiveDioramaFovDeg(
+  baseFovDeg: number,
+  canvasWidth: number,
+  canvasHeight: number,
+  baselineAspect = DEFAULT_ASPECT_RATIO
+): number {
+  const safeBaseFov = Math.max(5, Math.min(140, baseFovDeg));
+  const safeW = Math.max(1, canvasWidth);
+  const safeH = Math.max(1, canvasHeight);
+  const currentAspect = safeW / safeH;
+  const safeBaseline = baselineAspect > 0.1 ? baselineAspect : DEFAULT_ASPECT_RATIO;
+
+  // When canvas is as wide or wider than baseline 16:9, preserve base vertical FOV
+  if (currentAspect >= safeBaseline) {
+    return safeBaseFov;
+  }
+
+  // When canvas is narrower than baseline (e.g. 50/50 split ~1:1), widen vertical FOV
+  // proportionally so that horizontal FOV matches baselineAspect coverage
+  const halfBaseFovRad = (safeBaseFov * 0.5) / RAD_TO_DEG;
+  const adaptedHalfFovRad = Math.atan(
+    (safeBaseline / currentAspect) * Math.tan(halfBaseFovRad)
+  );
+  return Math.max(5, Math.min(140, 2 * adaptedHalfFovRad * RAD_TO_DEG));
+}

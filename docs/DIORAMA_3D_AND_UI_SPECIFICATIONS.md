@@ -31,9 +31,18 @@ Controls the main Three.js `PerspectiveCamera` through which the user views the 
      - **Full 360° Aerial Orbit**: For elevated or flying entities (where $Y_{\text{target}} - R \ge 0.05\text{m}$), polar angle unlocks up to $176.4^\circ$ ($0.98\pi$), enabling complete 360° vertical inspection from underneath without bottom-pole gimbal lock.
      - **Floor-Level Directorial Worm's-Eye**: For ground actors, the camera can orbit down to knee and floor level ($Y = 0.05\text{m}$) and tilt upwards to inspect low-angle compositions, stopping smoothly at the floor plane without clipping through the stage grid into the underground void.
      - **Underground Pan Protection**: Both camera elevation and orbit target elevation are hard-clamped to $Y \ge 0.05\text{m}$ during mouse panning.
+   - **Active Target Pivot Preservation**: Directorial camera preset snaps (**Top / Iso / Front / Side**) preserve the user's active look-at target or active character anchor (Blender Numpad 7/1/3 style), falling back to stage chest level `[0, 1.1, 0]` rather than jumping the target vertically or colliding with floor clearance bounds. Clicking a preset immediately flushes the Telemetry Capsule UI without throttling delay.
 3. **`'stage-pov'` (Stage Camera POV)**:
    - Locks the viewport camera directly to `frame.stageCamera.transform` (`position`, `target`, `fovDeg`) with analytical vertical FOV compensation (`computeViewfinderCanvasFovDeg`), guaranteeing that the 3D scene inside the contained active film gate matches the lens focal length across any split workspace width with zero distortion.
    - Automatically activates the Director's Optical Viewfinder Overlay (`StageCamViewfinderOverlay.tsx`), featuring an 82% obsidian Look-Around veil outside the gate, active framing brackets, and toggleable composition guides.
+
+### 2.2 Fluid Adaptive Diorama Framing (`computeAdaptiveDioramaFovDeg` — Approach A)
+To eliminate stage clipping in the resizable split workspace without forcing black bars or letterboxing:
+- When viewing the diorama in `'scripted'` or `'free'` mode, `ObserverCameraRig.tsx` dynamically evaluates `computeAdaptiveDioramaFovDeg(baseFov, width, height, baselineAspect)`.
+- In wide viewports ($\ge 16:9$), the standard vertical FOV is preserved and horizontal view expands naturally.
+- In narrow viewports ($< 16:9$, such as 50/50 split or mobile), the vertical FOV expands analytically:
+  $$v\text{FOV}_{\text{adapted}} = 2 \times \arctan\left(\frac{\text{baselineAspect}}{\text{currentAspect}} \times \tan\left(\frac{v\text{FOV}_{\text{base}}}{2}\right)\right)$$
+- Guarantees that whatever stage width is visible in full 16:9 recording is also completely visible in the interactive split workspace, eliminating the authoring trap where split-window adjustments look too distant when recorded.
 
 > [!IMPORTANT]
 > **Instant Cut Invariant (0ms Transition)**: Switching between `'scripted'`, `'free'`, and `'stage-pov'` applies an instantaneous cut on the very next animation frame without slerp/lerp transition lag.

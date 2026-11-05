@@ -27,7 +27,7 @@ export interface UseStageFrameLoopResult {
   liveViewportPoseRef: React.RefObject<SphericalPose>;
   uiSnapshot: StageUiSnapshot;
   evaluateTick60fps: () => StageFrame;
-  notifyFreeOrbitChange: (newPose: SphericalPose) => void;
+  notifyFreeOrbitChange: (newPose: SphericalPose, immediate?: boolean) => void;
   forceSyncUi: () => void;
 }
 
@@ -45,6 +45,7 @@ export function useStageFrameLoop(
     cloneSphericalPose(initialFrame.observerCamera.transform.pose)
   );
   const lastUiSyncPerfMsRef = useRef<number>(0);
+  const trailingSyncTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lockedLoopShotIdRef = useRef<string | null>(null);
 
   const [uiSnapshot, setUiSnapshot] = useState<StageUiSnapshot>(() => ({
@@ -112,18 +113,61 @@ export function useStageFrameLoop(
     []
   );
 
-  const notifyFreeOrbitChange = useCallback((newPose: SphericalPose) => {
-    liveViewportPoseRef.current = cloneSphericalPose(newPose);
-    const now = performance.now();
-    if (now - lastUiSyncPerfMsRef.current >= 80) {
-      lastUiSyncPerfMsRef.current = now;
-      setUiSnapshot({
-        timestampSec: frameRef.current.timestampSec,
-        frame: frameRef.current,
-        liveViewportPose: cloneSphericalPose(newPose),
-      });
-    }
+  // Clean up trailing sync timer on unmount
+  useEffect(() => {
+    return () => {
+      if (trailingSyncTimeoutRef.current) {
+        clearTimeout(trailingSyncTimeoutRef.current);
+        trailingSyncTimeoutRef.current = null;
+      }
+    };
   }, []);
+
+  const notifyFreeOrbitChange = useCallback(
+    (newPose: SphericalPose, immediate = false) => {
+      liveViewportPoseRef.current = cloneSphericalPose(newPose);
+
+      if (immediate) {
+        if (trailingSyncTimeoutRef.current) {
+          clearTimeout(trailingSyncTimeoutRef.current);
+          trailingSyncTimeoutRef.current = null;
+        }
+        lastUiSyncPerfMsRef.current = performance.now();
+        setUiSnapshot({
+          timestampSec: frameRef.current.timestampSec,
+          frame: frameRef.current,
+          liveViewportPose: cloneSphericalPose(newPose),
+        });
+        return;
+      }
+
+      const now = performance.now();
+      if (now - lastUiSyncPerfMsRef.current >= 80) {
+        if (trailingSyncTimeoutRef.current) {
+          clearTimeout(trailingSyncTimeoutRef.current);
+          trailingSyncTimeoutRef.current = null;
+        }
+        lastUiSyncPerfMsRef.current = now;
+        setUiSnapshot({
+          timestampSec: frameRef.current.timestampSec,
+          frame: frameRef.current,
+          liveViewportPose: cloneSphericalPose(newPose),
+        });
+      } else if (!trailingSyncTimeoutRef.current) {
+        // Guarantee final resting pose flushes when dragging stops inside the 80ms window
+        trailingSyncTimeoutRef.current = setTimeout(() => {
+          trailingSyncTimeoutRef.current = null;
+          lastUiSyncPerfMsRef.current = performance.now();
+          setUiSnapshot({
+            timestampSec: frameRef.current.timestampSec,
+            frame: frameRef.current,
+            liveViewportPose: cloneSphericalPose(liveViewportPoseRef.current),
+          });
+        }, 85);
+      }
+    },
+    []
+  );
 
   /**
    * Called at 60fps inside R3F's `useFrame` (and by the Procedural canvas loop).

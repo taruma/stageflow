@@ -8,6 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Fluid Adaptive Diorama Viewport Framing (Approach A — `computeAdaptiveDioramaFovDeg`, `ObserverCameraRig.tsx`, `opticsMath.ts`)**:
+  - Implemented dynamic horizontal stage extent preservation for `'scripted'` and `'free'` observer modes, analytically expanding canvas vertical FOV when split workspace aspect ratio drops below 16:9 ($<1.77$) so that the full stage width visible in 16:9 recordings remains completely visible without side clipping or letterboxing.
+  - Added unit test suite in `tests/unit/opticsMath.test.ts` verifying FOV preservation across 16:9, ultrawide, and narrow split viewports.
+- **Active Target Pivot Preservation across Camera Presets (`cameraPresets.ts`, `ObserverCameraRig.tsx`)**:
+  - Upgraded 1-click angle snaps (**Top / Iso / Front / Side**) to preserve the user's active look-at target or character pivot (Blender Numpad 7/1/3 style) rather than jumping to arbitrary heights.
+  - Standardized fallback preset targets to stage chest level `[0, 1.1, 0]`, safely preventing collisions with `MIN_FLOOR_CLEARANCE_M = 0.05`.
+
+### Fixed
+- **Camera Telemetry Capsule Preset Freeze & Trailing Sync (`useStageFrameLoop.ts`, `ObserverCameraRig.tsx`)**:
+  - Resolved race condition where switching camera presets dropped UI telemetry sync due to an immediate 80ms throttle check following mode changes.
+  - Added `immediate = true` synchronous telemetry flush on preset trigger and an 85ms trailing timer to ensure final mouse resting positions always flush reliably to React state.
+  - Fixed false target shift artifact in Top view caused by dropped telemetry sync and floor clearance clamping.
 - **Diorama 2D UI Elevation: Top-Center Mode Switcher, Camera Presets & Streamlined Chrome (`src/ui/`, `src/stage/`, `src/App.tsx`)**:
   - **Top-Center Floating Camera Mode Switcher (`CameraModeSwitcher.tsx`)**: Extracted the 3-way camera POV toggle (`Scripted Observer`, `Free Orbit`, `Stage Cam POV`) from the bottom transport deck into an elevated, centered tactile segmented pill at `top-3 left-1/2 -translate-x-1/2`, establishing a dedicated viewfinder mode header while decluttering the transport bar.
   - **Directorial Camera Presets (`CameraPresetControls.tsx`, `cameraPresets.ts`, `ObserverCameraRig.tsx`)**: Added a 1-click angle snaps cluster in the top-right overlay (`Top/Plan 84°`, `Iso 45°`, `Front 12°`, `Side 90°`, `Reset`) that instantly snaps camera perspective and switches to Free Orbit without pausing playback.

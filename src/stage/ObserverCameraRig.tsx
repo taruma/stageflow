@@ -24,6 +24,7 @@ import {
   MIN_FLOOR_CLEARANCE_M,
 } from '../core/sphericalMath';
 import {
+  computeAdaptiveDioramaFovDeg,
   computeViewfinderCanvasFovDeg,
   verticalFovDegToFocalLengthMm,
 } from '../core/opticsMath';
@@ -38,7 +39,7 @@ export interface ObserverCameraRigProps {
   frameRef: React.RefObject<StageFrame>;
   uiFrame?: StageFrame;
   lastManualSeekIdRef: React.RefObject<number>;
-  onFreeOrbitPoseChange: (pose: SphericalPose) => void;
+  onFreeOrbitPoseChange: (pose: SphericalPose, immediate?: boolean) => void;
   cameraPresetActionRef?: React.RefObject<{
     type: CameraPresetType;
     id: number;
@@ -73,7 +74,9 @@ export const ObserverCameraRig: React.FC<ObserverCameraRigProps> = ({
       transform.position.z
     );
 
-    // In Stage Cam POV, compensate canvas vertical FOV for the contained film gate
+    // In Stage Cam POV, compensate canvas vertical FOV for the contained film gate.
+    // In Scripted / Free diorama modes, adapt vertical FOV so horizontal stage coverage
+    // matches 16:9 baseline framing across narrow split workspace layouts (Approach A).
     const targetFovDeg =
       mode === 'stage-pov'
         ? computeViewfinderCanvasFovDeg(
@@ -82,7 +85,12 @@ export const ObserverCameraRig: React.FC<ObserverCameraRigProps> = ({
             size.height,
             transform.aspectRatio
           )
-        : transform.fovDeg;
+        : computeAdaptiveDioramaFovDeg(
+            transform.fovDeg,
+            size.width,
+            size.height,
+            transform.aspectRatio
+          );
 
     if (Math.abs(persp.fov - targetFovDeg) > 0.05) {
       persp.fov = targetFovDeg;
@@ -148,10 +156,17 @@ export const ObserverCameraRig: React.FC<ObserverCameraRigProps> = ({
         applyTransformImperatively(targetTransform, cameraMode);
       } else {
         const aspect = frame.observerCamera.transform.aspectRatio ?? 16 / 9;
-        const targetTransform = getPresetTransform(presetAction.type, 35, aspect);
+        const activeTarget = controlsRef.current
+          ? {
+              x: controlsRef.current.target.x,
+              y: controlsRef.current.target.y,
+              z: controlsRef.current.target.z,
+            }
+          : frame.observerCamera.transform.target;
+        const targetTransform = getPresetTransform(presetAction.type, activeTarget, 35, aspect);
         applyTransformImperatively(targetTransform, 'free');
       }
-      handleControlsChange();
+      handleControlsChange(true);
       return;
     }
 
@@ -221,7 +236,7 @@ export const ObserverCameraRig: React.FC<ObserverCameraRigProps> = ({
   const isOrbitEnabled =
     cameraMode === 'free' || (cameraMode === 'scripted' && !isPlaying);
 
-  const handleControlsChange = () => {
+  const handleControlsChange = (immediate = false) => {
     if (!isOrbitEnabled || !controlsRef.current) return;
     const persp = camera as THREE.PerspectiveCamera;
     const tgt = controlsRef.current.target;
@@ -250,7 +265,7 @@ export const ObserverCameraRig: React.FC<ObserverCameraRigProps> = ({
       { x: tgt.x, y: tgt.y, z: tgt.z },
       focalMm
     );
-    onFreeOrbitPoseChange(livePose);
+    onFreeOrbitPoseChange(livePose, immediate);
   };
 
   return (
@@ -262,7 +277,7 @@ export const ObserverCameraRig: React.FC<ObserverCameraRigProps> = ({
       minDistance={0.5}
       maxDistance={38}
       maxPolarAngle={MAX_SAFE_POLAR_ANGLE_RAD}
-      onChange={handleControlsChange}
+      onChange={() => handleControlsChange(false)}
     />
   );
 };

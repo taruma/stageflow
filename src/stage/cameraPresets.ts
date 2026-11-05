@@ -9,7 +9,7 @@
  */
 
 import { degToRad, sphericalToCartesian } from '../core/sphericalMath';
-import type { CameraTransform3D, SphericalPose } from '../core/types';
+import type { CameraTransform3D, SphericalPose, Vec3 } from '../core/types';
 
 export type CameraPresetType = 'top' | 'iso' | 'front' | 'side' | 'reset';
 
@@ -34,7 +34,7 @@ export const DIORAMA_CAMERA_PRESETS: Record<
     pitchDeg: 84,
     yawDeg: 0,
     distanceM: 14,
-    target: [0, 0, 0],
+    target: [0, 1.1, 0],
   },
   iso: {
     label: 'Isometric',
@@ -43,7 +43,7 @@ export const DIORAMA_CAMERA_PRESETS: Record<
     pitchDeg: 35.264,
     yawDeg: 45,
     distanceM: 10,
-    target: [0, 0.8, 0],
+    target: [0, 1.1, 0],
   },
   front: {
     label: 'Front (Proscenium)',
@@ -52,7 +52,7 @@ export const DIORAMA_CAMERA_PRESETS: Record<
     pitchDeg: 12,
     yawDeg: 0,
     distanceM: 8,
-    target: [0, 1.2, 0],
+    target: [0, 1.1, 0],
   },
   side: {
     label: 'Side (Profile)',
@@ -61,21 +61,27 @@ export const DIORAMA_CAMERA_PRESETS: Record<
     pitchDeg: 15,
     yawDeg: 90,
     distanceM: 9,
-    target: [0, 1.2, 0],
+    target: [0, 1.1, 0],
   },
 };
 
 /**
  * Computes a world-space CameraTransform3D from a preset type.
+ * Preserves the user's active look-at target (Blender Numpad 7/1/3 style)
+ * when `activeTarget` is provided.
  */
 export function getPresetTransform(
   preset: Exclude<CameraPresetType, 'reset'>,
+  activeTarget?: Vec3,
   focalLengthMm = 35,
   aspectRatio = 16 / 9
 ): CameraTransform3D {
   const config = DIORAMA_CAMERA_PRESETS[preset];
+  const target: Vec3 = activeTarget
+    ? { x: activeTarget.x, y: Math.max(0.05, activeTarget.y), z: activeTarget.z }
+    : { x: config.target[0], y: config.target[1], z: config.target[2] };
   const pose: SphericalPose = {
-    target: { x: config.target[0], y: config.target[1], z: config.target[2] },
+    target,
     distance: config.distanceM,
     pitch: degToRad(config.pitchDeg),
     yaw: degToRad(config.yawDeg),
