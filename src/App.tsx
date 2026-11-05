@@ -213,6 +213,25 @@ const InteractiveStudioApp: React.FC = () => {
     saveStoredVideoHeightPct(pct);
   }, []);
 
+  const handleResetLayout = useCallback(() => {
+    setSplitPresetState('split');
+    saveStoredSplitPreset('split');
+
+    setLeftSplitPctState(30);
+    saveStoredLeftSplitPct(30);
+
+    setRightSplitPctState(30);
+    saveStoredRightSplitPct(30);
+
+    setVideoHeightPctState(45);
+    saveStoredVideoHeightPct(45);
+
+    setIsSubpanelCollapsedState(false);
+    saveStoredSubpanelCollapsed(false);
+
+    showToast('Reset workspace layout to default (30/40/30)', 'info');
+  }, [showToast]);
+
   const handleSelectLabelMode = useCallback((mode: LabelDisplayMode) => {
     setLabelModeState(mode);
     saveStoredLabelMode(mode);
@@ -530,6 +549,7 @@ const InteractiveStudioApp: React.FC = () => {
         onSelectScene={handleSelectScene}
         onSelectSplitPreset={handleSelectSplitPreset}
         onToggleEditMode={handleToggleEditMode}
+        onResetLayout={handleResetLayout}
         onUploadFiles={fileDrop.processFiles}
         onExportActiveScore={handleExportActiveScore}
         onOpenLibrary={(tab) => {

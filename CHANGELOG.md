@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Eliminated the legacy `[</> YAML Score]` drawer toggle from the right wing of `WorkspaceHeader.tsx`, leaving the right wing minimal (`[Theme ▾] [Library]`).
   - Added continuous 3-way divider resizing: dual vertical dividers (Left/Center and Center/Right, clamped $18\%–45\%$) and a horizontal row divider inside the left column ($180\text{px}$ min video, $140\text{px}$ min subpanel).
   - Scaffolded modular `VideoWorkspaceSubpanel.tsx` beneath the reference video with active shot tag, timing telemetry, and independent collapse/expand chevron.
+  - Fixed subpanel collapse overflow where collapsing `VideoWorkspaceSubpanel` pushed the header bar out of view; docked the 36px header bar permanently above the transport bar with full-width click-to-expand affordance.
+  - Added a 1-click **Reset Layout** button to the right of the Library button in the header right wing ([`WorkspaceHeader.tsx`](src/ui/WorkspaceHeader.tsx), [`App.tsx`](src/App.tsx)) that instantly restores default column widths (30/40/30), video height (45%), and subpanel expansion, persisting changes to `localStorage` with a confirmation toast.
   - Implemented 4-state workspace matrix (`Split`/`Full` × `Edit ON`/`OFF`), preserving background media clock and offscreen video audio playback in `Full` mode.
   - Added synchronous `localStorage` persistence and unit tests for `isEditMode`, column width percentages, left video height percentage, and subpanel collapse state (`localStorageUi.ts`, `storage.test.ts`).
 - **4-Corner Directorial HUD Layout & 3D ViewCube Preset Icons (`CameraPresetControls.tsx`, `ShotBreakdownHud.tsx`, `App.tsx`)**:

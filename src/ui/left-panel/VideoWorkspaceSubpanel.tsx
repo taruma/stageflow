@@ -44,11 +44,28 @@ export const VideoWorkspaceSubpanel: React.FC<VideoWorkspaceSubpanelProps> = ({
 
   return (
     <div className="w-full h-full flex flex-col bg-surface border-t border-border-main overflow-hidden text-text-main select-none">
-      {/* Subpanel Header Bar */}
-      <div className="h-9 px-3 bg-surface-subtle border-b border-border-subtle flex items-center justify-between gap-2 shrink-0">
+      {/* Subpanel Header Bar (click anywhere to toggle collapse/expand) */}
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={onToggleCollapse}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onToggleCollapse();
+          }
+        }}
+        className="h-9 px-3 bg-surface-subtle hover:bg-surface border-b border-border-subtle flex items-center justify-between gap-2 shrink-0 cursor-pointer select-none transition-colors group focus:outline-none focus:ring-1 focus:ring-accent-primary/40"
+        title={
+          isCollapsed
+            ? 'Click to expand Directorial Workspace'
+            : 'Click to collapse Subpanel'
+        }
+        aria-expanded={!isCollapsed}
+      >
         <div className="flex items-center gap-2 min-w-0">
           <SlidersHorizontal className="w-3.5 h-3.5 text-accent-primary shrink-0" />
-          <span className="text-[10px] font-mono font-bold tracking-wider text-text-main uppercase truncate">
+          <span className="text-[10px] font-mono font-bold tracking-wider text-text-main uppercase truncate group-hover:text-accent-primary transition-colors">
             Directorial Workspace
           </span>
           <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-surface border border-border-main text-text-muted shrink-0">
@@ -58,11 +75,22 @@ export const VideoWorkspaceSubpanel: React.FC<VideoWorkspaceSubpanelProps> = ({
 
         <button
           type="button"
-          onClick={onToggleCollapse}
-          className="p-1 rounded-lg hover:bg-surface text-text-muted hover:text-text-main transition-colors shrink-0 cursor-pointer"
-          title={isCollapsed ? 'Expand Directorial Workspace' : 'Collapse Subpanel'}
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleCollapse();
+          }}
+          className="p-1 rounded-lg hover:bg-surface-muted text-text-muted hover:text-text-main transition-colors shrink-0 cursor-pointer"
+          title={
+            isCollapsed
+              ? 'Expand Directorial Workspace'
+              : 'Collapse Subpanel'
+          }
           aria-expanded={!isCollapsed}
-          aria-label={isCollapsed ? 'Expand Directorial Workspace' : 'Collapse Subpanel'}
+          aria-label={
+            isCollapsed
+              ? 'Expand Directorial Workspace'
+              : 'Collapse Subpanel'
+          }
         >
           {isCollapsed ? (
             <ChevronUp className="w-3.5 h-3.5" />

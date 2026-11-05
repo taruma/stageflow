@@ -165,7 +165,7 @@ export const ResizableSplitWorkspace: React.FC<
               ? ({
                   height: `${videoHeightPct}%`,
                 } as React.CSSProperties)
-              : { height: '100%' }
+              : { height: 'calc(100% - 36px)' }
           }
           className="w-full shrink-0 min-h-0 relative flex flex-col overflow-hidden"
         >
@@ -200,7 +200,7 @@ export const ResizableSplitWorkspace: React.FC<
             className={
               showSubpanel
                 ? 'w-full flex-1 min-h-0 relative flex flex-col overflow-hidden'
-                : 'w-full shrink-0 relative flex flex-col'
+                : 'w-full h-9 shrink-0 relative flex flex-col overflow-hidden'
             }
           >
             {leftSubpanelPane}

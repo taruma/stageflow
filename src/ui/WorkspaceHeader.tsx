@@ -7,7 +7,7 @@
  */
 
 import React, { useState } from 'react';
-import { Box, Book } from 'lucide-react';
+import { Box, Book, RotateCcw } from 'lucide-react';
 import type { ScoreCatalogItem } from '../core/scoreCatalog';
 import type {
   AppThemeCategory,
@@ -41,6 +41,7 @@ export interface WorkspaceHeaderProps {
   onUploadFiles: (files: FileList) => void;
   onExportActiveScore: () => void;
   onOpenLibrary: (tab?: 'all' | 'bundled' | 'custom') => void;
+  onResetLayout?: () => void;
   onSelectThemeMode?: (mode: AppThemeMode) => void;
   onSelectDioramaThemeMode?: (mode: DioramaThemeMode) => void;
   onCreateBlankProject?: () => void;
@@ -62,6 +63,7 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
   onUploadFiles,
   onExportActiveScore,
   onOpenLibrary,
+  onResetLayout,
   onSelectThemeMode,
   onSelectDioramaThemeMode,
   onCreateBlankProject,
@@ -150,6 +152,19 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
           <Book className="w-3.5 h-3.5 shrink-0" />
           <span className="font-bold tracking-wide">Library</span>
         </button>
+
+        {/* Reset Layout Dimensions Button */}
+        {onResetLayout && (
+          <button
+            type="button"
+            onClick={onResetLayout}
+            className={UI_TOKENS.button.filePill}
+            title="Reset workspace layout and split widths to default (30/40/30)"
+          >
+            <RotateCcw className="w-3.5 h-3.5 text-text-muted" />
+            <span className="hidden sm:inline">Reset Layout</span>
+          </button>
+        )}
       </div>
     </header>
   );
