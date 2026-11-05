@@ -49,11 +49,18 @@ describe('localStorageUi — Synchronous UI Preferences Persistence', () => {
   it('saves and loads valid split presets', () => {
     expect(loadStoredSplitPreset()).toBeNull();
 
-    saveStoredSplitPreset('70-30');
-    expect(loadStoredSplitPreset()).toBe('70-30');
+    saveStoredSplitPreset('split');
+    expect(loadStoredSplitPreset()).toBe('split');
 
-    saveStoredSplitPreset('0-100');
-    expect(loadStoredSplitPreset()).toBe('0-100');
+    saveStoredSplitPreset('full');
+    expect(loadStoredSplitPreset()).toBe('full');
+
+    // Backward-compatible migration of legacy ratio presets
+    globalThis.localStorage.setItem('stageflow:ui:split-preset', '70-30');
+    expect(loadStoredSplitPreset()).toBe('split');
+
+    globalThis.localStorage.setItem('stageflow:ui:split-preset', '0-100');
+    expect(loadStoredSplitPreset()).toBe('full');
 
     // Invalid value fallback
     globalThis.localStorage.setItem('stageflow:ui:split-preset', 'invalid-preset');

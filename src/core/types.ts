@@ -61,7 +61,7 @@ export type CameraViewMode = 'scripted' | 'free' | 'stage-pov';
 
 export type LabelDisplayMode = 'all' | 'camera-only' | 'off';
 
-export type SplitPreset = '50-50' | '30-70' | '70-30' | '0-100';
+export type SplitPreset = 'split' | 'full';
 
 export type StoragePersistenceStatus =
   | 'bundled'

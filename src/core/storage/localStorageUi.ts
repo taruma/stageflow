@@ -16,13 +16,15 @@ const STORAGE_KEYS = {
 export function loadStoredSplitPreset(): SplitPreset | null {
   try {
     const val = localStorage.getItem(STORAGE_KEYS.SPLIT_PRESET);
-    if (
-      val === '50-50' ||
-      val === '30-70' ||
-      val === '70-30' ||
-      val === '0-100'
-    ) {
+    if (val === 'split' || val === 'full') {
       return val;
+    }
+    // Backward-compatible migration of legacy ratio presets
+    if (val === '50-50' || val === '30-70' || val === '70-30') {
+      return 'split';
+    }
+    if (val === '0-100') {
+      return 'full';
     }
   } catch {
     // Ignore localStorage access restrictions (e.g. sandboxed iframes)

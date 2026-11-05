@@ -53,7 +53,7 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
   const customScores = catalog.filter((item) => item.isCustom);
 
   return (
-    <header className="h-12 shrink-0 px-3 bg-[#0a0f1d] border-b border-slate-800/90 flex items-center justify-between gap-3 select-none z-20">
+    <header className="relative z-30 h-12 shrink-0 px-3 bg-[#0a0f1d] border-b border-slate-800/90 flex items-center justify-between gap-3 select-none">
       {/* Left Wing: Brand Identity, File Menu & Active Score Indicator */}
       <div className="flex items-center gap-2.5 min-w-0">
         {/* Brand Logo & Title */}

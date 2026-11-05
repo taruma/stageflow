@@ -68,7 +68,7 @@ const InteractiveStudioApp: React.FC = () => {
   });
 
   const [splitPreset, setSplitPresetState] = useState<SplitPreset>(
-    () => loadStoredSplitPreset() ?? '50-50'
+    () => loadStoredSplitPreset() ?? 'split'
   );
 
   const [isYamlDrawerOpen, setIsYamlDrawerOpenState] = useState<boolean>(
@@ -433,7 +433,11 @@ const InteractiveStudioApp: React.FC = () => {
       {/* Main Resizable Split Workspace (Video Panel + 3D Blueprint Diorama) */}
       <ResizableSplitWorkspace
         splitPreset={splitPreset}
-        onCustomDragSplit={() => {}}
+        onCustomDragSplit={() => {
+          if (splitPreset !== 'split') {
+            handleSelectSplitPreset('split');
+          }
+        }}
         leftVideoPane={
           <UniversalVideoViewport
             score={activeScore}

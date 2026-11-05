@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Studio Header Ergonomics & Layout Simplification (`src/ui/`, `src/core/`)**:
+  - **Fixed File Dropdown Stacking Context Overlap**: Added `relative z-30` to `<header>` in [`src/ui/WorkspaceHeader.tsx`](src/ui/WorkspaceHeader.tsx), creating an explicit stacking context above diorama viewport canvases and preventing overlay badges (such as `STAGE CAM SIMULATOR` in `UniversalVideoViewport.tsx`) from occluding the `File` menu dropdown and its children.
+  - **Clean Active Score Title Indicator**: Removed the redundant persistence state badge (`StorageStatusBadge`) from [`src/ui/header/ActiveScoreIndicator.tsx`](src/ui/header/ActiveScoreIndicator.tsx), eliminating visual noise (`Bundled Baseline` / `Custom (IndexedDB)`) from the main header and expanding the title truncation ceiling so score titles can breathe naturally, while preserving persistence telemetry in the live YAML drawer status bar and Score Library modal.
+  - **Streamlined Workspace Layout Controls (`Split` | `Full`)**: Simplified [`src/ui/header/LayoutSegmentedControl.tsx`](src/ui/header/LayoutSegmentedControl.tsx) from redundant numerical presets (`50/50`, `70/30`, `30/70`, `100%`) into a clean, intuitive 2-mode segmented toggle (`Split` vs. `Full`).
+  - **Memory-Preserving Split Restoration**: Updated [`src/ui/ResizableSplitWorkspace.tsx`](src/ui/ResizableSplitWorkspace.tsx) and [`src/App.tsx`](src/App.tsx) so toggling between `Split` and `Full` smoothly remembers and restores the user's customized drag percentage (defaulting to 50%), and auto-switches to `Split` whenever the divider is dragged.
+  - **Backward-Compatible Persistence Migration**: Updated `SplitPreset` in [`src/core/types.ts`](src/core/types.ts), [`src/core/storage/localStorageUi.ts`](src/core/storage/localStorageUi.ts), and [`tests/unit/storage.test.ts`](tests/unit/storage.test.ts) to `'split' | 'full'` while transparently migrating any legacy stored presets (`50-50`, `70-30`, `30-70`, `0-100`).
+
 ### Added
 - **SceneFlow-Aligned 3-Wing Studio Header & Decoupled Score Library (`src/ui/header/`, `src/ui/ScoreLibraryModal.tsx`, `src/ui/WorkspaceHeader.tsx`)**:
   - Aligned StageFlow's studio header layout and ergonomics with sister application **SceneFlow** (`Screenplay-Sync`), structuring the top navigation into three balanced, decoupled wings.

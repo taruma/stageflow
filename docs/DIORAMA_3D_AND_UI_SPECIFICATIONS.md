@@ -87,9 +87,10 @@ Scene entities (`character`, `prop`, `marker`) are rendered with unambiguous ori
 
 ### 4.1 Three-Wing Studio Header & Score Library (`WorkspaceHeader.tsx`, `ScoreLibraryModal.tsx`)
 - **SceneFlow 3-Wing Architecture**: Aligned with sister application SceneFlow (`Screenplay-Sync`), the top studio header bar is divided into three ergonomic wings:
-  - **Left Wing**: Brand identity (`StageFlow · 3D Blocking Diorama`), tiered `File ▾` dropdown (`FileMenuDropdown.tsx`), and the interactive `ActiveScoreIndicator.tsx` pill displaying the active score title and `StorageStatusBadge`. Clicking the active score chip immediately opens the Score Library.
-  - **Center Stage**: Centered `LayoutSegmentedControl.tsx` housing the 4 workspace split presets (`50/50`, `70/30 Stage`, `70/30 Video`, `100% Stage`) in an elevated pill container.
+  - **Left Wing**: Brand identity (`StageFlow · 3D Blocking Diorama`), tiered `File ▾` dropdown (`FileMenuDropdown.tsx`), and the interactive `ActiveScoreIndicator.tsx` pill displaying the active score title with uncluttered clarity (technical storage badges like `Bundled Baseline` and `Custom` are reserved for the YAML drawer and Score Library). Clicking the active score chip immediately opens the Score Library.
+  - **Center Stage**: Centered `LayoutSegmentedControl.tsx` housing the 2 workspace layout modes (`Split` | `Full`) in an elevated pill container.
   - **Right Wing**: Standalone amber `[ 📖 Library ]` gateway button opening `ScoreLibraryModal.tsx` and the `[ YAML Score ]` drawer toggle.
+  - **Authoritative Stacking Context**: The header uses `relative z-30`, ensuring all dropdown menus (`File ▾`) and popovers render safely above viewport HUD elements, labels, and badges.
 - **Tiered `File ▾` Menu (`FileMenuDropdown.tsx`)**:
   - *Media & Score I/O*: "Open Video or Score..." (file picker trigger) and "Export Active Score (.yaml)" (direct browser download).
   - *Scores*: "New Blank Score..." and "Manage Custom Scores" (with custom scores badge count).
@@ -99,11 +100,9 @@ Scene entities (`character`, `prop`, `marker`) are rendered with unambiguous ori
   - Rich card telemetry: Duration (`X.Xs`), shot count (`X Shots`), aspect ratio (`16:9` / `2.39:1`), active indicator badge, and 1-click loading.
   - Category tabs (`All`, `Bundled`, `Custom`) and real-time title/subtitle search filtering.
 - **Desktop (`lg+`)**: Side-by-side split between the Left Video Viewport and Right 3D Diorama Stage, separated by a smooth pointer-drag divider bar (`18%` to `82%` clamp).
-- **Quick-Toggle Header Presets**:
-  - `50/50`: Balanced 50% Video / 50% 3D Stage.
-  - `70/30 Stage`: 32% Video / 68% 3D Diorama Focus.
-  - `70/30 Video`: 68% Video / 32% 3D Stage.
-  - `100% Stage`: Collapses the video panel to 0% for full-viewport 3D inspection while keeping the reference video/YouTube player mounted off-screen so background media playback, audio, and clock sync continue seamlessly.
+- **Workspace Layout Modes**:
+  - `Split`: Side-by-side Video and 3D Diorama Stage. Remembers the user's customized drag ratio (defaults to 50%).
+  - `Full`: Collapses the video panel to 0% for full-viewport 3D inspection while keeping the reference video/YouTube player mounted off-screen so background media playback, audio, and clock sync continue seamlessly.
 - **Narrow Screens (`< lg`)**: Responsively stacks the Video Panel (`38%` height) above the 3D Diorama Stage (`62%` height) and hides the center segmented layout presets to prevent header crowding.
 
 ### 4.2 Authoring Telemetry Capsule (`CameraTelemetryCapsule.tsx`)
