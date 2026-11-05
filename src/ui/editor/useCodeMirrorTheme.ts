@@ -66,6 +66,32 @@ export function createStageflowCodeMirrorTheme(
       '.cm-scroller': {
         overflow: 'auto',
         fontFamily: 'inherit',
+        scrollbarWidth: 'thin',
+        scrollbarColor: isDark
+          ? 'rgba(255, 255, 255, 0.2) transparent'
+          : isWarm
+          ? 'rgba(0, 0, 0, 0.2) transparent'
+          : 'rgba(0, 0, 0, 0.2) transparent',
+      },
+      '.cm-scroller::-webkit-scrollbar': {
+        width: '6px',
+        height: '6px',
+      },
+      '.cm-scroller::-webkit-scrollbar-track': {
+        background: 'transparent',
+      },
+      '.cm-scroller::-webkit-scrollbar-thumb': {
+        background: isDark
+          ? 'rgba(255, 255, 255, 0.18)'
+          : isWarm
+          ? 'rgba(0, 0, 0, 0.2)'
+          : 'rgba(0, 0, 0, 0.2)',
+        borderRadius: '9999px',
+      },
+      '.cm-scroller::-webkit-scrollbar-thumb:hover': {
+        background: isDark
+          ? 'rgba(245, 158, 11, 0.6)'
+          : 'rgba(217, 119, 6, 0.6)',
       },
       // Search match styling
       '.cm-searchMatch': {
