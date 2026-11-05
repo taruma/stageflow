@@ -186,3 +186,22 @@ body.is-resizing-split iframe {
 .disable-theme-transitions *::after {
   transition: none !important;
 }
+
+/* Container-query aspect-ratio containment: strictly preserves film aspect ratio (16:9, 2.39:1) with zero squishing */
+.aspect-fit-container {
+  container-type: size;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.aspect-fit-box {
+  width: min(100cqw, calc(100cqh * var(--aspect-ratio, 1.7777777778)));
+  height: min(100cqh, calc(100cqw / var(--aspect-ratio, 1.7777777778)));
+  box-sizing: border-box;
+}

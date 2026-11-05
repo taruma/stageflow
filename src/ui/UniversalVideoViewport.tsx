@@ -39,11 +39,13 @@ export const UniversalVideoViewport: React.FC<UniversalVideoViewportProps> = ({
   themeCategory = 'dark',
 }) => {
   return (
-    <div className="relative flex-1 w-full h-full flex flex-col items-center justify-center bg-app select-none overflow-hidden p-3">
+    <div className="relative flex-1 w-full h-full aspect-fit-container bg-app select-none overflow-hidden p-3">
       {/* 16:9 / Gate Aspect Ratio Responsive Frame */}
       <div
-        style={{ aspectRatio: String(score.aspectRatio) }}
-        className="relative w-full max-h-full bg-surface-dark rounded-2xl border border-border-main shadow-xl overflow-hidden flex items-center justify-center"
+        style={{
+          ['--aspect-ratio' as string]: String(score.aspectRatio),
+        }}
+        className="aspect-fit-box relative bg-surface-dark rounded-2xl border border-border-main shadow-xl overflow-hidden flex items-center justify-center"
       >
         {/* 1. Native HTML5 <video> */}
         <video

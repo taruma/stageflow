@@ -155,9 +155,16 @@ export const VideoWorkspaceSubpanel: React.FC<VideoWorkspaceSubpanelProps> = ({
       {!isCollapsed && (
         <div className="flex-1 min-h-0 relative flex flex-col overflow-hidden bg-app">
           {viewMode === 'stage-cam' && stageCamSlot ? (
-            /* Mode A: True 3D Stage Cam POV Simulator */
-            <div className="w-full h-full flex flex-col items-center justify-center p-2 min-h-0 overflow-hidden">
-              {stageCamSlot}
+            /* Mode A: True 3D Stage Cam POV Simulator with aspect-ratio containment */
+            <div className="w-full h-full aspect-fit-container p-2 min-h-0 overflow-hidden">
+              <div
+                style={{
+                  ['--aspect-ratio' as string]: String(score.aspectRatio),
+                }}
+                className="aspect-fit-box relative bg-surface-dark rounded-xl border border-border-main shadow-md overflow-hidden flex items-center justify-center"
+              >
+                {stageCamSlot}
+              </div>
             </div>
           ) : (
             /* Mode B: Directorial Notes & Telemetry */

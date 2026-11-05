@@ -117,7 +117,7 @@ export const StageCamMonitorCanvas: React.FC<StageCamMonitorCanvasProps> = ({
             <div className="absolute inset-y-0 right-1/3 border-r border-amber-500/20" />
 
             {/* 90% Safe-Action Title Frame */}
-            <div className="absolute inset-8 sm:inset-12 border border-amber-500/30 rounded-xs pointer-events-none" />
+            <div className="absolute inset-[5%] border border-amber-500/30 rounded-xs pointer-events-none" />
 
             {/* Center Focus Crosshair */}
             <div className="relative w-6 h-6 flex items-center justify-center">

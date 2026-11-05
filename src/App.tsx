@@ -415,20 +415,15 @@ const InteractiveStudioApp: React.FC = () => {
             onSelectViewMode={setSubpanelViewMode}
             stageCamSlot={
               mediaClock.sourceInfo.kind !== 'procedural' ? (
-                <div
-                  style={{ aspectRatio: String(activeScore.aspectRatio) }}
-                  className="relative w-full max-h-full bg-surface-dark rounded-xl border border-border-main shadow-md overflow-hidden flex items-center justify-center"
-                >
-                  <StageCamMonitorCanvas
-                    score={activeScore}
-                    frameRef={stageLoop.frameRef}
-                    uiFrame={stageLoop.uiSnapshot.frame}
-                    labelMode={display.labelMode}
-                    isPlaying={mediaClock.isPlaying}
-                    showGuides={display.showGuides}
-                    themeCategory={theme.effectiveDioramaCategory}
-                  />
-                </div>
+                <StageCamMonitorCanvas
+                  score={activeScore}
+                  frameRef={stageLoop.frameRef}
+                  uiFrame={stageLoop.uiSnapshot.frame}
+                  labelMode={display.labelMode}
+                  isPlaying={mediaClock.isPlaying}
+                  showGuides={display.showGuides}
+                  themeCategory={theme.effectiveDioramaCategory}
+                />
               ) : undefined
             }
           />
