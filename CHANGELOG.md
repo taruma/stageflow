@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Unified Category Color System & Collapsible Sections (`src/ui/library/ScoreLibraryCard.tsx`, `src/ui/ScoreLibraryModal.tsx`, `src/ui/library/ScoreInspectorPane.tsx`)**:
+  - Implemented **Unified Category Color Indicator (Option A)**: Replaced rainbow per-blueprint borders with a consistent architectural **Sky Blue** (`border-l-sky-500`, `bg-sky-500/15`, `text-sky-400`) accent border and tag badge for all bundled factory blueprints (`BP 01`–`BP 05`), while user-created projects share a warm **Amber** (`border-l-amber-500`, `bg-amber-500/15`, `text-amber-400`) accent.
+  - Aligned inspector status chips in [`ScoreInspectorPane.tsx`](src/ui/library/ScoreInspectorPane.tsx) to match the Sky Blue (Bundled) and Amber (Custom) category palettes.
+  - Added **Interactive Collapsible Sections** to the score list: `BUNDLED BLUEPRINTS` and `CUSTOM PROJECTS` headers now feature rotating chevron indicators (`ChevronDown` / `ChevronRight`) and item count badges, allowing one-click collapsing and expanding of sections.
+  - Linked keyboard arrow navigation (<kbd>↑</kbd> / <kbd>↓</kbd>) dynamically to `visibleScores`, ensuring arrow traversal skips collapsed sections and steps exclusively through expanded scores.
 - **High-Density Compact Score Library Navigation & Keyboard Shortcuts (`src/ui/library/ScoreLibraryCard.tsx`, `src/ui/ScoreLibraryModal.tsx`)**:
   - Refactored score list cards into ultra-compact, high-density ~50px 2-line rows, dropping item vertical height by ~60% and increasing visible items from ~3.5 to 9–10 scores simultaneously without scrolling.
   - Formatted Line 1 with color-coded blueprint tag (`BP 01`–`BP 05`, `CUSTOM`) and clean `Inter` (`font-sans text-xs font-semibold`) un-truncated title.

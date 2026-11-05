@@ -147,11 +147,11 @@ export const ScoreInspectorPane: React.FC<ScoreInspectorPaneProps> = ({
             </span>
 
             {item.isCustom ? (
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-600 dark:text-rose-300 border border-rose-400/30 uppercase tracking-wider font-bold">
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-300 border border-amber-400/30 uppercase tracking-wider font-bold">
                 Custom Project
               </span>
             ) : (
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-surface-muted text-text-muted border border-border-main uppercase tracking-wider font-bold">
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-sky-500/15 text-sky-600 dark:text-sky-300 border border-sky-400/30 uppercase tracking-wider font-bold">
                 Bundled Blueprint
               </span>
             )}

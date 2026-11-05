@@ -13,6 +13,7 @@ import {
   Search,
   LayoutList,
   SlidersHorizontal,
+  ChevronDown,
 } from 'lucide-react';
 import type { ScoreCatalogItem } from '../core/scoreCatalog';
 import { ScoreLibraryCard } from './library/ScoreLibraryCard';
@@ -54,6 +55,8 @@ export const ScoreLibraryModal: React.FC<ScoreLibraryModalProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedScoreId, setSelectedScoreId] = useState<string>(activeSceneId);
   const [mobileView, setMobileView] = useState<'list' | 'details'>('list');
+  const [isBundledExpanded, setIsBundledExpanded] = useState(true);
+  const [isCustomExpanded, setIsCustomExpanded] = useState(true);
   const listContainerRef = useRef<HTMLDivElement>(null);
 
   // Synchronize initialTab and selectedScoreId when modal opens
@@ -111,12 +114,29 @@ export const ScoreLibraryModal: React.FC<ScoreLibraryModalProps> = ({
     };
   }, [filteredScores]);
 
-  // Find currently selected score object, falling back to first filtered item
+  // Determine scores currently visible in the DOM (respecting activeTab and collapsible sections)
+  const visibleScores = useMemo(() => {
+    if (activeTab === 'bundled') {
+      return bundledFiltered;
+    }
+    if (activeTab === 'custom') {
+      return customFiltered;
+    }
+    if (activeTab === 'all' && (bundledFiltered.length > 0 || customFiltered.length > 0)) {
+      const items: ScoreCatalogItem[] = [];
+      if (isBundledExpanded) items.push(...bundledFiltered);
+      if (isCustomExpanded) items.push(...customFiltered);
+      return items;
+    }
+    return filteredScores;
+  }, [activeTab, bundledFiltered, customFiltered, isBundledExpanded, isCustomExpanded, filteredScores]);
+
+  // Find currently selected score object, falling back to first visible/filtered item
   const selectedScore = useMemo(() => {
     const found = catalog.find((item) => item.id === selectedScoreId);
     if (found) return found;
-    return filteredScores[0] || catalog[0] || null;
-  }, [catalog, selectedScoreId, filteredScores]);
+    return visibleScores[0] || filteredScores[0] || catalog[0] || null;
+  }, [catalog, selectedScoreId, visibleScores, filteredScores]);
 
   // Keyboard navigation: ArrowUp, ArrowDown, Enter
   useEffect(() => {
@@ -131,21 +151,21 @@ export const ScoreLibraryModal: React.FC<ScoreLibraryModalProps> = ({
 
       if (e.key === 'ArrowDown') {
         e.preventDefault();
-        const currentIndex = filteredScores.findIndex(
+        const currentIndex = visibleScores.findIndex(
           (s) => s.id === selectedScoreId
         );
-        const nextIndex = Math.min(filteredScores.length - 1, currentIndex + 1);
-        if (filteredScores[nextIndex]) {
-          setSelectedScoreId(filteredScores[nextIndex].id);
+        const nextIndex = Math.min(visibleScores.length - 1, currentIndex + 1);
+        if (visibleScores[nextIndex]) {
+          setSelectedScoreId(visibleScores[nextIndex].id);
         }
       } else if (e.key === 'ArrowUp') {
         e.preventDefault();
-        const currentIndex = filteredScores.findIndex(
+        const currentIndex = visibleScores.findIndex(
           (s) => s.id === selectedScoreId
         );
         const prevIndex = Math.max(0, currentIndex - 1);
-        if (filteredScores[prevIndex]) {
-          setSelectedScoreId(filteredScores[prevIndex].id);
+        if (visibleScores[prevIndex]) {
+          setSelectedScoreId(visibleScores[prevIndex].id);
         }
       } else if (e.key === 'Enter') {
         // If actively typing inside search or rename input, let input handle Enter
@@ -160,7 +180,7 @@ export const ScoreLibraryModal: React.FC<ScoreLibraryModalProps> = ({
 
     window.addEventListener('keydown', handleKeyNav);
     return () => window.removeEventListener('keydown', handleKeyNav);
-  }, [isOpen, filteredScores, selectedScoreId, selectedScore, onSelectScene, onClose]);
+  }, [isOpen, visibleScores, selectedScoreId, selectedScore, onSelectScene, onClose]);
 
   if (!isOpen) return null;
 
@@ -304,44 +324,90 @@ export const ScoreLibraryModal: React.FC<ScoreLibraryModalProps> = ({
                 <div className="py-16 text-center text-text-muted font-sans text-xs">
                   No choreography scores found matching your criteria.
                 </div>
-              ) : activeTab === 'all' && bundledFiltered.length > 0 && customFiltered.length > 0 ? (
-                <>
+              ) : activeTab === 'all' && (bundledFiltered.length > 0 || customFiltered.length > 0) ? (
+                <div className="space-y-2">
                   {/* Bundled Blueprints Section */}
-                  <div className="px-1 pt-1 pb-0.5 text-[9.5px] font-mono font-bold tracking-widest text-text-faint uppercase flex items-center justify-between">
-                    <span>Bundled Blueprints</span>
-                    <span>{bundledFiltered.length}</span>
-                  </div>
-                  {bundledFiltered.map((item) => (
-                    <ScoreLibraryCard
-                      key={item.id}
-                      item={item}
-                      isActive={item.id === activeSceneId}
-                      isSelected={item.id === selectedScore?.id}
-                      onSelect={() => {
-                        setSelectedScoreId(item.id);
-                        setMobileView('details');
-                      }}
-                    />
-                  ))}
+                  {bundledFiltered.length > 0 && (
+                    <div className="space-y-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setIsBundledExpanded((prev) => !prev)}
+                        aria-expanded={isBundledExpanded}
+                        className="w-full px-2 py-1 text-[10px] font-mono font-bold tracking-wider text-text-muted hover:text-text-main uppercase flex items-center justify-between rounded-md hover:bg-surface-subtle transition-colors group select-none cursor-pointer"
+                      >
+                        <div className="flex items-center gap-1.5">
+                          <ChevronDown
+                            className={`w-3.5 h-3.5 text-text-faint group-hover:text-text-main transition-transform duration-150 ${
+                              isBundledExpanded ? 'rotate-0' : '-rotate-90'
+                            }`}
+                          />
+                          <span>Bundled Blueprints</span>
+                        </div>
+                        <span className="text-[9.5px] px-1.5 py-0.2 rounded-full bg-surface-subtle border border-border-subtle group-hover:border-border-main text-text-muted font-mono">
+                          {bundledFiltered.length}
+                        </span>
+                      </button>
+
+                      {isBundledExpanded && (
+                        <div className="space-y-1.5">
+                          {bundledFiltered.map((item) => (
+                            <ScoreLibraryCard
+                              key={item.id}
+                              item={item}
+                              isActive={item.id === activeSceneId}
+                              isSelected={item.id === selectedScore?.id}
+                              onSelect={() => {
+                                setSelectedScoreId(item.id);
+                                setMobileView('details');
+                              }}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {/* Custom Projects Section */}
-                  <div className="px-1 pt-3 pb-0.5 text-[9.5px] font-mono font-bold tracking-widest text-text-faint uppercase flex items-center justify-between">
-                    <span>Custom Projects</span>
-                    <span>{customFiltered.length}</span>
-                  </div>
-                  {customFiltered.map((item) => (
-                    <ScoreLibraryCard
-                      key={item.id}
-                      item={item}
-                      isActive={item.id === activeSceneId}
-                      isSelected={item.id === selectedScore?.id}
-                      onSelect={() => {
-                        setSelectedScoreId(item.id);
-                        setMobileView('details');
-                      }}
-                    />
-                  ))}
-                </>
+                  {customFiltered.length > 0 && (
+                    <div className="space-y-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setIsCustomExpanded((prev) => !prev)}
+                        aria-expanded={isCustomExpanded}
+                        className="w-full px-2 pt-2 pb-1 text-[10px] font-mono font-bold tracking-wider text-text-muted hover:text-text-main uppercase flex items-center justify-between rounded-md hover:bg-surface-subtle transition-colors group select-none cursor-pointer"
+                      >
+                        <div className="flex items-center gap-1.5">
+                          <ChevronDown
+                            className={`w-3.5 h-3.5 text-text-faint group-hover:text-text-main transition-transform duration-150 ${
+                              isCustomExpanded ? 'rotate-0' : '-rotate-90'
+                            }`}
+                          />
+                          <span>Custom Projects</span>
+                        </div>
+                        <span className="text-[9.5px] px-1.5 py-0.2 rounded-full bg-surface-subtle border border-border-subtle group-hover:border-border-main text-text-muted font-mono">
+                          {customFiltered.length}
+                        </span>
+                      </button>
+
+                      {isCustomExpanded && (
+                        <div className="space-y-1.5">
+                          {customFiltered.map((item) => (
+                            <ScoreLibraryCard
+                              key={item.id}
+                              item={item}
+                              isActive={item.id === activeSceneId}
+                              isSelected={item.id === selectedScore?.id}
+                              onSelect={() => {
+                                setSelectedScoreId(item.id);
+                                setMobileView('details');
+                              }}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               ) : (
                 filteredScores.map((item) => (
                   <ScoreLibraryCard

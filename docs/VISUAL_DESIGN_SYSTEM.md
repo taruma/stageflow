@@ -152,11 +152,16 @@ The Choreography Score Library ([`ScoreLibraryModal.tsx`](../src/ui/ScoreLibrary
 
 ### 7.1 High-Density Navigation List (Left Column, ~40%)
 - **Ultra-Compact 2-Line Row Layout (`~50px`)**: Eliminates chunky multi-card waste, fitting 9–10 scores in the viewport simultaneously without scrolling.
-  - **Line 1 (Identity)**: Color-coded category badge (`BP 01`–`BP 05`, `CUSTOM`) alongside `Inter` (`font-sans text-xs font-semibold`) un-truncated title.
+  - **Line 1 (Identity)**: Unified category tag (`BP 01`–`BP 05` in Sky Blue, `CUSTOM` in Warm Amber) alongside `Inter` (`font-sans text-xs font-semibold`) un-truncated title.
   - **Line 2 (Telemetry)**: Precision `JetBrains Mono` (`font-mono text-[10px]`) delimited string displaying media badge (`Simulator`, `YouTube`, `Local`), duration (`30.0s`), shot count (`17 shots`), and aspect ratio (`16:9`, `2.39:1`).
-- **Sticky Section Headers**: Categorizes scores under sticky headers (`BUNDLED BLUEPRINTS` vs. `CUSTOM PROJECTS`) with item counts in the `All` tab.
-- **Keyboard Traversal**:
-  - `↑` / `ArrowUp` and `↓` / `ArrowDown` step smoothly across scores, updating the right-column inspector and 2D SVG minimap live in real time.
+- **Unified Category Color Coding**:
+  - **Bundled Blueprints**: Pure diorama **Sky Blue** (`border-l-sky-500`, `bg-sky-500/15`, `text-sky-400`), conveying factory-tested architectural reference material.
+  - **Custom User Projects**: Warm **Amber** (`border-l-amber-500`, `bg-amber-500/15`, `text-amber-400`), conveying active directorial drafting and user-authored scenes.
+- **Interactive Collapsible Sections**:
+  - `BUNDLED BLUEPRINTS` and `CUSTOM PROJECTS` section headers function as interactive accordions with rotating chevrons (`ChevronDown` / `ChevronRight`) and count badges.
+  - Clicking any section header collapses or expands that group's cards to optimize vertical scanning space.
+- **Keyboard Traversal & Dynamic Visibility**:
+  - `↑` / `ArrowUp` and `↓` / `ArrowDown` step smoothly across visible scores, automatically skipping collapsed sections and updating the inspector and 2D SVG minimap live.
   - `Enter` loads the selected score directly into the 3D studio and closes the modal (auto-bypassed when search/rename inputs have focus).
 
 ### 7.2 Choreography Inspector (Right Column, ~60%)

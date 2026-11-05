@@ -34,47 +34,30 @@ interface BlueprintBadgeInfo {
 }
 
 function getScoreBadgeInfo(item: ScoreCatalogItem): BlueprintBadgeInfo {
-  if (item.id === 'demo-blueprint') {
+  if (item.isCustom) {
     return {
-      tag: 'BP 01',
-      badgeClass: 'bg-sky-500/15 text-sky-600 dark:text-sky-300 border-sky-400/30',
-      accentBorder: 'border-l-sky-500',
-    };
-  }
-  if (item.id === 'blueprint-02-dialogue' || item.id === 'blueprint_02_dialogue') {
-    return {
-      tag: 'BP 02',
-      badgeClass: 'bg-indigo-500/15 text-indigo-600 dark:text-indigo-300 border-indigo-400/30',
-      accentBorder: 'border-l-indigo-500',
-    };
-  }
-  if (item.id === 'blueprint-03-ball-pass' || item.id === 'blueprint_03_ball_pass') {
-    return {
-      tag: 'BP 03',
-      badgeClass: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-300 border-emerald-400/30',
-      accentBorder: 'border-l-emerald-500',
-    };
-  }
-  if (item.id === 'blueprint-04-cinematography-tutorial' || item.id === 'blueprint_04_cinematography_tutorial') {
-    return {
-      tag: 'BP 04',
-      badgeClass: 'bg-violet-500/15 text-violet-600 dark:text-violet-300 border-violet-400/30',
-      accentBorder: 'border-l-violet-500',
-    };
-  }
-  if (item.id === 'blueprint-05-two-rooms' || item.id === 'blueprint_05_two_rooms') {
-    return {
-      tag: 'BP 05',
+      tag: 'CUSTOM',
       badgeClass: 'bg-amber-500/15 text-amber-600 dark:text-amber-300 border-amber-400/30',
       accentBorder: 'border-l-amber-500',
     };
   }
+
+  // Extract BP number if matches demo or blueprint-0X pattern
+  let tag = 'BLUEPRINT';
+  if (item.id === 'demo-blueprint') {
+    tag = 'BP 01';
+  } else {
+    const match = item.id.match(/(?:blueprint[_-]?0?(\d+))/i);
+    if (match?.[1]) {
+      const num = parseInt(match[1], 10);
+      tag = `BP ${num < 10 ? `0${num}` : num}`;
+    }
+  }
+
   return {
-    tag: item.isCustom ? 'CUSTOM' : 'SCORE',
-    badgeClass: item.isCustom
-      ? 'bg-rose-500/15 text-rose-600 dark:text-rose-300 border-rose-400/30'
-      : 'bg-surface-muted text-text-muted border-border-main',
-    accentBorder: item.isCustom ? 'border-l-rose-500' : 'border-l-border-main',
+    tag,
+    badgeClass: 'bg-sky-500/15 text-sky-600 dark:text-sky-300 border-sky-400/30',
+    accentBorder: 'border-l-sky-500',
   };
 }
 
