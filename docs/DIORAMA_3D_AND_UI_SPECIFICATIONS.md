@@ -1,15 +1,16 @@
 # 3D Blueprint Diorama & 2D Workspace UI Specifications
 
-This document is the authoritative technical specification for **Layer 4 (`src/stage/`)** and **Layer 5 (`src/ui/`)** in **StageFlow**. It is governed by [`AGENTS.md`](../AGENTS.md).
+This document is the authoritative technical specification for **Layer 4 (`src/stage/`)** and **Layer 5 (`src/ui/`)** in **StageFlow**. It is governed by [`AGENTS.md`](../AGENTS.md). For typography, color tokens, CSS variables, and theme palettes, see the companion Single Source of Truth: [**`docs/VISUAL_DESIGN_SYSTEM.md`**](VISUAL_DESIGN_SYSTEM.md).
 
 ---
 
 ## 1. Visual Aesthetic: Minimalist Blueprint / Architectural Schematic
 
 StageFlow's 3D stage is engineered for maximum spatial legibility and zero visual clutter:
-- **Studio Void Background**: Deep blueprint obsidian (`#050811`) with subtle depth fog (`16m` to `42m`).
+- **Studio Void Background & Fog**: Deep obsidian blueprint void with subtle depth fog (`16m` to `42m`), adapting dynamically via the diorama theme palette ([`src/stage/dioramaTheme.ts`](../src/stage/dioramaTheme.ts)).
 - **Dual-Cadence Metric Floor Grid (`BlueprintFloorGrid.tsx`)**:
-  - Renders a precision ground plane at $Y = 0$ with `1.0m` primary section lines (`#1e293b`), `0.25m` minor sub-grid lines (`#0f172a`), an active stage perimeter frame (`#38bdf8`), center $X/Z$ axis crosshairs, an origin reticle at `(0, 0, 0)`, and cardinal stage labels (`+Z · Downstage / Front`, `-Z · Upstage / Back`). Cardinal labels are rendered as native WebGL SDF meshes (`Text` from `@react-three/drei`) lying flat on the perimeter floor plane ($Y = 0.005\text{m}$, rotation $-90^\circ$ around $X$) matching architectural blueprint convention; participating 100% in the WebGL Z-buffer so 3D camera cone/frustum lines and actors render naturally in front of the floor markings; automatically unmounted in `Stage Cam POV` (`cameraMode === 'stage-pov'`) to keep the viewfinder composition 100% clean.
+  - Renders a precision ground plane at $Y = 0$ with `1.0m` primary section lines, `0.25m` minor sub-grid lines, an active stage perimeter frame, center $X/Z$ axis crosshairs, an origin reticle at `(0, 0, 0)`, and cardinal stage labels (`+Z · Downstage / Front`, `-Z · Upstage / Back`). Grid line colors adapt dynamically to the diorama stage theme (see [`VISUAL_DESIGN_SYSTEM.md`](VISUAL_DESIGN_SYSTEM.md#5-decoupled-3d-diorama-stage-palette-srcstagedioramathemets)).
+  - Cardinal labels are rendered as native WebGL SDF meshes (`Text` from `@react-three/drei`) lying flat on the perimeter floor plane ($Y = 0.005\text{m}$, rotation $-90^\circ$ around $X$) matching architectural blueprint convention; participating 100% in the WebGL Z-buffer so 3D camera cone/frustum lines and actors render naturally in front of the floor markings; automatically unmounted in `Stage Cam POV` (`cameraMode === 'stage-pov'`) to keep the viewfinder composition 100% clean.
 
 ---
 
@@ -185,22 +186,11 @@ Scene entities (`character`, `prop`, `marker`) are rendered with unambiguous ori
   - `--shot <shot_id>` or `--start <sec> --end <sec>`: Slices exact shot cues or timestamp windows.
   - `--res 1080p | 4k | 720p | square | vertical`, `--fps <number>`.
 
-### 4.11 SceneFlow Design System Parity & Decoupled Theme Engine (`src/ui/tokens/ui.ts`, `src/hooks/useAppShellTheme.ts`, `src/stage/dioramaTheme.ts`)
-- **Shared Creative Suite Visual Identity**: Aligned StageFlow's visual interface with sister application SceneFlow (`Screenplay-Sync`), pairing tactile physical stationery pill chrome, delicate borders (`border-border-main`), and editorial micro-typography (`Inter`, `Libre Baskerville`, `JetBrains Mono`).
-- **4-Mode App Shell Theme Engine (`useAppShellTheme.ts`, `ThemeSelectorDropdown.tsx`)**:
-  - `Dark`: Warm Obsidian Studio (`#0c0a09` app, `#171514` surface, `#2c2825` border) with cyan/amber diorama highlights. Default on cold start for optimal 3D contrast.
-  - `Warm`: Architectural Drafting Paper (`#f3efe6` app, `#faf7f0` surface, `#dfd7c5` border) with warm grey metric grid lines.
-  - `Light`: Clean Warm Stone (`#f5f5f4` app, `#ffffff` surface, `#e7e5e4` border).
-  - `Auto`: Resolves to the user's system OS preference (`prefers-color-scheme`).
-  - Stored synchronously in `localStorage` (`stageflow:ui:theme-mode`).
-- **Decoupled 3D Diorama Stage Theme (`DioramaThemeMode`)**:
-  - Directorial staging often demands a high-contrast dark blueprint void for spatial perspective and camera cone visibility, even when reading or authoring in warm drafting paper or light UI chrome.
-  - Supports 4 distinct diorama modes:
-    - `Dark` (Default): Retains high-contrast deep blueprint obsidian floor (`#171514`) with cyan and slate precision grid lines.
-    - `Match App`: Dynamically follows whatever theme the 2D app shell is currently set to.
-    - `Warm`: Architectural drafting paper floor (`#faf7f0`) with subtle warm grey metric grid lines.
-    - `Light`: Clean warm stone floor (`#ffffff`) with warm grey metric grid lines.
-  - Stored synchronously in `localStorage` (`stageflow:ui:diorama-theme-mode`).
-- **Transition Freezing (`disableTransitionsTemporarily()`)**: Instantaneous theme swapping without animation reflow lag or frame stutter by suppressing global CSS transitions for one frame during mode swaps.
-- **60fps Split Resize Performance (`body.is-resizing-split`)**: Freezes transitions and disables iframe pointer interception while dragging the split workspace divider bar.
-- **Adaptive 3D Diorama Stage Palette (`dioramaTheme.ts`)**: Background clear color, scene fog, and metric floor grid materials automatically evaluate via `getDioramaPalette(effectiveCategory)` with **0 additional WebGL draw calls or shader passes**.
+### 4.11 Theme Engine & Split Resize Invariants (`src/hooks/useAppShellTheme.ts`, `src/stage/dioramaTheme.ts`)
+- **Visual Design System SSOT**: All typography, semantic CSS tokens, color palettes, and centralized `UI_TOKENS` are authored in [**`docs/VISUAL_DESIGN_SYSTEM.md`**](VISUAL_DESIGN_SYSTEM.md).
+- **Dual-Tier Decoupled Theme System (`useAppShellTheme.ts`, `ThemeSelectorDropdown.tsx`)**:
+  - **App Shell Theme**: 4 modes (`Dark`, `Warm`, `Light`, `Auto`) persisted in `stageflow:ui:theme-mode`.
+  - **3D Diorama Stage Theme**: Decoupled from the app shell, with 4 modes (`Dark` [default], `Match App`, `Warm`, `Light`) persisted in `stageflow:ui:diorama-theme-mode`. Allows maintaining a high-contrast dark blueprint void on stage while authoring in warm drafting paper or light UI chrome.
+- **Adaptive 3D Diorama Stage Palette (`dioramaTheme.ts`)**: Evaluates WebGL clear color, scene fog (`16m`–`42m`), and metric grid materials via `getDioramaPalette(effectiveCategory)` with **0 additional WebGL draw calls or shader passes**.
+- **Transition Freezing (`disableTransitionsTemporarily()`)**: Momentarily suppresses global CSS transitions across the DOM for 1 animation frame during theme swaps, eliminating animation reflow lag.
+- **60fps Split Resize Performance (`body.is-resizing-split`)**: Suppresses transitions and iframe pointer interception across the window while dragging the split workspace divider bar.

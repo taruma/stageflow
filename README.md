@@ -41,6 +41,7 @@ StageFlow is organized into a strictly decoupled **5-Layer Architecture** (`core
 - [**`docs/CORE_MATH_AND_SCORE_SPECIFICATIONS.md`**](docs/CORE_MATH_AND_SCORE_SPECIFICATIONS.md) — Layer 1 stateless math (`Frame_t = f(t)`), metric/degree conventions, lens optics (`mm`), and YAML score schema.
 - [**`docs/MEDIA_CLOCK_AND_SYNC_SPECIFICATIONS.md`**](docs/MEDIA_CLOCK_AND_SYNC_SPECIFICATIONS.md) — Layer 2 & 3 universal `MediaClockDriver`, YouTube 60fps drift extrapolation, and dual-tier 60fps ref / ~10Hz UI loop.
 - [**`docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md`**](docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md) — Layer 4 & 5 React Three Fiber blueprint stage, dual-camera handover, directional mannequins, and workspace UI.
+- [**`docs/VISUAL_DESIGN_SYSTEM.md`**](docs/VISUAL_DESIGN_SYSTEM.md) — Single Source of Truth for visual design language, typographic hierarchy, theme engine, centralized `UI_TOKENS`, and decoupled 3D diorama palettes.
 
 ---
 

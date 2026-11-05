@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Visual Design System SSOT Documentation (`docs/VISUAL_DESIGN_SYSTEM.md`)**:
+  - Established dedicated Single Source of Truth for SceneFlow visual identity, 3-tier font hierarchy (`Libre Baskerville`, `Inter`, `JetBrains Mono`), 4 app themes, CSS semantic custom properties, centralized `UI_TOKENS`, decoupled 3D diorama stage palette system, and performance invariants (`disableTransitionsTemporarily()`, `body.is-resizing-split`).
+  - Deduplicated styling tokens and color tables out of [`docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md`](docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md) to keep 3D mechanics and visual design decoupled.
 - **SceneFlow Visual Design System Parity & Centralized `UI_TOKENS` (`src/ui/tokens/ui.ts`, `src/index.css`, `index.html`)**:
   - Brought sister application **SceneFlow** (`Screenplay-Sync`) visual design language, tactile physical stationery pill chrome, and refined editorial micro-typography to StageFlow.
   - Added centralized [`src/ui/tokens/ui.ts`](src/ui/tokens/ui.ts) bundling Tailwind class presets for layout shells (`appHeader`, `sectionTitle`), modals (`containerSm`, `containerMd`, `containerLibrary`, `header`, `footer`), dropdowns (`menu`, `header`, `item`), and tactile buttons (`actionPill`, `filePill`, `libraryPop`, `settingsPill`, `segmentedGroup`).
