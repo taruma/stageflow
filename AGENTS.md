@@ -149,8 +149,10 @@ stageflow/
 │   │   ├── useMediaClock.ts         # Transport controls, frame-stepping ([ / ]), loop-shot, hotkeys
 │   │   ├── useStageFrameLoop.ts     # 60fps ref evaluation tick + ~10Hz throttled React UI sync
 │   │   ├── useFileDropLoader.ts     # Drag-and-drop & file picker loader for .yaml and .mp4 pairs
-│   │   └── useScorePersistence.ts   # Startup hydration, draft auto-saving & confirmed reset
+│   │   ├── useScorePersistence.ts   # Startup hydration, draft auto-saving & confirmed reset
+│   │   └── useAppShellTheme.ts      # SceneFlow theme hook (Auto/Dark/Warm/Light) & transition suppression
 │   ├── stage/                       # Layer 4: React Three Fiber 3D Blueprint Diorama
+│   │   ├── dioramaTheme.ts          # Adaptive theme clear colors, fog & metric grid line mapping
 │   │   ├── DioramaCanvas.tsx        # Root R3F <Canvas>, lighting, fog, and priority -1 frame ticker
 │   │   ├── BlueprintStageScene.tsx  # Shared lighting, metric floor grid, and mannequins
 │   │   ├── BlueprintFloorGrid.tsx   # Metric floor grid (1m / 0.25m), perimeter frame & compass labels
@@ -162,10 +164,13 @@ stageflow/
 │   │   ├── DirectionalMannequin.tsx # Stylized character/prop proxies with facing visor & floor trails
 │   │   └── StageBillboardLabel.tsx  # Crisp 3D HTML floating identity badges
 │   ├── ui/                          # Layer 5: 2D Directorial UI Shell
+│   │   ├── tokens/                  # SceneFlow-aligned design tokens
+│   │   │   └── ui.ts                # Centralized UI_TOKENS for layout, pills, buttons & modals
 │   │   ├── header/                  # Modular 3-wing studio header submodules
 │   │   │   ├── FileMenuDropdown.tsx # Tiered File ▾ popover menu (Open, Export, New, Manage, Guide)
 │   │   │   ├── LayoutSegmentedControl.tsx # Centered segmented split workspace layout switcher
-│   │   │   └── ActiveScoreIndicator.tsx # Interactive active score context chip with 1-click library open
+│   │   │   ├── ActiveScoreIndicator.tsx # Interactive active score context chip with 1-click library open
+│   │   │   └── ThemeSelectorDropdown.tsx # Accessible 4-mode theme switcher (Auto, Dark, Warm, Light)
 │   │   ├── library/                 # Modular score library submodules
 │   │   │   └── ScoreLibraryCard.tsx # Cinematic choreography score card with color tags & telemetry
 │   │   ├── WorkspaceHeader.tsx      # SceneFlow-aligned 3-wing orchestrator header bar

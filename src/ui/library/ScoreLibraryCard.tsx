@@ -2,6 +2,7 @@
  * ScoreLibraryCard Component for ScoreLibraryModal.
  * Renders an individual choreography score card with cinematic metadata,
  * color-coded blueprint tags, formatted aspect ratio, and interactive hover states.
+ * Styled with SceneFlow tactile card design tokens.
  */
 
 import React from 'react';
@@ -28,51 +29,44 @@ function formatAspectRatio(ratio: number | string | undefined): string {
 interface BlueprintBadgeInfo {
   tag: string;
   badgeClass: string;
-  hoverBorderClass: string;
 }
 
 function getScoreBadgeInfo(item: ScoreCatalogItem): BlueprintBadgeInfo {
   if (item.id === 'demo-blueprint') {
     return {
       tag: 'BP 01',
-      badgeClass: 'bg-sky-500/15 text-sky-300 border-sky-400/30',
-      hoverBorderClass: 'group-hover:border-sky-500/50',
+      badgeClass: 'bg-sky-500/15 text-sky-600 dark:text-sky-300 border-sky-400/30',
     };
   }
   if (item.id === 'blueprint-02-dialogue' || item.id === 'blueprint_02_dialogue') {
     return {
       tag: 'BP 02',
-      badgeClass: 'bg-indigo-500/15 text-indigo-300 border-indigo-400/30',
-      hoverBorderClass: 'group-hover:border-indigo-500/50',
+      badgeClass: 'bg-indigo-500/15 text-indigo-600 dark:text-indigo-300 border-indigo-400/30',
     };
   }
   if (item.id === 'blueprint-03-ball-pass' || item.id === 'blueprint_03_ball_pass') {
     return {
       tag: 'BP 03',
-      badgeClass: 'bg-emerald-500/15 text-emerald-300 border-emerald-400/30',
-      hoverBorderClass: 'group-hover:border-emerald-500/50',
+      badgeClass: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-300 border-emerald-400/30',
     };
   }
   if (item.id === 'blueprint-04-cinematography-tutorial' || item.id === 'blueprint_04_cinematography_tutorial') {
     return {
       tag: 'BP 04',
-      badgeClass: 'bg-violet-500/15 text-violet-300 border-violet-400/30',
-      hoverBorderClass: 'group-hover:border-violet-500/50',
+      badgeClass: 'bg-violet-500/15 text-violet-600 dark:text-violet-300 border-violet-400/30',
     };
   }
   if (item.id === 'blueprint-05-two-rooms' || item.id === 'blueprint_05_two_rooms') {
     return {
       tag: 'BP 05',
-      badgeClass: 'bg-amber-500/15 text-amber-300 border-amber-400/30',
-      hoverBorderClass: 'group-hover:border-amber-500/50',
+      badgeClass: 'bg-amber-500/15 text-amber-600 dark:text-amber-300 border-amber-400/30',
     };
   }
   return {
     tag: item.isCustom ? 'CUSTOM' : 'SCORE',
     badgeClass: item.isCustom
-      ? 'bg-rose-500/15 text-rose-300 border-rose-400/30'
-      : 'bg-slate-800 text-slate-300 border-slate-700',
-    hoverBorderClass: 'group-hover:border-slate-600',
+      ? 'bg-rose-500/15 text-rose-600 dark:text-rose-300 border-rose-400/30'
+      : 'bg-surface-muted text-text-muted border-border-main',
   };
 }
 
@@ -98,10 +92,10 @@ export const ScoreLibraryCard: React.FC<ScoreLibraryCardProps> = ({
           onSelect();
         }
       }}
-      className={`p-4 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-3 group relative select-none ${
+      className={`p-4 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-3 group relative select-none shadow-xs hover:shadow-md ${
         isActive
-          ? 'border-amber-500/80 bg-amber-500/10 ring-1 ring-amber-500/40 shadow-xl'
-          : `border-slate-800/90 bg-slate-900/60 hover:bg-slate-800/75 hover:shadow-lg ${badgeInfo.hoverBorderClass}`
+          ? 'border-border-main bg-surface-subtle ring-2 ring-text-main/20'
+          : 'border-border-main bg-surface hover:bg-surface-subtle'
       }`}
     >
       {/* Card Header & Content */}
@@ -109,22 +103,22 @@ export const ScoreLibraryCard: React.FC<ScoreLibraryCardProps> = ({
         <div className="flex items-start justify-between gap-2.5">
           <div className="flex items-center gap-2 min-w-0">
             <span
-              className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border shrink-0 uppercase tracking-wider ${badgeInfo.badgeClass}`}
+              className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-lg border shrink-0 uppercase tracking-wider ${badgeInfo.badgeClass}`}
             >
               {badgeInfo.tag}
             </span>
-            <h3 className="text-sm font-semibold font-sans text-slate-100 group-hover:text-white transition-colors truncate">
+            <h3 className="text-sm font-semibold font-sans text-text-main group-hover:text-text-main transition-colors truncate">
               {item.title}
             </h3>
           </div>
 
           {isActive ? (
-            <span className="text-[10px] font-mono bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2 py-0.5 rounded-full shrink-0 flex items-center gap-1 font-bold">
+            <span className="text-[10px] font-mono bg-btn-primary-bg text-btn-primary-text border border-btn-primary-bg px-2 py-0.5 rounded-full shrink-0 flex items-center gap-1 font-bold shadow-xs">
               <Check className="w-3 h-3" />
               <span>Active</span>
             </span>
           ) : (
-            <span className="text-[11px] font-sans text-slate-500 group-hover:text-sky-400 flex items-center gap-1 transition-colors shrink-0">
+            <span className="text-[11px] font-sans text-text-faint group-hover:text-text-main flex items-center gap-1 transition-colors shrink-0">
               <span className="hidden sm:inline">Open</span>
               <ArrowRight className="w-3 h-3 transition-transform group-hover:translate-x-0.5" />
             </span>
@@ -132,31 +126,31 @@ export const ScoreLibraryCard: React.FC<ScoreLibraryCardProps> = ({
         </div>
 
         {item.subtitle && (
-          <p className="text-xs font-sans text-slate-400 group-hover:text-slate-300 line-clamp-2 leading-relaxed">
+          <p className="text-xs font-sans text-text-muted group-hover:text-text-body line-clamp-2 leading-relaxed">
             {item.subtitle}
           </p>
         )}
       </div>
 
       {/* Card Footer: Telemetry Pill Strip */}
-      <div className="flex items-center gap-2 pt-2.5 border-t border-slate-800/80 text-[10px] font-mono text-slate-400">
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-950/70 border border-slate-800 text-slate-300">
-          <Clock className="w-3 h-3 text-slate-400" />
+      <div className="flex items-center gap-2 pt-2.5 border-t border-border-subtle text-[10px] font-mono text-text-muted">
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-surface-muted border border-border-main text-text-body">
+          <Clock className="w-3 h-3 text-text-faint" />
           <span>{durationSec.toFixed(1)}s</span>
         </span>
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-950/70 border border-slate-800 text-slate-300">
-          <Layers className="w-3 h-3 text-slate-400" />
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-surface-muted border border-border-main text-text-body">
+          <Layers className="w-3 h-3 text-text-faint" />
           <span>
             {shotCount} {shotCount === 1 ? 'Shot' : 'Shots'}
           </span>
         </span>
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-950/70 border border-slate-800 text-slate-300">
-          <Video className="w-3 h-3 text-slate-400" />
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-surface-muted border border-border-main text-text-body">
+          <Video className="w-3 h-3 text-text-faint" />
           <span>{formatAspectRatio(aspectRatio)}</span>
         </span>
         {entityCount > 0 && (
-          <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-950/70 border border-slate-800 text-slate-400">
-            <Users className="w-3 h-3 text-slate-500" />
+          <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-surface-muted border border-border-main text-text-muted">
+            <Users className="w-3 h-3 text-text-faint" />
             <span>
               {entityCount} {entityCount === 1 ? 'Entity' : 'Entities'}
             </span>

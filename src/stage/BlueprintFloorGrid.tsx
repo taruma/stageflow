@@ -1,12 +1,14 @@
 /**
  * Minimalist Blueprint Architectural Floor Grid & Compass Reference.
  * 1 unit = 1 meter. Y = 0 is the stage floor plane.
+ * Dynamically reacts to the active theme palette with zero extra draw calls.
  */
 
 import React, { useMemo } from 'react';
 import { Grid, Line, Text } from '@react-three/drei';
 import * as THREE from 'three';
-import type { CameraViewMode } from '../core/types';
+import type { AppThemeCategory, CameraViewMode } from '../core/types';
+import { getDioramaThemeColors } from './dioramaTheme';
 
 export interface BlueprintFloorGridProps {
   width: number;
@@ -14,6 +16,7 @@ export interface BlueprintFloorGridProps {
   gridStep: number;
   showLabels?: boolean;
   cameraMode?: CameraViewMode;
+  themeCategory?: AppThemeCategory;
 }
 
 export const BlueprintFloorGrid: React.FC<BlueprintFloorGridProps> = ({
@@ -22,10 +25,15 @@ export const BlueprintFloorGrid: React.FC<BlueprintFloorGridProps> = ({
   gridStep,
   showLabels = true,
   cameraMode,
+  themeCategory = 'dark',
 }) => {
   const halfW = width * 0.5;
   const halfD = depth * 0.5;
   const isStagePov = cameraMode === 'stage-pov';
+  const themeColors = useMemo(
+    () => getDioramaThemeColors(themeCategory),
+    [themeCategory]
+  );
 
   // Perimeter stage boundary rectangle
   const borderPoints = useMemo<Array<[number, number, number]>>(
@@ -62,10 +70,14 @@ export const BlueprintFloorGrid: React.FC<BlueprintFloorGridProps> = ({
 
   return (
     <group>
-      {/* Subtle dark matte ground floor to anchor shadows/grids */}
+      {/* Subtle matte ground floor to anchor shadows/grids */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]}>
         <planeGeometry args={[width * 2.4, depth * 2.4]} />
-        <meshBasicMaterial color="#050811" transparent opacity={0.92} />
+        <meshBasicMaterial
+          color={themeColors.floorColor}
+          transparent
+          opacity={themeColors.floorOpacity}
+        />
       </mesh>
 
       {/* Dual-cadence precision metric grid (1m major, 0.25m minor) */}
@@ -74,10 +86,10 @@ export const BlueprintFloorGrid: React.FC<BlueprintFloorGridProps> = ({
         args={[width, depth]}
         cellSize={gridStep * 0.25}
         cellThickness={0.5}
-        cellColor="#0f172a"
+        cellColor={themeColors.gridCell}
         sectionSize={gridStep}
         sectionThickness={1.1}
-        sectionColor="#1e293b"
+        sectionColor={themeColors.gridSection}
         fadeDistance={28}
         fadeStrength={1.2}
         infiniteGrid
@@ -86,26 +98,26 @@ export const BlueprintFloorGrid: React.FC<BlueprintFloorGridProps> = ({
       {/* Active Stage Perimeter Frame */}
       <Line
         points={borderPoints}
-        color="#38bdf8"
+        color={themeColors.borderLine}
         lineWidth={1.2}
         transparent
-        opacity={0.35}
+        opacity={themeColors.borderOpacity}
       />
 
       {/* Center X & Z Axis Guides */}
       <Line
         points={xAxisPoints}
-        color="#38bdf8"
+        color={themeColors.axisLine}
         lineWidth={1}
         transparent
-        opacity={0.2}
+        opacity={0.3}
       />
       <Line
         points={zAxisPoints}
-        color="#38bdf8"
+        color={themeColors.axisLine}
         lineWidth={1}
         transparent
-        opacity={0.2}
+        opacity={0.3}
       />
 
       {/* Origin (0,0,0) Center Reticle */}
@@ -115,25 +127,25 @@ export const BlueprintFloorGrid: React.FC<BlueprintFloorGridProps> = ({
         position={[0, 0.008, 0]}
       >
         <meshBasicMaterial
-          color="#38bdf8"
+          color={themeColors.ringColor}
           transparent
-          opacity={0.45}
+          opacity={0.5}
           side={THREE.DoubleSide}
         />
       </mesh>
 
-      {/* Cardinal Stage Orientation Markers (Native WebGL SDF mesh lying flat on floor plane; hidden in Stage Cam POV) */}
+      {/* Cardinal Stage Orientation Markers */}
       {showLabels && !isStagePov && (
         <>
           <Text
             position={[0, 0.005, halfD + 0.55]}
             rotation={[-Math.PI / 2, 0, 0]}
             fontSize={0.24}
-            color="#38bdf8"
+            color={themeColors.borderLine}
             anchorX="center"
             anchorY="middle"
             letterSpacing={0.14}
-            fillOpacity={0.65}
+            fillOpacity={0.75}
           >
             +Z · DOWNSTAGE / FRONT
           </Text>
@@ -142,11 +154,11 @@ export const BlueprintFloorGrid: React.FC<BlueprintFloorGridProps> = ({
             position={[0, 0.005, -halfD - 0.55]}
             rotation={[-Math.PI / 2, 0, 0]}
             fontSize={0.24}
-            color="#64748b"
+            color={themeColors.axisLine}
             anchorX="center"
             anchorY="middle"
             letterSpacing={0.14}
-            fillOpacity={0.65}
+            fillOpacity={0.7}
           >
             -Z · UPSTAGE / BACK
           </Text>

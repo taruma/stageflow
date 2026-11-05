@@ -1,6 +1,7 @@
 /**
  * Lightweight floating Toast Notification container for StageFlow.
  * Displays temporary feedback banners for file imports, forking, and project actions.
+ * Styled with SceneFlow tactile card design tokens.
  */
 
 import React from 'react';
@@ -22,7 +23,7 @@ export const ToastContainer: React.FC<ToastContainerProps> = ({
     <div
       aria-live="polite"
       aria-atomic="true"
-      className="fixed top-14 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none"
+      className="fixed top-14 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none select-none"
     >
       {toasts.map((toast) => {
         const type = toast.type ?? 'info';
@@ -31,12 +32,12 @@ export const ToastContainer: React.FC<ToastContainerProps> = ({
         const isError = type === 'error';
 
         const borderColor = isSuccess
-          ? 'border-emerald-500/40 bg-emerald-950/90 text-emerald-200'
+          ? 'border-emerald-500/40 text-emerald-700 dark:text-emerald-300'
           : isWarning
-          ? 'border-amber-500/40 bg-amber-950/90 text-amber-200'
+          ? 'border-amber-500/40 text-amber-700 dark:text-amber-300'
           : isError
-          ? 'border-rose-500/40 bg-rose-950/90 text-rose-200'
-          : 'border-sky-500/40 bg-slate-900/95 text-slate-100';
+          ? 'border-red-500/40 text-red-700 dark:text-red-300'
+          : 'border-border-main text-text-main';
 
         const Icon = isSuccess
           ? CheckCircle2
@@ -47,28 +48,28 @@ export const ToastContainer: React.FC<ToastContainerProps> = ({
           : Info;
 
         const iconColor = isSuccess
-          ? 'text-emerald-400'
+          ? 'text-emerald-500'
           : isWarning
-          ? 'text-amber-400'
+          ? 'text-amber-500'
           : isError
-          ? 'text-rose-400'
-          : 'text-sky-400';
+          ? 'text-red-500'
+          : 'text-sky-500';
 
         return (
           <div
             key={toast.id}
             role="status"
-            className={`pointer-events-auto flex items-start gap-2.5 p-3 rounded-lg border shadow-xl backdrop-blur-md text-xs font-mono transition-all animate-in fade-in slide-in-from-top-2 duration-200 ${borderColor}`}
+            className={`pointer-events-auto flex items-start gap-2.5 p-3.5 rounded-2xl border shadow-xl bg-surface text-xs font-mono transition-all animate-in fade-in slide-in-from-top-2 duration-200 ${borderColor}`}
           >
             <Icon className={`w-4 h-4 shrink-0 mt-0.5 ${iconColor}`} />
-            <div className="flex-1 min-w-0 break-words leading-relaxed">
+            <div className="flex-1 min-w-0 break-words leading-relaxed text-text-main">
               {toast.message}
             </div>
             <button
               type="button"
               onClick={() => onDismiss(toast.id)}
               aria-label="Dismiss notification"
-              className="p-0.5 rounded hover:bg-white/10 text-slate-400 hover:text-white cursor-pointer shrink-0"
+              className="p-1 rounded-lg hover:bg-surface-muted text-text-muted hover:text-text-main cursor-pointer shrink-0 transition-colors"
             >
               <X className="w-3.5 h-3.5" />
             </button>

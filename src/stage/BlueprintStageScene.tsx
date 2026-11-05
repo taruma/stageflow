@@ -6,6 +6,7 @@
 
 import React from 'react';
 import type {
+  AppThemeCategory,
   CameraViewMode,
   LabelDisplayMode,
   StageFrame,
@@ -21,6 +22,7 @@ export interface BlueprintStageSceneProps {
   labelMode?: LabelDisplayMode;
   isPlaying?: boolean;
   cameraMode?: CameraViewMode;
+  themeCategory?: AppThemeCategory;
 }
 
 export const BlueprintStageScene: React.FC<BlueprintStageSceneProps> = ({
@@ -30,16 +32,17 @@ export const BlueprintStageScene: React.FC<BlueprintStageSceneProps> = ({
   labelMode = 'all',
   isPlaying = false,
   cameraMode,
+  themeCategory = 'dark',
 }) => {
   return (
     <group>
-      {/* Clean Blueprint Studio Lighting */}
-      <ambientLight intensity={0.75} />
+      {/* Studio Lighting */}
+      <ambientLight intensity={themeCategory === 'dark' ? 0.75 : 0.85} />
       <directionalLight position={[6, 12, 8]} intensity={1.1} />
       <directionalLight
         position={[-6, 8, -6]}
         intensity={0.45}
-        color="#38bdf8"
+        color={themeCategory === 'dark' ? '#38bdf8' : '#ffffff'}
       />
 
       {/* Metric Blueprint Stage Floor Grid */}
@@ -49,6 +52,7 @@ export const BlueprintStageScene: React.FC<BlueprintStageSceneProps> = ({
         gridStep={score.stage.gridStep}
         showLabels={labelMode !== 'off'}
         cameraMode={cameraMode}
+        themeCategory={themeCategory}
       />
 
       {/* Directional Character Mannequins & Stage Props */}

@@ -3,16 +3,24 @@
  * Composes a balanced 3-wing layout:
  * - Left Wing: Brand Identity, File ▾ Dropdown, and Active Score Indicator
  * - Center Stage: Centered Split Layout Segmented Control
- * - Right Wing: Dedicated Score Library Button and YAML Drawer Toggle
+ * - Right Wing: Theme Mode Dropdown, Score Library Button, and YAML Drawer Toggle
  */
 
 import React, { useState } from 'react';
 import { Box, Code2, Book } from 'lucide-react';
 import type { ScoreCatalogItem } from '../core/scoreCatalog';
-import type { SplitPreset, StoragePersistenceStatus } from '../core/types';
+import type {
+  AppThemeCategory,
+  AppThemeMode,
+  DioramaThemeMode,
+  SplitPreset,
+  StoragePersistenceStatus,
+} from '../core/types';
+import { UI_TOKENS } from './tokens/ui';
 import { FileMenuDropdown } from './header/FileMenuDropdown';
 import { LayoutSegmentedControl } from './header/LayoutSegmentedControl';
 import { ActiveScoreIndicator } from './header/ActiveScoreIndicator';
+import { ThemeSelectorDropdown } from './header/ThemeSelectorDropdown';
 
 export type { SplitPreset, StoragePersistenceStatus };
 
@@ -23,12 +31,18 @@ export interface WorkspaceHeaderProps {
   isYamlDrawerOpen: boolean;
   storageStatus?: StoragePersistenceStatus;
   isLibraryOpen?: boolean;
+  themeMode?: AppThemeMode;
+  effectiveThemeCategory?: AppThemeCategory;
+  dioramaThemeMode?: DioramaThemeMode;
+  effectiveDioramaCategory?: AppThemeCategory;
   onSelectScene: (sceneId: string) => void;
   onSelectSplitPreset: (preset: SplitPreset) => void;
   onToggleYamlDrawer: () => void;
   onUploadFiles: (files: FileList) => void;
   onExportActiveScore: () => void;
   onOpenLibrary: () => void;
+  onSelectThemeMode?: (mode: AppThemeMode) => void;
+  onSelectDioramaThemeMode?: (mode: DioramaThemeMode) => void;
   onOpenManageProjects?: () => void;
   onCreateBlankProject?: () => void;
 }
@@ -40,11 +54,17 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
   isYamlDrawerOpen,
   storageStatus = 'bundled',
   isLibraryOpen = false,
+  themeMode = 'dark',
+  effectiveThemeCategory = 'dark',
+  dioramaThemeMode = 'dark',
+  effectiveDioramaCategory = 'dark',
   onSelectSplitPreset,
   onToggleYamlDrawer,
   onUploadFiles,
   onExportActiveScore,
   onOpenLibrary,
+  onSelectThemeMode,
+  onSelectDioramaThemeMode,
   onOpenManageProjects,
   onCreateBlankProject,
 }) => {
@@ -53,25 +73,25 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
   const customScores = catalog.filter((item) => item.isCustom);
 
   return (
-    <header className="relative z-30 h-12 shrink-0 px-3 bg-[#0a0f1d] border-b border-slate-800/90 flex items-center justify-between gap-3 select-none">
+    <header className={UI_TOKENS.layout.appHeader}>
       {/* Left Wing: Brand Identity, File Menu & Active Score Indicator */}
       <div className="flex items-center gap-2.5 min-w-0 max-w-[calc(50%-80px)]">
         {/* Brand Logo & Title */}
         <div className="flex items-center gap-2 shrink-0">
-          <div className="w-7 h-7 rounded-lg bg-sky-500/15 border border-sky-400/40 flex items-center justify-center text-sky-400 shadow-inner">
+          <div className="w-7 h-7 rounded-xl bg-surface-muted border border-border-main flex items-center justify-center text-text-main shadow-2xs">
             <Box className="w-4 h-4" />
           </div>
           <div className="flex flex-col">
-            <span className="text-xs font-mono font-bold tracking-wider text-slate-100 uppercase leading-none">
+            <span className="text-xs font-black tracking-wider text-text-main uppercase leading-none font-sans">
               StageFlow
             </span>
-            <span className="text-[9px] font-mono text-sky-400/80 tracking-widest uppercase mt-0.5">
+            <span className="text-[8px] font-black text-text-faint tracking-[0.2em] uppercase mt-0.5 font-sans">
               3D Blocking Diorama
             </span>
           </div>
         </div>
 
-        <div className="h-5 w-px bg-slate-800 shrink-0 hidden sm:block" />
+        <div className="h-5 w-px bg-border-main shrink-0 hidden sm:block" />
 
         {/* Tiered File Dropdown Menu */}
         <FileMenuDropdown
@@ -103,20 +123,32 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
         />
       </div>
 
-      {/* Right Wing: Dedicated Score Library Button & Live YAML Drawer Toggle */}
+      {/* Right Wing: Theme Mode Dropdown, Score Library Button & Live YAML Drawer Toggle */}
       <div className="flex items-center gap-2 shrink-0">
-        {/* Standalone Amber Library Button */}
+        {/* Theme Mode Selector Dropdown */}
+        {onSelectThemeMode && (
+          <ThemeSelectorDropdown
+            themeMode={themeMode}
+            effectiveCategory={effectiveThemeCategory}
+            onSelectThemeMode={onSelectThemeMode}
+            dioramaThemeMode={dioramaThemeMode}
+            effectiveDioramaCategory={effectiveDioramaCategory}
+            onSelectDioramaThemeMode={onSelectDioramaThemeMode}
+          />
+        )}
+
+        {/* Standalone Library Button */}
         <button
           type="button"
           onClick={onOpenLibrary}
-          className={`px-2.5 py-1 rounded-md text-xs font-mono transition-all flex items-center gap-1.5 cursor-pointer border ${
+          className={
             isLibraryOpen
-              ? 'bg-amber-500/25 border-amber-400/70 text-amber-200 shadow-sm'
-              : 'bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border-amber-500/40 hover:border-amber-400/60'
-          }`}
+              ? UI_TOKENS.button.libraryPopActive
+              : UI_TOKENS.button.libraryPop
+          }
           title="Browse Choreography Score Library (Blueprints & Custom Scores)"
         >
-          <Book className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+          <Book className="w-3.5 h-3.5 shrink-0" />
           <span className="font-bold tracking-wide">Library</span>
         </button>
 
@@ -124,14 +156,14 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
         <button
           type="button"
           onClick={onToggleYamlDrawer}
-          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-mono transition-all cursor-pointer ${
+          className={
             isYamlDrawerOpen
-              ? 'bg-amber-500/20 border-amber-500/50 text-amber-300 shadow-sm'
-              : 'bg-slate-900 hover:bg-slate-800 border-slate-800 text-slate-300 hover:text-white'
-          }`}
+              ? UI_TOKENS.button.filePillActive
+              : UI_TOKENS.button.filePill
+          }
           title="Open live YAML score inspector and editor"
         >
-          <Code2 className="w-3.5 h-3.5 text-amber-400" />
+          <Code2 className="w-3.5 h-3.5 text-text-muted" />
           <span className="hidden sm:inline">YAML Score</span>
         </button>
       </div>

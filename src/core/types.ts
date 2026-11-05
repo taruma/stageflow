@@ -63,6 +63,10 @@ export type LabelDisplayMode = 'all' | 'camera-only' | 'off';
 
 export type SplitPreset = 'split' | 'full';
 
+export type AppThemeMode = 'auto' | 'light' | 'warm' | 'dark';
+export type AppThemeCategory = 'light' | 'warm' | 'dark';
+export type DioramaThemeMode = 'dark' | 'match-app' | 'warm' | 'light';
+
 export type StoragePersistenceStatus =
   | 'bundled'
   | 'draft-saved'

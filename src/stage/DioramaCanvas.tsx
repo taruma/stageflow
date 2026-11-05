@@ -2,11 +2,13 @@
  * Root React Three Fiber Canvas orchestrating the 60fps evaluation tick,
  * Blueprint Floor Grid, Observer Camera Rig, Illustrative Stage Camera Rig,
  * and Directional Mannequins.
+ * Dynamically reacts to the active theme palette with zero extra draw calls.
  */
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import type {
+  AppThemeCategory,
   CameraViewMode,
   LabelDisplayMode,
   SphericalPose,
@@ -16,6 +18,7 @@ import type {
 import { BlueprintStageScene } from './BlueprintStageScene';
 import { ObserverCameraRig } from './ObserverCameraRig';
 import { StageCameraRig } from './StageCameraRig';
+import { getDioramaThemeColors } from './dioramaTheme';
 
 export interface DioramaCanvasProps {
   score: StageScore;
@@ -27,6 +30,7 @@ export interface DioramaCanvasProps {
   evaluateTick60fps: () => StageFrame;
   onFreeOrbitPoseChange: (pose: SphericalPose) => void;
   labelMode?: LabelDisplayMode;
+  themeCategory?: AppThemeCategory;
 }
 
 const FrameLoopTicker: React.FC<{ onTick: () => void }> = ({ onTick }) => {
@@ -47,9 +51,15 @@ export const DioramaCanvas: React.FC<DioramaCanvasProps> = ({
   evaluateTick60fps,
   onFreeOrbitPoseChange,
   labelMode = 'all',
+  themeCategory = 'dark',
 }) => {
+  const themeColors = useMemo(
+    () => getDioramaThemeColors(themeCategory),
+    [themeCategory]
+  );
+
   return (
-    <div className="relative w-full h-full bg-[#050811] select-none overflow-hidden">
+    <div className="relative w-full h-full bg-app select-none overflow-hidden">
       <Canvas
         gl={{ antialias: true, powerPreference: 'high-performance' }}
         dpr={[1, 2]}
@@ -60,8 +70,8 @@ export const DioramaCanvas: React.FC<DioramaCanvasProps> = ({
           position: [4.5, 3.5, 6.0],
         }}
       >
-        <color attach="background" args={['#050811']} />
-        <fog attach="fog" args={['#050811', 16, 42]} />
+        <color attach="background" args={[themeColors.bg]} />
+        <fog attach="fog" args={[themeColors.fog, 16, 42]} />
 
         {/* 60fps Stateless Frame Evaluator Tick */}
         <FrameLoopTicker onTick={evaluateTick60fps} />
@@ -74,6 +84,7 @@ export const DioramaCanvas: React.FC<DioramaCanvasProps> = ({
           labelMode={labelMode}
           isPlaying={isPlaying}
           cameraMode={cameraMode}
+          themeCategory={themeCategory}
         />
 
         {/* 2. Viewport Observer Camera & Free-Orbit Handover Rig */}

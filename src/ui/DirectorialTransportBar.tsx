@@ -2,6 +2,7 @@
  * Directorial Transport Deck with Shot Markers, Click-to-Jump Shot Chips,
  * Variable Slow-Motion Playback Rates (0.25x, 0.5x, 1x, 2x), Frame-Stepping (`[` / `]`),
  * Loop-Active-Shot Toggle, and 3-Way Instant-Cut Camera Mode Selector.
+ * Styled with SceneFlow tactile pill design tokens.
  */
 
 import React from 'react';
@@ -70,12 +71,12 @@ export const DirectorialTransportBar: React.FC<
   const currentSec = frame.timestampSec;
 
   return (
-    <footer className="shrink-0 bg-[#0a0f1d] border-t border-slate-800/90 px-3 py-2 flex flex-col gap-2 select-none z-20">
+    <footer className="shrink-0 bg-surface border-t border-border-main px-3 py-2 flex flex-col gap-2 select-none z-20 text-text-main shadow-xs">
       {/* Row 1: Scrubber Track with Visual Shot Cut Markers & Clickable Shot Chips */}
       <div className="flex flex-col gap-1">
         <div className="relative flex items-center w-full h-5">
           {/* Shot Boundary Tick Marks under Scrubber */}
-          <div className="absolute inset-x-0 h-2 rounded-full bg-slate-900 border border-slate-800 overflow-hidden pointer-events-none">
+          <div className="absolute inset-x-0 h-2 rounded-full bg-surface-muted border border-border-main overflow-hidden pointer-events-none">
             {score.shots.map((shot) => {
               const leftPct = (shot.startSec / safeDuration) * 100;
               const widthPct =
@@ -88,8 +89,10 @@ export const DirectorialTransportBar: React.FC<
                     left: `${leftPct}%`,
                     width: `${widthPct}%`,
                   }}
-                  className={`absolute top-0 bottom-0 border-r border-slate-700/80 transition-colors ${
-                    isActive ? 'bg-sky-500/25' : 'bg-slate-800/40'
+                  className={`absolute top-0 bottom-0 border-r border-border-subtle transition-colors ${
+                    isActive
+                      ? 'bg-amber-500/30'
+                      : 'bg-surface-hover/50'
                   }`}
                 />
               );
@@ -99,7 +102,7 @@ export const DirectorialTransportBar: React.FC<
               style={{
                 width: `${Math.min(100, (currentSec / safeDuration) * 100)}%`,
               }}
-              className="h-full bg-gradient-to-r from-sky-500 via-sky-400 to-amber-400"
+              className="h-full bg-gradient-to-r from-sky-500 via-indigo-500 to-amber-500"
             />
           </div>
 
@@ -111,7 +114,7 @@ export const DirectorialTransportBar: React.FC<
             step={0.01}
             value={currentSec}
             onChange={(e) => onSeek(parseFloat(e.target.value))}
-            className="relative w-full h-5 appearance-none bg-transparent cursor-pointer accent-amber-400 z-10"
+            className="relative w-full h-5 appearance-none bg-transparent cursor-pointer accent-text-main z-10"
             title="Scrub timeline (deterministically reconstructs 3D stage at any timestamp)"
           />
         </div>
@@ -126,16 +129,16 @@ export const DirectorialTransportBar: React.FC<
                   key={shot.id}
                   type="button"
                   onClick={() => onSeek(shot.startSec)}
-                  className={`px-2 py-0.5 rounded text-[10px] font-mono flex items-center gap-1.5 shrink-0 transition-colors cursor-pointer border ${
+                  className={`px-2 py-0.5 rounded-lg text-[10px] font-mono flex items-center gap-1.5 shrink-0 transition-all cursor-pointer border ${
                     isActive
-                      ? 'bg-amber-500/20 border-amber-500/50 text-amber-300 font-semibold'
-                      : 'bg-slate-900/90 hover:bg-slate-800 border-slate-800 text-slate-400 hover:text-slate-200'
+                      ? 'bg-btn-primary-bg text-btn-primary-text border-btn-primary-bg font-semibold shadow-xs'
+                      : 'bg-surface hover:bg-surface-subtle border-border-main text-text-muted hover:text-text-main shadow-2xs'
                   }`}
                   title={`Jump to Shot ${shot.shotNumber}: ${shot.label} (${shot.startSec.toFixed(1)}s – ${shot.endSec.toFixed(1)}s)`}
                 >
-                  <span>S{String(shot.shotNumber).padStart(2, '0')}</span>
+                  <span className="font-bold">S{String(shot.shotNumber).padStart(2, '0')}</span>
                   <span className="truncate max-w-[140px]">{shot.label}</span>
-                  <span className="text-[9px] opacity-60">
+                  <span className="text-[9px] opacity-70">
                     {shot.startSec.toFixed(1)}s
                   </span>
                 </button>
@@ -152,7 +155,7 @@ export const DirectorialTransportBar: React.FC<
           <button
             type="button"
             onClick={() => onSeek(0)}
-            className="p-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-400 hover:text-slate-100 transition-colors cursor-pointer"
+            className="p-1.5 rounded-xl bg-surface hover:bg-surface-hover border border-border-main text-text-muted hover:text-text-main transition-all cursor-pointer shadow-2xs active:scale-95"
             title="Restart to 00:00.00"
           >
             <RotateCcw className="w-3.5 h-3.5" />
@@ -161,7 +164,7 @@ export const DirectorialTransportBar: React.FC<
           <button
             type="button"
             onClick={() => onStepFrames(-1)}
-            className="px-2 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white text-[11px] font-mono flex items-center gap-0.5 transition-colors cursor-pointer"
+            className="px-2 py-1.5 rounded-xl bg-surface hover:bg-surface-hover border border-border-main text-text-body hover:text-text-main text-[11px] font-mono flex items-center gap-0.5 transition-all cursor-pointer shadow-2xs active:scale-95"
             title="Step 1 Frame Backward (Hotkey: [)"
           >
             <ChevronLeft className="w-3.5 h-3.5" />
@@ -171,10 +174,10 @@ export const DirectorialTransportBar: React.FC<
           <button
             type="button"
             onClick={onTogglePlay}
-            className={`px-3.5 py-1 rounded-lg text-xs font-mono font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-md ${
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-mono font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm active:scale-95 ${
               isPlaying
-                ? 'bg-amber-500/20 border border-amber-500/50 text-amber-300'
-                : 'bg-sky-500 hover:bg-sky-400 text-slate-950'
+                ? 'bg-amber-500 text-white hover:bg-amber-600'
+                : 'bg-btn-primary-bg text-btn-primary-text hover:bg-btn-primary-hover'
             }`}
             title="Play / Pause (Hotkey: Space)"
           >
@@ -194,7 +197,7 @@ export const DirectorialTransportBar: React.FC<
           <button
             type="button"
             onClick={() => onStepFrames(1)}
-            className="px-2 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white text-[11px] font-mono flex items-center gap-0.5 transition-colors cursor-pointer"
+            className="px-2 py-1.5 rounded-xl bg-surface hover:bg-surface-hover border border-border-main text-text-body hover:text-text-main text-[11px] font-mono flex items-center gap-0.5 transition-all cursor-pointer shadow-2xs active:scale-95"
             title="Step 1 Frame Forward (Hotkey: ])"
           >
             <span>]</span>
@@ -204,10 +207,10 @@ export const DirectorialTransportBar: React.FC<
           <button
             type="button"
             onClick={onToggleLoopActiveShot}
-            className={`px-2 py-1 rounded-lg border text-[10px] font-mono flex items-center gap-1 transition-colors cursor-pointer ${
+            className={`px-2.5 py-1.5 rounded-xl border text-[10px] font-mono flex items-center gap-1 transition-all cursor-pointer shadow-2xs active:scale-95 ${
               loopActiveShot
-                ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-300'
-                : 'bg-slate-900 hover:bg-slate-800 border-slate-800 text-slate-400 hover:text-slate-200'
+                ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-600 dark:text-emerald-300 font-semibold'
+                : 'bg-surface hover:bg-surface-hover border-border-main text-text-muted hover:text-text-main'
             }`}
             title="Loop currently active shot"
           >
@@ -218,30 +221,30 @@ export const DirectorialTransportBar: React.FC<
           <button
             type="button"
             onClick={onToggleMute}
-            className="p-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-400 hover:text-slate-200 transition-colors cursor-pointer"
+            className="p-1.5 rounded-xl bg-surface hover:bg-surface-hover border border-border-main text-text-muted hover:text-text-main transition-all cursor-pointer shadow-2xs active:scale-95"
             title={isMuted ? 'Unmute Audio' : 'Mute Audio'}
           >
             {isMuted ? (
-              <VolumeX className="w-3.5 h-3.5 text-rose-400" />
+              <VolumeX className="w-3.5 h-3.5 text-rose-500" />
             ) : (
-              <Volume2 className="w-3.5 h-3.5 text-slate-300" />
+              <Volume2 className="w-3.5 h-3.5 text-text-muted" />
             )}
           </button>
 
           {/* Timecode Readout */}
-          <div className="pl-2 font-mono text-xs text-slate-300 flex items-center gap-1">
-            <span className="text-sky-300 font-bold">
+          <div className="px-2.5 py-1 rounded-xl bg-surface-muted border border-border-main font-mono text-xs text-text-muted flex items-center gap-1 shadow-inner">
+            <span className="text-text-main font-bold">
               {formatTimecode(currentSec)}
             </span>
-            <span className="text-slate-600">/</span>
-            <span className="text-slate-500">
+            <span className="text-text-faint">/</span>
+            <span className="text-text-faint">
               {formatTimecode(safeDuration)}
             </span>
           </div>
         </div>
 
         {/* Center: Slow-Motion & Variable Playback Speed Selector */}
-        <div className="flex items-center gap-1 bg-slate-950/90 p-0.5 rounded-lg border border-slate-800/90 font-mono text-[10px]">
+        <div className="flex items-center gap-0.5 bg-surface-muted p-0.5 rounded-xl border border-border-main font-mono text-[10px] shadow-xs">
           {PLAYBACK_RATES.map((rate) => {
             const active = Math.abs(playbackRate - rate) < 0.01;
             return (
@@ -249,10 +252,10 @@ export const DirectorialTransportBar: React.FC<
                 key={rate}
                 type="button"
                 onClick={() => onSetPlaybackRate(rate)}
-                className={`px-2 py-0.5 rounded transition-colors cursor-pointer ${
+                className={`px-2 py-0.5 rounded-lg transition-all cursor-pointer ${
                   active
-                    ? 'bg-sky-500/20 text-sky-300 border border-sky-500/40 font-bold'
-                    : 'text-slate-400 hover:text-slate-200'
+                    ? 'bg-surface text-text-main font-bold shadow-xs'
+                    : 'text-text-muted hover:text-text-main'
                 }`}
                 title={`Set playback speed to ${rate}x`}
               >
@@ -263,46 +266,46 @@ export const DirectorialTransportBar: React.FC<
         </div>
 
         {/* Right: 3-Way Camera POV Mode Toggle (Instant Cut) */}
-        <div className="flex items-center bg-slate-950/90 p-0.5 rounded-lg border border-slate-800/90 text-[11px] font-mono">
+        <div className="flex items-center bg-surface-muted p-0.5 rounded-xl border border-border-main text-[11px] font-mono shadow-xs">
           <button
             type="button"
             onClick={() => onSetCameraMode('scripted')}
-            className={`px-2.5 py-1 rounded-md flex items-center gap-1.5 transition-colors cursor-pointer ${
+            className={`px-2.5 py-1 rounded-lg flex items-center gap-1.5 transition-all cursor-pointer ${
               cameraMode === 'scripted'
-                ? 'bg-sky-500/20 text-sky-300 border border-sky-500/40 font-semibold'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-surface text-text-main font-semibold shadow-xs'
+                : 'text-text-muted hover:text-text-main'
             }`}
             title="Scripted Observer View (Driven by timeline while playing; releases to Free Orbit when paused)"
           >
-            <Eye className="w-3.5 h-3.5 text-sky-400" />
+            <Eye className="w-3.5 h-3.5 text-sky-500" />
             <span>Scripted Observer</span>
           </button>
 
           <button
             type="button"
             onClick={() => onSetCameraMode('free')}
-            className={`px-2.5 py-1 rounded-md flex items-center gap-1.5 transition-colors cursor-pointer ${
+            className={`px-2.5 py-1 rounded-lg flex items-center gap-1.5 transition-all cursor-pointer ${
               cameraMode === 'free'
-                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-semibold'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-surface text-text-main font-semibold shadow-xs'
+                : 'text-text-muted hover:text-text-main'
             }`}
             title="Free Orbit View (Unlocks OrbitControls even during playback)"
           >
-            <Orbit className="w-3.5 h-3.5 text-emerald-400" />
+            <Orbit className="w-3.5 h-3.5 text-emerald-500" />
             <span>Free Orbit</span>
           </button>
 
           <button
             type="button"
             onClick={() => onSetCameraMode('stage-pov')}
-            className={`px-2.5 py-1 rounded-md flex items-center gap-1.5 transition-colors cursor-pointer ${
+            className={`px-2.5 py-1 rounded-lg flex items-center gap-1.5 transition-all cursor-pointer ${
               cameraMode === 'stage-pov'
-                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 font-semibold'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-surface text-text-main font-semibold shadow-xs'
+                : 'text-text-muted hover:text-text-main'
             }`}
             title="Stage Camera POV (Instant cut to look directly through the 3D Stage Camera lens)"
           >
-            <Camera className="w-3.5 h-3.5 text-amber-400" />
+            <Camera className="w-3.5 h-3.5 text-amber-500" />
             <span>Stage Cam POV</span>
           </button>
         </div>

@@ -2,6 +2,7 @@
  * Resizable Split Workspace Container.
  * Side-by-side on desktop (`lg+`) with a smooth draggable divider bar,
  * collapsing to stacked top/bottom on narrow viewports.
+ * Enforces SceneFlow 60fps drag performance with .is-resizing-split.
  */
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
@@ -40,6 +41,10 @@ export const ResizableSplitWorkspace: React.FC<
   useEffect(() => {
     if (!isDraggingDivider) return;
 
+    if (typeof document !== 'undefined') {
+      document.body.classList.add('is-resizing-split');
+    }
+
     const handlePointerMove = (e: PointerEvent) => {
       const container = containerRef.current;
       if (!container) return;
@@ -55,6 +60,9 @@ export const ResizableSplitWorkspace: React.FC<
 
     const handlePointerUp = () => {
       setIsDraggingDivider(false);
+      if (typeof document !== 'undefined') {
+        document.body.classList.remove('is-resizing-split');
+      }
     };
 
     window.addEventListener('pointermove', handlePointerMove);
@@ -62,6 +70,9 @@ export const ResizableSplitWorkspace: React.FC<
     return () => {
       window.removeEventListener('pointermove', handlePointerMove);
       window.removeEventListener('pointerup', handlePointerUp);
+      if (typeof document !== 'undefined') {
+        document.body.classList.remove('is-resizing-split');
+      }
     };
   }, [isDraggingDivider, onCustomDragSplit]);
 
@@ -70,7 +81,7 @@ export const ResizableSplitWorkspace: React.FC<
   return (
     <div
       ref={containerRef}
-      className="relative flex-1 min-h-0 w-full flex flex-col lg:flex-row overflow-hidden bg-[#050811]"
+      className="relative flex-1 min-h-0 w-full flex flex-col lg:flex-row overflow-hidden bg-app"
     >
       {/* Left / Top: Reference Video Viewport (Continuously mounted so media clock & audio never pause or reset) */}
       <div
@@ -82,7 +93,7 @@ export const ResizableSplitWorkspace: React.FC<
         className={
           isVideoHidden
             ? 'fixed -left-[99999px] top-0 w-[320px] h-[180px] opacity-0 pointer-events-none overflow-hidden -z-50'
-            : 'w-full h-[38%] lg:h-full lg:w-[var(--video-pct)] shrink-0 flex flex-col bg-[#070b16] border-b lg:border-b-0 border-slate-800/80 overflow-hidden'
+            : 'w-full h-[38%] lg:h-full lg:w-[var(--video-pct)] shrink-0 flex flex-col bg-surface border-b lg:border-b-0 border-border-main overflow-hidden'
         }
         aria-hidden={isVideoHidden}
       >
@@ -95,17 +106,17 @@ export const ResizableSplitWorkspace: React.FC<
           onPointerDown={handlePointerDown}
           className={`hidden lg:flex w-2 shrink-0 items-center justify-center cursor-col-resize select-none transition-colors z-10 ${
             isDraggingDivider
-              ? 'bg-sky-500/40'
-              : 'bg-slate-900/90 hover:bg-sky-500/25 border-x border-slate-800/90'
+              ? 'bg-text-main'
+              : 'bg-surface-subtle hover:bg-surface-hover border-x border-border-main'
           }`}
           title="Drag to resize Video and 3D Diorama panels"
         >
-          <GripVertical className="w-3.5 h-3.5 text-slate-500" />
+          <GripVertical className="w-3.5 h-3.5 text-text-faint" />
         </div>
       )}
 
       {/* Right / Bottom: 3D Blueprint Diorama Viewport */}
-      <div className="flex-1 min-w-0 min-h-0 h-full relative overflow-hidden">
+      <div className="flex-1 min-w-0 min-h-0 h-full relative overflow-hidden bg-app">
         {rightStagePane}
       </div>
     </div>

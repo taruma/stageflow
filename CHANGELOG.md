@@ -7,7 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **SceneFlow Visual Design System Parity & Centralized `UI_TOKENS` (`src/ui/tokens/ui.ts`, `src/index.css`, `index.html`)**:
+  - Brought sister application **SceneFlow** (`Screenplay-Sync`) visual design language, tactile physical stationery pill chrome, and refined editorial micro-typography to StageFlow.
+  - Added centralized [`src/ui/tokens/ui.ts`](src/ui/tokens/ui.ts) bundling Tailwind class presets for layout shells (`appHeader`, `sectionTitle`), modals (`containerSm`, `containerMd`, `containerLibrary`, `header`, `footer`), dropdowns (`menu`, `header`, `item`), and tactile buttons (`actionPill`, `filePill`, `libraryPop`, `settingsPill`, `segmentedGroup`).
+  - Added Google Fonts preconnect and loaded `Libre Baskerville` alongside `Inter` and `JetBrains Mono` in [`index.html`](index.html).
+  - Defined CSS custom properties in [`src/index.css`](src/index.css) for 4 distinct theme categories (`light`, `warm`, `dark`, `pure-black`) mapping `--app-bg`, `--surface`, `--surface-subtle`, `--surface-muted`, `--border-main`, and text tokens.
+- **4-Mode App Shell Theme Engine & Transition Freezing (`src/hooks/useAppShellTheme.ts`, `src/ui/header/ThemeSelectorDropdown.tsx`)**:
+  - Added [`useAppShellTheme.ts`](src/hooks/useAppShellTheme.ts) managing `AppThemeMode` (`auto`, `dark`, `warm`, `light`) with synchronous `localStorage` persistence (`stageflow:ui:theme-mode`) in [`src/core/storage/localStorageUi.ts`](src/core/storage/localStorageUi.ts).
+  - Added `disableTransitionsTemporarily()` which freezes CSS transitions across the entire DOM for 1 frame during theme swaps, eliminating transition reflow stutter.
+  - Added [`ThemeSelectorDropdown.tsx`](src/ui/header/ThemeSelectorDropdown.tsx) in the right wing of `WorkspaceHeader.tsx` allowing 1-click switching between Dark (Obsidian Studio), Warm (Drafting Paper), Light (Warm Stone), and Auto (System Match).
+- **Decoupled 3D Diorama Stage Theme Mode (`DioramaThemeMode`, `src/hooks/useAppShellTheme.ts`, `src/stage/dioramaTheme.ts`)**:
+  - Decoupled the 3D diorama canvas theme from the 2D app shell theme, allowing users to keep the 3D diorama stage in a high-contrast dark blueprint void (`Dark` mode default) even when running the 2D app shell in `Warm` drafting paper or `Light` stone modes.
+  - Added `DioramaThemeMode` (`'dark' | 'match-app' | 'warm' | 'light'`) with synchronous `localStorage` persistence (`stageflow:ui:diorama-theme-mode`).
+  - Added a dedicated 3D Diorama Stage section inside [`ThemeSelectorDropdown.tsx`](src/ui/header/ThemeSelectorDropdown.tsx) for 1-click stage theme selection (`Dark`, `Match App`, `Warm`, `Light`).
+  - Added [`src/stage/dioramaTheme.ts`](src/stage/dioramaTheme.ts) mapping WebGL background clear color, scene fog, and metric floor grid materials dynamically to the effective category with **0 additional WebGL draw calls or shader passes**.
+  - In `dark` mode: obsidian floor (`#171514`) with cyan and slate precision grid lines.
+  - In `warm` mode: ivory drafting paper floor (`#faf7f0`) with subtle warm grey metric grid lines.
+  - In `light` mode: clean white floor (`#ffffff`) with warm stone grid lines.
+  - Updated `DioramaCanvas.tsx`, `StageCamMonitorCanvas.tsx`, and `BlueprintFloorGrid.tsx` to react to `themeCategory`.
+- **60fps Split Workspace Divider Dragging (`body.is-resizing-split`)**:
+  - Integrated `is-resizing-split` class in [`src/ui/ResizableSplitWorkspace.tsx`](src/ui/ResizableSplitWorkspace.tsx) during pointer drag, suppressing transitions and iframe pointer interception across the window for butter-smooth 60fps divider resizing.
+
 ### Changed
+- **Tactile Pill Restyling of 2D Directorial Chrome**:
+  - Restyled [`src/ui/WorkspaceHeader.tsx`](src/ui/WorkspaceHeader.tsx), [`src/ui/header/FileMenuDropdown.tsx`](src/ui/header/FileMenuDropdown.tsx), [`src/ui/header/LayoutSegmentedControl.tsx`](src/ui/header/LayoutSegmentedControl.tsx), and [`src/ui/header/ActiveScoreIndicator.tsx`](src/ui/header/ActiveScoreIndicator.tsx) with rounded pill geometry and subtle borders.
+  - Restyled [`src/ui/DirectorialTransportBar.tsx`](src/ui/DirectorialTransportBar.tsx) with SceneFlow pill buttons, rounded timecode readout, and theme-aware shot cut chips.
+  - Restyled [`src/ui/UniversalVideoViewport.tsx`](src/ui/UniversalVideoViewport.tsx) with rounded video player container card and tactile source mode badges (`YOUTUBE SYNC`, `LOCAL VIDEO`, `STAGE CAM SIMULATOR`).
+  - Restyled [`src/ui/ShotBreakdownHud.tsx`](src/ui/ShotBreakdownHud.tsx) and [`src/ui/CameraTelemetryCapsule.tsx`](src/ui/CameraTelemetryCapsule.tsx) with tactile pill cards and soft shadows.
+  - Restyled [`src/ui/ScoreLibraryModal.tsx`](src/ui/ScoreLibraryModal.tsx), [`src/ui/library/ScoreLibraryCard.tsx`](src/ui/library/ScoreLibraryCard.tsx), [`src/ui/YamlInspectorDrawer.tsx`](src/ui/YamlInspectorDrawer.tsx), [`src/ui/ManageProjectsModal.tsx`](src/ui/ManageProjectsModal.tsx), and [`src/ui/ConfirmResetModal.tsx`](src/ui/ConfirmResetModal.tsx).
 - **Choreography Score Library Aesthetic & Card Redesign (`src/ui/ScoreLibraryModal.tsx`, `src/ui/library/ScoreLibraryCard.tsx`)**:
   - Decomposed `ScoreLibraryModal.tsx` into a modular [`src/ui/library/ScoreLibraryCard.tsx`](src/ui/library/ScoreLibraryCard.tsx) component conforming to decoupling standards ($\le 250$ lines/file).
   - Replaced terminal-heavy 100% monospace styling with crisp typographic hierarchy: modern sans-serif (`font-sans`) for titles and subtitles, reserving `font-mono` for technical telemetry pills.

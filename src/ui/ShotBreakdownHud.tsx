@@ -2,6 +2,7 @@
  * Minimalist Top-Left HUD Overlay inside the 3D Diorama Viewport.
  * Displays active Shot Number, Label, Lens Focal Length (mm), Active Maneuver,
  * and brief Directorial Staging Note.
+ * Styled with SceneFlow tactile pill design tokens.
  */
 
 import React from 'react';
@@ -40,47 +41,47 @@ export const ShotBreakdownHud: React.FC<ShotBreakdownHudProps> = ({
   return (
     <div className="absolute top-3 left-3 max-w-md flex flex-col gap-1.5 pointer-events-none select-none z-10">
       {/* Primary Shot & Optics Pill */}
-      <div className="px-3 py-2 rounded-xl bg-slate-950/90 backdrop-blur-xl border border-slate-800/90 shadow-xl flex flex-col gap-1">
+      <div className="px-3 py-2 rounded-2xl bg-surface border border-border-main shadow-lg flex flex-col gap-1 text-text-main">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="px-1.5 py-0.5 rounded bg-amber-500/20 border border-amber-500/40 text-amber-300 text-[10px] font-mono font-bold uppercase tracking-wider flex items-center gap-1">
+          <span className="px-2 py-0.5 rounded-lg bg-btn-primary-bg text-btn-primary-text text-[10px] font-mono font-bold uppercase tracking-wider flex items-center gap-1 shadow-2xs">
             <Video className="w-3 h-3" />
             {shot ? `SHOT ${String(shot.shotNumber).padStart(2, '0')}` : 'STANDBY'}
           </span>
 
           {hasOffset && (
-            <span className="px-1.5 py-0.5 rounded bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 text-[10px] font-mono font-bold uppercase tracking-wider flex items-center gap-1">
+            <span className="px-2 py-0.5 rounded-lg bg-sky-500/15 border border-sky-500/30 text-sky-600 dark:text-sky-300 text-[10px] font-mono font-bold uppercase tracking-wider flex items-center gap-1">
               <Crosshair className="w-3 h-3" />
               OFFSET {offsetMag.toFixed(2)}m
             </span>
           )}
 
-          <span className="text-xs font-mono font-semibold text-slate-100 truncate">
+          <span className="text-xs font-mono font-semibold text-text-main truncate">
             {shot ? shot.label : score.title}
           </span>
         </div>
 
         {/* Optics & Maneuver Row */}
-        <div className="flex items-center gap-2 text-[10px] font-mono text-slate-400 pt-0.5 flex-wrap">
-          <span className="flex items-center gap-1 text-sky-300 font-semibold">
-            <Aperture className="w-3 h-3 text-sky-400" />
+        <div className="flex items-center gap-2 text-[10px] font-mono text-text-muted pt-0.5 flex-wrap">
+          <span className="flex items-center gap-1 text-text-main font-semibold">
+            <Aperture className="w-3 h-3 text-sky-500" />
             {lensMm}mm Prime · {aspectLabel} Gate
           </span>
-          <span className="text-slate-700">|</span>
-          <span className="flex items-center gap-1 text-amber-300/90 uppercase">
-            <Compass className="w-3 h-3 text-amber-400" />
+          <span className="text-border-main">|</span>
+          <span className="flex items-center gap-1 text-amber-600 dark:text-amber-300 uppercase">
+            <Compass className="w-3 h-3 text-amber-500" />
             {stageCam.maneuver}
           </span>
           {hasOffset && offset && (
             <>
-              <span className="text-slate-700">|</span>
-              <span className="text-cyan-300 font-mono">
+              <span className="text-border-main">|</span>
+              <span className="text-sky-600 dark:text-sky-300 font-mono">
                 Δ [{offset.x >= 0 ? `+${offset.x.toFixed(2)}` : offset.x.toFixed(2)},{' '}
                 {offset.y >= 0 ? `+${offset.y.toFixed(2)}` : offset.y.toFixed(2)},{' '}
                 {offset.z >= 0 ? `+${offset.z.toFixed(2)}` : offset.z.toFixed(2)}]m
               </span>
             </>
           )}
-          <span className="text-slate-700">|</span>
+          <span className="text-border-main">|</span>
           <span>
             {cameraMode === 'scripted' ? (
               isPlaying ? (
@@ -89,8 +90,8 @@ export const ShotBreakdownHud: React.FC<ShotBreakdownHudProps> = ({
                 'Paused · Free Orbit'
               )
             ) : cameraMode === 'stage-pov' ? (
-              <span className="text-amber-300 font-semibold inline-flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+              <span className="text-amber-600 dark:text-amber-300 font-semibold inline-flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
                 Stage Cam Viewfinder
               </span>
             ) : (
@@ -101,7 +102,7 @@ export const ShotBreakdownHud: React.FC<ShotBreakdownHudProps> = ({
 
         {/* Directorial Staging Description */}
         {shot?.description && (
-          <p className="text-[11px] font-sans text-slate-300/90 leading-snug pt-1 border-t border-slate-800/70 line-clamp-2">
+          <p className="text-[11px] font-sans text-text-muted leading-snug pt-1 border-t border-border-subtle line-clamp-2">
             {shot.description}
           </p>
         )}

@@ -24,6 +24,8 @@ It synchronizes a universal video player (**Local `.mp4`/`.webm`**, **YouTube UR
    - Automatically saves score drafts and custom imported scenes in browser **IndexedDB** (`idb`), while persisting UI layout preferences in **`localStorage`**. Heavy local dropped videos remain strictly in temporary session memory, and the YAML score remains the authoritative single source of truth for video playback.
 7. **Deterministic 60fps Viewport Video Recorder**:
    - Headless CLI tool (`npm run record`) powered by Playwright and FFmpeg that steps through scores frame-by-frame ($t_i = i / 60\text{s}$) with zero dropped frames. Exports Scripted Observer or Stage Cam POV viewports in 1080p/4K MP4, WebM, animated GIF, or PNG sequence with toggleable 3D HTML labels and composition guides.
+8. **SceneFlow Visual Design Parity & Decoupled Theme Engine**:
+   - Tactile pill chrome, delicate borders, and editorial typography (`Inter`, `Libre Baskerville`, `JetBrains Mono`) aligned with sister suite app **SceneFlow** (`Screenplay-Sync`). Features an instant 4-mode app theme switcher (`Dark Obsidian Studio`, `Warm Drafting Paper`, `Light Warm Stone`, `Auto System`) with transition-freeze performance, paired with an independently configurable 3D diorama stage theme (`Dark`, `Match App`, `Warm`, `Light`) so you can retain high-contrast dark blueprint void on the stage while working in warm drafting paper UI chrome (0 extra draw calls).
 
 ---
 

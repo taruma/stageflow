@@ -3,7 +3,12 @@
  * Safely handles environments where localStorage is disabled or restricted.
  */
 
-import type { LabelDisplayMode, SplitPreset } from '../types';
+import type {
+  AppThemeMode,
+  DioramaThemeMode,
+  LabelDisplayMode,
+  SplitPreset,
+} from '../types';
 
 const STORAGE_KEYS = {
   SPLIT_PRESET: 'stageflow:ui:split-preset',
@@ -11,6 +16,8 @@ const STORAGE_KEYS = {
   ACTIVE_SCENE_ID: 'stageflow:ui:active-scene-id',
   LABEL_MODE: 'stageflow:ui:label-mode',
   VIEWFINDER_GUIDES: 'stageflow:ui:viewfinder-guides',
+  THEME_MODE: 'stageflow:ui:theme-mode',
+  DIORAMA_THEME_MODE: 'stageflow:ui:diorama-theme-mode',
 } as const;
 
 export function loadStoredSplitPreset(): SplitPreset | null {
@@ -110,6 +117,51 @@ export function loadStoredViewfinderGuides(): boolean | null {
 export function saveStoredViewfinderGuides(showGuides: boolean): void {
   try {
     localStorage.setItem(STORAGE_KEYS.VIEWFINDER_GUIDES, String(showGuides));
+  } catch {
+    // Ignore storage quota or access errors
+  }
+}
+
+export function loadStoredThemeMode(): AppThemeMode | null {
+  try {
+    const val = localStorage.getItem(STORAGE_KEYS.THEME_MODE);
+    if (val === 'auto' || val === 'light' || val === 'warm' || val === 'dark') {
+      return val;
+    }
+  } catch {
+    // Ignore localStorage access restrictions
+  }
+  return null;
+}
+
+export function saveStoredThemeMode(mode: AppThemeMode): void {
+  try {
+    localStorage.setItem(STORAGE_KEYS.THEME_MODE, mode);
+  } catch {
+    // Ignore storage quota or access errors
+  }
+}
+
+export function loadStoredDioramaThemeMode(): DioramaThemeMode | null {
+  try {
+    const val = localStorage.getItem(STORAGE_KEYS.DIORAMA_THEME_MODE);
+    if (
+      val === 'dark' ||
+      val === 'match-app' ||
+      val === 'warm' ||
+      val === 'light'
+    ) {
+      return val;
+    }
+  } catch {
+    // Ignore localStorage access restrictions
+  }
+  return null;
+}
+
+export function saveStoredDioramaThemeMode(mode: DioramaThemeMode): void {
+  try {
+    localStorage.setItem(STORAGE_KEYS.DIORAMA_THEME_MODE, mode);
   } catch {
     // Ignore storage quota or access errors
   }

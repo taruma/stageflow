@@ -184,3 +184,23 @@ Scene entities (`character`, `prop`, `marker`) are rendered with unambiguous ori
   - `--preset isometric | top-down | front | side`: Sets fixed architectural perspective angles.
   - `--shot <shot_id>` or `--start <sec> --end <sec>`: Slices exact shot cues or timestamp windows.
   - `--res 1080p | 4k | 720p | square | vertical`, `--fps <number>`.
+
+### 4.11 SceneFlow Design System Parity & Decoupled Theme Engine (`src/ui/tokens/ui.ts`, `src/hooks/useAppShellTheme.ts`, `src/stage/dioramaTheme.ts`)
+- **Shared Creative Suite Visual Identity**: Aligned StageFlow's visual interface with sister application SceneFlow (`Screenplay-Sync`), pairing tactile physical stationery pill chrome, delicate borders (`border-border-main`), and editorial micro-typography (`Inter`, `Libre Baskerville`, `JetBrains Mono`).
+- **4-Mode App Shell Theme Engine (`useAppShellTheme.ts`, `ThemeSelectorDropdown.tsx`)**:
+  - `Dark`: Warm Obsidian Studio (`#0c0a09` app, `#171514` surface, `#2c2825` border) with cyan/amber diorama highlights. Default on cold start for optimal 3D contrast.
+  - `Warm`: Architectural Drafting Paper (`#f3efe6` app, `#faf7f0` surface, `#dfd7c5` border) with warm grey metric grid lines.
+  - `Light`: Clean Warm Stone (`#f5f5f4` app, `#ffffff` surface, `#e7e5e4` border).
+  - `Auto`: Resolves to the user's system OS preference (`prefers-color-scheme`).
+  - Stored synchronously in `localStorage` (`stageflow:ui:theme-mode`).
+- **Decoupled 3D Diorama Stage Theme (`DioramaThemeMode`)**:
+  - Directorial staging often demands a high-contrast dark blueprint void for spatial perspective and camera cone visibility, even when reading or authoring in warm drafting paper or light UI chrome.
+  - Supports 4 distinct diorama modes:
+    - `Dark` (Default): Retains high-contrast deep blueprint obsidian floor (`#171514`) with cyan and slate precision grid lines.
+    - `Match App`: Dynamically follows whatever theme the 2D app shell is currently set to.
+    - `Warm`: Architectural drafting paper floor (`#faf7f0`) with subtle warm grey metric grid lines.
+    - `Light`: Clean warm stone floor (`#ffffff`) with warm grey metric grid lines.
+  - Stored synchronously in `localStorage` (`stageflow:ui:diorama-theme-mode`).
+- **Transition Freezing (`disableTransitionsTemporarily()`)**: Instantaneous theme swapping without animation reflow lag or frame stutter by suppressing global CSS transitions for one frame during mode swaps.
+- **60fps Split Resize Performance (`body.is-resizing-split`)**: Freezes transitions and disables iframe pointer interception while dragging the split workspace divider bar.
+- **Adaptive 3D Diorama Stage Palette (`dioramaTheme.ts`)**: Background clear color, scene fog, and metric floor grid materials automatically evaluate via `getDioramaPalette(effectiveCategory)` with **0 additional WebGL draw calls or shader passes**.

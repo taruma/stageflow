@@ -2,14 +2,21 @@
  * True 3D Stage Cam Monitor Canvas.
  * Renders the 3D diorama scene directly through the illustrative Stage Camera's lens,
  * overlaid with an optical director's monitor HUD (safe-action guides, reticle, telemetry).
+ * Dynamically reacts to the active theme palette with zero extra draw calls.
  */
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Canvas } from '@react-three/fiber';
-import type { LabelDisplayMode, StageFrame, StageScore } from '../core/types';
+import type {
+  AppThemeCategory,
+  LabelDisplayMode,
+  StageFrame,
+  StageScore,
+} from '../core/types';
 import { radToDeg } from '../core/sphericalMath';
 import { BlueprintStageScene } from './BlueprintStageScene';
 import { StageCamViewRig } from './StageCamViewRig';
+import { getDioramaThemeColors } from './dioramaTheme';
 
 export interface StageCamMonitorCanvasProps {
   score: StageScore;
@@ -18,6 +25,7 @@ export interface StageCamMonitorCanvasProps {
   labelMode?: LabelDisplayMode;
   isPlaying?: boolean;
   showGuides?: boolean;
+  themeCategory?: AppThemeCategory;
 }
 
 export const StageCamMonitorCanvas: React.FC<StageCamMonitorCanvasProps> = ({
@@ -27,13 +35,18 @@ export const StageCamMonitorCanvas: React.FC<StageCamMonitorCanvasProps> = ({
   labelMode = 'all',
   isPlaying = false,
   showGuides = true,
+  themeCategory = 'dark',
 }) => {
   const pose = uiFrame.stageCamera.transform.pose;
   const yawDeg = radToDeg(pose.yaw);
   const rollDeg = radToDeg(pose.roll);
+  const themeColors = useMemo(
+    () => getDioramaThemeColors(themeCategory),
+    [themeCategory]
+  );
 
   return (
-    <div className="relative w-full h-full bg-[#050811] select-none overflow-hidden">
+    <div className="relative w-full h-full bg-app select-none overflow-hidden">
       {/* 1. True 3D WebGL Viewport locked to Stage Camera */}
       <Canvas
         gl={{ antialias: true, powerPreference: 'high-performance' }}
@@ -44,8 +57,8 @@ export const StageCamMonitorCanvas: React.FC<StageCamMonitorCanvasProps> = ({
           far: 150,
         }}
       >
-        <color attach="background" args={['#050811']} />
-        <fog attach="fog" args={['#050811', 16, 42]} />
+        <color attach="background" args={[themeColors.bg]} />
+        <fog attach="fog" args={[themeColors.fog, 16, 42]} />
 
         {/* Shared Diorama Scene (Lighting, Metric Floor Grid, Directional Mannequins) */}
         <BlueprintStageScene
@@ -55,6 +68,7 @@ export const StageCamMonitorCanvas: React.FC<StageCamMonitorCanvasProps> = ({
           labelMode={labelMode}
           isPlaying={isPlaying}
           cameraMode="stage-pov"
+          themeCategory={themeCategory}
         />
 
         {/* 60fps Stage Camera View Controller (Gated to cut atomically with UI state) */}
@@ -64,90 +78,73 @@ export const StageCamMonitorCanvas: React.FC<StageCamMonitorCanvasProps> = ({
       {/* 2. Optical Director's Monitor HUD Overlay */}
       <div className="absolute inset-0 pointer-events-none flex flex-col justify-between p-4 z-10">
         {/* Top Monitor Status Line */}
-        <div className="flex items-center justify-between text-[10px] font-mono tracking-wider">
-          <div className="px-2 py-0.5 rounded bg-slate-950/80 border border-amber-500/30 text-amber-300 font-semibold flex items-center gap-1.5 shadow-sm">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-            <span>OPTICAL STAGE CAM VIEW</span>
-            <span className="text-slate-500">· {score.aspectRatio} GATE</span>
+        <div className="flex items-center justify-between text-[11px] font-mono tracking-wider">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+            <span className="font-bold text-amber-500">STAGE CAM 01</span>
+            <span className="text-text-muted">|</span>
+            <span className="text-text-body font-semibold">
+              {Math.round(pose.focalLengthMm)}mm Full-Frame
+            </span>
           </div>
-          <div className="px-2 py-0.5 rounded bg-slate-950/80 border border-slate-800 text-sky-400 font-semibold shadow-sm">
-            LIVE 3D SIMULATOR
+
+          <div className="flex items-center gap-2 bg-surface/80 border border-border-main px-2 py-0.5 rounded-md shadow-xs">
+            <span className="text-text-muted">FOV</span>
+            <span className="text-text-main font-semibold">
+              {uiFrame.stageCamera.transform.fovDeg.toFixed(1)}°
+            </span>
+            <span className="text-border-main">·</span>
+            <span className="text-text-muted">ROLL</span>
+            <span
+              className={`font-semibold ${
+                Math.abs(rollDeg) >= 0.05
+                  ? 'text-violet-500'
+                  : 'text-text-main'
+              }`}
+            >
+              {rollDeg.toFixed(1)}°
+            </span>
           </div>
         </div>
 
-        {/* Center Optical Reticle & Safe-Action Box (Toggleable via showGuides) */}
+        {/* Center Optical Reticle & Rule-of-Thirds Grid */}
         {showGuides && (
-          <div className="absolute inset-4 sm:inset-6 border border-amber-500/25 pointer-events-none flex items-center justify-center">
-            {/* Rule of Thirds Guides */}
-            <div className="absolute inset-0 grid grid-cols-3 grid-rows-3 pointer-events-none opacity-20">
-              <div className="border-r border-b border-amber-400" />
-              <div className="border-r border-b border-amber-400" />
-              <div className="border-b border-amber-400" />
-              <div className="border-r border-b border-amber-400" />
-              <div className="border-r border-b border-amber-400" />
-              <div className="border-b border-amber-400" />
-              <div className="border-r border-b border-amber-400" />
-              <div className="border-r border-b border-amber-400" />
-              <div />
-            </div>
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            {/* Rule-of-Thirds Grid Lines */}
+            <div className="absolute inset-x-0 top-1/3 border-b border-amber-500/20" />
+            <div className="absolute inset-x-0 bottom-1/3 border-b border-amber-500/20" />
+            <div className="absolute inset-y-0 left-1/3 border-r border-amber-500/20" />
+            <div className="absolute inset-y-0 right-1/3 border-r border-amber-500/20" />
 
-            {/* Center Crosshair Ring */}
-            <div className="relative w-6 h-6 rounded-full border border-amber-400/60 flex items-center justify-center">
-              <div className="w-1.5 h-1.5 rounded-full bg-amber-400/80" />
-              <div className="absolute -top-2 w-[1px] h-2 bg-amber-400/60" />
-              <div className="absolute -bottom-2 w-[1px] h-2 bg-amber-400/60" />
-              <div className="absolute -left-2 h-[1px] w-2 bg-amber-400/60" />
-              <div className="absolute -right-2 h-[1px] w-2 bg-amber-400/60" />
+            {/* 90% Safe-Action Title Frame */}
+            <div className="absolute inset-8 sm:inset-12 border border-amber-500/30 rounded-xs pointer-events-none" />
+
+            {/* Center Focus Crosshair */}
+            <div className="relative w-6 h-6 flex items-center justify-center">
+              <div className="absolute w-4 h-px bg-amber-500/60" />
+              <div className="absolute h-4 w-px bg-amber-500/60" />
+              <div className="w-1.5 h-1.5 rounded-full border border-amber-500/80" />
             </div>
           </div>
         )}
 
-        {/* Bottom Optical Telemetry Bar */}
-        <div className="flex items-center justify-between px-3 py-1.5 rounded bg-slate-950/90 border border-amber-500/30 text-[11px] font-mono shadow-md">
-          <div className="text-amber-400 font-bold flex items-center gap-2">
-            <span>STAGE CAM MONITOR</span>
-            <span className="text-slate-500">·</span>
-            <span className="text-slate-200">
-              {Math.round(pose.focalLengthMm)}mm LENS
+        {/* Bottom Horizon & Telemetry Bar */}
+        <div className="flex items-center justify-between text-[10px] font-mono text-text-muted z-10">
+          <div className="flex items-center gap-1.5 bg-surface/80 border border-border-main px-2 py-0.5 rounded-md shadow-xs">
+            <span className="text-amber-500 font-bold">MANEUVER:</span>
+            <span className="text-text-main uppercase font-semibold">
+              {uiFrame.stageCamera.maneuver}
             </span>
-            <span className="text-slate-500">·</span>
-            <span className="text-slate-300">
-              DIST {pose.distance.toFixed(2)}m
-            </span>
-            <span className="text-slate-500">·</span>
-            <span className="text-slate-300">
-              YAW {yawDeg >= 0 ? `+${yawDeg.toFixed(1)}` : yawDeg.toFixed(1)}°
-            </span>
-            {Math.abs(rollDeg) >= 0.1 && (
-              <>
-                <span className="text-slate-500">·</span>
-                <span className="text-violet-300">
-                  ROLL {rollDeg >= 0 ? `+${rollDeg.toFixed(1)}` : rollDeg.toFixed(1)}°
-                </span>
-              </>
-            )}
-            {uiFrame.stageCamera.targetOffset &&
-              Math.hypot(
-                uiFrame.stageCamera.targetOffset.x,
-                uiFrame.stageCamera.targetOffset.y,
-                uiFrame.stageCamera.targetOffset.z
-              ) >= 0.01 && (
-                <>
-                  <span className="text-slate-500">·</span>
-                  <span className="text-cyan-300">
-                    OFFSET{' '}
-                    {Math.hypot(
-                      uiFrame.stageCamera.targetOffset.x,
-                      uiFrame.stageCamera.targetOffset.y,
-                      uiFrame.stageCamera.targetOffset.z
-                    ).toFixed(2)}
-                    m
-                  </span>
-                </>
-              )}
           </div>
-          <div className="text-sky-400 font-semibold">
-            T+ {uiFrame.timestampSec.toFixed(2)}s
+
+          <div className="flex items-center gap-2 bg-surface/80 border border-border-main px-2 py-0.5 rounded-md shadow-xs">
+            <span>
+              YAW: <strong className="text-text-main">{yawDeg.toFixed(1)}°</strong>
+            </span>
+            <span className="text-border-main">·</span>
+            <span>
+              DIST: <strong className="text-text-main">{pose.distance.toFixed(2)}m</strong>
+            </span>
           </div>
         </div>
       </div>

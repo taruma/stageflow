@@ -30,6 +30,7 @@ import { useMediaClock } from './hooks/useMediaClock';
 import { useStageFrameLoop } from './hooks/useStageFrameLoop';
 import { useFileDropLoader } from './hooks/useFileDropLoader';
 import { useScorePersistence } from './hooks/useScorePersistence';
+import { useAppShellTheme } from './hooks/useAppShellTheme';
 import { DioramaCanvas } from './stage/DioramaCanvas';
 import {
   WorkspaceHeader,
@@ -54,6 +55,8 @@ const isHeadlessRender =
   new URLSearchParams(window.location.search).get('mode') === 'headless-render';
 
 const InteractiveStudioApp: React.FC = () => {
+  const theme = useAppShellTheme();
+
   const [catalog, setCatalog] = useState<ScoreCatalogItem[]>(
     INITIAL_CATALOG_ITEMS
   );
@@ -393,15 +396,15 @@ const InteractiveStudioApp: React.FC = () => {
       onDragOver={fileDrop.handleDragOver}
       onDragLeave={fileDrop.handleDragLeave}
       onDrop={fileDrop.handleDrop}
-      className="relative w-full h-dvh flex flex-col bg-[#050811] text-slate-100 overflow-hidden"
+      className="relative w-full h-dvh flex flex-col bg-app text-text-main overflow-hidden"
     >
       {/* Drag-and-Drop Overlay Indicator */}
       {fileDrop.isDraggingOver && (
-        <div className="absolute inset-0 z-50 bg-sky-950/60 backdrop-blur-md border-2 border-dashed border-sky-400 flex flex-col items-center justify-center gap-2 pointer-events-none">
-          <span className="text-lg font-mono font-bold text-sky-200">
+        <div className="absolute inset-0 z-50 bg-overlay-heavy backdrop-blur-md border-2 border-dashed border-text-main flex flex-col items-center justify-center gap-2 pointer-events-none">
+          <span className="text-lg font-mono font-bold text-text-main">
             Drop .MP4 / .WebM Video or .YAML Choreography Score
           </span>
-          <span className="text-xs font-mono text-sky-400">
+          <span className="text-xs font-mono text-text-muted">
             Videos are held in session memory; YAML scores are saved in IndexedDB
           </span>
         </div>
@@ -415,12 +418,18 @@ const InteractiveStudioApp: React.FC = () => {
         isYamlDrawerOpen={isYamlDrawerOpen}
         storageStatus={scorePersistence.storageStatus}
         isLibraryOpen={isLibraryOpen}
+        themeMode={theme.themeMode}
+        effectiveThemeCategory={theme.effectiveCategory}
+        dioramaThemeMode={theme.dioramaThemeMode}
+        effectiveDioramaCategory={theme.effectiveDioramaCategory}
         onSelectScene={handleSelectScene}
         onSelectSplitPreset={handleSelectSplitPreset}
         onToggleYamlDrawer={handleToggleYamlDrawer}
         onUploadFiles={fileDrop.processFiles}
         onExportActiveScore={handleExportActiveScore}
         onOpenLibrary={() => setIsLibraryOpen(true)}
+        onSelectThemeMode={theme.setThemeMode}
+        onSelectDioramaThemeMode={theme.setDioramaThemeMode}
         onOpenManageProjects={() => setIsManageProjectsOpen(true)}
         onCreateBlankProject={async () => {
           const blank = await scorePersistence.createBlankScore();
@@ -449,6 +458,7 @@ const InteractiveStudioApp: React.FC = () => {
             isPlaying={mediaClock.isPlaying}
             labelMode={labelMode}
             showGuides={showGuides}
+            themeCategory={theme.effectiveDioramaCategory}
             onApplyVideoUrlOverride={(url) => {
               setVideoOverrideUrl(url);
               mediaClock.seek(0);
@@ -469,6 +479,7 @@ const InteractiveStudioApp: React.FC = () => {
               evaluateTick60fps={stageLoop.evaluateTick60fps}
               onFreeOrbitPoseChange={stageLoop.notifyFreeOrbitChange}
               labelMode={labelMode}
+              themeCategory={theme.effectiveDioramaCategory}
             />
 
             {/* Stage Camera POV Director's Optical Viewfinder Overlay */}
