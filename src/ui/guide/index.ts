@@ -1,4 +1,2 @@
-export {
-  ScoreAuthoringGuideModal,
-  type ScoreAuthoringGuideModalProps,
-} from './ScoreAuthoringGuideModal';
+export { ScoreAuthoringGuideView } from './ScoreAuthoringGuideView';
+export * from './guideUtils';

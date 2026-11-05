@@ -199,12 +199,12 @@ export const FileMenuDropdown: React.FC<FileMenuDropdownProps> = ({
             </button>
 
             <a
-              href="https://github.com/taruma/stageflow/blob/main/docs/YAML_AUTHORING_GUIDE.md"
+              href="?mode=guide"
               target="_blank"
               rel="noopener noreferrer"
               onClick={onClose}
               className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-text-muted hover:text-text-main hover:bg-surface-subtle transition-colors text-left"
-              title="Open YAML Authoring Guide documentation in a new tab"
+              title="Open StageFlow YAML Score Authoring Manual in a new tab"
             >
               <span>YAML Authoring Guide</span>
               <ExternalLink className="w-3 h-3 text-text-faint" />

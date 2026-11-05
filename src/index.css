@@ -145,37 +145,71 @@ body,
   color: var(--text-main);
 }
 
+/* Standalone documentation guide mode (?mode=guide): restore natural page scrolling */
+html[data-mode="guide"] {
+  height: auto;
+  min-height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+html[data-mode="guide"] body {
+  height: auto;
+  min-height: 100%;
+  overflow: visible !important;
+  user-select: auto;
+  touch-action: auto;
+}
+
+html[data-mode="guide"] #root {
+  height: auto;
+  min-height: 100%;
+  overflow: visible;
+  user-select: auto;
+}
+
 body {
   font-family: var(--font-sans);
 }
 
-/* Custom slim scrollbar for YAML Editor Studio, modals and dropdowns */
+/* Custom slim scrollbar for YAML Editor Studio, code blocks, modals and dropdowns */
 .custom-scrollbar,
-.cm-scroller {
+.cm-scroller,
+pre {
   scrollbar-width: thin;
   scrollbar-color: var(--border-main) transparent;
 }
 
 .custom-scrollbar::-webkit-scrollbar,
-.cm-scroller::-webkit-scrollbar {
+.cm-scroller::-webkit-scrollbar,
+pre::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track,
-.cm-scroller::-webkit-scrollbar-track {
+.cm-scroller::-webkit-scrollbar-track,
+pre::-webkit-scrollbar-track {
   background: transparent;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb,
-.cm-scroller::-webkit-scrollbar-thumb {
+.cm-scroller::-webkit-scrollbar-thumb,
+pre::-webkit-scrollbar-thumb {
   background: var(--border-main);
   border-radius: 9999px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover,
-.cm-scroller::-webkit-scrollbar-thumb:hover {
+.cm-scroller::-webkit-scrollbar-thumb:hover,
+pre::-webkit-scrollbar-thumb:hover {
   background: var(--text-muted);
+}
+
+.custom-scrollbar::-webkit-scrollbar-corner,
+.cm-scroller::-webkit-scrollbar-corner,
+pre::-webkit-scrollbar-corner {
+  background: transparent;
 }
 
 /* Disable all transitions and pointer events while resizing split panels for 60fps drag performance */

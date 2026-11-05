@@ -170,14 +170,15 @@ Adopts professional 3D viewport convention (Blender, Unreal Engine, Maya) distri
 - **Debounced Live Sync & Re-Evaluation (~150ms)**: When editing custom projects, typing updates locally with zero input latency at 60fps/144fps, while `parseStageScore` and 3D diorama re-evaluation trigger after 150ms of typing inactivity, debouncing writes to IndexedDB and preventing WebGL stutter.
   - **Playback & Focus Collision Guards**: Protects in-flight typing against background 10Hz React UI sync renders during looped playback via a three-tier guard (`lastDispatchedTextRef` updated upon actual debounce dispatch, `view.hasFocus` write protection, and `sceneId` transition boundary detection with safe selection clamping).
 - **Top Panel Header (`YamlEditorHeader.tsx`)**:
-  - Compact title bar housing the editor title (`Live YAML Score`), a status badge (`● Live Sync` with pulsing dot or `Read-Only` for bundled blueprints), an in-app **`[ Guide ]`** modal trigger button, and an isolated **`[ ✕ ]`** close button.
+  - Compact title bar housing the editor title (`Live YAML Score`), a status badge (`● Live Sync` with pulsing dot or `Read-Only` for bundled blueprints), a **`[ Guide ]`** trigger button (opening the authoring manual in a new tab at `?mode=guide`), and an isolated **`[ ✕ ]`** close button.
   - Omit redundant clutter (`Meters...` subtitle, storage badges, and mathematical slogans) for a clean directorial look.
 - **Directorial Action Bar (`YamlActionBar.tsx`)**:
   - Dedicated sub-header strip housing primary buffer actions: **`[ Wrap ]`** (toggles soft line-wrapping on `.cm-scroller` via a dynamic CodeMirror `Compartment`, persisted in `localStorage` under `stageflow:ui:editor-word-wrap`), **`[ Copy ]`** (copies full YAML with visual feedback), and **`[ Fork to Edit → ]`** (when viewing bundled blueprints).
   - Redundant project-level actions (`Duplicate`, `Reset`) are omitted as they reside in the Score Library.
-- **In-App Score Authoring Guide Modal (`ScoreAuthoringGuideModal.tsx`)**:
-  - Lazy-loaded (`React.lazy`) interactive documentation modal rendering `docs/YAML_AUTHORING_GUIDE.md` with full Markdown tables, code blocks, and KaTeX LaTeX math support.
-  - Code-split into a separate async chunk, imposing 0 KB initial load and zero WebGL diorama playback overhead. Features tactical search filtering and quick section jump anchors.
+- **Dedicated Score Authoring Guide View (`ScoreAuthoringGuideView.tsx`, `?mode=guide`)**:
+  - Mounted when `?mode=guide` is present in the URL, rendering `docs/YAML_AUTHORING_GUIDE.md` in a dedicated, full-window Markdown + KaTeX reading environment.
+  - Skips mounting the 3D diorama canvas, video player, and transport deck entirely (zero GPU/WebGL overhead).
+  - Features StageFlow theme synchronization, quick section jump anchors, tactical search filtering, and a `[ ← Back to Studio ]` / tab-close button.
 - **Conditional Diagnostics & Alert Banner (`YamlDiagnosticsBanner.tsx`)**:
   - Renders `null` when the score is valid, giving maximum vertical space directly to the CodeMirror 6 canvas without an empty idle strip.
   - Displays exact line and column numbers on syntax errors (`Line X, Col Y`) extracted from `YAMLParseError.linePos` with a 1-click **`[ Jump ]`** button that positions the cursor and scrolls smoothly to the invalid line.

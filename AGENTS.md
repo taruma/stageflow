@@ -190,7 +190,8 @@ stageflow/
 │   │   │   ├── useCodeMirrorTheme.ts # Dynamic theme extension for Dark/Warm/Light/Pure Black
 │   │   │   └── useYamlEditor.ts     # Compartments, external sync guard & ~150ms debouncer
 │   │   ├── guide/                   # In-app choreography score authoring manual
-│   │   │   └── ScoreAuthoringGuideModal.tsx # Lazy-loaded Markdown + KaTeX LaTeX documentation dialog
+│   │   │   ├── ScoreAuthoringGuideView.tsx # Standalone Markdown + KaTeX manual view (?mode=guide)
+│   │   │   └── guideUtils.ts        # Section anchor mappings, recursive text & slug extractors
 │   │   ├── library/                 # Modular score library submodules
 │   │   │   ├── ScoreLibraryCard.tsx # Cinematic choreography score card with color tags & telemetry
 │   │   │   ├── ScoreInspectorPane.tsx # Rich master-detail choreography inspector & action bar

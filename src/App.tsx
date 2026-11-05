@@ -50,9 +50,25 @@ import { DirectorialTransportBar } from './ui/DirectorialTransportBar';
 import { DioramaOverlayContainer } from './ui/DioramaOverlayContainer';
 import { HeadlessRecorderView } from './recorder/HeadlessRecorderView';
 
-const isHeadlessRender =
-  typeof window !== 'undefined' &&
-  new URLSearchParams(window.location.search).get('mode') === 'headless-render';
+const ScoreAuthoringGuideView = React.lazy(() =>
+  import('./ui/guide').then((m) => ({ default: m.ScoreAuthoringGuideView }))
+);
+
+const urlParams =
+  typeof window !== 'undefined'
+    ? new URLSearchParams(window.location.search)
+    : null;
+
+const isHeadlessRender = urlParams?.get('mode') === 'headless-render';
+const isGuideMode = urlParams?.get('mode') === 'guide';
+
+if (typeof document !== 'undefined' && isGuideMode) {
+  document.documentElement.setAttribute('data-mode', 'guide');
+  document.body.classList.remove('overflow-hidden');
+}
+
+
+
 
 const InteractiveStudioApp: React.FC = () => {
   const theme = useAppShellTheme();
@@ -582,6 +598,13 @@ const InteractiveStudioApp: React.FC = () => {
 export const App: React.FC = () => {
   if (isHeadlessRender) {
     return <HeadlessRecorderView />;
+  }
+  if (isGuideMode) {
+    return (
+      <React.Suspense fallback={null}>
+        <ScoreAuthoringGuideView />
+      </React.Suspense>
+    );
   }
   return <InteractiveStudioApp />;
 };
