@@ -49,6 +49,7 @@ import { LabelDisplayModeToggle } from './ui/LabelDisplayModeToggle';
 import { StageCamViewfinderOverlay } from './ui/StageCamViewfinderOverlay';
 import { CameraModeSwitcher } from './ui/CameraModeSwitcher';
 import { CameraPresetControls } from './ui/CameraPresetControls';
+import { CompactDioramaHeader } from './ui/CompactDioramaHeader';
 import type { CameraPresetType } from './stage/cameraPresets';
 import { HeadlessRecorderView } from './recorder/HeadlessRecorderView';
 
@@ -109,6 +110,27 @@ const InteractiveStudioApp: React.FC = () => {
   const dismissToast = useCallback((id: string) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
+
+  // Measure diorama pane width to toggle between standard and compact header (<580px)
+  const stageContainerRef = useRef<HTMLDivElement | null>(null);
+  const [dioramaWidth, setDioramaWidth] = useState<number>(1000);
+
+  useEffect(() => {
+    const el = stageContainerRef.current;
+    if (!el) return;
+    const updateWidth = () => {
+      const rect = el.getBoundingClientRect();
+      if (rect.width > 0) {
+        setDioramaWidth(rect.width);
+      }
+    };
+    updateWidth();
+    const ro = new ResizeObserver(updateWidth);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  const isNarrowDiorama = dioramaWidth < 580;
 
   const initialItem =
     INITIAL_CATALOG_ITEMS.find((item) => item.id === activeSceneId) ??
@@ -499,7 +521,7 @@ const InteractiveStudioApp: React.FC = () => {
           />
         }
         rightStagePane={
-          <div className="relative w-full h-full isolate">
+          <div ref={stageContainerRef} className="relative w-full h-full isolate">
             {/* 3D React Three Fiber Blueprint Diorama */}
             <DioramaCanvas
               score={activeScore}
@@ -524,38 +546,57 @@ const InteractiveStudioApp: React.FC = () => {
               />
             )}
 
-            {/* Top-Left Shot & Lens Breakdown HUD (De-duplicated & Collapsible) */}
-            <ShotBreakdownHud
-              score={activeScore}
-              frame={stageLoop.uiSnapshot.frame}
-              cameraMode={stageLoop.cameraMode}
-              isPlaying={mediaClock.isPlaying}
-            />
-
-            {/* Top-Center Camera POV Mode Switcher (Elevated from Transport Deck) */}
-            <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
-              <CameraModeSwitcher
+            {/* Narrow Viewport: Dedicated Unified Compact Header (<580px) */}
+            {isNarrowDiorama ? (
+              <CompactDioramaHeader
+                score={activeScore}
+                frame={stageLoop.uiSnapshot.frame}
                 cameraMode={stageLoop.cameraMode}
                 onSetCameraMode={stageLoop.setCameraMode}
-              />
-            </div>
-
-            {/* Top-Right Overlays: Camera Presets & Display Controls */}
-            <div className="absolute top-3 right-3 z-10 flex items-center gap-2 pointer-events-auto select-none">
-              <CameraPresetControls onSelectPreset={handleSelectCameraPreset} />
-              <LabelDisplayModeToggle
+                onSelectPreset={handleSelectCameraPreset}
                 labelMode={labelMode}
                 onSelectLabelMode={handleSelectLabelMode}
                 showGuides={showGuides}
                 onToggleGuides={handleToggleGuides}
-                cameraMode={stageLoop.cameraMode}
               />
-            </div>
+            ) : (
+              <>
+                {/* Top-Left Shot & Lens Breakdown HUD (De-duplicated & Collapsible) */}
+                <ShotBreakdownHud
+                  score={activeScore}
+                  frame={stageLoop.uiSnapshot.frame}
+                  cameraMode={stageLoop.cameraMode}
+                  isPlaying={mediaClock.isPlaying}
+                />
 
-            {/* Bottom-Right Authoring Telemetry Capsule + 1-Click YAML Copy */}
-            <CameraTelemetryCapsule
-              pose={stageLoop.uiSnapshot.liveViewportPose}
-            />
+                {/* Top-Center Camera POV Mode Switcher (Elevated from Transport Deck) */}
+                <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
+                  <CameraModeSwitcher
+                    cameraMode={stageLoop.cameraMode}
+                    onSetCameraMode={stageLoop.setCameraMode}
+                  />
+                </div>
+
+                {/* Top-Right Overlays: Camera Presets & Display Controls */}
+                <div className="absolute top-3 right-3 z-10 flex items-center gap-2 pointer-events-auto select-none">
+                  <CameraPresetControls onSelectPreset={handleSelectCameraPreset} />
+                  <LabelDisplayModeToggle
+                    labelMode={labelMode}
+                    onSelectLabelMode={handleSelectLabelMode}
+                    showGuides={showGuides}
+                    onToggleGuides={handleToggleGuides}
+                    cameraMode={stageLoop.cameraMode}
+                  />
+                </div>
+              </>
+            )}
+
+            {/* Bottom-Right Authoring Telemetry Capsule + 1-Click YAML Copy (Hidden when narrow to maximize clean 3D stage area) */}
+            {!isNarrowDiorama && (
+              <CameraTelemetryCapsule
+                pose={stageLoop.uiSnapshot.liveViewportPose}
+              />
+            )}
           </div>
         }
       />

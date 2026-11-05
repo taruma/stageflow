@@ -116,13 +116,14 @@ Scene entities (`character`, `prop`, `marker`) are rendered with unambiguous ori
     - **Unified Project Lifecycle Actions**: Direct inline **Rename**, **Duplicate**, **Export (.yaml)**, and **Delete** for custom projects (eliminating the redundant separate project management modal), alongside **Fork as Custom** for bundled blueprints and **Load Score into Studio**.
 - **Desktop (`lg+`)**: Side-by-side split between the Left Video Viewport and Right 3D Diorama Stage, separated by a smooth pointer-drag divider bar (`18%` to `82%` clamp).
 - **Workspace Layout Modes**:
-  - `Split`: Side-by-side Video and 3D Diorama Stage. Remembers the user's customized drag ratio (defaults to 50%).
+  - `Split`: Side-by-side Video and 3D Diorama Stage. Remembers the user's customized drag ratio (defaults to **30% Video / 70% 3D Diorama** for maximum spatial staging area).
   - `Full`: Collapses the video panel to 0% for full-viewport 3D inspection while keeping the reference video/YouTube player mounted off-screen so background media playback, audio, and clock sync continue seamlessly.
 - **Narrow Screens (`< lg`)**: Responsively stacks the Video Panel (`38%` height) above the 3D Diorama Stage (`62%` height) and hides the center segmented layout presets to prevent header crowding.
 
 ### 4.2 Authoring Telemetry Capsule (`CameraTelemetryCapsule.tsx`)
 - Floating bottom-right glassmorphic badge inside the 3D viewport displaying live **human degrees and metric meters** (`Pitch° / Yaw° · Distance(m) · (X, Y, Z)`).
 - **Live Free-Orbit Tracking**: Updates in real time as the user orbits/pans/zooms via `OrbitControls` (`cartesianToSpherical`).
+- **Narrow Viewport Auto-Hiding**: When the diorama pane width drops below the $580\text{px}$ narrow threshold, the capsule is automatically unmounted to keep the bottom 3D stage area 100% clean and unobstructed.
 - **1-Click YAML Snippet Copy**: Clicking the capsule copies a formatted YAML camera block directly to the clipboard:
   ```yaml
   target: [0.00, 1.10, 0.00]
@@ -131,6 +132,13 @@ Scene entities (`character`, `prop`, `marker`) are rendered with unambiguous ori
   yaw: 38.0
   lens: 35mm
   ```
+
+### 4.3 Dedicated Compact Diorama Header (`CompactDioramaHeader.tsx` — `< 580px`)
+- When the diorama pane width drops below $580\text{px}$ (e.g. in extreme split mode or on compact screens), `src/App.tsx` dynamically switches from the distributed top overlay trio to a dedicated, unified compact header mounted at `top-3 left-3 right-3`:
+  - **Left Wing**: `#xx` tag and clean shot title with a click-to-expand details popover displaying focal length, gate aspect ratio, and maneuver note.
+  - **Center Wing**: Streamlined 3-way segmented Camera POV Switcher (`Scripted`, `Free Orbit`, `Stage Cam`).
+  - **Right Wing**: Unified `[ View ▾ ]` popover consolidating 1-click angle presets (Top, Iso, Front, Side, Reset), 3D label display modes (All, Cam, Off), and viewfinder guides toggle into an accessible, collision-free dropdown.
+  - **Outside Click Dismissal**: Automatically closes open popovers on outside pointer interactions.
 
 ### 4.3 Slide-Out Live YAML Score Drawer (`YamlInspectorDrawer.tsx`)
 - Toggled via the top-right `[ YAML Score ]` button (closes with `Escape` or `X`).

@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Dedicated Compact Diorama Header for Narrow Viewports (`CompactDioramaHeader.tsx`, `App.tsx`)**:
+  - Implemented real-time diorama container measurement via `ResizeObserver` with a narrow threshold at $580\text{px}$.
+  - When diorama width $< 580\text{px}$ (e.g. extreme split view or compact viewports), replaces the three separate floating overlays (`ShotBreakdownHud`, `CameraModeSwitcher`, and `CameraPresetControls` + `LabelToggle`) with a dedicated unified header mounted at `top-3 left-3 right-3`.
+  - Integrates an active shot chip with click-to-expand details popover, streamlined 3-way camera mode switcher, and a consolidated `[ View ▾ ]` dropdown menu housing camera presets (Top, Iso, Front, Side, Reset), 3D label display modes, and optical guides toggle with click-outside dismissal.
+- **Narrow Viewport Telemetry Auto-Hiding (`App.tsx`, `CameraTelemetryCapsule.tsx`)**:
+  - Automatically unmounts the bottom-right `CameraTelemetryCapsule` when diorama width $< 580\text{px}$, leaving the narrow 3D diorama stage 100% clean and unobstructed with zero floating chrome blocking the floor or actors.
+- **30/70 Default Workspace Split Ratio (`ResizableSplitWorkspace.tsx`)**:
+  - Updated initial workspace split from 50/50 to **30% Reference Video / 70% 3D Blueprint Diorama**, providing an expansive, ergonomic 3D staging and blocking canvas by default upon application launch.
 - **Fluid Adaptive Diorama Viewport Framing (Approach A — `computeAdaptiveDioramaFovDeg`, `ObserverCameraRig.tsx`, `opticsMath.ts`)**:
   - Implemented dynamic horizontal stage extent preservation for `'scripted'` and `'free'` observer modes, analytically expanding canvas vertical FOV when split workspace aspect ratio drops below 16:9 ($<1.77$) so that the full stage width visible in 16:9 recordings remains completely visible without side clipping or letterboxing.
   - Added unit test suite in `tests/unit/opticsMath.test.ts` verifying FOV preservation across 16:9, ultrawide, and narrow split viewports.

@@ -20,14 +20,14 @@ export const ResizableSplitWorkspace: React.FC<
   ResizableSplitWorkspaceProps
 > = ({ splitPreset, onCustomDragSplit, leftVideoPane, rightStagePane }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const [videoWidthPct, setVideoWidthPct] = useState<number>(50);
-  const lastSplitWidthRef = useRef<number>(50);
+  const [videoWidthPct, setVideoWidthPct] = useState<number>(30);
+  const lastSplitWidthRef = useRef<number>(30);
   const [isDraggingDivider, setIsDraggingDivider] = useState(false);
 
   // Sync percentage whenever a header preset is clicked
   useEffect(() => {
     if (splitPreset === 'split') {
-      setVideoWidthPct(lastSplitWidthRef.current > 1 ? lastSplitWidthRef.current : 50);
+      setVideoWidthPct(lastSplitWidthRef.current > 1 ? lastSplitWidthRef.current : 30);
     } else if (splitPreset === 'full') {
       setVideoWidthPct(0);
     }
