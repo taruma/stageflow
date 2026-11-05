@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **High-Density Compact Score Library Navigation & Keyboard Shortcuts (`src/ui/library/ScoreLibraryCard.tsx`, `src/ui/ScoreLibraryModal.tsx`)**:
+  - Refactored score list cards into ultra-compact, high-density ~50px 2-line rows, dropping item vertical height by ~60% and increasing visible items from ~3.5 to 9–10 scores simultaneously without scrolling.
+  - Formatted Line 1 with color-coded blueprint tag (`BP 01`–`BP 05`, `CUSTOM`) and clean `Inter` (`font-sans text-xs font-semibold`) un-truncated title.
+  - Formatted Line 2 with precision tabular telemetry in `JetBrains Mono` (`font-mono text-[10px]`) displaying media engine source badge (`Simulator`, `YouTube`, `Local`), duration (`30.0s`), shot count (`17 shots`), and aspect ratio (`2.39:1`) delimited by subtle mid-dots (`·`).
+  - Added full keyboard arrow navigation (`↑` / `ArrowUp` and `↓` / `ArrowDown`) to step through scores effortlessly, instantly updating the selected score, right-column inspector, and 2D vector stage minimap in real time.
+  - Added `Enter` key shortcut to load the selected score directly into the diorama studio and close the modal (safely bypassed when typing in inputs).
+  - Added sticky section headers (`BUNDLED BLUEPRINTS` vs `CUSTOM PROJECTS`) with count badges in the `All` tab to provide clear structural orientation across long project lists.
 - **Choreography Score Library Master-Detail Elevation & 2D SVG Stage Minimap (`src/ui/ScoreLibraryModal.tsx`, `src/ui/library/ScoreStageMinimap.tsx`, `src/ui/library/ScoreInspectorPane.tsx`)**:
   - Elevated the score library from a basic 2-column card grid into a spacious 2-column **Master-Detail Studio Hub** (`max-w-5xl`), featuring a fast-scrolling score list on the left (~40%) and a comprehensive Choreography Inspector on the right (~60%).
   - Added [`ScoreStageMinimap.tsx`](src/ui/library/ScoreStageMinimap.tsx) generating a pure 2D vector SVG top-down stage schematic (metric grid, character proxy circles with facing chevrons, and camera trajectory cones) derived directly from in-memory score geometry in $< 0.1\text{ms}$ with **0 WebGL overhead and 0 asset downloads**, automatically supporting both factory blueprints and user-created custom scores.

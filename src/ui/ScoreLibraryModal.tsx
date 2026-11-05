@@ -1,10 +1,11 @@
 /**
  * Accessible Score Library Modal for StageFlow (2-Column Master-Detail Layout).
- * Displays bundled factory blueprints and custom user scores with rich metadata,
- * procedural 2D SVG stage minimap, media engine classification, and unified project lifecycle management.
+ * Displays bundled factory blueprints and custom user scores with high-density compact rows,
+ * keyboard arrow navigation (↑ / ↓ / Enter), sticky section headers, procedural 2D SVG stage minimap,
+ * and unified project lifecycle management.
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   Clapperboard,
   Plus,
@@ -53,6 +54,7 @@ export const ScoreLibraryModal: React.FC<ScoreLibraryModalProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedScoreId, setSelectedScoreId] = useState<string>(activeSceneId);
   const [mobileView, setMobileView] = useState<'list' | 'details'>('list');
+  const listContainerRef = useRef<HTMLDivElement>(null);
 
   // Synchronize initialTab and selectedScoreId when modal opens
   useEffect(() => {
@@ -101,12 +103,64 @@ export const ScoreLibraryModal: React.FC<ScoreLibraryModalProps> = ({
     );
   }, [catalog, activeTab, bundledScores, customScores, searchQuery]);
 
+  // Grouped lists for the "All" tab
+  const { bundledFiltered, customFiltered } = useMemo(() => {
+    return {
+      bundledFiltered: filteredScores.filter((item) => !item.isCustom),
+      customFiltered: filteredScores.filter((item) => item.isCustom),
+    };
+  }, [filteredScores]);
+
   // Find currently selected score object, falling back to first filtered item
   const selectedScore = useMemo(() => {
     const found = catalog.find((item) => item.id === selectedScoreId);
     if (found) return found;
     return filteredScores[0] || catalog[0] || null;
   }, [catalog, selectedScoreId, filteredScores]);
+
+  // Keyboard navigation: ArrowUp, ArrowDown, Enter
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyNav = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') return;
+
+      const isInput =
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement;
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        const currentIndex = filteredScores.findIndex(
+          (s) => s.id === selectedScoreId
+        );
+        const nextIndex = Math.min(filteredScores.length - 1, currentIndex + 1);
+        if (filteredScores[nextIndex]) {
+          setSelectedScoreId(filteredScores[nextIndex].id);
+        }
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        const currentIndex = filteredScores.findIndex(
+          (s) => s.id === selectedScoreId
+        );
+        const prevIndex = Math.max(0, currentIndex - 1);
+        if (filteredScores[prevIndex]) {
+          setSelectedScoreId(filteredScores[prevIndex].id);
+        }
+      } else if (e.key === 'Enter') {
+        // If actively typing inside search or rename input, let input handle Enter
+        if (isInput) return;
+        if (selectedScore) {
+          e.preventDefault();
+          onSelectScene(selectedScore.id);
+          onClose();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyNav);
+    return () => window.removeEventListener('keydown', handleKeyNav);
+  }, [isOpen, filteredScores, selectedScoreId, selectedScore, onSelectScene, onClose]);
 
   if (!isOpen) return null;
 
@@ -136,7 +190,7 @@ export const ScoreLibraryModal: React.FC<ScoreLibraryModalProps> = ({
                 Choreography Score Library
               </h2>
               <span className="text-xs font-sans text-text-muted truncate block mt-1">
-                Explore bundled blueprint scores and custom saved scenes
+                Explore bundled blueprint scores and custom saved scenes · <kbd className="font-mono text-[10px] px-1 py-0.2 rounded bg-surface border border-border-subtle">↑</kbd> <kbd className="font-mono text-[10px] px-1 py-0.2 rounded bg-surface border border-border-subtle">↓</kbd> to navigate
               </span>
             </div>
           </div>
@@ -170,14 +224,14 @@ export const ScoreLibraryModal: React.FC<ScoreLibraryModalProps> = ({
 
         {/* Master-Detail Body Layout */}
         <div className="flex-1 flex flex-col md:flex-row min-h-0 overflow-hidden">
-          {/* Left Column: Score List & Search (w-full on mobile, ~42% on md+) */}
+          {/* Left Column: High-Density Score List & Search (w-full on mobile, ~40% on md+) */}
           <div
             className={`w-full md:w-[42%] lg:w-[40%] flex flex-col border-r border-border-subtle bg-surface min-h-0 ${
               mobileView === 'details' ? 'hidden md:flex' : 'flex'
             }`}
           >
             {/* Filter Tabs & Search Bar */}
-            <div className="p-3 border-b border-border-subtle bg-surface-subtle space-y-2.5 shrink-0">
+            <div className="p-3 border-b border-border-subtle bg-surface-subtle space-y-2 shrink-0">
               <div className="flex items-center justify-between gap-2">
                 <div className={UI_TOKENS.button.segmentedGroup}>
                   <button
@@ -241,12 +295,53 @@ export const ScoreLibraryModal: React.FC<ScoreLibraryModalProps> = ({
               </div>
             </div>
 
-            {/* Scrollable Scores List */}
-            <div className="flex-1 overflow-y-auto p-3 space-y-2.5 custom-scrollbar">
+            {/* Scrollable High-Density Scores List */}
+            <div
+              ref={listContainerRef}
+              className="flex-1 overflow-y-auto p-2.5 space-y-1.5 custom-scrollbar"
+            >
               {filteredScores.length === 0 ? (
                 <div className="py-16 text-center text-text-muted font-sans text-xs">
                   No choreography scores found matching your criteria.
                 </div>
+              ) : activeTab === 'all' && bundledFiltered.length > 0 && customFiltered.length > 0 ? (
+                <>
+                  {/* Bundled Blueprints Section */}
+                  <div className="px-1 pt-1 pb-0.5 text-[9.5px] font-mono font-bold tracking-widest text-text-faint uppercase flex items-center justify-between">
+                    <span>Bundled Blueprints</span>
+                    <span>{bundledFiltered.length}</span>
+                  </div>
+                  {bundledFiltered.map((item) => (
+                    <ScoreLibraryCard
+                      key={item.id}
+                      item={item}
+                      isActive={item.id === activeSceneId}
+                      isSelected={item.id === selectedScore?.id}
+                      onSelect={() => {
+                        setSelectedScoreId(item.id);
+                        setMobileView('details');
+                      }}
+                    />
+                  ))}
+
+                  {/* Custom Projects Section */}
+                  <div className="px-1 pt-3 pb-0.5 text-[9.5px] font-mono font-bold tracking-widest text-text-faint uppercase flex items-center justify-between">
+                    <span>Custom Projects</span>
+                    <span>{customFiltered.length}</span>
+                  </div>
+                  {customFiltered.map((item) => (
+                    <ScoreLibraryCard
+                      key={item.id}
+                      item={item}
+                      isActive={item.id === activeSceneId}
+                      isSelected={item.id === selectedScore?.id}
+                      onSelect={() => {
+                        setSelectedScoreId(item.id);
+                        setMobileView('details');
+                      }}
+                    />
+                  ))}
+                </>
               ) : (
                 filteredScores.map((item) => (
                   <ScoreLibraryCard

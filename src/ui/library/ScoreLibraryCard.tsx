@@ -1,12 +1,12 @@
 /**
  * ScoreLibraryCard Component for ScoreLibraryModal.
- * Renders an individual choreography score list item for the Master-Detail library,
- * featuring un-truncated titles, media engine badges, color-coded blueprint tags,
- * and clear active/selected state styling.
+ * Renders a high-density, 2-line compact list row (~50px) for the Master-Detail catalog.
+ * Line 1: Blueprint / Custom tag + Title (Inter 12px) + Active indicator
+ * Line 2: Precision telemetry string (JetBrains Mono 10px): Media · Duration · Shots · Aspect
  */
 
 import React from 'react';
-import { Check, Clock, Layers, Video, Users, ArrowRight, Film, Camera } from 'lucide-react';
+import { Check, ChevronRight, Film, Camera, Video } from 'lucide-react';
 import type { ScoreCatalogItem } from '../../core/scoreCatalog';
 
 export interface ScoreLibraryCardProps {
@@ -108,7 +108,6 @@ export const ScoreLibraryCard: React.FC<ScoreLibraryCardProps> = ({
 }) => {
   const durationSec = item.score?.durationSec ?? 0;
   const shotCount = item.score?.shots?.length ?? 0;
-  const entityCount = item.score?.entities?.length ?? 0;
   const aspectRatio = item.score?.aspectRatio ?? '16:9';
   const badgeInfo = getScoreBadgeInfo(item);
   const mediaBadge = getMediaSourceBadge(item.score?.videoUrl);
@@ -125,75 +124,55 @@ export const ScoreLibraryCard: React.FC<ScoreLibraryCardProps> = ({
           onSelect();
         }
       }}
-      className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-2.5 group relative select-none shadow-2xs border-l-4 ${badgeInfo.accentBorder} ${
+      className={`px-3 py-2 rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between gap-2.5 group relative select-none border-l-[3px] ${badgeInfo.accentBorder} ${
         isSelected
-          ? 'border-border-main bg-surface-subtle ring-2 ring-text-main/25 shadow-sm'
-          : 'border-border-main bg-surface hover:bg-surface-subtle'
+          ? 'border-border-main bg-surface-subtle ring-1 ring-text-main/20 shadow-xs'
+          : 'border-border-subtle bg-surface hover:bg-surface-subtle'
       }`}
     >
-      {/* Card Header & Content */}
-      <div className="space-y-1.5 min-w-0">
-        <div className="flex items-center justify-between gap-2">
-          {/* Tag & Media Source */}
-          <div className="flex items-center gap-1.5 min-w-0">
-            <span
-              className={`text-[9.5px] font-mono font-bold px-2 py-0.5 rounded-md border shrink-0 uppercase tracking-wider ${badgeInfo.badgeClass}`}
-            >
-              {badgeInfo.tag}
-            </span>
+      {/* Content Columns: Line 1 Title, Line 2 Telemetry */}
+      <div className="min-w-0 flex-1 space-y-0.5">
+        {/* Line 1: Tag + Title + Indicator */}
+        <div className="flex items-center gap-1.5 min-w-0">
+          <span
+            className={`text-[9px] font-mono font-bold px-1.5 py-0.2 rounded border shrink-0 uppercase tracking-wider ${badgeInfo.badgeClass}`}
+          >
+            {badgeInfo.tag}
+          </span>
 
-            <span className={`inline-flex items-center gap-1 text-[10px] font-mono ${mediaBadge.className}`}>
-              <MediaIcon className="w-2.5 h-2.5" />
-              <span>{mediaBadge.label}</span>
-            </span>
-          </div>
-
-          {/* Active or Selected Marker */}
-          {isActive ? (
-            <span className="text-[9.5px] font-mono bg-btn-primary-bg text-btn-primary-text border border-btn-primary-bg px-2 py-0.5 rounded-full shrink-0 flex items-center gap-1 font-bold shadow-2xs">
-              <Check className="w-2.5 h-2.5" />
-              <span>Active</span>
-            </span>
-          ) : isSelected ? (
-            <span className="text-[10px] font-mono text-text-faint flex items-center gap-1">
-              <span>Selected</span>
-              <ArrowRight className="w-2.5 h-2.5 text-text-main" />
-            </span>
-          ) : null}
+          <h3 className="text-xs font-semibold font-sans text-text-main group-hover:text-text-main truncate">
+            {item.title}
+          </h3>
         </div>
 
-        {/* Un-truncated Title with Natural Wrap */}
-        <h3 className="text-sm font-semibold font-sans text-text-main group-hover:text-text-main leading-snug">
-          {item.title}
-        </h3>
+        {/* Line 2: Precision Telemetry String */}
+        <div className="flex items-center gap-1.5 text-[10px] font-mono text-text-muted truncate">
+          <span className={`inline-flex items-center gap-1 ${mediaBadge.className} shrink-0`}>
+            <MediaIcon className="w-2.5 h-2.5" />
+            <span>{mediaBadge.label}</span>
+          </span>
 
-        {item.subtitle && (
-          <p className="text-xs font-sans text-text-muted group-hover:text-text-body line-clamp-2 leading-relaxed">
-            {item.subtitle}
-          </p>
-        )}
+          <span className="text-text-faint opacity-50">·</span>
+          <span className="shrink-0">{durationSec.toFixed(1)}s</span>
+
+          <span className="text-text-faint opacity-50">·</span>
+          <span className="shrink-0">{shotCount} {shotCount === 1 ? 'shot' : 'shots'}</span>
+
+          <span className="text-text-faint opacity-50">·</span>
+          <span className="shrink-0">{formatAspectRatio(aspectRatio)}</span>
+        </div>
       </div>
 
-      {/* Card Footer: Telemetry Pill Strip */}
-      <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-border-subtle text-[10px] font-mono text-text-muted">
-        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-surface-muted border border-border-subtle text-text-body">
-          <Clock className="w-2.5 h-2.5 text-text-faint" />
-          <span>{durationSec.toFixed(1)}s</span>
-        </span>
-        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-surface-muted border border-border-subtle text-text-body">
-          <Layers className="w-2.5 h-2.5 text-text-faint" />
-          <span>{shotCount} {shotCount === 1 ? 'Shot' : 'Shots'}</span>
-        </span>
-        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-surface-muted border border-border-subtle text-text-body">
-          <Video className="w-2.5 h-2.5 text-text-faint" />
-          <span>{formatAspectRatio(aspectRatio)}</span>
-        </span>
-        {entityCount > 0 && (
-          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-surface-muted border border-border-subtle text-text-muted">
-            <Users className="w-2.5 h-2.5 text-text-faint" />
-            <span>{entityCount}</span>
+      {/* Right Column: Active Chip or Selected Chevron */}
+      <div className="shrink-0 flex items-center">
+        {isActive ? (
+          <span className="inline-flex items-center gap-1 text-[9px] font-mono font-bold bg-btn-primary-bg text-btn-primary-text border border-btn-primary-bg px-1.5 py-0.2 rounded-full shadow-2xs">
+            <Check className="w-2.5 h-2.5" />
+            <span>Active</span>
           </span>
-        )}
+        ) : isSelected ? (
+          <ChevronRight className="w-3.5 h-3.5 text-text-muted group-hover:text-text-main transition-colors" />
+        ) : null}
       </div>
     </div>
   );

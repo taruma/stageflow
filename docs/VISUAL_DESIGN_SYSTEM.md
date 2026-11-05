@@ -143,3 +143,25 @@ To prevent Three.js Drei `<Html>` elements from colliding with or occluding 2D U
 - **Calibrated Z-Index Range**: [`StageBillboardLabel.tsx`](../src/stage/StageBillboardLabel.tsx) restricts `<Html>` depth sorting to `zIndexRange={[5, 0]}`. Closer 3D mannequins render above farther ones in 3D space, but remain strictly beneath 2D viewport HUDs (`z-10`) and bottom telemetry capsules (`z-20`).
 - **Viewport Stacking Isolation**: The 3D diorama container in [`ResizableSplitWorkspace.tsx`](../src/ui/ResizableSplitWorkspace.tsx) enforces `isolation: isolate`, confining all 3D canvas HTML DOM projections inside a discrete stacking context.
 - **Authoritative Studio Header**: The top header (`WorkspaceHeader.tsx`) enforces `relative z-30`, ensuring all navigation dropdowns (`File ▾`, `Color Themes ▾`) and modal overlays (`z-[100]`) render authoritatively above the 3D diorama canvas.
+
+---
+
+## 7. Master-Detail Score Library Architecture
+
+The Choreography Score Library ([`ScoreLibraryModal.tsx`](../src/ui/ScoreLibraryModal.tsx)) implements an elevated 2-column studio layout (`max-w-5xl`) optimized for rapid browsing across large catalogs (10–50+ scores):
+
+### 7.1 High-Density Navigation List (Left Column, ~40%)
+- **Ultra-Compact 2-Line Row Layout (`~50px`)**: Eliminates chunky multi-card waste, fitting 9–10 scores in the viewport simultaneously without scrolling.
+  - **Line 1 (Identity)**: Color-coded category badge (`BP 01`–`BP 05`, `CUSTOM`) alongside `Inter` (`font-sans text-xs font-semibold`) un-truncated title.
+  - **Line 2 (Telemetry)**: Precision `JetBrains Mono` (`font-mono text-[10px]`) delimited string displaying media badge (`Simulator`, `YouTube`, `Local`), duration (`30.0s`), shot count (`17 shots`), and aspect ratio (`16:9`, `2.39:1`).
+- **Sticky Section Headers**: Categorizes scores under sticky headers (`BUNDLED BLUEPRINTS` vs. `CUSTOM PROJECTS`) with item counts in the `All` tab.
+- **Keyboard Traversal**:
+  - `↑` / `ArrowUp` and `↓` / `ArrowDown` step smoothly across scores, updating the right-column inspector and 2D SVG minimap live in real time.
+  - `Enter` loads the selected score directly into the 3D studio and closes the modal (auto-bypassed when search/rename inputs have focus).
+
+### 7.2 Choreography Inspector (Right Column, ~60%)
+- **Directorial Metadata & Notes**: High-contrast title in `Libre Baskerville` serif, full directorial notes, and media engine indicators.
+- **Procedural 2D Vector Stage Minimap (`ScoreStageMinimap.tsx`)**: Renders an instantaneous top-down SVG blueprint schematic of stage geometry, character proxies with facing chevrons, and camera trajectory cones in $< 0.1\text{ms}$ with zero WebGL overhead.
+- **Optical & Staging Grid**: 4-quadrant display of duration, shot count, film gate aspect ratio, and entity count.
+- **Shot Coverage Strips**: Sequential step-by-step breakdown of camera focal lengths, maneuvers, and duration cuts.
+- **Unified Lifecycle Controls**: Inline renaming, score duplication, YAML export, and deletion without auxiliary modal windows.
