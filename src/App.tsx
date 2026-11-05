@@ -15,15 +15,23 @@ import {
 import { parseStageScore } from './core/scoreParser';
 import {
   loadStoredActiveSceneId,
+  loadStoredEditMode,
   loadStoredLabelMode,
+  loadStoredLeftSplitPct,
+  loadStoredRightSplitPct,
   loadStoredSplitPreset,
+  loadStoredSubpanelCollapsed,
+  loadStoredVideoHeightPct,
   loadStoredViewfinderGuides,
-  loadStoredYamlDrawerOpen,
   saveStoredActiveSceneId,
+  saveStoredEditMode,
   saveStoredLabelMode,
+  saveStoredLeftSplitPct,
+  saveStoredRightSplitPct,
   saveStoredSplitPreset,
+  saveStoredSubpanelCollapsed,
+  saveStoredVideoHeightPct,
   saveStoredViewfinderGuides,
-  saveStoredYamlDrawerOpen,
 } from './core/storage/localStorageUi';
 import { saveStoredScore } from './core/storage/scoreDb';
 import { useMediaClock } from './hooks/useMediaClock';
@@ -38,6 +46,7 @@ import {
 } from './ui/WorkspaceHeader';
 import { ResizableSplitWorkspace } from './ui/ResizableSplitWorkspace';
 import { UniversalVideoViewport } from './ui/UniversalVideoViewport';
+import { VideoWorkspaceSubpanel } from './ui/left-panel/VideoWorkspaceSubpanel';
 import { ShotBreakdownHud } from './ui/ShotBreakdownHud';
 import { CameraTelemetryCapsule } from './ui/CameraTelemetryCapsule';
 import { DirectorialTransportBar } from './ui/DirectorialTransportBar';
@@ -77,8 +86,24 @@ const InteractiveStudioApp: React.FC = () => {
     () => loadStoredSplitPreset() ?? 'split'
   );
 
-  const [isYamlDrawerOpen, setIsYamlDrawerOpenState] = useState<boolean>(
-    () => loadStoredYamlDrawerOpen() ?? false
+  const [isEditMode, setIsEditModeState] = useState<boolean>(
+    () => loadStoredEditMode() ?? false
+  );
+
+  const [leftSplitPct, setLeftSplitPctState] = useState<number>(
+    () => loadStoredLeftSplitPct() ?? 30
+  );
+
+  const [rightSplitPct, setRightSplitPctState] = useState<number>(
+    () => loadStoredRightSplitPct() ?? 30
+  );
+
+  const [videoHeightPct, setVideoHeightPctState] = useState<number>(
+    () => loadStoredVideoHeightPct() ?? 45
+  );
+
+  const [isSubpanelCollapsed, setIsSubpanelCollapsedState] = useState<boolean>(
+    () => loadStoredSubpanelCollapsed() ?? false
   );
 
   const [labelMode, setLabelModeState] = useState<LabelDisplayMode>(
@@ -153,12 +178,39 @@ const InteractiveStudioApp: React.FC = () => {
     saveStoredSplitPreset(preset);
   }, []);
 
-  const handleToggleYamlDrawer = useCallback(() => {
-    setIsYamlDrawerOpenState((prev) => {
+  const handleToggleEditMode = useCallback(() => {
+    setIsEditModeState((prev) => {
       const next = !prev;
-      saveStoredYamlDrawerOpen(next);
+      saveStoredEditMode(next);
+      if (next) {
+        setIsSubpanelCollapsedState(false);
+        saveStoredSubpanelCollapsed(false);
+      }
       return next;
     });
+  }, []);
+
+  const handleToggleSubpanelCollapse = useCallback(() => {
+    setIsSubpanelCollapsedState((prev) => {
+      const next = !prev;
+      saveStoredSubpanelCollapsed(next);
+      return next;
+    });
+  }, []);
+
+  const handleLeftSplitChange = useCallback((pct: number) => {
+    setLeftSplitPctState(pct);
+    saveStoredLeftSplitPct(pct);
+  }, []);
+
+  const handleRightSplitChange = useCallback((pct: number) => {
+    setRightSplitPctState(pct);
+    saveStoredRightSplitPct(pct);
+  }, []);
+
+  const handleVideoHeightChange = useCallback((pct: number) => {
+    setVideoHeightPctState(pct);
+    saveStoredVideoHeightPct(pct);
   }, []);
 
   const handleSelectLabelMode = useCallback((mode: LabelDisplayMode) => {
@@ -401,7 +453,8 @@ const InteractiveStudioApp: React.FC = () => {
         setRawYaml(yamlText);
         setParseError(parsed.error);
         setParseWarning(null);
-        setIsYamlDrawerOpenState(true);
+        setIsEditModeState(true);
+        saveStoredEditMode(true);
         showToast(
           `Failed to parse YAML: ${parsed.error ?? 'Syntax error'}`,
           'error'
@@ -467,7 +520,7 @@ const InteractiveStudioApp: React.FC = () => {
         catalog={catalog}
         activeSceneId={activeSceneId}
         splitPreset={splitPreset}
-        isYamlDrawerOpen={isYamlDrawerOpen}
+        isEditMode={isEditMode}
         storageStatus={scorePersistence.storageStatus}
         isLibraryOpen={isLibraryOpen}
         themeMode={theme.themeMode}
@@ -476,7 +529,7 @@ const InteractiveStudioApp: React.FC = () => {
         effectiveDioramaCategory={theme.effectiveDioramaCategory}
         onSelectScene={handleSelectScene}
         onSelectSplitPreset={handleSelectSplitPreset}
-        onToggleYamlDrawer={handleToggleYamlDrawer}
+        onToggleEditMode={handleToggleEditMode}
         onUploadFiles={fileDrop.processFiles}
         onExportActiveScore={handleExportActiveScore}
         onOpenLibrary={(tab) => {
@@ -493,14 +546,17 @@ const InteractiveStudioApp: React.FC = () => {
         }}
       />
 
-      {/* Main Resizable Split Workspace (Video Panel + 3D Blueprint Diorama) */}
+      {/* Main Resizable Split Workspace (Video Panel + 3D Blueprint Diorama + YAML Studio) */}
       <ResizableSplitWorkspace
         splitPreset={splitPreset}
-        onCustomDragSplit={() => {
-          if (splitPreset !== 'split') {
-            handleSelectSplitPreset('split');
-          }
-        }}
+        isEditMode={isEditMode}
+        leftSplitPct={leftSplitPct}
+        onLeftSplitChange={handleLeftSplitChange}
+        rightSplitPct={rightSplitPct}
+        onRightSplitChange={handleRightSplitChange}
+        videoHeightPct={videoHeightPct}
+        onVideoHeightChange={handleVideoHeightChange}
+        isSubpanelCollapsed={isSubpanelCollapsed}
         leftVideoPane={
           <UniversalVideoViewport
             score={activeScore}
@@ -520,7 +576,16 @@ const InteractiveStudioApp: React.FC = () => {
             }}
           />
         }
-        rightStagePane={
+        leftSubpanelPane={
+          <VideoWorkspaceSubpanel
+            isCollapsed={isSubpanelCollapsed}
+            onToggleCollapse={handleToggleSubpanelCollapse}
+            score={activeScore}
+            activeShot={stageLoop.uiSnapshot.frame.activeShot}
+            shotIndex={stageLoop.uiSnapshot.frame.shotIndex}
+          />
+        }
+        centerStagePane={
           <div ref={stageContainerRef} className="relative w-full h-full isolate">
             {/* 3D React Three Fiber Blueprint Diorama */}
             <DioramaCanvas
@@ -602,6 +667,25 @@ const InteractiveStudioApp: React.FC = () => {
             )}
           </div>
         }
+        rightEditorPane={
+          <YamlInspectorDrawer
+            isOpen={isEditMode}
+            rawYaml={rawYaml}
+            parseError={parseError}
+            parseWarning={parseWarning}
+            storageStatus={scorePersistence.storageStatus}
+            isBundled={isBundledSceneId(activeSceneId)}
+            onChangeYaml={handleChangeYaml}
+            onForkScore={async () => {
+              const forked = await scorePersistence.forkScoreAsCustom(activeSceneId);
+              if (forked) {
+                showToast(`Forked "${forked.title}" as Custom Project`, 'success');
+              }
+            }}
+            onResetDefault={() => scorePersistence.setIsResetModalOpen(true)}
+            onClose={handleToggleEditMode}
+          />
+        }
       />
 
       {/* Bottom Directorial Transport Deck (Streamlined Timeline Controls) */}
@@ -619,28 +703,6 @@ const InteractiveStudioApp: React.FC = () => {
         onSetPlaybackRate={mediaClock.setPlaybackRate}
         onToggleMute={mediaClock.toggleMute}
         onToggleLoopActiveShot={mediaClock.toggleLoopActiveShot}
-      />
-
-      {/* Slide-Out Live YAML Score Inspector & Editor Drawer */}
-      <YamlInspectorDrawer
-        isOpen={isYamlDrawerOpen}
-        rawYaml={rawYaml}
-        parseError={parseError}
-        parseWarning={parseWarning}
-        storageStatus={scorePersistence.storageStatus}
-        isBundled={isBundledSceneId(activeSceneId)}
-        onChangeYaml={handleChangeYaml}
-        onForkScore={async () => {
-          const forked = await scorePersistence.forkScoreAsCustom(activeSceneId);
-          if (forked) {
-            showToast(`Forked "${forked.title}" as Custom Project`, 'success');
-          }
-        }}
-        onResetDefault={() => scorePersistence.setIsResetModalOpen(true)}
-        onClose={() => {
-          setIsYamlDrawerOpenState(false);
-          saveStoredYamlDrawerOpen(false);
-        }}
       />
 
       {/* Reset Confirmation Dialog Modal */}

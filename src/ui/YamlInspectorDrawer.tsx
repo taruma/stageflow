@@ -80,7 +80,7 @@ export const YamlInspectorDrawer: React.FC<YamlInspectorDrawerProps> = ({
   };
 
   return (
-    <aside className="fixed top-12 bottom-0 right-0 w-[440px] max-w-[calc(100vw-1rem)] bg-surface border-l border-border-main shadow-2xl flex flex-col z-40 text-text-main animate-in slide-in-from-right duration-200">
+    <aside className="w-full h-full bg-surface border-l border-border-main flex flex-col text-text-main overflow-hidden">
       {/* Drawer Header */}
       <div className="px-4 py-3 border-b border-border-main flex items-center justify-between gap-2 select-none bg-surface-subtle">
         <div className="flex items-center gap-2">

@@ -18,6 +18,11 @@ const STORAGE_KEYS = {
   VIEWFINDER_GUIDES: 'stageflow:ui:viewfinder-guides',
   THEME_MODE: 'stageflow:ui:theme-mode',
   DIORAMA_THEME_MODE: 'stageflow:ui:diorama-theme-mode',
+  EDIT_MODE: 'stageflow:ui:edit-mode',
+  LEFT_SPLIT_PCT: 'stageflow:ui:left-split-pct',
+  RIGHT_SPLIT_PCT: 'stageflow:ui:right-split-pct',
+  VIDEO_HEIGHT_PCT: 'stageflow:ui:video-height-pct',
+  SUBPANEL_COLLAPSED: 'stageflow:ui:subpanel-collapsed',
 } as const;
 
 export function loadStoredSplitPreset(): SplitPreset | null {
@@ -166,3 +171,111 @@ export function saveStoredDioramaThemeMode(mode: DioramaThemeMode): void {
     // Ignore storage quota or access errors
   }
 }
+
+export function loadStoredEditMode(): boolean | null {
+  try {
+    const val = localStorage.getItem(STORAGE_KEYS.EDIT_MODE);
+    if (val === 'true') return true;
+    if (val === 'false') return false;
+  } catch {
+    // Ignore storage quota or access errors
+  }
+  return null;
+}
+
+export function saveStoredEditMode(isEdit: boolean): void {
+  try {
+    localStorage.setItem(STORAGE_KEYS.EDIT_MODE, String(isEdit));
+  } catch {
+    // Ignore storage quota or access errors
+  }
+}
+
+export function loadStoredLeftSplitPct(): number | null {
+  try {
+    const val = localStorage.getItem(STORAGE_KEYS.LEFT_SPLIT_PCT);
+    if (val !== null) {
+      const parsed = parseFloat(val);
+      if (!Number.isNaN(parsed) && parsed >= 15 && parsed <= 50) {
+        return parsed;
+      }
+    }
+  } catch {
+    // Ignore storage quota or access errors
+  }
+  return null;
+}
+
+export function saveStoredLeftSplitPct(pct: number): void {
+  try {
+    localStorage.setItem(STORAGE_KEYS.LEFT_SPLIT_PCT, String(pct));
+  } catch {
+    // Ignore storage quota or access errors
+  }
+}
+
+export function loadStoredRightSplitPct(): number | null {
+  try {
+    const val = localStorage.getItem(STORAGE_KEYS.RIGHT_SPLIT_PCT);
+    if (val !== null) {
+      const parsed = parseFloat(val);
+      if (!Number.isNaN(parsed) && parsed >= 15 && parsed <= 50) {
+        return parsed;
+      }
+    }
+  } catch {
+    // Ignore storage quota or access errors
+  }
+  return null;
+}
+
+export function saveStoredRightSplitPct(pct: number): void {
+  try {
+    localStorage.setItem(STORAGE_KEYS.RIGHT_SPLIT_PCT, String(pct));
+  } catch {
+    // Ignore storage quota or access errors
+  }
+}
+
+export function loadStoredVideoHeightPct(): number | null {
+  try {
+    const val = localStorage.getItem(STORAGE_KEYS.VIDEO_HEIGHT_PCT);
+    if (val !== null) {
+      const parsed = parseFloat(val);
+      if (!Number.isNaN(parsed) && parsed >= 15 && parsed <= 85) {
+        return parsed;
+      }
+    }
+  } catch {
+    // Ignore storage quota or access errors
+  }
+  return null;
+}
+
+export function saveStoredVideoHeightPct(pct: number): void {
+  try {
+    localStorage.setItem(STORAGE_KEYS.VIDEO_HEIGHT_PCT, String(pct));
+  } catch {
+    // Ignore storage quota or access errors
+  }
+}
+
+export function loadStoredSubpanelCollapsed(): boolean | null {
+  try {
+    const val = localStorage.getItem(STORAGE_KEYS.SUBPANEL_COLLAPSED);
+    if (val === 'true') return true;
+    if (val === 'false') return false;
+  } catch {
+    // Ignore storage quota or access errors
+  }
+  return null;
+}
+
+export function saveStoredSubpanelCollapsed(collapsed: boolean): void {
+  try {
+    localStorage.setItem(STORAGE_KEYS.SUBPANEL_COLLAPSED, String(collapsed));
+  } catch {
+    // Ignore storage quota or access errors
+  }
+}
+

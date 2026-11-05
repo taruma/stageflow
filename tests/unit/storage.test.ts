@@ -14,6 +14,16 @@ import {
   saveStoredThemeMode,
   loadStoredDioramaThemeMode,
   saveStoredDioramaThemeMode,
+  loadStoredEditMode,
+  saveStoredEditMode,
+  loadStoredLeftSplitPct,
+  saveStoredLeftSplitPct,
+  loadStoredRightSplitPct,
+  saveStoredRightSplitPct,
+  loadStoredVideoHeightPct,
+  saveStoredVideoHeightPct,
+  loadStoredSubpanelCollapsed,
+  saveStoredSubpanelCollapsed,
 } from '../../src/core/storage/localStorageUi';
 import { getDioramaThemeColors } from '../../src/stage/dioramaTheme';
 
@@ -154,6 +164,40 @@ describe('localStorageUi — Synchronous UI Preferences Persistence', () => {
     // Invalid fallback
     globalThis.localStorage.setItem('stageflow:ui:diorama-theme-mode', 'invalid-diorama');
     expect(loadStoredDioramaThemeMode()).toBeNull();
+  });
+
+  it('saves and loads 3-column studio layout dimensions and edit mode', () => {
+    // Edit mode
+    expect(loadStoredEditMode()).toBeNull();
+    saveStoredEditMode(true);
+    expect(loadStoredEditMode()).toBe(true);
+    saveStoredEditMode(false);
+    expect(loadStoredEditMode()).toBe(false);
+
+    // Left split percentage
+    expect(loadStoredLeftSplitPct()).toBeNull();
+    saveStoredLeftSplitPct(32.5);
+    expect(loadStoredLeftSplitPct()).toBe(32.5);
+    // Invalid / out-of-range clamping check
+    globalThis.localStorage.setItem('stageflow:ui:left-split-pct', '100');
+    expect(loadStoredLeftSplitPct()).toBeNull();
+
+    // Right split percentage
+    expect(loadStoredRightSplitPct()).toBeNull();
+    saveStoredRightSplitPct(28);
+    expect(loadStoredRightSplitPct()).toBe(28);
+
+    // Video height percentage
+    expect(loadStoredVideoHeightPct()).toBeNull();
+    saveStoredVideoHeightPct(45);
+    expect(loadStoredVideoHeightPct()).toBe(45);
+
+    // Subpanel collapsed state
+    expect(loadStoredSubpanelCollapsed()).toBeNull();
+    saveStoredSubpanelCollapsed(true);
+    expect(loadStoredSubpanelCollapsed()).toBe(true);
+    saveStoredSubpanelCollapsed(false);
+    expect(loadStoredSubpanelCollapsed()).toBe(false);
   });
 
   it('provides distinct, valid hex colors for all diorama theme categories', () => {

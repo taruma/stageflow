@@ -114,11 +114,23 @@ Scene entities (`character`, `prop`, `marker`) are rendered with unambiguous ori
     - **Cinematic Telemetry**: Full titles, directorial notes, focal length breakdown (e.g. `35mm, 50mm`), camera maneuver tags, and actor/prop lineup.
     - **Shot Coverage Sequence**: Miniature timeline breakdown detailing each shot's lens, maneuver, and duration.
     - **Unified Project Lifecycle Actions**: Direct inline **Rename**, **Duplicate**, **Export (.yaml)**, and **Delete** for custom projects (eliminating the redundant separate project management modal), alongside **Fork as Custom** for bundled blueprints and **Load Score into Studio**.
-- **Desktop (`lg+`)**: Side-by-side split between the Left Video Viewport and Right 3D Diorama Stage, separated by a smooth pointer-drag divider bar (`18%` to `82%` clamp).
-- **Workspace Layout Modes**:
-  - `Split`: Side-by-side Video and 3D Diorama Stage. Remembers the user's customized drag ratio (defaults to **30% Video / 70% 3D Diorama** for maximum spatial staging area).
-  - `Full`: Collapses the video panel to 0% for full-viewport 3D inspection while keeping the reference video/YouTube player mounted off-screen so background media playback, audio, and clock sync continue seamlessly.
-- **Narrow Screens (`< lg`)**: Responsively stacks the Video Panel (`38%` height) above the 3D Diorama Stage (`62%` height) and hides the center segmented layout presets to prevent header crowding.
+- **Desktop (`lg+`) 3-Column Studio Workspace Architecture (`ResizableSplitWorkspace.tsx`)**:
+  - **Left Column (~30%)**: Houses the reference video player (anchored top, aspect-fit), a continuous horizontal drag divider, and the modular **`VideoWorkspaceSubpanel.tsx`** for active shot context and future cue widgets.
+  - **Center Column (~40%)**: Dedicated, uninterrupted 3D Blueprint Diorama viewport with 4-corner directorial HUD.
+  - **Right Column (~30%)**: Dedicated, full-height YAML Score Studio (`YamlInspectorDrawer.tsx` in flex column mode) for real-time score authoring and validation.
+- **Center Header Workflow & Layout Pairing (`LayoutSegmentedControl.tsx`)**:
+  - Couples the layout mode segmented pill `[ ◫ Split | ⛶ Full ]` with an adjacent **`[ ✎ Edit ]`** toggle pill (styled with SceneFlow-aligned amber accent active state).
+- **Workspace State Matrix**:
+  - `Split + Edit OFF`: Classic 2-column playback view (Video 50% / Diorama 50%). Subpanel collapses into minimal header.
+  - `Split + Edit ON`: Full 3-Column Studio (Left 30% [Video + Subpanel] | Center 40% [Diorama] | Right 30% [YAML]). Subpanel defaults to expanded.
+  - `Full + Edit OFF`: 100% 3D Diorama stage. Reference video is mounted offscreen (`fixed -left-[99999px]`) to maintain media clock and audio sync without interruption.
+  - `Full + Edit ON`: 2-Column Mode (Diorama 60% | YAML 40%, video cleanly offscreened). Perfect for procedural blueprint scores.
+- **Continuous 3-Way Resizing**:
+  - Left vertical divider (col-resize) adjusts Left Column width ($18\%$ to $45\%$).
+  - Right vertical divider (col-resize) adjusts Right Column width ($18\%$ to $45\%$).
+  - Left horizontal divider (row-resize) adjusts Video container height ($180\text{px}$ min video, $140\text{px}$ min subpanel).
+  - Enforces `.is-resizing-split` during any drag operation to maintain 60fps responsiveness across WebGL and IFrames.
+- **Narrow Screens (`< lg`)**: Responsively stacks the Video Panel (`40%` height) above the 3D Diorama Stage and hides the center layout presets to prevent header crowding.
 
 ### 4.2 4-Corner Directorial HUD Architecture (Wide Mode $\ge 580\text{px}$)
 Adopts professional 3D viewport convention (Blender, Unreal Engine, Maya) distributing chrome strictly to the 4 corners while leaving the center stage sightline 100% clean:

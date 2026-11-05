@@ -63,6 +63,13 @@ export type LabelDisplayMode = 'all' | 'camera-only' | 'off';
 
 export type SplitPreset = 'split' | 'full';
 
+export interface WorkspaceLayoutDimensions {
+  leftSplitPct: number;
+  rightSplitPct: number;
+  videoHeightPct: number;
+  isSubpanelCollapsed: boolean;
+}
+
 export type AppThemeMode = 'auto' | 'light' | 'warm' | 'dark';
 export type AppThemeCategory = 'light' | 'warm' | 'dark';
 export type DioramaThemeMode = 'dark' | 'match-app' | 'warm' | 'light';

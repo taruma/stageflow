@@ -172,13 +172,15 @@ stageflow/
 │   │   │   ├── LayoutSegmentedControl.tsx # Centered segmented split workspace layout switcher
 │   │   │   ├── ActiveScoreIndicator.tsx # Interactive active score context chip with 1-click library open
 │   │   │   └── ThemeSelectorDropdown.tsx # Accessible 4-mode theme switcher (Auto, Dark, Warm, Light)
+│   │   ├── left-panel/              # Modular left column submodules
+│   │   │   └── VideoWorkspaceSubpanel.tsx # Modular directorial workspace subpanel below reference video
 │   │   ├── library/                 # Modular score library submodules
 │   │   │   ├── ScoreLibraryCard.tsx # Cinematic choreography score card with color tags & telemetry
 │   │   │   ├── ScoreInspectorPane.tsx # Rich master-detail choreography inspector & action bar
 │   │   │   └── ScoreStageMinimap.tsx # Pure 2D vector SVG top-down stage schematic preview
 │   │   ├── WorkspaceHeader.tsx      # SceneFlow-aligned 3-wing orchestrator header bar
 │   │   ├── ScoreLibraryModal.tsx    # Accessible 2-column master-detail score library & project hub
-│   │   ├── ResizableSplitWorkspace.tsx # Draggable side-by-side split container
+│   │   ├── ResizableSplitWorkspace.tsx # Draggable 3-column studio container (30/40/30) with dual dividers
 │   │   ├── UniversalVideoViewport.tsx  # Local video, YouTube IFrame, or 60fps Stage Cam Simulator
 │   │   ├── ShotBreakdownHud.tsx     # Top-left active shot, lens, maneuver & staging note overlay
 │   │   ├── CameraTelemetryCapsule.tsx  # Live degree/meter readout with 1-click YAML snippet copy

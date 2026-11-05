@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **3-Column Studio Layout Architecture (`ResizableSplitWorkspace.tsx`, `WorkspaceHeader.tsx`, `LayoutSegmentedControl.tsx`, `VideoWorkspaceSubpanel.tsx`, `App.tsx`)**:
+  - Re-architected StageFlow's workspace into a first-class 30 / 40 / 30 three-column studio (Left: Reference Video + Directorial Subpanel, Center: 3D Blueprint Diorama, Right: Full-Height YAML Score Studio).
+  - Paired the center layout segmented pill `[ ◫ Split | ⛶ Full ]` with an adjacent tactile **`[ ✎ Edit ]`** toggle pill styled with SceneFlow-aligned amber accent indicator.
+  - Eliminated the legacy `[</> YAML Score]` drawer toggle from the right wing of `WorkspaceHeader.tsx`, leaving the right wing minimal (`[Theme ▾] [Library]`).
+  - Added continuous 3-way divider resizing: dual vertical dividers (Left/Center and Center/Right, clamped $18\%–45\%$) and a horizontal row divider inside the left column ($180\text{px}$ min video, $140\text{px}$ min subpanel).
+  - Scaffolded modular `VideoWorkspaceSubpanel.tsx` beneath the reference video with active shot tag, timing telemetry, and independent collapse/expand chevron.
+  - Implemented 4-state workspace matrix (`Split`/`Full` × `Edit ON`/`OFF`), preserving background media clock and offscreen video audio playback in `Full` mode.
+  - Added synchronous `localStorage` persistence and unit tests for `isEditMode`, column width percentages, left video height percentage, and subpanel collapse state (`localStorageUi.ts`, `storage.test.ts`).
 - **4-Corner Directorial HUD Layout & 3D ViewCube Preset Icons (`CameraPresetControls.tsx`, `ShotBreakdownHud.tsx`, `App.tsx`)**:
   - Re-architected diorama chrome into a clean 4-corner layout (Top-Left Info, Top-Right Legend/Labels, Bottom-Left Camera Dock, Bottom-Right Telemetry) that leaves the center stage horizon 100% unobstructed, eliminating visual double-stacking with `[ Split | Full ]`.
   - Replaced text buttons in [`CameraPresetControls.tsx`](src/ui/CameraPresetControls.tsx) with bespoke **isometric 3D ViewCube SVG icons** (Top plan, Iso 45°, Front proscenium, Side profile, and Reset) with descriptive tooltips, mounted directly above the Camera POV mode switcher at bottom-left for 1-click access without popup menus.

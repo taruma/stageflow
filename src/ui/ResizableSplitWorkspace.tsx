@@ -1,45 +1,65 @@
 /**
- * Resizable Split Workspace Container.
- * Side-by-side on desktop (`lg+`) with a smooth draggable divider bar,
- * collapsing to stacked top/bottom on narrow viewports.
+ * ResizableSplitWorkspace Component for StageFlow Studio.
+ * 3-Column Studio Workspace Architecture:
+ * - Left Column: Reference Video + Horizontal Divider + VideoWorkspaceSubpanel
+ * - Center Column: Interactive 3D Blueprint Diorama Stage
+ * - Right Column: Full-Height YAML Score Studio
  * Enforces SceneFlow 60fps drag performance with .is-resizing-split.
  */
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { GripVertical } from 'lucide-react';
-import type { SplitPreset } from './WorkspaceHeader';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
+import { GripHorizontal, GripVertical } from 'lucide-react';
+import type { SplitPreset } from '../core/types';
 
 export interface ResizableSplitWorkspaceProps {
   splitPreset: SplitPreset;
-  onCustomDragSplit: () => void;
+  isEditMode: boolean;
+  leftSplitPct: number;
+  onLeftSplitChange: (pct: number) => void;
+  rightSplitPct: number;
+  onRightSplitChange: (pct: number) => void;
+  videoHeightPct: number;
+  onVideoHeightChange: (pct: number) => void;
+  isSubpanelCollapsed: boolean;
   leftVideoPane: React.ReactNode;
-  rightStagePane: React.ReactNode;
+  leftSubpanelPane?: React.ReactNode;
+  centerStagePane: React.ReactNode;
+  rightEditorPane?: React.ReactNode;
 }
 
 export const ResizableSplitWorkspace: React.FC<
   ResizableSplitWorkspaceProps
-> = ({ splitPreset, onCustomDragSplit, leftVideoPane, rightStagePane }) => {
+> = ({
+  splitPreset,
+  isEditMode,
+  leftSplitPct,
+  onLeftSplitChange,
+  rightSplitPct,
+  onRightSplitChange,
+  videoHeightPct,
+  onVideoHeightChange,
+  isSubpanelCollapsed,
+  leftVideoPane,
+  leftSubpanelPane,
+  centerStagePane,
+  rightEditorPane,
+}) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const [videoWidthPct, setVideoWidthPct] = useState<number>(30);
-  const lastSplitWidthRef = useRef<number>(30);
-  const [isDraggingDivider, setIsDraggingDivider] = useState(false);
+  const leftColRef = useRef<HTMLDivElement | null>(null);
 
-  // Sync percentage whenever a header preset is clicked
+  const [isDraggingLeft, setIsDraggingLeft] = useState(false);
+  const [isDraggingRight, setIsDraggingRight] = useState(false);
+  const [isDraggingHorizontal, setIsDraggingHorizontal] = useState(false);
+
+  const isVideoHidden = splitPreset === 'full';
+  const showRightEditor = isEditMode && Boolean(rightEditorPane);
+  const showSubpanel = !isSubpanelCollapsed && Boolean(leftSubpanelPane);
+
+  // Global mousemove/mouseup listener for all dividers
   useEffect(() => {
-    if (splitPreset === 'split') {
-      setVideoWidthPct(lastSplitWidthRef.current > 1 ? lastSplitWidthRef.current : 30);
-    } else if (splitPreset === 'full') {
-      setVideoWidthPct(0);
-    }
-  }, [splitPreset]);
-
-  const handlePointerDown = useCallback((e: React.PointerEvent) => {
-    e.preventDefault();
-    setIsDraggingDivider(true);
-  }, []);
-
-  useEffect(() => {
-    if (!isDraggingDivider) return;
+    const isDraggingAny =
+      isDraggingLeft || isDraggingRight || isDraggingHorizontal;
+    if (!isDraggingAny) return;
 
     if (typeof document !== 'undefined') {
       document.body.classList.add('is-resizing-split');
@@ -51,15 +71,33 @@ export const ResizableSplitWorkspace: React.FC<
       const rect = container.getBoundingClientRect();
       if (rect.width <= 0) return;
 
-      const rawPct = ((e.clientX - rect.left) / rect.width) * 100;
-      const clampedPct = Math.max(18, Math.min(82, rawPct));
-      setVideoWidthPct(clampedPct);
-      lastSplitWidthRef.current = clampedPct;
-      onCustomDragSplit();
+      if (isDraggingLeft) {
+        const rawPct = ((e.clientX - rect.left) / rect.width) * 100;
+        const clamped = Math.max(18, Math.min(45, rawPct));
+        onLeftSplitChange(clamped);
+      } else if (isDraggingRight) {
+        const rawPct = ((rect.right - e.clientX) / rect.width) * 100;
+        const clamped = Math.max(18, Math.min(45, rawPct));
+        onRightSplitChange(clamped);
+      } else if (isDraggingHorizontal) {
+        const leftCol = leftColRef.current;
+        if (!leftCol) return;
+        const leftRect = leftCol.getBoundingClientRect();
+        if (leftRect.height <= 0) return;
+
+        const rawPct = ((e.clientY - leftRect.top) / leftRect.height) * 100;
+        // Ensure minimum 180px top video and 140px bottom subpanel
+        const minTopPct = Math.min(40, (180 / leftRect.height) * 100);
+        const maxTopPct = Math.max(60, 100 - (140 / leftRect.height) * 100);
+        const clamped = Math.max(minTopPct, Math.min(maxTopPct, rawPct));
+        onVideoHeightChange(clamped);
+      }
     };
 
     const handlePointerUp = () => {
-      setIsDraggingDivider(false);
+      setIsDraggingLeft(false);
+      setIsDraggingRight(false);
+      setIsDraggingHorizontal(false);
       if (typeof document !== 'undefined') {
         document.body.classList.remove('is-resizing-split');
       }
@@ -74,51 +112,150 @@ export const ResizableSplitWorkspace: React.FC<
         document.body.classList.remove('is-resizing-split');
       }
     };
-  }, [isDraggingDivider, onCustomDragSplit]);
+  }, [
+    isDraggingLeft,
+    isDraggingRight,
+    isDraggingHorizontal,
+    onLeftSplitChange,
+    onRightSplitChange,
+    onVideoHeightChange,
+  ]);
 
-  const isVideoHidden = videoWidthPct <= 1;
+  const handlePointerDownLeft = useCallback((e: React.PointerEvent) => {
+    e.preventDefault();
+    setIsDraggingLeft(true);
+  }, []);
+
+  const handlePointerDownRight = useCallback((e: React.PointerEvent) => {
+    e.preventDefault();
+    setIsDraggingRight(true);
+  }, []);
+
+  const handlePointerDownHorizontal = useCallback((e: React.PointerEvent) => {
+    e.preventDefault();
+    setIsDraggingHorizontal(true);
+  }, []);
 
   return (
     <div
       ref={containerRef}
       className="relative flex-1 min-h-0 w-full flex flex-col lg:flex-row overflow-hidden bg-app"
     >
-      {/* Left / Top: Reference Video Viewport (Continuously mounted so media clock & audio never pause or reset) */}
+      {/* LEFT COLUMN: Video Viewport + Horizontal Split Divider + Directorial Subpanel */}
       <div
+        ref={leftColRef}
         style={
           isVideoHidden
             ? undefined
-            : ({ '--video-pct': `${videoWidthPct}%` } as React.CSSProperties)
+            : ({
+                '--left-col-pct': `${leftSplitPct}%`,
+              } as React.CSSProperties)
         }
         className={
           isVideoHidden
             ? 'fixed -left-[99999px] top-0 w-[320px] h-[180px] opacity-0 pointer-events-none overflow-hidden -z-50'
-            : 'w-full h-[38%] lg:h-full lg:w-[var(--video-pct)] shrink-0 flex flex-col bg-surface border-b lg:border-b-0 border-border-main overflow-hidden'
+            : 'w-full h-[40%] lg:h-full lg:w-[var(--left-col-pct)] shrink-0 flex flex-col bg-surface border-b lg:border-b-0 border-border-main overflow-hidden'
         }
         aria-hidden={isVideoHidden}
       >
-        {leftVideoPane}
+        {/* Top Section: Reference Video Player */}
+        <div
+          style={
+            showSubpanel
+              ? ({
+                  height: `${videoHeightPct}%`,
+                } as React.CSSProperties)
+              : { height: '100%' }
+          }
+          className="w-full shrink-0 min-h-0 relative flex flex-col overflow-hidden"
+        >
+          {leftVideoPane}
+        </div>
+
+        {/* Horizontal Divider Bar (between Video and Subpanel) */}
+        {showSubpanel && (
+          <div
+            onPointerDown={handlePointerDownHorizontal}
+            className={`hidden lg:flex h-2 shrink-0 items-center justify-center cursor-row-resize select-none transition-colors z-20 ${
+              isDraggingHorizontal
+                ? 'bg-accent-primary'
+                : 'bg-surface-subtle hover:bg-surface-hover border-y border-border-main'
+            }`}
+            title="Drag to resize Video and Directorial Workspace"
+          >
+            <GripHorizontal className="w-3.5 h-3.5 text-text-faint" />
+          </div>
+        )}
+
+        {/* Bottom Section: Directorial Subpanel */}
+        {leftSubpanelPane && (
+          <div
+            style={
+              showSubpanel
+                ? ({
+                    height: `${100 - videoHeightPct}%`,
+                  } as React.CSSProperties)
+                : undefined
+            }
+            className={
+              showSubpanel
+                ? 'w-full flex-1 min-h-0 relative flex flex-col overflow-hidden'
+                : 'w-full shrink-0 relative flex flex-col'
+            }
+          >
+            {leftSubpanelPane}
+          </div>
+        )}
       </div>
 
-      {/* Draggable Split Divider Bar (Desktop lg+) */}
+      {/* LEFT VERTICAL DIVIDER BAR (between Left Column and Center Diorama) */}
       {!isVideoHidden && (
         <div
-          onPointerDown={handlePointerDown}
+          onPointerDown={handlePointerDownLeft}
           className={`hidden lg:flex w-2 shrink-0 items-center justify-center cursor-col-resize select-none transition-colors z-10 ${
-            isDraggingDivider
-              ? 'bg-text-main'
+            isDraggingLeft
+              ? 'bg-accent-primary'
               : 'bg-surface-subtle hover:bg-surface-hover border-x border-border-main'
           }`}
-          title="Drag to resize Video and 3D Diorama panels"
+          title="Drag to resize Left Column and 3D Diorama Stage"
         >
           <GripVertical className="w-3.5 h-3.5 text-text-faint" />
         </div>
       )}
 
-      {/* Right / Bottom: 3D Blueprint Diorama Viewport */}
+      {/* CENTER COLUMN: 3D Blueprint Diorama Viewport */}
       <div className="flex-1 min-w-0 min-h-0 h-full relative overflow-hidden bg-app isolate">
-        {rightStagePane}
+        {centerStagePane}
       </div>
+
+      {/* RIGHT VERTICAL DIVIDER BAR (between Center Diorama and Right YAML Studio) */}
+      {showRightEditor && (
+        <div
+          onPointerDown={handlePointerDownRight}
+          className={`hidden lg:flex w-2 shrink-0 items-center justify-center cursor-col-resize select-none transition-colors z-10 ${
+            isDraggingRight
+              ? 'bg-amber-500'
+              : 'bg-surface-subtle hover:bg-surface-hover border-x border-border-main'
+          }`}
+          title="Drag to resize 3D Diorama and YAML Score Studio"
+        >
+          <GripVertical className="w-3.5 h-3.5 text-text-faint" />
+        </div>
+      )}
+
+      {/* RIGHT COLUMN: Full-Height YAML Score Studio */}
+      {showRightEditor && (
+        <div
+          style={
+            {
+              '--right-col-pct': `${rightSplitPct}%`,
+            } as React.CSSProperties
+          }
+          className="w-full lg:w-[var(--right-col-pct)] shrink-0 h-full flex flex-col bg-surface z-10"
+        >
+          {rightEditorPane}
+        </div>
+      )}
     </div>
   );
 };

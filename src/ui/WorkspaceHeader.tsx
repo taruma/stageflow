@@ -7,7 +7,7 @@
  */
 
 import React, { useState } from 'react';
-import { Box, Code2, Book } from 'lucide-react';
+import { Box, Book } from 'lucide-react';
 import type { ScoreCatalogItem } from '../core/scoreCatalog';
 import type {
   AppThemeCategory,
@@ -28,7 +28,7 @@ export interface WorkspaceHeaderProps {
   catalog: ScoreCatalogItem[];
   activeSceneId: string;
   splitPreset: SplitPreset;
-  isYamlDrawerOpen: boolean;
+  isEditMode: boolean;
   storageStatus?: StoragePersistenceStatus;
   isLibraryOpen?: boolean;
   themeMode?: AppThemeMode;
@@ -37,7 +37,7 @@ export interface WorkspaceHeaderProps {
   effectiveDioramaCategory?: AppThemeCategory;
   onSelectScene: (sceneId: string) => void;
   onSelectSplitPreset: (preset: SplitPreset) => void;
-  onToggleYamlDrawer: () => void;
+  onToggleEditMode: () => void;
   onUploadFiles: (files: FileList) => void;
   onExportActiveScore: () => void;
   onOpenLibrary: (tab?: 'all' | 'bundled' | 'custom') => void;
@@ -50,7 +50,7 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
   catalog,
   activeSceneId,
   splitPreset,
-  isYamlDrawerOpen,
+  isEditMode,
   storageStatus = 'bundled',
   isLibraryOpen = false,
   themeMode = 'dark',
@@ -58,7 +58,7 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
   dioramaThemeMode = 'dark',
   effectiveDioramaCategory = 'dark',
   onSelectSplitPreset,
-  onToggleYamlDrawer,
+  onToggleEditMode,
   onUploadFiles,
   onExportActiveScore,
   onOpenLibrary,
@@ -117,10 +117,12 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
         <LayoutSegmentedControl
           splitPreset={splitPreset}
           onSelectSplitPreset={onSelectSplitPreset}
+          isEditMode={isEditMode}
+          onToggleEditMode={onToggleEditMode}
         />
       </div>
 
-      {/* Right Wing: Theme Mode Dropdown, Score Library Button & Live YAML Drawer Toggle */}
+      {/* Right Wing: Theme Mode Dropdown & Score Library Button */}
       <div className="flex items-center gap-2 shrink-0">
         {/* Theme Mode Selector Dropdown */}
         {onSelectThemeMode && (
@@ -147,21 +149,6 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
         >
           <Book className="w-3.5 h-3.5 shrink-0" />
           <span className="font-bold tracking-wide">Library</span>
-        </button>
-
-        {/* Live YAML Inspector Drawer Toggle */}
-        <button
-          type="button"
-          onClick={onToggleYamlDrawer}
-          className={
-            isYamlDrawerOpen
-              ? UI_TOKENS.button.filePillActive
-              : UI_TOKENS.button.filePill
-          }
-          title="Open live YAML score inspector and editor"
-        >
-          <Code2 className="w-3.5 h-3.5 text-text-muted" />
-          <span className="hidden sm:inline">YAML Score</span>
         </button>
       </div>
     </header>
