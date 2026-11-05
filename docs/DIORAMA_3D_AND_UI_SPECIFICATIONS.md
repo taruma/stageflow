@@ -85,14 +85,26 @@ Scene entities (`character`, `prop`, `marker`) are rendered with unambiguous ori
 
 ## 4. 2D Workspace Shell & Authoring Utilities (`src/ui/`)
 
-### 4.1 Resizable Split Workspace (`WorkspaceHeader.tsx`, `ResizableSplitWorkspace.tsx`)
+### 4.1 Three-Wing Studio Header & Score Library (`WorkspaceHeader.tsx`, `ScoreLibraryModal.tsx`)
+- **SceneFlow 3-Wing Architecture**: Aligned with sister application SceneFlow (`Screenplay-Sync`), the top studio header bar is divided into three ergonomic wings:
+  - **Left Wing**: Brand identity (`StageFlow · 3D Blocking Diorama`), tiered `File ▾` dropdown (`FileMenuDropdown.tsx`), and the interactive `ActiveScoreIndicator.tsx` pill displaying the active score title and `StorageStatusBadge`. Clicking the active score chip immediately opens the Score Library.
+  - **Center Stage**: Centered `LayoutSegmentedControl.tsx` housing the 4 workspace split presets (`50/50`, `70/30 Stage`, `70/30 Video`, `100% Stage`) in an elevated pill container.
+  - **Right Wing**: Standalone amber `[ 📖 Library ]` gateway button opening `ScoreLibraryModal.tsx` and the `[ YAML Score ]` drawer toggle.
+- **Tiered `File ▾` Menu (`FileMenuDropdown.tsx`)**:
+  - *Media & Score I/O*: "Open Video or Score..." (file picker trigger) and "Export Active Score (.yaml)" (direct browser download).
+  - *Scores*: "New Blank Score..." and "Manage Custom Scores" (with custom scores badge count).
+  - *Reference*: "Score Library..." and link to the YAML Authoring Guide.
+- **Dedicated Score Library Modal (`ScoreLibraryModal.tsx`)**:
+  - Accessible dialog displaying all bundled blueprint scores (01–05) and custom user scores in a responsive card grid.
+  - Rich card telemetry: Duration (`X.Xs`), shot count (`X Shots`), aspect ratio (`16:9` / `2.39:1`), active indicator badge, and 1-click loading.
+  - Category tabs (`All`, `Bundled`, `Custom`) and real-time title/subtitle search filtering.
 - **Desktop (`lg+`)**: Side-by-side split between the Left Video Viewport and Right 3D Diorama Stage, separated by a smooth pointer-drag divider bar (`18%` to `82%` clamp).
 - **Quick-Toggle Header Presets**:
   - `50/50`: Balanced 50% Video / 50% 3D Stage.
   - `70/30 Stage`: 32% Video / 68% 3D Diorama Focus.
   - `70/30 Video`: 68% Video / 32% 3D Stage.
   - `100% Stage`: Collapses the video panel to 0% for full-viewport 3D inspection while keeping the reference video/YouTube player mounted off-screen so background media playback, audio, and clock sync continue seamlessly.
-- **Narrow Screens (`< lg`)**: Responsively stacks the Video Panel (`38%` height) above the 3D Diorama Stage (`62%` height).
+- **Narrow Screens (`< lg`)**: Responsively stacks the Video Panel (`38%` height) above the 3D Diorama Stage (`62%` height) and hides the center segmented layout presets to prevent header crowding.
 
 ### 4.2 Authoring Telemetry Capsule (`CameraTelemetryCapsule.tsx`)
 - Floating bottom-right glassmorphic badge inside the 3D viewport displaying live **human degrees and metric meters** (`Pitch° / Yaw° · Distance(m) · (X, Y, Z)`).

@@ -43,6 +43,7 @@ import { DirectorialTransportBar } from './ui/DirectorialTransportBar';
 import { YamlInspectorDrawer } from './ui/YamlInspectorDrawer';
 import { ConfirmResetModal } from './ui/ConfirmResetModal';
 import { ManageProjectsModal } from './ui/ManageProjectsModal';
+import { ScoreLibraryModal } from './ui/ScoreLibraryModal';
 import { ToastContainer } from './ui/ToastContainer';
 import { LabelDisplayModeToggle } from './ui/LabelDisplayModeToggle';
 import { StageCamViewfinderOverlay } from './ui/StageCamViewfinderOverlay';
@@ -84,6 +85,9 @@ const InteractiveStudioApp: React.FC = () => {
 
   // Manage Projects Dialog state
   const [isManageProjectsOpen, setIsManageProjectsOpen] = useState(false);
+
+  // Score Library Modal state
+  const [isLibraryOpen, setIsLibraryOpen] = useState(false);
 
   // Floating Toast Notifications state
   const [toasts, setToasts] = useState<ToastNotification[]>([]);
@@ -153,6 +157,21 @@ const InteractiveStudioApp: React.FC = () => {
       return next;
     });
   }, []);
+
+  const handleExportActiveScore = useCallback(() => {
+    const blob = new Blob([rawYaml], {
+      type: 'text/yaml;charset=utf-8',
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${activeSceneId}.yaml`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast(`Exported score "${activeSceneId}.yaml"`, 'success');
+  }, [rawYaml, activeSceneId, showToast]);
 
   // Global hotkeys: 'L' cycles label modes, 'G' toggles composition guides
   useEffect(() => {
@@ -395,15 +414,18 @@ const InteractiveStudioApp: React.FC = () => {
         splitPreset={splitPreset}
         isYamlDrawerOpen={isYamlDrawerOpen}
         storageStatus={scorePersistence.storageStatus}
+        isLibraryOpen={isLibraryOpen}
         onSelectScene={handleSelectScene}
         onSelectSplitPreset={handleSelectSplitPreset}
         onToggleYamlDrawer={handleToggleYamlDrawer}
         onUploadFiles={fileDrop.processFiles}
+        onExportActiveScore={handleExportActiveScore}
+        onOpenLibrary={() => setIsLibraryOpen(true)}
         onOpenManageProjects={() => setIsManageProjectsOpen(true)}
         onCreateBlankProject={async () => {
           const blank = await scorePersistence.createBlankScore();
           if (blank) {
-            showToast(`Created new blank project "${blank.title}"`, 'success');
+            showToast(`Created new blank score "${blank.title}"`, 'success');
           }
         }}
       />
@@ -537,24 +559,40 @@ const InteractiveStudioApp: React.FC = () => {
         onRenameProject={async (id, newTitle) => {
           const ok = await scorePersistence.renameCustomScore(id, newTitle);
           if (ok) {
-            showToast(`Project renamed to "${newTitle}"`, 'success');
+            showToast(`Score renamed to "${newTitle}"`, 'success');
           }
           return ok;
         }}
         onDeleteProject={async (id) => {
           const ok = await scorePersistence.deleteCustomScore(id);
           if (ok) {
-            showToast('Custom project deleted', 'info');
+            showToast('Custom score deleted', 'info');
           }
           return ok;
         }}
         onCreateBlankProject={async () => {
           const blank = await scorePersistence.createBlankScore();
           if (blank) {
-            showToast(`Created new blank project "${blank.title}"`, 'success');
+            showToast(`Created new blank score "${blank.title}"`, 'success');
           }
         }}
         onClose={() => setIsManageProjectsOpen(false)}
+      />
+
+      {/* Choreography Score Library Modal */}
+      <ScoreLibraryModal
+        isOpen={isLibraryOpen}
+        catalog={catalog}
+        activeSceneId={activeSceneId}
+        onSelectScene={handleSelectScene}
+        onCreateBlankScore={async () => {
+          const blank = await scorePersistence.createBlankScore();
+          if (blank) {
+            showToast(`Created new blank score "${blank.title}"`, 'success');
+          }
+        }}
+        onOpenManageScores={() => setIsManageProjectsOpen(true)}
+        onClose={() => setIsLibraryOpen(false)}
       />
 
       {/* Floating Toast Notification Container */}

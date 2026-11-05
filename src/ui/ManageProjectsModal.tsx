@@ -113,10 +113,10 @@ export const ManageProjectsModal: React.FC<ManageProjectsModalProps> = ({
                 id="manage-projects-title"
                 className="text-sm font-semibold font-mono text-slate-100"
               >
-                Custom Projects
+                Custom Scores
               </h2>
               <span className="text-[11px] font-mono text-slate-400">
-                {customProjects.length} custom project{customProjects.length === 1 ? '' : 's'} stored in browser IndexedDB
+                {customProjects.length} custom score{customProjects.length === 1 ? '' : 's'} stored in browser IndexedDB
               </span>
             </div>
           </div>
@@ -151,7 +151,7 @@ export const ManageProjectsModal: React.FC<ManageProjectsModalProps> = ({
           {customProjects.length === 0 ? (
             <div className="py-12 flex flex-col items-center justify-center gap-3 text-center text-slate-400 font-mono text-xs">
               <FolderKanban className="w-10 h-10 text-slate-600 stroke-1" />
-              <span>No custom projects yet.</span>
+              <span>No custom scores yet.</span>
               <p className="text-[11px] text-slate-500 max-w-sm">
                 Drop your own <code className="text-sky-300">.yaml</code> file into the viewport, or click <strong>New Blank</strong> above, or <strong>Fork</strong> any factory blueprint from the YAML drawer.
               </p>

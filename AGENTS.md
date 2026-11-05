@@ -162,7 +162,12 @@ stageflow/
 │   │   ├── DirectionalMannequin.tsx # Stylized character/prop proxies with facing visor & floor trails
 │   │   └── StageBillboardLabel.tsx  # Crisp 3D HTML floating identity badges
 │   ├── ui/                          # Layer 5: 2D Directorial UI Shell
-│   │   ├── WorkspaceHeader.tsx      # Scene selector, file upload, split presets & YAML drawer toggle
+│   │   ├── header/                  # Modular 3-wing studio header submodules
+│   │   │   ├── FileMenuDropdown.tsx # Tiered File ▾ popover menu (Open, Export, New, Manage, Guide)
+│   │   │   ├── LayoutSegmentedControl.tsx # Centered segmented split workspace layout switcher
+│   │   │   └── ActiveScoreIndicator.tsx # Interactive active score context chip with 1-click library open
+│   │   ├── WorkspaceHeader.tsx      # SceneFlow-aligned 3-wing orchestrator header bar
+│   │   ├── ScoreLibraryModal.tsx    # Accessible modal for browsing bundled blueprints & custom scores
 │   │   ├── ResizableSplitWorkspace.tsx # Draggable side-by-side split container
 │   │   ├── UniversalVideoViewport.tsx  # Local video, YouTube IFrame, or 60fps Stage Cam Simulator
 │   │   ├── ShotBreakdownHud.tsx     # Top-left active shot, lens, maneuver & staging note overlay

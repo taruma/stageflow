@@ -1,25 +1,18 @@
 /**
  * Top Studio Header Bar for StageFlow.
- * Houses the Scene Catalog Selector (Grouped into Bundled Blueprints & Custom Projects),
- * File Upload trigger, Manage Projects trigger, Layout Split Presets,
- * and Live YAML Score Drawer toggle.
+ * Composes a balanced 3-wing layout:
+ * - Left Wing: Brand Identity, File ▾ Dropdown, and Active Score Indicator
+ * - Center Stage: Centered Split Layout Segmented Control
+ * - Right Wing: Dedicated Score Library Button and YAML Drawer Toggle
  */
 
-import React, { useRef } from 'react';
-import {
-  Box,
-  Code2,
-  Columns2,
-  Film,
-  FolderKanban,
-  Maximize2,
-  PanelLeft,
-  PanelRight,
-  Upload,
-} from 'lucide-react';
+import React, { useState } from 'react';
+import { Box, Code2, Book } from 'lucide-react';
 import type { ScoreCatalogItem } from '../core/scoreCatalog';
 import type { SplitPreset, StoragePersistenceStatus } from '../core/types';
-import { StorageStatusBadge } from './StorageStatusBadge';
+import { FileMenuDropdown } from './header/FileMenuDropdown';
+import { LayoutSegmentedControl } from './header/LayoutSegmentedControl';
+import { ActiveScoreIndicator } from './header/ActiveScoreIndicator';
 
 export type { SplitPreset, StoragePersistenceStatus };
 
@@ -29,10 +22,13 @@ export interface WorkspaceHeaderProps {
   splitPreset: SplitPreset;
   isYamlDrawerOpen: boolean;
   storageStatus?: StoragePersistenceStatus;
+  isLibraryOpen?: boolean;
   onSelectScene: (sceneId: string) => void;
   onSelectSplitPreset: (preset: SplitPreset) => void;
   onToggleYamlDrawer: () => void;
   onUploadFiles: (files: FileList) => void;
+  onExportActiveScore: () => void;
+  onOpenLibrary: () => void;
   onOpenManageProjects?: () => void;
   onCreateBlankProject?: () => void;
 }
@@ -43,30 +39,24 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
   splitPreset,
   isYamlDrawerOpen,
   storageStatus = 'bundled',
-  onSelectScene,
+  isLibraryOpen = false,
   onSelectSplitPreset,
   onToggleYamlDrawer,
   onUploadFiles,
+  onExportActiveScore,
+  onOpenLibrary,
   onOpenManageProjects,
   onCreateBlankProject,
 }) => {
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [isFileMenuOpen, setIsFileMenuOpen] = useState(false);
 
-  const bundledItems = catalog.filter((item) => !item.isCustom);
-  const customItems = catalog.filter((item) => item.isCustom);
-
-  const handleDropdownChange = (value: string) => {
-    if (value === '__NEW_BLANK__') {
-      onCreateBlankProject?.();
-    } else {
-      onSelectScene(value);
-    }
-  };
+  const customScores = catalog.filter((item) => item.isCustom);
 
   return (
     <header className="h-12 shrink-0 px-3 bg-[#0a0f1d] border-b border-slate-800/90 flex items-center justify-between gap-3 select-none z-20">
-      {/* Left: Brand Identity & Scene Catalog Selector */}
-      <div className="flex items-center gap-3 min-w-0">
+      {/* Left Wing: Brand Identity, File Menu & Active Score Indicator */}
+      <div className="flex items-center gap-2.5 min-w-0">
+        {/* Brand Logo & Title */}
         <div className="flex items-center gap-2 shrink-0">
           <div className="w-7 h-7 rounded-lg bg-sky-500/15 border border-sky-400/40 flex items-center justify-center text-sky-400 shadow-inner">
             <Box className="w-4 h-4" />
@@ -83,153 +73,56 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
 
         <div className="h-5 w-px bg-slate-800 shrink-0 hidden sm:block" />
 
-        {/* Scene Switcher with Semantic Optgroups */}
-        <div className="flex items-center gap-1.5 min-w-0">
-          <Film className="w-3.5 h-3.5 text-slate-400 shrink-0 hidden sm:block" />
-          <select
-            value={activeSceneId}
-            onChange={(e) => handleDropdownChange(e.target.value)}
-            className="bg-slate-900/90 hover:bg-slate-800/90 text-slate-200 text-xs font-mono px-2.5 py-1 rounded-md border border-slate-700/80 focus:outline-none focus:border-sky-400 transition-colors truncate max-w-[220px] sm:max-w-[280px] cursor-pointer"
-            title="Switch active choreography score"
-          >
-            <optgroup label="Bundled Blueprints">
-              {bundledItems.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.title}
-                </option>
-              ))}
-            </optgroup>
-
-            {customItems.length > 0 && (
-              <optgroup label="Custom Projects">
-                {customItems.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.title}
-                  </option>
-                ))}
-              </optgroup>
-            )}
-
-            <optgroup label="Actions">
-              <option value="__NEW_BLANK__">+ New Blank Project...</option>
-            </optgroup>
-          </select>
-
-          {/* Manage Custom Projects Button */}
-          {onOpenManageProjects && (
-            <button
-              type="button"
-              onClick={onOpenManageProjects}
-              className="px-2 py-1 rounded-md bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-sky-300 border border-slate-700/80 hover:border-sky-500/40 text-[11px] font-mono transition-colors cursor-pointer shrink-0 flex items-center gap-1"
-              title="Manage Custom Projects (Rename, Export, Delete)"
-            >
-              <FolderKanban className="w-3.5 h-3.5 text-sky-400" />
-              <span className="hidden sm:inline">Projects</span>
-              {customItems.length > 0 && (
-                <span className="text-[9px] bg-sky-500/20 text-sky-300 px-1 rounded-full font-mono font-bold">
-                  {customItems.length}
-                </span>
-              )}
-            </button>
-          )}
-
-          <StorageStatusBadge
-            status={storageStatus}
-            className="hidden sm:inline-flex shrink-0"
-          />
-        </div>
-
-        {/* Upload / Drop .MP4 + .YAML Trigger */}
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".yaml,.yml,.json,.mp4,.webm,.mov,video/*"
-          multiple
-          className="hidden"
-          onChange={(e) => {
-            if (e.target.files && e.target.files.length > 0) {
-              onUploadFiles(e.target.files);
-              e.target.value = '';
-            }
-          }}
+        {/* Tiered File Dropdown Menu */}
+        <FileMenuDropdown
+          isOpen={isFileMenuOpen}
+          customScoresCount={customScores.length}
+          onToggle={() => setIsFileMenuOpen((prev) => !prev)}
+          onClose={() => setIsFileMenuOpen(false)}
+          onUploadFiles={onUploadFiles}
+          onExportActiveScore={onExportActiveScore}
+          onCreateBlankScore={onCreateBlankProject}
+          onOpenManageScores={onOpenManageProjects}
+          onOpenLibrary={onOpenLibrary}
         />
-        <button
-          type="button"
-          onClick={() => fileInputRef.current?.click()}
-          className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-sky-300 border border-slate-800 hover:border-sky-500/40 text-[11px] font-mono transition-colors cursor-pointer shrink-0"
-          title="Load local .yaml score and/or .mp4 video file"
-        >
-          <Upload className="w-3.5 h-3.5 text-sky-400" />
-          <span>Load Video / YAML</span>
-        </button>
+
+        {/* Active Score Context Chip (Clickable Option A to Open Library) */}
+        <ActiveScoreIndicator
+          catalog={catalog}
+          activeSceneId={activeSceneId}
+          storageStatus={storageStatus}
+          onOpenLibrary={onOpenLibrary}
+        />
       </div>
 
-      {/* Right: Layout Split Presets & YAML Score Drawer Toggle */}
+      {/* Center Stage: Centered Workspace Split Segmented Control */}
+      <LayoutSegmentedControl
+        splitPreset={splitPreset}
+        onSelectSplitPreset={onSelectSplitPreset}
+      />
+
+      {/* Right Wing: Dedicated Score Library Button & Live YAML Drawer Toggle */}
       <div className="flex items-center gap-2 shrink-0">
-        {/* Split Layout Presets */}
-        <div className="hidden lg:flex items-center bg-slate-950/90 p-0.5 rounded-lg border border-slate-800/90 text-[10px] font-mono">
-          <button
-            type="button"
-            onClick={() => onSelectSplitPreset('50-50')}
-            className={`px-2 py-1 rounded-md flex items-center gap-1 transition-colors cursor-pointer ${
-              splitPreset === '50-50'
-                ? 'bg-sky-500/20 text-sky-300 border border-sky-500/40'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
-            title="50% Video / 50% 3D Stage"
-          >
-            <Columns2 className="w-3 h-3" />
-            <span>50/50</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => onSelectSplitPreset('30-70')}
-            className={`px-2 py-1 rounded-md flex items-center gap-1 transition-colors cursor-pointer ${
-              splitPreset === '30-70'
-                ? 'bg-sky-500/20 text-sky-300 border border-sky-500/40'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
-            title="30% Video / 70% 3D Diorama Focus"
-          >
-            <PanelLeft className="w-3 h-3" />
-            <span>70/30 Stage</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => onSelectSplitPreset('70-30')}
-            className={`px-2 py-1 rounded-md flex items-center gap-1 transition-colors cursor-pointer ${
-              splitPreset === '70-30'
-                ? 'bg-sky-500/20 text-sky-300 border border-sky-500/40'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
-            title="70% Video / 30% 3D Stage"
-          >
-            <PanelRight className="w-3 h-3" />
-            <span>70/30 Video</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => onSelectSplitPreset('0-100')}
-            className={`px-2 py-1 rounded-md flex items-center gap-1 transition-colors cursor-pointer ${
-              splitPreset === '0-100'
-                ? 'bg-sky-500/20 text-sky-300 border border-sky-500/40'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
-            title="100% Full-Screen 3D Diorama Stage"
-          >
-            <Maximize2 className="w-3 h-3" />
-            <span>100% Stage</span>
-          </button>
-        </div>
+        {/* Standalone Amber Library Button */}
+        <button
+          type="button"
+          onClick={onOpenLibrary}
+          className={`px-2.5 py-1 rounded-md text-xs font-mono transition-all flex items-center gap-1.5 cursor-pointer border ${
+            isLibraryOpen
+              ? 'bg-amber-500/25 border-amber-400/70 text-amber-200 shadow-sm'
+              : 'bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border-amber-500/40 hover:border-amber-400/60'
+          }`}
+          title="Browse Choreography Score Library (Blueprints & Custom Scores)"
+        >
+          <Book className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+          <span className="font-bold tracking-wide">Library</span>
+        </button>
 
         {/* Live YAML Inspector Drawer Toggle */}
         <button
           type="button"
           onClick={onToggleYamlDrawer}
-          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-mono transition-all cursor-pointer ${
+          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-mono transition-all cursor-pointer ${
             isYamlDrawerOpen
               ? 'bg-amber-500/20 border-amber-500/50 text-amber-300 shadow-sm'
               : 'bg-slate-900 hover:bg-slate-800 border-slate-800 text-slate-300 hover:text-white'
@@ -237,7 +130,7 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
           title="Open live YAML score inspector and editor"
         >
           <Code2 className="w-3.5 h-3.5 text-amber-400" />
-          <span>YAML Score</span>
+          <span className="hidden sm:inline">YAML Score</span>
         </button>
       </div>
     </header>

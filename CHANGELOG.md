@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **SceneFlow-Aligned 3-Wing Studio Header & Decoupled Score Library (`src/ui/header/`, `src/ui/ScoreLibraryModal.tsx`, `src/ui/WorkspaceHeader.tsx`)**:
+  - Aligned StageFlow's studio header layout and ergonomics with sister application **SceneFlow** (`Screenplay-Sync`), structuring the top navigation into three balanced, decoupled wings.
+  - Added [`FileMenuDropdown.tsx`](src/ui/header/FileMenuDropdown.tsx) on the Left Wing grouping media and score I/O: "Open Video or Score..." (file picker trigger), "Export Active Score (.yaml)" (direct browser download), "New Blank Score...", "Manage Custom Scores" (with badge count), "Score Library...", and link to the YAML Authoring Guide.
+  - Added [`LayoutSegmentedControl.tsx`](src/ui/header/LayoutSegmentedControl.tsx) on Center Stage providing an elevated segmented pill container for the 4 split workspace layout presets (`50/50`, `70/30 Stage`, `70/30 Video`, `100% Stage`).
+  - Added [`ActiveScoreIndicator.tsx`](src/ui/header/ActiveScoreIndicator.tsx) on the Left Wing displaying active score title and `StorageStatusBadge`, acting as an interactive 1-click shortcut to open the Score Library (Option A).
+  - Added dedicated [`ScoreLibraryModal.tsx`](src/ui/ScoreLibraryModal.tsx) showcasing all factory blueprints (01–05) and custom IndexedDB scores with category tabs (`All`, `Bundled`, `Custom`), real-time search filtering, and rich metadata cards (duration in seconds, shot count, aspect ratio, persistence status).
+  - Added direct YAML download handler `handleExportActiveScore` in [`src/App.tsx`](src/App.tsx) downloading `${activeSceneId}.yaml` with transient toast feedback.
+  - Refactored [`src/ui/WorkspaceHeader.tsx`](src/ui/WorkspaceHeader.tsx) from a 245-line monolithic component down to 148 lines, reducing visual density and enforcing strict decoupling ($\le 250$ lines/file).
+  - Unified script and project terminology around the official designation **"Score"** across the studio header, project management modal, and library interfaces.
 - **Protected Bundled Presets & Fork-on-Edit Architecture (`src/core/`, `src/hooks/`, `src/ui/`)**:
   - Implemented the Observable / ShaderToy template protection pattern: factory Blueprints (01–05) are immutably protected reference baselines.
   - Added `isBundledSceneId` and `generateBlankScoreYaml` helpers in [`src/core/scoreCatalog.ts`](src/core/scoreCatalog.ts) and `checkScoreExists` in [`src/core/storage/scoreDb.ts`](src/core/storage/scoreDb.ts).
