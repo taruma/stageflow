@@ -189,8 +189,9 @@ stageflow/
 │   │   │   ├── YamlEditorCanvas.tsx # CodeMirror 6 DOM mounting & virtualized canvas
 │   │   │   ├── useCodeMirrorTheme.ts # Dynamic theme extension for Dark/Warm/Light/Pure Black
 │   │   │   └── useYamlEditor.ts     # Compartments, external sync guard & ~150ms debouncer
-│   │   ├── guide/                   # In-app choreography score authoring manual
-│   │   │   ├── ScoreAuthoringGuideView.tsx # Standalone Markdown + KaTeX manual view (?mode=guide)
+│   │   ├── guide/                   # In-app choreography score & script specification manual
+│   │   │   ├── ScoreAuthoringGuideView.tsx # Standalone Markdown + KaTeX manual view (?mode=guide / ?mode=spec)
+│   │   │   ├── guideMarkdownComponents.tsx # Custom markdown element renderers (h1-h3, pre, table)
 │   │   │   └── guideUtils.ts        # Section anchor mappings, recursive text & slug extractors
 │   │   ├── library/                 # Modular score library submodules
 │   │   │   ├── ScoreLibraryCard.tsx # Cinematic choreography score card with color tags & telemetry

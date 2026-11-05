@@ -209,6 +209,18 @@ export const FileMenuDropdown: React.FC<FileMenuDropdownProps> = ({
               <span>YAML Authoring Guide</span>
               <ExternalLink className="w-3 h-3 text-text-faint" />
             </a>
+
+            <a
+              href="?mode=spec"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={onClose}
+              className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-text-muted hover:text-text-main hover:bg-surface-subtle transition-colors text-left"
+              title="Open StageFlow Script Technical Specification in a new tab"
+            >
+              <span>Script Specification</span>
+              <ExternalLink className="w-3 h-3 text-text-faint" />
+            </a>
           </div>
         </div>
       )}

@@ -1,11 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import React from 'react';
 import {
+  GUIDE_DOC_SHORTCUTS,
   SECTION_SHORTCUTS,
   getNodeText,
   slugify,
 } from '../../src/ui/guide/guideUtils';
 import yamlAuthoringGuideRaw from '../../docs/YAML_AUTHORING_GUIDE.md?raw';
+import scriptSpecificationRaw from '../../docs/STAGEFLOW_SCRIPT_SPECIFICATION.md?raw';
 
 describe('guideUtils', () => {
   it('correctly extracts text from string, array, and nested React elements', () => {
@@ -27,14 +29,29 @@ describe('guideUtils', () => {
     expect(slugify("9. Director's Cookbook: 6 Cinematography Recipes")).toBe('9-director-s-cookbook-6-cinematography-recipes');
   });
 
-  it('ensures every SECTION_SHORTCUT corresponds to an actual h2 in docs/YAML_AUTHORING_GUIDE.md', () => {
+  it('ensures every guide shortcut corresponds to an actual h2 in docs/YAML_AUTHORING_GUIDE.md', () => {
     const h2Lines = yamlAuthoringGuideRaw
       .split('\n')
       .filter((line) => line.startsWith('## '));
 
-    expect(h2Lines.length).toBe(SECTION_SHORTCUTS.length);
+    expect(h2Lines.length).toBe(GUIDE_DOC_SHORTCUTS.guide.length);
+    expect(SECTION_SHORTCUTS.length).toBe(GUIDE_DOC_SHORTCUTS.guide.length);
 
-    SECTION_SHORTCUTS.forEach((sec, idx) => {
+    GUIDE_DOC_SHORTCUTS.guide.forEach((sec, idx) => {
+      const line = h2Lines[idx];
+      expect(sec.id).toBe(`section-${idx + 1}`);
+      expect(line.startsWith(`## ${idx + 1}.`)).toBe(true);
+    });
+  });
+
+  it('ensures every spec shortcut corresponds to an actual h2 in docs/STAGEFLOW_SCRIPT_SPECIFICATION.md', () => {
+    const h2Lines = scriptSpecificationRaw
+      .split('\n')
+      .filter((line) => line.startsWith('## '));
+
+    expect(h2Lines.length).toBe(GUIDE_DOC_SHORTCUTS.spec.length);
+
+    GUIDE_DOC_SHORTCUTS.spec.forEach((sec, idx) => {
       const line = h2Lines[idx];
       expect(sec.id).toBe(`section-${idx + 1}`);
       expect(line.startsWith(`## ${idx + 1}.`)).toBe(true);

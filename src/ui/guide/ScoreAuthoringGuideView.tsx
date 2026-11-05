@@ -1,8 +1,8 @@
 /**
- * Dedicated Full-Page Markdown + LaTeX Score Authoring Guide View.
- * Mounted when ?mode=guide is present in the URL.
- * Renders docs/YAML_AUTHORING_GUIDE.md with zero WebGL diorama, video player,
- * or transport deck overhead.
+ * Dedicated Full-Page Markdown + LaTeX Documentation Viewer.
+ * Mounted when ?mode=guide or ?mode=spec is present in the URL.
+ * Renders docs/YAML_AUTHORING_GUIDE.md or docs/STAGEFLOW_SCRIPT_SPECIFICATION.md
+ * with zero WebGL diorama, video player, or transport deck overhead.
  */
 
 import React, { useEffect, useMemo, useState } from 'react';
@@ -10,25 +10,42 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
-import { ArrowLeft, BookOpen, Compass, Search } from 'lucide-react';
+import { ArrowLeft, BookOpen, Compass, FileText, Search } from 'lucide-react';
 import 'katex/dist/katex.min.css';
 import yamlAuthoringGuideRaw from '../../../docs/YAML_AUTHORING_GUIDE.md?raw';
+import scriptSpecificationRaw from '../../../docs/STAGEFLOW_SCRIPT_SPECIFICATION.md?raw';
 import { useAppShellTheme } from '../../hooks/useAppShellTheme';
 import { ThemeSelectorDropdown } from '../header/ThemeSelectorDropdown';
 import {
-  SECTION_SHORTCUTS,
-  getNodeText,
-  slugify,
+  GUIDE_DOC_SHORTCUTS,
+  type GuideDocType,
 } from './guideUtils';
+import { createGuideMarkdownComponents } from './guideMarkdownComponents';
 
-export const ScoreAuthoringGuideView: React.FC = () => {
+export interface ScoreAuthoringGuideViewProps {
+  initialDoc?: GuideDocType;
+}
+
+export const ScoreAuthoringGuideView: React.FC<ScoreAuthoringGuideViewProps> = ({
+  initialDoc,
+}) => {
   const theme = useAppShellTheme();
+  const [activeDoc, setActiveDoc] = useState<GuideDocType>(() => {
+    if (initialDoc) return initialDoc;
+    if (typeof window !== 'undefined') {
+      const mode = new URLSearchParams(window.location.search).get('mode');
+      if (mode === 'spec') return 'spec';
+    }
+    return 'guide';
+  });
   const [filterQuery, setFilterQuery] = useState('');
 
+  const currentRawDoc = activeDoc === 'spec' ? scriptSpecificationRaw : yamlAuthoringGuideRaw;
+
   const displayedContent = useMemo(() => {
-    if (!filterQuery.trim()) return yamlAuthoringGuideRaw;
+    if (!filterQuery.trim()) return currentRawDoc;
     const query = filterQuery.toLowerCase();
-    const lines = yamlAuthoringGuideRaw.split('\n');
+    const lines = currentRawDoc.split('\n');
     const matchedIndices: number[] = [];
 
     lines.forEach((line, idx) => {
@@ -57,7 +74,17 @@ export const ScoreAuthoringGuideView: React.FC = () => {
     });
 
     return result.join('\n');
-  }, [filterQuery]);
+  }, [currentRawDoc, filterQuery]);
+
+  const handleSwitchDoc = (nextDoc: GuideDocType) => {
+    if (nextDoc === activeDoc) return;
+    setActiveDoc(nextDoc);
+    setFilterQuery('');
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    const url = new URL(window.location.href);
+    url.searchParams.set('mode', nextDoc);
+    window.history.replaceState({}, '', url.pathname + url.search);
+  };
 
   const handleJumpToSection = (targetId: string) => {
     const jump = () => {
@@ -94,26 +121,59 @@ export const ScoreAuthoringGuideView: React.FC = () => {
     };
   }, []);
 
+  const markdownComponents = useMemo(() => createGuideMarkdownComponents(), []);
+  const currentShortcuts = GUIDE_DOC_SHORTCUTS[activeDoc];
+
   return (
     <div className="min-h-screen w-full bg-app text-text-main flex flex-col font-sans selection:bg-amber-500/20 select-text">
       {/* 1. Directorial Header Bar */}
       <header className="sticky top-0 z-30 h-14 px-4 sm:px-6 bg-surface/90 backdrop-blur-md border-b border-border-main flex items-center justify-between gap-3 select-none">
         <div className="flex items-center gap-3 min-w-0">
           <div className="w-8 h-8 rounded-lg bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-500 shrink-0">
-            <Compass className="w-4 h-4" />
+            {activeDoc === 'spec' ? <FileText className="w-4 h-4 text-sky-400" /> : <Compass className="w-4 h-4" />}
           </div>
           <div className="min-w-0">
             <h1 className="text-sm font-bold text-text-main leading-tight truncate">
-              StageFlow YAML Score Authoring Manual
+              {activeDoc === 'spec' ? 'StageFlow Script Technical Specification' : 'StageFlow YAML Score Authoring Manual'}
             </h1>
             <span className="text-[10px] font-mono text-text-muted truncate block">
-              docs/YAML_AUTHORING_GUIDE.md · Standalone Reference
+              {activeDoc === 'spec' ? 'docs/STAGEFLOW_SCRIPT_SPECIFICATION.md · Mathematical Model' : 'docs/YAML_AUTHORING_GUIDE.md · Standalone Reference'}
             </span>
           </div>
         </div>
 
-        {/* Action Controls: Theme Switcher & Studio Return */}
+        {/* Center/Right Actions: Doc Switcher, Theme Switcher, Studio Return */}
         <div className="flex items-center gap-2 shrink-0">
+          {/* Document Switcher Segmented Control */}
+          <div className="flex items-center p-0.5 rounded-lg bg-surface-muted border border-border-main text-[11px] font-mono">
+            <button
+              type="button"
+              onClick={() => handleSwitchDoc('spec')}
+              className={`px-2.5 py-1 rounded-md transition-all cursor-pointer flex items-center gap-1 ${
+                activeDoc === 'spec'
+                  ? 'bg-surface text-sky-400 font-bold shadow-2xs border border-border-main'
+                  : 'text-text-muted hover:text-text-main'
+              }`}
+              title="View StageFlow Script Technical & Mathematical Specification"
+            >
+              <FileText className="w-3 h-3" />
+              <span>SPEC</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSwitchDoc('guide')}
+              className={`px-2.5 py-1 rounded-md transition-all cursor-pointer flex items-center gap-1 ${
+                activeDoc === 'guide'
+                  ? 'bg-surface text-amber-500 font-bold shadow-2xs border border-border-main'
+                  : 'text-text-muted hover:text-text-main'
+              }`}
+              title="View YAML Score Authoring Manual & Recipes"
+            >
+              <BookOpen className="w-3 h-3" />
+              <span>Guide</span>
+            </button>
+          </div>
+
           <ThemeSelectorDropdown
             themeMode={theme.themeMode}
             effectiveCategory={theme.effectiveCategory}
@@ -140,13 +200,13 @@ export const ScoreAuthoringGuideView: React.FC = () => {
             type="text"
             value={filterQuery}
             onChange={(e) => setFilterQuery(e.target.value)}
-            placeholder="Search guide (e.g. arc, roll, 85mm)..."
+            placeholder={`Search ${activeDoc === 'spec' ? 'spec' : 'guide'} (e.g. arc, roll, 85mm)...`}
             className="w-full pl-8 pr-2.5 py-1 text-xs font-mono bg-surface border border-border-main rounded-md text-text-main placeholder-text-muted focus:outline-none focus:border-amber-500 transition-colors"
           />
         </div>
 
         <div className="flex items-center gap-1.5 overflow-x-auto py-0.5 custom-scrollbar text-[11px] font-mono">
-          {SECTION_SHORTCUTS.map((sec) => (
+          {currentShortcuts.map((sec) => (
             <button
               key={sec.id}
               type="button"
@@ -164,79 +224,7 @@ export const ScoreAuthoringGuideView: React.FC = () => {
         <ReactMarkdown
           remarkPlugins={[remarkGfm, remarkMath]}
           rehypePlugins={[rehypeKatex]}
-          components={{
-            h1: ({ children }) => (
-              <h1 className="text-2xl font-bold font-sans text-text-main mt-8 mb-4 pb-2 border-b border-border-main flex items-center gap-2">
-                <BookOpen className="w-6 h-6 text-amber-500 inline shrink-0" />
-                <span>{children}</span>
-              </h1>
-            ),
-            h2: ({ children }) => {
-              const text = getNodeText(children);
-              const slug = slugify(text);
-              const match = text.match(/^(\d+)\./);
-              const sectionId = match ? `section-${match[1]}` : slug;
-              return (
-                <h2
-                  id={sectionId}
-                  data-slug={slug}
-                  className="text-lg font-bold font-sans text-text-main mt-8 mb-3 pb-1.5 border-b border-border-subtle scroll-mt-32"
-                >
-                  {children}
-                </h2>
-              );
-            },
-            h3: ({ children }) => (
-              <h3 className="text-sm font-bold font-mono text-amber-600 dark:text-amber-400 mt-6 mb-2 uppercase tracking-wide">
-                {children}
-              </h3>
-            ),
-            p: ({ children }) => (
-              <p className="text-sm font-sans text-text-body leading-relaxed my-3">
-                {children}
-              </p>
-            ),
-            ul: ({ children }) => (
-              <ul className="list-disc list-inside space-y-1.5 my-3 text-sm text-text-body pl-3">
-                {children}
-              </ul>
-            ),
-            ol: ({ children }) => (
-              <ol className="list-decimal list-inside space-y-1.5 my-3 text-sm text-text-body pl-3">
-                {children}
-              </ol>
-            ),
-            li: ({ children }) => <li className="text-sm text-text-body leading-relaxed">{children}</li>,
-            table: ({ children }) => (
-              <div className="w-full overflow-x-auto custom-scrollbar my-5 rounded-xl border border-border-main bg-surface shadow-2xs">
-                <table className="w-full text-left border-collapse text-xs font-mono">{children}</table>
-              </div>
-            ),
-            thead: ({ children }) => <thead className="bg-surface-muted text-text-main text-xs border-b border-border-main">{children}</thead>,
-            th: ({ children }) => <th className="px-4 py-2.5 font-bold text-text-main">{children}</th>,
-            td: ({ children }) => <td className="px-4 py-2 border-b border-border-subtle/60 text-xs text-text-body">{children}</td>,
-            pre: ({ children }) => (
-              <pre className="p-4 my-4 rounded-xl bg-surface-muted border border-border-main font-mono text-xs text-text-main overflow-x-auto custom-scrollbar leading-relaxed shadow-inner">
-                {children}
-              </pre>
-            ),
-            code: ({ className, children }) => {
-              if (!className) {
-                return (
-                  <code className="px-1.5 py-0.5 rounded bg-surface-subtle text-amber-600 dark:text-amber-400 font-mono text-xs border border-border-subtle">
-                    {children}
-                  </code>
-                );
-              }
-              return <code>{children}</code>;
-            },
-            blockquote: ({ children }) => (
-              <blockquote className="border-l-4 border-amber-500 bg-amber-500/10 px-4 py-2.5 rounded-r-lg my-4 text-sm italic text-text-body">
-                {children}
-              </blockquote>
-            ),
-            hr: () => <hr className="my-8 border-t border-border-subtle" />,
-          }}
+          components={markdownComponents}
         >
           {displayedContent}
         </ReactMarkdown>

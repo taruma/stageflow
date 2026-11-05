@@ -61,8 +61,10 @@ const urlParams =
 
 const isHeadlessRender = urlParams?.get('mode') === 'headless-render';
 const isGuideMode = urlParams?.get('mode') === 'guide';
+const isSpecMode = urlParams?.get('mode') === 'spec';
+const isDocMode = isGuideMode || isSpecMode;
 
-if (typeof document !== 'undefined' && isGuideMode) {
+if (typeof document !== 'undefined' && isDocMode) {
   document.documentElement.setAttribute('data-mode', 'guide');
   document.body.classList.remove('overflow-hidden');
 }
@@ -599,10 +601,10 @@ export const App: React.FC = () => {
   if (isHeadlessRender) {
     return <HeadlessRecorderView />;
   }
-  if (isGuideMode) {
+  if (isDocMode) {
     return (
       <React.Suspense fallback={null}>
-        <ScoreAuthoringGuideView />
+        <ScoreAuthoringGuideView initialDoc={isSpecMode ? 'spec' : 'guide'} />
       </React.Suspense>
     );
   }

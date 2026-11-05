@@ -1,25 +1,42 @@
 /**
- * Helper utilities and section anchor mappings for ScoreAuthoringGuideView.
+ * Helper utilities, section anchor mappings, and text extractors
+ * for ScoreAuthoringGuideView. Supports both the YAML Authoring Guide
+ * and the StageFlow Script Technical Specification.
  */
 
 import React from 'react';
+
+export type GuideDocType = 'guide' | 'spec';
 
 export interface GuideSectionShortcut {
   label: string;
   id: string;
 }
 
-export const SECTION_SHORTCUTS: GuideSectionShortcut[] = [
-  { label: 'Rules', id: 'section-1' },
-  { label: 'Coordinates', id: 'section-2' },
-  { label: 'Schema', id: 'section-3' },
-  { label: 'Entities', id: 'section-4' },
-  { label: 'Shots', id: 'section-5' },
-  { label: 'Cameras', id: 'section-6' },
-  { label: 'Blocking', id: 'section-7' },
-  { label: 'Workflow', id: 'section-8' },
-  { label: 'Recipes', id: 'section-9' },
-];
+export const GUIDE_DOC_SHORTCUTS: Record<GuideDocType, GuideSectionShortcut[]> = {
+  guide: [
+    { label: 'Rules', id: 'section-1' },
+    { label: 'Coordinates', id: 'section-2' },
+    { label: 'Schema', id: 'section-3' },
+    { label: 'Entities', id: 'section-4' },
+    { label: 'Shots', id: 'section-5' },
+    { label: 'Cameras', id: 'section-6' },
+    { label: 'Blocking', id: 'section-7' },
+    { label: 'Workflow', id: 'section-8' },
+    { label: 'Recipes', id: 'section-9' },
+  ],
+  spec: [
+    { label: 'Coordinates', id: 'section-1' },
+    { label: 'Kinematics', id: 'section-2' },
+    { label: 'Optics', id: 'section-3' },
+    { label: 'Entities', id: 'section-4' },
+    { label: 'Maneuvers', id: 'section-5' },
+    { label: 'Chaining', id: 'section-6' },
+    { label: 'Schema', id: 'section-7' },
+  ],
+};
+
+export const SECTION_SHORTCUTS = GUIDE_DOC_SHORTCUTS.guide;
 
 export const getNodeText = (node: React.ReactNode): string => {
   if (node == null || typeof node === 'boolean') return '';
