@@ -3,13 +3,14 @@
  * Converts human-authored degrees into radians and applies metric stage defaults.
  */
 
-import { parse as parseYaml } from 'yaml';
+import { parse as parseYaml, YAMLParseError } from 'yaml';
 import type {
   EntityCueOverride,
   EntityKind,
+  ParseScoreResult,
   SceneEntityDef,
+  ScoreDiagnostic,
   ShotCue,
-  StageScore,
 } from './types';
 import {
   BLUEPRINT_PALETTE,
@@ -67,7 +68,7 @@ export {
 export function parseStageScore(
   rawText: string,
   fallbackId = 'custom-scene'
-): { score: StageScore | null; error: string | null; warning?: string | null } {
+): ParseScoreResult {
   if (!rawText || typeof rawText !== 'string' || rawText.trim().length === 0) {
     return { score: null, error: 'Score content is empty.' };
   }
@@ -77,7 +78,20 @@ export function parseStageScore(
     parsed = parseYaml(rawText);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    return { score: null, error: `YAML syntax error: ${message}` };
+    const diagnostics: ScoreDiagnostic[] = [];
+    if (err instanceof YAMLParseError && err.linePos && err.linePos.length > 0) {
+      diagnostics.push({
+        line: err.linePos[0].line,
+        column: err.linePos[0].col,
+        message: err.message,
+        severity: 'error',
+      });
+    }
+    return {
+      score: null,
+      error: `YAML syntax error: ${message}`,
+      diagnostics: diagnostics.length > 0 ? diagnostics : undefined,
+    };
   }
 
   if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {

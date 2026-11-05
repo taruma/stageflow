@@ -161,11 +161,21 @@ Adopts professional 3D viewport convention (Blender, Unreal Engine, Maya) distri
   - **Right Wing**: Unified `[ View ▾ ]` popover consolidating 1-click angle presets (Top, Iso, Front, Side, Reset), 3D label display modes (All, Cam, Off), and viewfinder guides toggle into an accessible, collision-free dropdown.
   - **Outside Click Dismissal**: Automatically closes open popovers on outside pointer interactions.
 
-### 4.3 Slide-Out Live YAML Score Drawer (`YamlInspectorDrawer.tsx`)
-- Toggled via the top-right `[ YAML Score ]` button (closes with `Escape` or `X`).
-- **Protected Bundled Presets (Read-Only)**: When viewing factory Blueprints 01–05, editing is locked (`readOnly={true}`) and surfaces an informational banner with a prominent **`[ Fork to Edit ]`** button. Clicking it clones the score into a Custom Project and immediately unlocks the live editor.
-- **Custom Projects Live Auto-Save**: When viewing Custom Projects, edits immediately re-evaluate the 3D stage in real time (`Frame_t = f(t)`) and auto-save debounced to IndexedDB, with a **`[ Duplicate ]`** button in the header. Syntax errors display a non-blocking diagnostic banner while preserving the last valid 3D stage state.
-- Includes a 1-click **`[ Guide ]`** button that opens [`docs/YAML_AUTHORING_GUIDE.md`](YAML_AUTHORING_GUIDE.md) in a new browser tab for side-by-side reference.
+### 4.3 Code-First YAML Score Studio (`src/ui/editor/`, `YamlStudioPanel.tsx`)
+- Mounted full-height in the right studio column when Edit Mode is active (`[ ✎ Edit ]` toggle).
+- **CodeMirror 6 Engine (`YamlEditorCanvas.tsx`, `useYamlEditor.ts`)**:
+  - Replaces plain `<textarea>` with a virtualized, responsive CodeMirror 6 editor featuring Lezer-based YAML grammar (`@codemirror/lang-yaml`), line numbers gutter, soft line-wrapping, 2-space tab indent (`indentWithTab`), and native search/replace (`Ctrl+F`).
+  - **Dynamic Theme Adaptation (`useCodeMirrorTheme.ts`)**: Uses CodeMirror `Compartment` instances to dynamically adapt editor chrome, line numbers, cursor, selection, and syntax tokens (amber keys, emerald strings, sky measurements, purple booleans, and muted slate comments) across StageFlow's 4 active themes (`Dark Obsidian`, `Warm Paper`, `Light Stone`, `Pure Black`) with zero reload lag.
+- **Protected Bundled Presets (Read-Only)**: When viewing factory Blueprints 01–05, editing is locked (`EditorState.readOnly.of(true)`) and surfaces a sky-blue banner with a prominent **`[ Fork to Edit → ]`** button. Clicking it clones the score into IndexedDB and immediately unlocks the editor.
+- **Debounced Live Sync & Re-Evaluation (~150ms)**: When editing custom projects, typing updates locally with zero input latency at 60fps/144fps, while `parseStageScore` and 3D diorama re-evaluation trigger after 150ms of typing inactivity, debouncing writes to IndexedDB and preventing WebGL stutter.
+- **Sticky Status & Line/Col Diagnostics Banner (`YamlDiagnosticsBanner.tsx`)**:
+  - Displays exact line and column numbers on syntax errors (`Error at Line X, Col Y`) extracted from `YAMLParseError.linePos` with a 1-click **`[ Jump ]`** button that positions the cursor and scrolls smoothly to the invalid line.
+  - Keeps the line numbers gutter clean and distraction-free.
+  - When valid, displays emerald pulse `● Live Sync Active`, `StorageStatusBadge`, and `Frame_t = f(t)`.
+- **Streamlined Action Toolbar (`YamlEditorHeader.tsx`)**:
+  - Features a clean action bar: **Title & Status**, **`[ Guide ]`** (opens YAML manual in a new tab), **`[ Copy ]`** (copies full YAML with feedback), and **`[ Close ]`**.
+  - Redundant project-level actions (`Duplicate`, `Reset`) are omitted as they reside in the Score Library.
+- **Backward Compatibility**: `YamlInspectorDrawer.tsx` is preserved as a thin adapter delegating to `YamlStudioPanel.tsx`.
 
 ### 4.4 Drag-and-Drop Custom Asset Loader (`useFileDropLoader.ts`)
 - Dropping any `.yaml`/`.yml`/`.json` file or `.mp4`/`.webm`/`.mov` video file anywhere onto the window (or selecting via `[ Load Video / YAML ]`) binds the assets in browser memory (`URL.createObjectURL`) with zero server upload required.

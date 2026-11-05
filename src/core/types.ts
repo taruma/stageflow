@@ -266,3 +266,25 @@ export interface StageFrame {
   entitiesById: Map<string, EvaluatedEntityState>;
   entitiesList: EvaluatedEntityState[];
 }
+
+/**
+ * Diagnostics and location metadata for YAML score syntax and schema errors.
+ */
+export interface ScoreDiagnostic {
+  line: number;
+  column?: number;
+  message: string;
+  severity: 'error' | 'warning';
+}
+
+/**
+ * Result of compiling raw YAML/JSON into a StageScore.
+ * Completely backward-compatible with legacy `{ score, error, warning }`.
+ */
+export interface ParseScoreResult {
+  score: StageScore | null;
+  error: string | null;
+  warning?: string | null;
+  diagnostics?: ScoreDiagnostic[];
+}
+

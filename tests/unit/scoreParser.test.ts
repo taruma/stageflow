@@ -83,6 +83,10 @@ shots: [1, 2
     const result = parseStageScore(brokenYaml);
     expect(result.score).toBeNull();
     expect(result.error).toContain('YAML syntax error');
+    expect(result.diagnostics).toBeDefined();
+    expect(result.diagnostics!.length).toBeGreaterThan(0);
+    expect(result.diagnostics![0].line).toBeGreaterThanOrEqual(1);
+    expect(result.diagnostics![0].severity).toBe('error');
   });
 
   it('classifies YouTube URLs, Local MP4 paths, and Procedural slates identically', () => {

@@ -181,6 +181,13 @@ stageflow/
 │   │   │   └── ThemeSelectorDropdown.tsx # Accessible 4-mode theme switcher (Auto, Dark, Warm, Light)
 │   │   ├── left-panel/              # Modular left column submodules
 │   │   │   └── VideoWorkspaceSubpanel.tsx # Modular directorial workspace subpanel below reference video
+│   │   ├── editor/                  # Modular CodeMirror 6 YAML Score Studio submodules
+│   │   │   ├── YamlStudioPanel.tsx  # In-flow right-column choreography score studio container
+│   │   │   ├── YamlEditorHeader.tsx # Streamlined action bar (Guide, Copy, Close)
+│   │   │   ├── YamlDiagnosticsBanner.tsx # Sticky status & line/col diagnostic alert banner
+│   │   │   ├── YamlEditorCanvas.tsx # CodeMirror 6 DOM mounting & virtualized canvas
+│   │   │   ├── useCodeMirrorTheme.ts # Dynamic theme extension for Dark/Warm/Light/Pure Black
+│   │   │   └── useYamlEditor.ts     # Compartments, external sync guard & ~150ms debouncer
 │   │   ├── library/                 # Modular score library submodules
 │   │   │   ├── ScoreLibraryCard.tsx # Cinematic choreography score card with color tags & telemetry
 │   │   │   ├── ScoreInspectorPane.tsx # Rich master-detail choreography inspector & action bar
