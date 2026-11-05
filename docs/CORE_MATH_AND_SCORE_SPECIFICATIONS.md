@@ -38,11 +38,13 @@ export interface SphericalPose {
 
 ### 2.1 Forward Conversion (`sphericalToCartesian`)
 Given a `SphericalPose`, [`sphericalToCartesian`](../src/core/sphericalMath.ts) computes the 3D eye position $(x, y, z)$ and the orthonormal rolled camera up-vector $\vec{U}_{\text{rolled}}$:
-$$\begin{aligned}
+$$
+\begin{aligned}
 x_{\text{eye}} &= \text{target}_x + d \cdot \cos(\text{pitch}) \cdot \sin(\text{yaw}) \\
 y_{\text{eye}} &= \text{target}_y + d \cdot \sin(\text{pitch}) \\
 z_{\text{eye}} &= \text{target}_z + d \cdot \cos(\text{pitch}) \cdot \cos(\text{yaw})
-\end{aligned}$$
+\end{aligned}
+$$
 
 The unit up-vector $\vec{U}_{\text{rolled}}$ rotated by roll $\gamma$ around the forward sightline $\vec{F}$ is:
 $$\vec{U}_{\text{rolled}} = \begin{bmatrix}

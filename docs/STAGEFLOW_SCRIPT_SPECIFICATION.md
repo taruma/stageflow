@@ -45,11 +45,13 @@ $$P = \left(\vec{T},\; d,\; \theta,\; \psi,\; \gamma,\; f_{\text{mm}}\right)$$
 ### 2.1 Spherical-to-Cartesian Projection
 Given pose $P$ (with $\theta, \psi, \gamma$ in radians), the 3D world-space camera eye position $\vec{E} = (x_{\text{eye}}, y_{\text{eye}}, z_{\text{eye}})$ is:
 
-$$\begin{aligned}
+$$
+\begin{aligned}
 x_{\text{eye}} &= T_x + d \cos(\theta) \sin(\psi) \\
 y_{\text{eye}} &= T_y + d \sin(\theta) \\
 z_{\text{eye}} &= T_z + d \cos(\theta) \cos(\psi)
-\end{aligned}$$
+\end{aligned}
+$$
 
 The unrolled orthonormal camera basis vectors $(\vec{R}_0, \vec{U}_0)$ and the roll-transformed camera up-vector $\vec{U}_{\text{rolled}}$ are:
 
