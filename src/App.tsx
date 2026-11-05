@@ -561,7 +561,7 @@ const InteractiveStudioApp: React.FC = () => {
               />
             ) : (
               <>
-                {/* Top-Left Shot & Lens Breakdown HUD (De-duplicated & Collapsible) */}
+                {/* 1. TOP-LEFT: Shot & Lens Breakdown HUD (Defaults to 2-line Collapsed Pill) */}
                 <ShotBreakdownHud
                   score={activeScore}
                   frame={stageLoop.uiSnapshot.frame}
@@ -569,17 +569,8 @@ const InteractiveStudioApp: React.FC = () => {
                   isPlaying={mediaClock.isPlaying}
                 />
 
-                {/* Top-Center Camera POV Mode Switcher (Elevated from Transport Deck) */}
-                <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
-                  <CameraModeSwitcher
-                    cameraMode={stageLoop.cameraMode}
-                    onSetCameraMode={stageLoop.setCameraMode}
-                  />
-                </div>
-
-                {/* Top-Right Overlays: Camera Presets & Display Controls */}
+                {/* 2. TOP-RIGHT: 3D Stage Labels & Viewfinder Guides */}
                 <div className="absolute top-3 right-3 z-10 flex items-center gap-2 pointer-events-auto select-none">
-                  <CameraPresetControls onSelectPreset={handleSelectCameraPreset} />
                   <LabelDisplayModeToggle
                     labelMode={labelMode}
                     onSelectLabelMode={handleSelectLabelMode}
@@ -588,10 +579,22 @@ const InteractiveStudioApp: React.FC = () => {
                     cameraMode={stageLoop.cameraMode}
                   />
                 </div>
+
+                {/* 3. BOTTOM-LEFT: Directorial Camera Workstation Dock (ViewCube Presets + Camera POV Modes) */}
+                <div className="absolute bottom-3 left-3 z-20 flex flex-col items-start gap-1.5 pointer-events-none select-none">
+                  {/* Tier 1: View Angle Presets (3D ViewCube Icons) */}
+                  <CameraPresetControls onSelectPreset={handleSelectCameraPreset} />
+
+                  {/* Tier 2: Camera POV Mode Switcher (Scripted, Free Orbit, Stage Cam) */}
+                  <CameraModeSwitcher
+                    cameraMode={stageLoop.cameraMode}
+                    onSetCameraMode={stageLoop.setCameraMode}
+                  />
+                </div>
               </>
             )}
 
-            {/* Bottom-Right Authoring Telemetry Capsule + 1-Click YAML Copy (Hidden when narrow to maximize clean 3D stage area) */}
+            {/* 4. BOTTOM-RIGHT: Authoring Telemetry Capsule + 1-Click YAML Copy (Hidden when narrow) */}
             {!isNarrowDiorama && (
               <CameraTelemetryCapsule
                 pose={stageLoop.uiSnapshot.liveViewportPose}

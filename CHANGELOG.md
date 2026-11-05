@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **4-Corner Directorial HUD Layout & 3D ViewCube Preset Icons (`CameraPresetControls.tsx`, `ShotBreakdownHud.tsx`, `App.tsx`)**:
+  - Re-architected diorama chrome into a clean 4-corner layout (Top-Left Info, Top-Right Legend/Labels, Bottom-Left Camera Dock, Bottom-Right Telemetry) that leaves the center stage horizon 100% unobstructed, eliminating visual double-stacking with `[ Split | Full ]`.
+  - Replaced text buttons in [`CameraPresetControls.tsx`](src/ui/CameraPresetControls.tsx) with bespoke **isometric 3D ViewCube SVG icons** (Top plan, Iso 45°, Front proscenium, Side profile, and Reset) with descriptive tooltips, mounted directly above the Camera POV mode switcher at bottom-left for 1-click access without popup menus.
+  - Set [`ShotBreakdownHud.tsx`](src/ui/ShotBreakdownHud.tsx) to default to the sleek 2-line collapsed pill on load, providing immediate horizontal balance across the top.
 - **Dedicated Compact Diorama Header for Narrow Viewports (`CompactDioramaHeader.tsx`, `App.tsx`)**:
   - Implemented real-time diorama container measurement via `ResizeObserver` with a narrow threshold at $580\text{px}$.
   - When diorama width $< 580\text{px}$ (e.g. extreme split view or compact viewports), replaces the three separate floating overlays (`ShotBreakdownHud`, `CameraModeSwitcher`, and `CameraPresetControls` + `LabelToggle`) with a dedicated unified header mounted at `top-3 left-3 right-3`.

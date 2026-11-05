@@ -22,7 +22,7 @@ export const ShotBreakdownHud: React.FC<ShotBreakdownHudProps> = ({
   cameraMode,
   isPlaying,
 }) => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
   const shot = frame.activeShot;
   const stageCam = frame.stageCamera;
   const lensMm = Math.round(stageCam.transform.pose.focalLengthMm);
