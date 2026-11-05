@@ -20,6 +20,7 @@ import { YamlEditorCanvas, type YamlEditorHandle } from './YamlEditorCanvas';
 export interface YamlStudioPanelProps {
   isOpen: boolean;
   rawYaml: string;
+  sceneId?: string;
   parseError: string | null;
   parseWarning?: string | null;
   diagnostics?: ScoreDiagnostic[];
@@ -35,6 +36,7 @@ export const YamlStudioPanel: React.FC<YamlStudioPanelProps> = React.memo(
   ({
     isOpen,
     rawYaml,
+    sceneId,
     parseError,
     parseWarning,
     diagnostics,
@@ -93,6 +95,7 @@ export const YamlStudioPanel: React.FC<YamlStudioPanelProps> = React.memo(
         <YamlEditorCanvas
           ref={editorCanvasRef}
           rawYaml={rawYaml}
+          sceneId={sceneId}
           isBundled={isBundled}
           effectiveTheme={effectiveTheme}
           wordWrap={wordWrap}

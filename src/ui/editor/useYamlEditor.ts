@@ -19,6 +19,7 @@ import { createStageflowCodeMirrorTheme } from './useCodeMirrorTheme';
 export interface UseYamlEditorOptions {
   containerRef: React.RefObject<HTMLDivElement | null>;
   rawYaml: string;
+  sceneId?: string;
   isBundled: boolean;
   effectiveTheme: 'dark' | 'warm' | 'light';
   wordWrap?: boolean;
@@ -34,6 +35,7 @@ export interface UseYamlEditorResult {
 export function useYamlEditor({
   containerRef,
   rawYaml,
+  sceneId,
   isBundled,
   effectiveTheme,
   wordWrap = true,
@@ -45,6 +47,7 @@ export function useYamlEditor({
   const themeCompartmentRef = useRef(new Compartment());
   const wrapCompartmentRef = useRef(new Compartment());
   const lastDispatchedTextRef = useRef<string>(rawYaml);
+  const lastSceneIdRef = useRef<string | undefined>(sceneId);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Keep latest onChange in ref to avoid re-initializing CodeMirror
@@ -81,13 +84,14 @@ export function useYamlEditor({
         EditorView.updateListener.of((update) => {
           if (update.docChanged) {
             const nextText = update.state.doc.toString();
-            lastDispatchedTextRef.current = nextText;
 
             if (debounceTimerRef.current) {
               clearTimeout(debounceTimerRef.current);
             }
 
             debounceTimerRef.current = setTimeout(() => {
+              // Record exact text dispatched to React so incoming props can be identified as echo
+              lastDispatchedTextRef.current = nextText;
               onChangeYamlRef.current(nextText);
             }, debounceMs);
           }
@@ -118,16 +122,48 @@ export function useYamlEditor({
     const view = viewRef.current;
     if (!view) return;
 
-    if (rawYaml !== lastDispatchedTextRef.current) {
+    // Check if the scene identity has switched (e.g. user selected another blueprint/custom score)
+    const isSceneSwitched =
+      sceneId !== undefined && sceneId !== lastSceneIdRef.current;
+    if (isSceneSwitched) {
+      lastSceneIdRef.current = sceneId;
       lastDispatchedTextRef.current = rawYaml;
+
       const currentDoc = view.state.doc.toString();
       if (currentDoc !== rawYaml) {
         view.dispatch({
           changes: { from: 0, to: currentDoc.length, insert: rawYaml },
+          selection: { anchor: 0 },
         });
+        view.scrollDOM.scrollTop = 0;
       }
+      return;
     }
-  }, [rawYaml]);
+
+    // If incoming text matches what was just dispatched to React, this is an echo from local typing—ignore it!
+    if (rawYaml === lastDispatchedTextRef.current) {
+      return;
+    }
+
+    // If the user has active focus on the editor, do not clobber their in-flight typing!
+    if (view.hasFocus) {
+      return;
+    }
+
+    // External change applied while not actively focused (e.g. drag & drop YAML, external reset)
+    lastDispatchedTextRef.current = rawYaml;
+    const currentDoc = view.state.doc.toString();
+    if (currentDoc !== rawYaml) {
+      const currentSelection = view.state.selection.main;
+      const safeAnchor = Math.min(currentSelection.anchor, rawYaml.length);
+      const safeHead = Math.min(currentSelection.head, rawYaml.length);
+
+      view.dispatch({
+        changes: { from: 0, to: currentDoc.length, insert: rawYaml },
+        selection: { anchor: safeAnchor, head: safeHead },
+      });
+    }
+  }, [rawYaml, sceneId]);
 
   // 3. Dynamic Read-Only Reconfiguration
   useEffect(() => {

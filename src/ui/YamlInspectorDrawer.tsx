@@ -11,6 +11,7 @@ import { YamlStudioPanel } from './editor/YamlStudioPanel';
 export interface YamlInspectorDrawerProps {
   isOpen: boolean;
   rawYaml: string;
+  sceneId?: string;
   parseError: string | null;
   parseWarning?: string | null;
   diagnostics?: ScoreDiagnostic[];
@@ -26,6 +27,7 @@ export interface YamlInspectorDrawerProps {
 export const YamlInspectorDrawer: React.FC<YamlInspectorDrawerProps> = ({
   isOpen,
   rawYaml,
+  sceneId,
   parseError,
   parseWarning,
   diagnostics,
@@ -40,6 +42,7 @@ export const YamlInspectorDrawer: React.FC<YamlInspectorDrawerProps> = ({
     <YamlStudioPanel
       isOpen={isOpen}
       rawYaml={rawYaml}
+      sceneId={sceneId}
       parseError={parseError}
       parseWarning={parseWarning}
       diagnostics={diagnostics}

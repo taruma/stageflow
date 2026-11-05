@@ -218,8 +218,15 @@ const InteractiveStudioApp: React.FC = () => {
         setParseDiagnostics(result.diagnostics);
       }
     },
-    [activeSceneId, scorePersistence]
+    [activeSceneId, scorePersistence.saveYamlDraftDebounced]
   );
+
+  const handleForkScore = useCallback(async () => {
+    const forked = await scorePersistence.forkScoreAsCustom(activeSceneId);
+    if (forked) {
+      showToast(`Forked "${forked.title}" as Custom Project`, 'success');
+    }
+  }, [activeSceneId, scorePersistence.forkScoreAsCustom, showToast]);
 
   // Drag-and-drop / File picker handlers for custom .yaml and .mp4 files
   const handleLoadYamlFile = useCallback(
@@ -477,6 +484,7 @@ const InteractiveStudioApp: React.FC = () => {
         rightEditorPane={
           <YamlStudioPanel
             isOpen={layout.isEditMode}
+            sceneId={activeSceneId}
             rawYaml={rawYaml}
             parseError={parseError}
             parseWarning={parseWarning}
@@ -485,14 +493,7 @@ const InteractiveStudioApp: React.FC = () => {
             storageStatus={scorePersistence.storageStatus}
             isBundled={isBundledSceneId(activeSceneId)}
             onChangeYaml={handleChangeYaml}
-            onForkScore={async () => {
-              const forked =
-                await scorePersistence.forkScoreAsCustom(activeSceneId);
-              if (forked) {
-                showToast(`Forked "${forked.title}" as Custom Project`, 'success');
-              }
-            }}
-
+            onForkScore={handleForkScore}
             onClose={layout.handleToggleEditMode}
           />
         }
