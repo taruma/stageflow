@@ -24,8 +24,7 @@ export interface FileMenuDropdownProps {
   onUploadFiles: (files: FileList) => void;
   onExportActiveScore: () => void;
   onCreateBlankScore?: () => void;
-  onOpenManageScores?: () => void;
-  onOpenLibrary: () => void;
+  onOpenLibrary: (tab?: 'all' | 'bundled' | 'custom') => void;
 }
 
 export const FileMenuDropdown: React.FC<FileMenuDropdownProps> = ({
@@ -36,7 +35,6 @@ export const FileMenuDropdown: React.FC<FileMenuDropdownProps> = ({
   onUploadFiles,
   onExportActiveScore,
   onCreateBlankScore,
-  onOpenManageScores,
   onOpenLibrary,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -162,28 +160,26 @@ export const FileMenuDropdown: React.FC<FileMenuDropdownProps> = ({
               </button>
             )}
 
-            {onOpenManageScores && (
-              <button
-                type="button"
-                role="menuitem"
-                onClick={() => {
-                  onOpenManageScores();
-                  onClose();
-                }}
-                className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-text-body hover:text-text-main hover:bg-surface-subtle transition-colors text-left cursor-pointer"
-                title="Manage Custom Scores (Rename, Export, Delete)"
-              >
-                <div className="flex items-center gap-2">
-                  <FolderKanban className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                  <span>Manage Custom Scores</span>
-                </div>
-                {customScoresCount > 0 && (
-                  <span className="text-[10px] bg-amber-500/20 text-amber-600 dark:text-amber-300 px-1.5 py-0.2 rounded-full font-bold">
-                    {customScoresCount}
-                  </span>
-                )}
-              </button>
-            )}
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                onOpenLibrary('custom');
+                onClose();
+              }}
+              className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-text-body hover:text-text-main hover:bg-surface-subtle transition-colors text-left cursor-pointer"
+              title="Manage Custom Scores (Rename, Duplicate, Export, Delete)"
+            >
+              <div className="flex items-center gap-2">
+                <FolderKanban className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                <span>Manage Custom Scores</span>
+              </div>
+              {customScoresCount > 0 && (
+                <span className="text-[10px] bg-amber-500/20 text-amber-600 dark:text-amber-300 px-1.5 py-0.2 rounded-full font-bold">
+                  {customScoresCount}
+                </span>
+              )}
+            </button>
           </div>
 
           {/* Section 3: Library & Reference Documentation */}
@@ -192,7 +188,7 @@ export const FileMenuDropdown: React.FC<FileMenuDropdownProps> = ({
               type="button"
               role="menuitem"
               onClick={() => {
-                onOpenLibrary();
+                onOpenLibrary('all');
                 onClose();
               }}
               className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-text-body hover:text-amber-600 dark:hover:text-amber-300 hover:bg-surface-subtle transition-colors text-left cursor-pointer"
@@ -203,19 +199,15 @@ export const FileMenuDropdown: React.FC<FileMenuDropdownProps> = ({
             </button>
 
             <a
-              role="menuitem"
               href="https://github.com/taruma/stageflow/blob/main/docs/YAML_AUTHORING_GUIDE.md"
               target="_blank"
               rel="noopener noreferrer"
               onClick={onClose}
-              className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-text-muted hover:text-text-main hover:bg-surface-subtle transition-colors text-left cursor-pointer"
-              title="Open StageFlow YAML Authoring Guide in a new tab"
+              className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-text-muted hover:text-text-main hover:bg-surface-subtle transition-colors text-left"
+              title="Open YAML Authoring Guide documentation in a new tab"
             >
-              <div className="flex items-center gap-2">
-                <ExternalLink className="w-3.5 h-3.5 text-text-faint shrink-0" />
-                <span>Authoring Guide</span>
-              </div>
-              <span className="text-[10px] text-text-faint">docs</span>
+              <span>YAML Authoring Guide</span>
+              <ExternalLink className="w-3 h-3 text-text-faint" />
             </a>
           </div>
         </div>

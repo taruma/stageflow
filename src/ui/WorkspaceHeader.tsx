@@ -40,10 +40,9 @@ export interface WorkspaceHeaderProps {
   onToggleYamlDrawer: () => void;
   onUploadFiles: (files: FileList) => void;
   onExportActiveScore: () => void;
-  onOpenLibrary: () => void;
+  onOpenLibrary: (tab?: 'all' | 'bundled' | 'custom') => void;
   onSelectThemeMode?: (mode: AppThemeMode) => void;
   onSelectDioramaThemeMode?: (mode: DioramaThemeMode) => void;
-  onOpenManageProjects?: () => void;
   onCreateBlankProject?: () => void;
 }
 
@@ -65,7 +64,6 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
   onOpenLibrary,
   onSelectThemeMode,
   onSelectDioramaThemeMode,
-  onOpenManageProjects,
   onCreateBlankProject,
 }) => {
   const [isFileMenuOpen, setIsFileMenuOpen] = useState(false);
@@ -102,7 +100,6 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
           onUploadFiles={onUploadFiles}
           onExportActiveScore={onExportActiveScore}
           onCreateBlankScore={onCreateBlankProject}
-          onOpenManageScores={onOpenManageProjects}
           onOpenLibrary={onOpenLibrary}
         />
 
@@ -111,7 +108,7 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
           catalog={catalog}
           activeSceneId={activeSceneId}
           storageStatus={storageStatus}
-          onOpenLibrary={onOpenLibrary}
+          onOpenLibrary={() => onOpenLibrary()}
         />
       </div>
 
@@ -140,7 +137,7 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
         {/* Standalone Library Button */}
         <button
           type="button"
-          onClick={onOpenLibrary}
+          onClick={() => onOpenLibrary()}
           className={
             isLibraryOpen
               ? UI_TOKENS.button.libraryPopActive

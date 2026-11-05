@@ -97,10 +97,14 @@ Scene entities (`character`, `prop`, `marker`) are rendered with unambiguous ori
   - *Media & Score I/O*: "Open Video or Score..." (file picker trigger) and "Export Active Score (.yaml)" (direct browser download).
   - *Scores*: "New Blank Score..." and "Manage Custom Scores" (with custom scores badge count).
   - *Reference*: "Score Library..." and link to the YAML Authoring Guide.
-- **Dedicated Score Library Modal (`ScoreLibraryModal.tsx`, `ScoreLibraryCard.tsx`)**:
-  - Accessible `max-w-4xl` dialog displaying all bundled blueprint scores (01–05) and custom user scores in a responsive card grid.
-  - Refined typography and card anatomy: sans-serif titles and technique summaries with color-coded blueprint tags (`BP 01`–`BP 05`, `CUSTOM`), clean monospace telemetry pills (duration in seconds, shot count, formatted aspect ratios `16:9` / `2.39:1`, entity count), active scene glow, and interactive `Open →` hover cues.
-  - Category tabs (`All`, `Bundled`, `Custom`) and real-time title/subtitle search filtering.
+- **2-Column Master-Detail Score Library & Project Hub (`ScoreLibraryModal.tsx`, `ScoreInspectorPane.tsx`, `ScoreStageMinimap.tsx`)**:
+  - Accessible `max-w-5xl` studio dialog integrating score discovery and project lifecycle management into a unified 2-column layout.
+  - **Left Column (~40%)**: Fast-scrolling catalog list (`ScoreLibraryCard.tsx`) with category tabs (`All`, `Bundled`, `Custom`), un-truncated titles, media engine badges (`YouTube`, `Simulator`, `Video`), and active scene indicators.
+  - **Right Column (~60%)**: Rich Choreography Inspector (`ScoreInspectorPane.tsx`) featuring:
+    - **Procedural 2D Vector SVG Stage Minimap (`ScoreStageMinimap.tsx`)**: Renders architectural top-down stage schematics (metric grid, character proxy circles with facing chevrons, and camera trajectory cones) derived directly from in-memory score geometry in $< 0.1\text{ms}$ with zero WebGL overhead.
+    - **Cinematic Telemetry**: Full titles, directorial notes, focal length breakdown (e.g. `35mm, 50mm`), camera maneuver tags, and actor/prop lineup.
+    - **Shot Coverage Sequence**: Miniature timeline breakdown detailing each shot's lens, maneuver, and duration.
+    - **Unified Project Lifecycle Actions**: Direct inline **Rename**, **Duplicate**, **Export (.yaml)**, and **Delete** for custom projects (eliminating the redundant separate project management modal), alongside **Fork as Custom** for bundled blueprints and **Load Score into Studio**.
 - **Desktop (`lg+`)**: Side-by-side split between the Left Video Viewport and Right 3D Diorama Stage, separated by a smooth pointer-drag divider bar (`18%` to `82%` clamp).
 - **Workspace Layout Modes**:
   - `Split`: Side-by-side Video and 3D Diorama Stage. Remembers the user's customized drag ratio (defaults to 50%).
@@ -140,9 +144,8 @@ Scene entities (`character`, `prop`, `marker`) are rendered with unambiguous ori
 ### 4.6 Reset Confirmation Modal (`ConfirmResetModal.tsx`)
 - Accessible modal dialog protecting against accidental data loss.
 
-### 4.7 Custom Project Management & Toast Notifications (`ManageProjectsModal.tsx`, `ToastContainer.tsx`)
-- **Grouped Scene Selector (`WorkspaceHeader.tsx`)**: The scene switcher dropdown uses semantic `<optgroup>` tags dividing `Bundled Blueprints` and `Custom Projects`, with a `+ New Blank Project...` action at the bottom.
-- **Dedicated Project Management Modal (`ManageProjectsModal.tsx`)**: Accessible via the `[ Projects ]` button in the header. Lists all custom projects with project count badges, live inline title renaming, 1-click YAML file export/download, and delete confirmation with smooth fallback to Blueprint 01.
+### 4.7 Unified Project Management & Toast Notifications (`ScoreLibraryModal.tsx`, `ToastContainer.tsx`)
+- **Unified Studio Hub**: Custom projects (stored in IndexedDB) are managed directly within the Score Library's Inspector pane (`ScoreInspectorPane.tsx`), featuring inline title renaming, YAML file export, project duplication, and delete confirmation with smooth fallback to Blueprint 01, completely eliminating redundant standalone dialogs.
 - **Transient Toast Feedback (`ToastContainer.tsx`)**: Lightweight 3-second floating feedback banners confirming file drops, auto-forks, project deletions, and exports.
 - **Legacy Draft Auto-Migration**: On startup hydration, any legacy drafts in IndexedDB that modified bundled presets are automatically migrated into standalone Custom Projects with zero data loss.
 

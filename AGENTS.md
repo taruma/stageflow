@@ -173,16 +173,17 @@ stageflow/
 │   │   │   ├── ActiveScoreIndicator.tsx # Interactive active score context chip with 1-click library open
 │   │   │   └── ThemeSelectorDropdown.tsx # Accessible 4-mode theme switcher (Auto, Dark, Warm, Light)
 │   │   ├── library/                 # Modular score library submodules
-│   │   │   └── ScoreLibraryCard.tsx # Cinematic choreography score card with color tags & telemetry
+│   │   │   ├── ScoreLibraryCard.tsx # Cinematic choreography score card with color tags & telemetry
+│   │   │   ├── ScoreInspectorPane.tsx # Rich master-detail choreography inspector & action bar
+│   │   │   └── ScoreStageMinimap.tsx # Pure 2D vector SVG top-down stage schematic preview
 │   │   ├── WorkspaceHeader.tsx      # SceneFlow-aligned 3-wing orchestrator header bar
-│   │   ├── ScoreLibraryModal.tsx    # Accessible modal for browsing bundled blueprints & custom scores
+│   │   ├── ScoreLibraryModal.tsx    # Accessible 2-column master-detail score library & project hub
 │   │   ├── ResizableSplitWorkspace.tsx # Draggable side-by-side split container
 │   │   ├── UniversalVideoViewport.tsx  # Local video, YouTube IFrame, or 60fps Stage Cam Simulator
 │   │   ├── ShotBreakdownHud.tsx     # Top-left active shot, lens, maneuver & staging note overlay
 │   │   ├── CameraTelemetryCapsule.tsx  # Live degree/meter readout with 1-click YAML snippet copy
 │   │   ├── DirectorialTransportBar.tsx # Shot-marker scrubber, shot chips, speed (0.25x-2x) & POV toggle
 │   │   ├── YamlInspectorDrawer.tsx  # Slide-out live YAML editor with read-only protection & fork-on-edit
-│   │   ├── ManageProjectsModal.tsx  # Accessible modal for custom project rename, export & deletion
 │   │   ├── ToastContainer.tsx       # Floating animated toast notification banners
 │   │   ├── LabelDisplayModeToggle.tsx # Floating 3-mode 3D diorama label toggle (All / Cam / Off)
 │   │   ├── StageCamViewfinderOverlay.tsx # Optical film gate, look-around mask & composition guides

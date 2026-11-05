@@ -27,7 +27,7 @@ export const UI_TOKENS = {
     containerLg:
       'bg-surface w-full max-w-4xl rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 border border-border-main text-text-main',
     containerLibrary:
-      'relative w-full max-w-4xl h-[92vh] sm:h-[85vh] md:h-[80vh] bg-surface rounded-2xl shadow-2xl overflow-hidden flex flex-col border border-border-main text-text-main',
+      'relative w-full max-w-5xl h-[94vh] sm:h-[90vh] md:h-[86vh] bg-surface rounded-2xl shadow-2xl overflow-hidden flex flex-col border border-border-main text-text-main',
     containerStaging:
       'relative w-full max-w-2xl max-h-[80vh] bg-surface rounded-xl shadow-2xl overflow-hidden flex flex-col border border-border-main text-text-main',
     header:

@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Choreography Score Library Master-Detail Elevation & 2D SVG Stage Minimap (`src/ui/ScoreLibraryModal.tsx`, `src/ui/library/ScoreStageMinimap.tsx`, `src/ui/library/ScoreInspectorPane.tsx`)**:
+  - Elevated the score library from a basic 2-column card grid into a spacious 2-column **Master-Detail Studio Hub** (`max-w-5xl`), featuring a fast-scrolling score list on the left (~40%) and a comprehensive Choreography Inspector on the right (~60%).
+  - Added [`ScoreStageMinimap.tsx`](src/ui/library/ScoreStageMinimap.tsx) generating a pure 2D vector SVG top-down stage schematic (metric grid, character proxy circles with facing chevrons, and camera trajectory cones) derived directly from in-memory score geometry in $< 0.1\text{ms}$ with **0 WebGL overhead and 0 asset downloads**, automatically supporting both factory blueprints and user-created custom scores.
+  - Added [`ScoreInspectorPane.tsx`](src/ui/library/ScoreInspectorPane.tsx) presenting un-truncated titles, directorial notes, media engine badges (`YouTube Sync`, `Stage Cam Simulator`, `Local Video`), optical lens breakdowns, camera maneuver tags, actor lineups, and shot-by-shot coverage strips.
+  - Refactored [`ScoreLibraryCard.tsx`](src/ui/library/ScoreLibraryCard.tsx) to support un-truncated title wrapping, media source classification badges, and distinct selected/active visual states.
+  - **Unified Project Lifecycle Management & Modal Consolidation**: Embedded custom project lifecycle actions (inline renaming, duplication, YAML export, and delete confirmation) directly into the Score Library inspector, eliminating the separate `ManageProjectsModal.tsx` and connecting the header `File ▾ -> Manage Custom Scores` directly to the library's custom tab.
 - **Visual Design System SSOT Documentation (`docs/VISUAL_DESIGN_SYSTEM.md`)**:
   - Established dedicated Single Source of Truth for SceneFlow visual identity, 3-tier font hierarchy (`Libre Baskerville`, `Inter`, `JetBrains Mono`), 4 app themes, CSS semantic custom properties, centralized `UI_TOKENS`, decoupled 3D diorama stage palette system, and performance invariants (`disableTransitionsTemporarily()`, `body.is-resizing-split`).
   - Deduplicated styling tokens and color tables out of [`docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md`](docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md) to keep 3D mechanics and visual design decoupled.

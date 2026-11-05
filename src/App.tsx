@@ -43,8 +43,7 @@ import { CameraTelemetryCapsule } from './ui/CameraTelemetryCapsule';
 import { DirectorialTransportBar } from './ui/DirectorialTransportBar';
 import { YamlInspectorDrawer } from './ui/YamlInspectorDrawer';
 import { ConfirmResetModal } from './ui/ConfirmResetModal';
-import { ManageProjectsModal } from './ui/ManageProjectsModal';
-import { ScoreLibraryModal } from './ui/ScoreLibraryModal';
+import { ScoreLibraryModal, type FilterTab } from './ui/ScoreLibraryModal';
 import { ToastContainer } from './ui/ToastContainer';
 import { LabelDisplayModeToggle } from './ui/LabelDisplayModeToggle';
 import { StageCamViewfinderOverlay } from './ui/StageCamViewfinderOverlay';
@@ -86,11 +85,9 @@ const InteractiveStudioApp: React.FC = () => {
     () => loadStoredViewfinderGuides() ?? true
   );
 
-  // Manage Projects Dialog state
-  const [isManageProjectsOpen, setIsManageProjectsOpen] = useState(false);
-
-  // Score Library Modal state
+  // Score Library Modal state & initial category tab
   const [isLibraryOpen, setIsLibraryOpen] = useState(false);
+  const [libraryInitialTab, setLibraryInitialTab] = useState<FilterTab>('all');
 
   // Floating Toast Notifications state
   const [toasts, setToasts] = useState<ToastNotification[]>([]);
@@ -161,20 +158,33 @@ const InteractiveStudioApp: React.FC = () => {
     });
   }, []);
 
+  const handleExportScore = useCallback(
+    (item: ScoreCatalogItem) => {
+      const blob = new Blob([item.rawYaml], {
+        type: 'text/yaml;charset=utf-8',
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${item.id}.yaml`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast(`Exported score "${item.id}.yaml"`, 'success');
+    },
+    [showToast]
+  );
+
   const handleExportActiveScore = useCallback(() => {
-    const blob = new Blob([rawYaml], {
-      type: 'text/yaml;charset=utf-8',
+    handleExportScore({
+      id: activeSceneId,
+      title: activeScore.title,
+      rawYaml,
+      score: activeScore,
+      isCustom: false,
     });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${activeSceneId}.yaml`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    showToast(`Exported score "${activeSceneId}.yaml"`, 'success');
-  }, [rawYaml, activeSceneId, showToast]);
+  }, [activeSceneId, activeScore, rawYaml, handleExportScore]);
 
   // Global hotkeys: 'L' cycles label modes, 'G' toggles composition guides
   useEffect(() => {
@@ -427,10 +437,12 @@ const InteractiveStudioApp: React.FC = () => {
         onToggleYamlDrawer={handleToggleYamlDrawer}
         onUploadFiles={fileDrop.processFiles}
         onExportActiveScore={handleExportActiveScore}
-        onOpenLibrary={() => setIsLibraryOpen(true)}
+        onOpenLibrary={(tab) => {
+          setLibraryInitialTab(tab ?? 'all');
+          setIsLibraryOpen(true);
+        }}
         onSelectThemeMode={theme.setThemeMode}
         onSelectDioramaThemeMode={theme.setDioramaThemeMode}
-        onOpenManageProjects={() => setIsManageProjectsOpen(true)}
         onCreateBlankProject={async () => {
           const blank = await scorePersistence.createBlankScore();
           if (blank) {
@@ -565,40 +577,12 @@ const InteractiveStudioApp: React.FC = () => {
         onCancel={() => scorePersistence.setIsResetModalOpen(false)}
       />
 
-      {/* Manage Custom Projects Dialog Modal */}
-      <ManageProjectsModal
-        isOpen={isManageProjectsOpen}
-        customProjects={catalog.filter((item) => item.isCustom)}
-        activeSceneId={activeSceneId}
-        onSelectProject={(id) => handleSelectScene(id)}
-        onRenameProject={async (id, newTitle) => {
-          const ok = await scorePersistence.renameCustomScore(id, newTitle);
-          if (ok) {
-            showToast(`Score renamed to "${newTitle}"`, 'success');
-          }
-          return ok;
-        }}
-        onDeleteProject={async (id) => {
-          const ok = await scorePersistence.deleteCustomScore(id);
-          if (ok) {
-            showToast('Custom score deleted', 'info');
-          }
-          return ok;
-        }}
-        onCreateBlankProject={async () => {
-          const blank = await scorePersistence.createBlankScore();
-          if (blank) {
-            showToast(`Created new blank score "${blank.title}"`, 'success');
-          }
-        }}
-        onClose={() => setIsManageProjectsOpen(false)}
-      />
-
-      {/* Choreography Score Library Modal */}
+      {/* Choreography Score Library Modal (2-Column Master-Detail) */}
       <ScoreLibraryModal
         isOpen={isLibraryOpen}
         catalog={catalog}
         activeSceneId={activeSceneId}
+        initialTab={libraryInitialTab}
         onSelectScene={handleSelectScene}
         onCreateBlankScore={async () => {
           const blank = await scorePersistence.createBlankScore();
@@ -606,7 +590,36 @@ const InteractiveStudioApp: React.FC = () => {
             showToast(`Created new blank score "${blank.title}"`, 'success');
           }
         }}
-        onOpenManageScores={() => setIsManageProjectsOpen(true)}
+        onForkScore={async (item) => {
+          const custom = await scorePersistence.forkScoreAsCustom(item.id);
+          if (custom) {
+            showToast(`Forked "${item.title}" into editable Custom Project`, 'success');
+          }
+        }}
+        onDuplicateScore={async (id) => {
+          const item = catalog.find((c) => c.id === id);
+          if (item) {
+            const dupe = await scorePersistence.forkScoreAsCustom(item.id);
+            if (dupe) {
+              showToast(`Duplicated "${item.title}"`, 'success');
+            }
+          }
+        }}
+        onExportScore={handleExportScore}
+        onRenameScore={async (id, newTitle) => {
+          const ok = await scorePersistence.renameCustomScore(id, newTitle);
+          if (ok) {
+            showToast(`Renamed score to "${newTitle}"`, 'success');
+          }
+          return ok;
+        }}
+        onDeleteScore={async (id) => {
+          const ok = await scorePersistence.deleteCustomScore(id);
+          if (ok) {
+            showToast('Custom project deleted', 'info');
+          }
+          return ok;
+        }}
         onClose={() => setIsLibraryOpen(false)}
       />
 

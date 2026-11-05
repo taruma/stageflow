@@ -1,45 +1,69 @@
 /**
- * Accessible Score Library Modal for StageFlow.
- * Displays bundled factory blueprints and custom user scores with rich metadata
- * (duration, shot count, aspect ratio, persistence status) and 1-click loading.
- * Styled with SceneFlow tactile modal design tokens.
+ * Accessible Score Library Modal for StageFlow (2-Column Master-Detail Layout).
+ * Displays bundled factory blueprints and custom user scores with rich metadata,
+ * procedural 2D SVG stage minimap, media engine classification, and unified project lifecycle management.
  */
 
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   Clapperboard,
   Plus,
-  FolderKanban,
   X,
   Search,
+  LayoutList,
+  SlidersHorizontal,
 } from 'lucide-react';
 import type { ScoreCatalogItem } from '../core/scoreCatalog';
 import { ScoreLibraryCard } from './library/ScoreLibraryCard';
+import { ScoreInspectorPane } from './library/ScoreInspectorPane';
 import { UI_TOKENS } from './tokens/ui';
+
+export type FilterTab = 'all' | 'bundled' | 'custom';
 
 export interface ScoreLibraryModalProps {
   isOpen: boolean;
   catalog: ScoreCatalogItem[];
   activeSceneId: string;
+  initialTab?: FilterTab;
   onSelectScene: (sceneId: string) => void;
   onCreateBlankScore?: () => void;
-  onOpenManageScores?: () => void;
+  onForkScore?: (item: ScoreCatalogItem) => void;
+  onDuplicateScore?: (id: string) => void;
+  onExportScore?: (item: ScoreCatalogItem) => void;
+  onRenameScore?: (id: string, newTitle: string) => Promise<boolean>;
+  onDeleteScore?: (id: string) => Promise<boolean>;
   onClose: () => void;
 }
-
-type FilterTab = 'all' | 'bundled' | 'custom';
 
 export const ScoreLibraryModal: React.FC<ScoreLibraryModalProps> = ({
   isOpen,
   catalog,
   activeSceneId,
+  initialTab = 'all',
   onSelectScene,
   onCreateBlankScore,
-  onOpenManageScores,
+  onForkScore,
+  onDuplicateScore,
+  onExportScore,
+  onRenameScore,
+  onDeleteScore,
   onClose,
 }) => {
-  const [activeTab, setActiveTab] = useState<FilterTab>('all');
+  const [activeTab, setActiveTab] = useState<FilterTab>(initialTab);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedScoreId, setSelectedScoreId] = useState<string>(activeSceneId);
+  const [mobileView, setMobileView] = useState<'list' | 'details'>('list');
+
+  // Synchronize initialTab and selectedScoreId when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      if (initialTab) {
+        setActiveTab(initialTab);
+      }
+      setSelectedScoreId(activeSceneId);
+      setMobileView('list');
+    }
+  }, [isOpen, initialTab, activeSceneId]);
 
   // Close on Escape key
   useEffect(() => {
@@ -76,6 +100,13 @@ export const ScoreLibraryModal: React.FC<ScoreLibraryModalProps> = ({
         item.id.toLowerCase().includes(q)
     );
   }, [catalog, activeTab, bundledScores, customScores, searchQuery]);
+
+  // Find currently selected score object, falling back to first filtered item
+  const selectedScore = useMemo(() => {
+    const found = catalog.find((item) => item.id === selectedScoreId);
+    if (found) return found;
+    return filteredScores[0] || catalog[0] || null;
+  }, [catalog, selectedScoreId, filteredScores]);
 
   if (!isOpen) return null;
 
@@ -137,105 +168,143 @@ export const ScoreLibraryModal: React.FC<ScoreLibraryModalProps> = ({
           </div>
         </div>
 
-        {/* Filter Tabs & Search Bar */}
-        <div className="px-5 py-3 border-b border-border-subtle bg-surface-subtle flex flex-wrap items-center justify-between gap-3">
-          <div className={UI_TOKENS.button.segmentedGroup}>
-            <button
-              type="button"
-              onClick={() => setActiveTab('all')}
-              className={
-                activeTab === 'all'
-                  ? UI_TOKENS.button.segmentedItemActive
-                  : UI_TOKENS.button.segmentedItem
-              }
-            >
-              All ({catalog.length})
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('bundled')}
-              className={
-                activeTab === 'bundled'
-                  ? UI_TOKENS.button.segmentedItemActive
-                  : UI_TOKENS.button.segmentedItem
-              }
-            >
-              Bundled ({bundledScores.length})
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('custom')}
-              className={
-                activeTab === 'custom'
-                  ? UI_TOKENS.button.segmentedItemActive
-                  : UI_TOKENS.button.segmentedItem
-              }
-            >
-              Custom ({customScores.length})
-            </button>
-          </div>
+        {/* Master-Detail Body Layout */}
+        <div className="flex-1 flex flex-col md:flex-row min-h-0 overflow-hidden">
+          {/* Left Column: Score List & Search (w-full on mobile, ~42% on md+) */}
+          <div
+            className={`w-full md:w-[42%] lg:w-[40%] flex flex-col border-r border-border-subtle bg-surface min-h-0 ${
+              mobileView === 'details' ? 'hidden md:flex' : 'flex'
+            }`}
+          >
+            {/* Filter Tabs & Search Bar */}
+            <div className="p-3 border-b border-border-subtle bg-surface-subtle space-y-2.5 shrink-0">
+              <div className="flex items-center justify-between gap-2">
+                <div className={UI_TOKENS.button.segmentedGroup}>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('all')}
+                    className={
+                      activeTab === 'all'
+                        ? UI_TOKENS.button.segmentedItemActive
+                        : UI_TOKENS.button.segmentedItem
+                    }
+                  >
+                    All ({catalog.length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('bundled')}
+                    className={
+                      activeTab === 'bundled'
+                        ? UI_TOKENS.button.segmentedItemActive
+                        : UI_TOKENS.button.segmentedItem
+                    }
+                  >
+                    Bundled ({bundledScores.length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('custom')}
+                    className={
+                      activeTab === 'custom'
+                        ? UI_TOKENS.button.segmentedItemActive
+                        : UI_TOKENS.button.segmentedItem
+                    }
+                  >
+                    Custom ({customScores.length})
+                  </button>
+                </div>
 
-          <div className="relative flex-1 min-w-[200px] max-w-xs">
-            <Search className="w-3.5 h-3.5 text-text-faint absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search scores by title, note..."
-              className={UI_TOKENS.input.search}
-            />
-          </div>
-        </div>
+                {/* Mobile View Toggle */}
+                <div className="md:hidden flex items-center">
+                  <button
+                    type="button"
+                    onClick={() => setMobileView('details')}
+                    className="p-1.5 rounded-lg bg-surface border border-border-main text-text-muted hover:text-text-main text-xs font-mono flex items-center gap-1"
+                  >
+                    <SlidersHorizontal className="w-3.5 h-3.5" />
+                    <span>Inspector</span>
+                  </button>
+                </div>
+              </div>
 
-        {/* Scores Grid */}
-        <div className="flex-1 overflow-y-auto p-5 grid grid-cols-1 md:grid-cols-2 gap-4 custom-scrollbar">
-          {filteredScores.length === 0 ? (
-            <div className="col-span-full py-16 text-center text-text-muted font-sans text-sm">
-              No choreography scores found matching your criteria.
+              {/* Search Field */}
+              <div className="relative w-full">
+                <Search className="w-3.5 h-3.5 text-text-faint absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search scores by title, note, or ID..."
+                  className={UI_TOKENS.input.search}
+                />
+              </div>
             </div>
-          ) : (
-            filteredScores.map((item) => (
-              <ScoreLibraryCard
-                key={item.id}
-                item={item}
-                isActive={item.id === activeSceneId}
-                onSelect={() => {
-                  onSelectScene(item.id);
-                  onClose();
-                }}
-              />
-            ))
-          )}
-        </div>
 
-        {/* Modal Footer */}
-        <div className={UI_TOKENS.modal.footer}>
-          <div className="w-full flex items-center justify-between gap-3 text-xs font-sans">
-            {onOpenManageScores && customScores.length > 0 ? (
+            {/* Scrollable Scores List */}
+            <div className="flex-1 overflow-y-auto p-3 space-y-2.5 custom-scrollbar">
+              {filteredScores.length === 0 ? (
+                <div className="py-16 text-center text-text-muted font-sans text-xs">
+                  No choreography scores found matching your criteria.
+                </div>
+              ) : (
+                filteredScores.map((item) => (
+                  <ScoreLibraryCard
+                    key={item.id}
+                    item={item}
+                    isActive={item.id === activeSceneId}
+                    isSelected={item.id === selectedScore?.id}
+                    onSelect={() => {
+                      setSelectedScoreId(item.id);
+                      setMobileView('details');
+                    }}
+                  />
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Right Column: Choreography Inspector Pane */}
+          <div
+            className={`flex-1 flex flex-col min-h-0 overflow-hidden bg-surface ${
+              mobileView === 'list' ? 'hidden md:flex' : 'flex'
+            }`}
+          >
+            {/* Mobile Header to return to list */}
+            <div className="md:hidden p-2.5 border-b border-border-subtle bg-surface-subtle flex items-center justify-between">
               <button
                 type="button"
-                onClick={() => {
-                  onOpenManageScores();
+                onClick={() => setMobileView('list')}
+                className="text-xs font-mono text-text-muted hover:text-text-main flex items-center gap-1"
+              >
+                <LayoutList className="w-3.5 h-3.5" />
+                <span>← Back to Score List</span>
+              </button>
+            </div>
+
+            {selectedScore ? (
+              <ScoreInspectorPane
+                item={selectedScore}
+                isActive={selectedScore.id === activeSceneId}
+                onSelectScore={() => {
+                  onSelectScene(selectedScore.id);
                   onClose();
                 }}
-                className="text-text-muted hover:text-text-main flex items-center gap-1.5 transition-colors cursor-pointer font-mono"
-              >
-                <FolderKanban className="w-3.5 h-3.5 text-text-muted" />
-                <span>Manage Custom Scores ({customScores.length})</span>
-              </button>
+                onForkScore={onForkScore}
+                onDuplicateScore={onDuplicateScore}
+                onExportScore={onExportScore}
+                onRenameScore={onRenameScore}
+                onDeleteScore={onDeleteScore}
+              />
             ) : (
-              <span className="text-[11px] font-mono text-text-faint">
-                YAML is the Single Source of Truth
-              </span>
+              <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-text-muted">
+                <Clapperboard className="w-10 h-10 stroke-1 text-text-faint mb-3" />
+                <span className="text-sm font-sans font-medium">No score selected</span>
+                <span className="text-xs text-text-faint mt-1">
+                  Select a score from the list to inspect its staging and optical breakdown.
+                </span>
+              </div>
             )}
-
-            <button
-              type="button"
-              onClick={onClose}
-              className={UI_TOKENS.button.secondary}
-            >
-              Close
-            </button>
           </div>
         </div>
       </div>
