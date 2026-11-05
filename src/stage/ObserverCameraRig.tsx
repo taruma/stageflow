@@ -27,6 +27,10 @@ import {
   computeViewfinderCanvasFovDeg,
   verticalFovDegToFocalLengthMm,
 } from '../core/opticsMath';
+import {
+  getPresetTransform,
+  type CameraPresetType,
+} from './cameraPresets';
 
 export interface ObserverCameraRigProps {
   cameraMode: CameraViewMode;
@@ -35,6 +39,10 @@ export interface ObserverCameraRigProps {
   uiFrame?: StageFrame;
   lastManualSeekIdRef: React.RefObject<number>;
   onFreeOrbitPoseChange: (pose: SphericalPose) => void;
+  cameraPresetActionRef?: React.RefObject<{
+    type: CameraPresetType;
+    id: number;
+  } | null>;
 }
 
 export const ObserverCameraRig: React.FC<ObserverCameraRigProps> = ({
@@ -44,10 +52,12 @@ export const ObserverCameraRig: React.FC<ObserverCameraRigProps> = ({
   uiFrame,
   lastManualSeekIdRef,
   onFreeOrbitPoseChange,
+  cameraPresetActionRef,
 }) => {
   const { camera, size } = useThree();
   const controlsRef = useRef<OrbitControlsImpl | null>(null);
   const lastHandledSeekIdRef = useRef<number>(lastManualSeekIdRef.current);
+  const lastHandledPresetIdRef = useRef<number>(0);
   const lastModeRef = useRef<CameraViewMode>(cameraMode);
   const wasPlayingRef = useRef<boolean>(isPlaying);
 
@@ -128,6 +138,22 @@ export const ObserverCameraRig: React.FC<ObserverCameraRigProps> = ({
 
     const justStartedPlaying = !wasPlayingRef.current && isPlaying;
     wasPlayingRef.current = isPlaying;
+
+    // Handle Camera Presets trigger (Top, Iso, Front, Side, Reset)
+    const presetAction = cameraPresetActionRef?.current;
+    if (presetAction && presetAction.id !== lastHandledPresetIdRef.current) {
+      lastHandledPresetIdRef.current = presetAction.id;
+      if (presetAction.type === 'reset') {
+        const targetTransform = frame.observerCamera.transform;
+        applyTransformImperatively(targetTransform, cameraMode);
+      } else {
+        const aspect = frame.observerCamera.transform.aspectRatio ?? 16 / 9;
+        const targetTransform = getPresetTransform(presetAction.type, 35, aspect);
+        applyTransformImperatively(targetTransform, 'free');
+      }
+      handleControlsChange();
+      return;
+    }
 
     // 1. STAGE CAMERA POV MODE: Always locked to the illustrative Stage Camera's exact frustum
     if (cameraMode === 'stage-pov') {

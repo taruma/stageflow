@@ -16,6 +16,7 @@ export interface LabelDisplayModeToggleProps {
   showGuides?: boolean;
   onToggleGuides?: () => void;
   cameraMode?: CameraViewMode;
+  className?: string;
 }
 
 const MODES: Array<{
@@ -50,11 +51,12 @@ export const LabelDisplayModeToggle: React.FC<LabelDisplayModeToggleProps> = ({
   showGuides = true,
   onToggleGuides,
   cameraMode,
+  className = '',
 }) => {
   const isStagePov = cameraMode === 'stage-pov';
 
   return (
-    <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5 pointer-events-auto select-none">
+    <div className={`flex items-center gap-1.5 pointer-events-auto select-none ${className}`}>
       {/* 1. 3D Labels Visibility Toggle */}
       <div className="flex items-center gap-0.5 p-0.5 rounded-xl bg-surface border border-border-main shadow-xs">
         <span className="text-[9px] font-mono uppercase tracking-wider text-text-faint pl-2 pr-1 hidden sm:inline">
@@ -81,8 +83,8 @@ export const LabelDisplayModeToggle: React.FC<LabelDisplayModeToggleProps> = ({
         })}
       </div>
 
-      {/* 2. Composition Guides Toggle (Hotkey: G) */}
-      {onToggleGuides && (
+      {/* 2. Composition Guides Toggle (Contextual: Stage Cam POV Only) */}
+      {onToggleGuides && isStagePov && (
         <div className="flex items-center p-0.5 rounded-xl bg-surface border border-border-main shadow-xs">
           <button
             type="button"
@@ -92,9 +94,7 @@ export const LabelDisplayModeToggle: React.FC<LabelDisplayModeToggleProps> = ({
             }`}
             className={`px-2 py-0.5 rounded-lg text-[10px] font-mono flex items-center gap-1 transition-all cursor-pointer ${
               showGuides
-                ? isStagePov
-                  ? 'bg-amber-500 text-white font-semibold shadow-2xs'
-                  : 'bg-btn-primary-bg text-btn-primary-text font-semibold shadow-2xs'
+                ? 'bg-amber-500 text-white font-semibold shadow-2xs'
                 : 'text-text-muted hover:text-text-main'
             }`}
           >

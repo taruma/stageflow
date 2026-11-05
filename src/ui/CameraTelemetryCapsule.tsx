@@ -68,50 +68,83 @@ export const CameraTelemetryCapsule: React.FC<CameraTelemetryCapsuleProps> =
           ) : (
             <Compass className="w-3.5 h-3.5 text-text-muted shrink-0 group-hover:rotate-45 transition-transform duration-300" />
           )}
-          <span
-            className={
-              copied ? 'text-emerald-600 dark:text-emerald-300 font-bold' : 'font-bold text-text-main'
-            }
-          >
-            {pitchDeg}°
+          {/* Pitch */}
+          <span className="flex items-center gap-0.5">
+            <span className="text-[9px] text-text-faint font-mono">P</span>
+            <span
+              className={
+                copied ? 'text-emerald-600 dark:text-emerald-300 font-bold' : 'font-bold text-text-main'
+              }
+            >
+              {pitchDeg}°
+            </span>
           </span>
-          <span className="text-border-main">/</span>
-          <span
-            className={
-              copied ? 'text-emerald-600 dark:text-emerald-300 font-bold' : 'font-bold text-text-main'
-            }
-          >
-            {yawDeg}°
+
+          <span className="text-border-main">·</span>
+
+          {/* Yaw */}
+          <span className="flex items-center gap-0.5">
+            <span className="text-[9px] text-text-faint font-mono">Y</span>
+            <span
+              className={
+                copied ? 'text-emerald-600 dark:text-emerald-300 font-bold' : 'font-bold text-text-main'
+              }
+            >
+              {yawDeg}°
+            </span>
           </span>
+
+          {/* Roll (if non-zero) */}
           {hasNonZeroRoll && (
             <>
-              <span className="text-border-main">/</span>
-              <span
-                className={
-                  copied
-                    ? 'text-emerald-600 dark:text-emerald-300 font-bold'
-                    : 'font-bold text-violet-600 dark:text-violet-300'
-                }
-                title="Camera Roll (Dutch Angle)"
-              >
-                {rollDeg}°
+              <span className="text-border-main">·</span>
+              <span className="flex items-center gap-0.5">
+                <span className="text-[9px] text-text-faint font-mono">R</span>
+                <span
+                  className={
+                    copied
+                      ? 'text-emerald-600 dark:text-emerald-300 font-bold'
+                      : 'font-bold text-violet-600 dark:text-violet-300'
+                  }
+                  title="Camera Roll (Dutch Angle)"
+                >
+                  {rollDeg}°
+                </span>
               </span>
             </>
           )}
+
           <span className="text-border-main">·</span>
-          <span
-            className={
-              copied
-                ? 'text-emerald-600 dark:text-emerald-300 font-bold'
-                : 'font-bold text-amber-600 dark:text-amber-400'
-            }
-          >
-            {distMeters}m
+
+          {/* Distance */}
+          <span className="flex items-center gap-0.5">
+            <span className="text-[9px] text-text-faint font-mono">D</span>
+            <span
+              className={
+                copied
+                  ? 'text-emerald-600 dark:text-emerald-300 font-bold'
+                  : 'font-bold text-amber-600 dark:text-amber-400'
+              }
+            >
+              {distMeters}m
+            </span>
           </span>
+
           <span className="text-border-main hidden sm:inline">·</span>
-          <span className="text-text-muted hidden sm:inline">
-            ({tx}, {ty}, {tz})
+
+          {/* Target */}
+          <span className="hidden sm:flex items-center gap-0.5 text-text-muted">
+            <span className="text-[9px] text-text-faint font-mono">TGT</span>
+            <span>[{tx}, {ty}, {tz}]</span>
           </span>
+
+          <span className="text-border-main hidden md:inline">·</span>
+
+          {/* Equivalent Lens */}
+          <span className="hidden md:inline text-text-main font-semibold">
+            {lensMm}mm
+          </span>
+
           <Copy className="w-3 h-3 text-text-faint group-hover:text-text-main ml-0.5 shrink-0" />
         </button>
 

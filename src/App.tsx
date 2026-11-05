@@ -5,7 +5,7 @@
  * and Persistent Storage (IndexedDB scores + localStorage UI preferences).
  */
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import type { LabelDisplayMode, ToastNotification } from './core/types';
 import {
   INITIAL_CATALOG_ITEMS,
@@ -47,6 +47,9 @@ import { ScoreLibraryModal, type FilterTab } from './ui/ScoreLibraryModal';
 import { ToastContainer } from './ui/ToastContainer';
 import { LabelDisplayModeToggle } from './ui/LabelDisplayModeToggle';
 import { StageCamViewfinderOverlay } from './ui/StageCamViewfinderOverlay';
+import { CameraModeSwitcher } from './ui/CameraModeSwitcher';
+import { CameraPresetControls } from './ui/CameraPresetControls';
+import type { CameraPresetType } from './stage/cameraPresets';
 import { HeadlessRecorderView } from './recorder/HeadlessRecorderView';
 
 const isHeadlessRender =
@@ -234,6 +237,23 @@ const InteractiveStudioApp: React.FC = () => {
     mediaClock.driverRef,
     mediaClock.loopActiveShot,
     mediaClock.isPlaying
+  );
+
+  const cameraPresetActionRef = useRef<{
+    type: CameraPresetType;
+    id: number;
+  } | null>(null);
+
+  const handleSelectCameraPreset = useCallback(
+    (preset: CameraPresetType) => {
+      if (preset === 'reset') {
+        stageLoop.setCameraMode('scripted');
+      } else {
+        stageLoop.setCameraMode('free');
+      }
+      cameraPresetActionRef.current = { type: preset, id: Date.now() };
+    },
+    [stageLoop]
   );
 
   // Switch between catalog scenes
@@ -492,6 +512,7 @@ const InteractiveStudioApp: React.FC = () => {
               onFreeOrbitPoseChange={stageLoop.notifyFreeOrbitChange}
               labelMode={labelMode}
               themeCategory={theme.effectiveDioramaCategory}
+              cameraPresetActionRef={cameraPresetActionRef}
             />
 
             {/* Stage Camera POV Director's Optical Viewfinder Overlay */}
@@ -503,7 +524,7 @@ const InteractiveStudioApp: React.FC = () => {
               />
             )}
 
-            {/* Top-Left Shot & Lens Breakdown HUD */}
+            {/* Top-Left Shot & Lens Breakdown HUD (De-duplicated & Collapsible) */}
             <ShotBreakdownHud
               score={activeScore}
               frame={stageLoop.uiSnapshot.frame}
@@ -511,14 +532,25 @@ const InteractiveStudioApp: React.FC = () => {
               isPlaying={mediaClock.isPlaying}
             />
 
-            {/* Top-Right Label & Guides Viewport Overlay Controls (Hotkeys: L, G) */}
-            <LabelDisplayModeToggle
-              labelMode={labelMode}
-              onSelectLabelMode={handleSelectLabelMode}
-              showGuides={showGuides}
-              onToggleGuides={handleToggleGuides}
-              cameraMode={stageLoop.cameraMode}
-            />
+            {/* Top-Center Camera POV Mode Switcher (Elevated from Transport Deck) */}
+            <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
+              <CameraModeSwitcher
+                cameraMode={stageLoop.cameraMode}
+                onSetCameraMode={stageLoop.setCameraMode}
+              />
+            </div>
+
+            {/* Top-Right Overlays: Camera Presets & Display Controls */}
+            <div className="absolute top-3 right-3 z-10 flex items-center gap-2 pointer-events-auto select-none">
+              <CameraPresetControls onSelectPreset={handleSelectCameraPreset} />
+              <LabelDisplayModeToggle
+                labelMode={labelMode}
+                onSelectLabelMode={handleSelectLabelMode}
+                showGuides={showGuides}
+                onToggleGuides={handleToggleGuides}
+                cameraMode={stageLoop.cameraMode}
+              />
+            </div>
 
             {/* Bottom-Right Authoring Telemetry Capsule + 1-Click YAML Copy */}
             <CameraTelemetryCapsule
@@ -528,7 +560,7 @@ const InteractiveStudioApp: React.FC = () => {
         }
       />
 
-      {/* Bottom Directorial Transport Deck */}
+      {/* Bottom Directorial Transport Deck (Streamlined Timeline Controls) */}
       <DirectorialTransportBar
         score={activeScore}
         frame={stageLoop.uiSnapshot.frame}
@@ -537,14 +569,12 @@ const InteractiveStudioApp: React.FC = () => {
         playbackRate={mediaClock.playbackRate}
         isMuted={mediaClock.isMuted}
         loopActiveShot={mediaClock.loopActiveShot}
-        cameraMode={stageLoop.cameraMode}
         onTogglePlay={mediaClock.togglePlay}
         onSeek={handleSeekAndSync}
         onStepFrames={handleStepFramesAndSync}
         onSetPlaybackRate={mediaClock.setPlaybackRate}
         onToggleMute={mediaClock.toggleMute}
         onToggleLoopActiveShot={mediaClock.toggleLoopActiveShot}
-        onSetCameraMode={stageLoop.setCameraMode}
       />
 
       {/* Slide-Out Live YAML Score Inspector & Editor Drawer */}

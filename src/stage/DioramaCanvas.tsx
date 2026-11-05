@@ -19,6 +19,7 @@ import { BlueprintStageScene } from './BlueprintStageScene';
 import { ObserverCameraRig } from './ObserverCameraRig';
 import { StageCameraRig } from './StageCameraRig';
 import { getDioramaThemeColors } from './dioramaTheme';
+import type { CameraPresetType } from './cameraPresets';
 
 export interface DioramaCanvasProps {
   score: StageScore;
@@ -31,6 +32,10 @@ export interface DioramaCanvasProps {
   onFreeOrbitPoseChange: (pose: SphericalPose) => void;
   labelMode?: LabelDisplayMode;
   themeCategory?: AppThemeCategory;
+  cameraPresetActionRef?: React.RefObject<{
+    type: CameraPresetType;
+    id: number;
+  } | null>;
 }
 
 const FrameLoopTicker: React.FC<{ onTick: () => void }> = ({ onTick }) => {
@@ -52,6 +57,7 @@ export const DioramaCanvas: React.FC<DioramaCanvasProps> = ({
   onFreeOrbitPoseChange,
   labelMode = 'all',
   themeCategory = 'dark',
+  cameraPresetActionRef,
 }) => {
   const themeColors = useMemo(
     () => getDioramaThemeColors(themeCategory),
@@ -95,6 +101,7 @@ export const DioramaCanvas: React.FC<DioramaCanvasProps> = ({
           uiFrame={uiFrame}
           lastManualSeekIdRef={lastManualSeekIdRef}
           onFreeOrbitPoseChange={onFreeOrbitPoseChange}
+          cameraPresetActionRef={cameraPresetActionRef}
         />
 
         {/* 3. Illustrative Stage Camera with Rectangular Film Gate Frustum */}

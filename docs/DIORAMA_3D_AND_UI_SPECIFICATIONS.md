@@ -149,15 +149,24 @@ Scene entities (`character`, `prop`, `marker`) are rendered with unambiguous ori
 - **Transient Toast Feedback (`ToastContainer.tsx`)**: Lightweight 3-second floating feedback banners confirming file drops, auto-forks, project deletions, and exports.
 - **Legacy Draft Auto-Migration**: On startup hydration, any legacy drafts in IndexedDB that modified bundled presets are automatically migrated into standalone Custom Projects with zero data loss.
 
-### 4.7 Directorial HUD & Optical Telemetry (`ShotBreakdownHud.tsx`, `StageCamMonitorCanvas.tsx`)
+### 4.7 Directorial HUD & Viewport Overlays (`ShotBreakdownHud.tsx`, `CameraModeSwitcher.tsx`, `CameraPresetControls.tsx`, `CameraTelemetryCapsule.tsx`)
+- **Top-Center Camera POV Mode Switcher (`CameraModeSwitcher.tsx`)**:
+  - Elevated floating tactile segmented pill centered at `top-3` (`[ 👁 Scripted | 🪐 Free Orbit | 📷 Stage Cam ]`), decoupling viewport perspective selection from the bottom transport bar.
+- **Top-Right Directorial Camera Presets (`CameraPresetControls.tsx`, `cameraPresets.ts`)**:
+  - 1-click angle snaps cluster (`Top/Plan 84°`, `Iso 45°`, `Front 12°`, `Side 90°`, `Reset`) that snaps camera perspective and switches to Free Orbit without pausing playback.
 - **Top-Left Shot Breakdown HUD (`ShotBreakdownHud.tsx`)**:
   - Displays active shot number, label, prime lens focal length, gate aspect ratio, and active maneuver.
-  - When `target_offset` is active ($\ge 0.01\text{m}$), automatically surfaces a cyan `OFFSET <magnitude>m` badge with crosshair icon and displays the exact world displacement vector `Δ [+X, +Y, +Z]m` in the optics row.
+  - Automatically de-duplicates title prefixes (`[SHOT 01] Slow Arc...` instead of repeating `Shot 01 · `).
+  - Features a 1-click collapse/expand fold chevron shrinking the card to a sleek single-line pill, saving ~70% screen real estate.
+  - When `target_offset` is active ($\ge 0.01\text{m}$), surfaces a cyan `OFFSET <magnitude>m` badge with crosshair icon and displays the exact world displacement vector `Δ [+X, +Y, +Z]m` in the optics row.
+- **Bottom-Right Authoring Telemetry Capsule (`CameraTelemetryCapsule.tsx`)**:
+  - Formatted with inline muted monospace micro-labels: `P 26.0° · Y 35.0° · [R -5.0°] · D 7.50m · TGT [0.0, 1.1, 0.0] · 50mm` for instant glanceability.
 - **Stage Cam Monitor Optical HUD (`StageCamMonitorCanvas.tsx`)**:
   - Displays live lens focal length, distance, yaw, roll degrees, and metric `OFFSET` magnitude in the bottom status bar.
 
 ### 4.8 Viewport Label & Composition Guides Controls (`LabelDisplayModeToggle.tsx`)
 - Floating top-right glassmorphic pill overlay mounted on the 3D diorama canvas.
+- Conditioned so the `Guides` toggle button appears strictly when in `Stage Cam POV` (`cameraMode === 'stage-pov'`), keeping the 3D Observer view chrome uncluttered.
 - Supports 3 distinct directorial visibility modes (`LabelDisplayMode`):
   - **`All`**: Displays both actor/prop mannequins and Stage Camera labels with playback auto-ghosting.
   - **`Cam` (`camera-only`)**: Hides actor/prop labels, keeping only the illustrative Stage Camera lens & maneuver badge.

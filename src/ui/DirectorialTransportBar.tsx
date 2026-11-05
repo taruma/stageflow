@@ -7,11 +7,8 @@
 
 import React from 'react';
 import {
-  Camera,
   ChevronLeft,
   ChevronRight,
-  Eye,
-  Orbit,
   Pause,
   Play,
   Repeat,
@@ -19,7 +16,7 @@ import {
   Volume2,
   VolumeX,
 } from 'lucide-react';
-import type { CameraViewMode, StageFrame, StageScore } from '../core/types';
+import type { StageFrame, StageScore } from '../core/types';
 
 export interface DirectorialTransportBarProps {
   score: StageScore;
@@ -29,14 +26,12 @@ export interface DirectorialTransportBarProps {
   playbackRate: number;
   isMuted: boolean;
   loopActiveShot: boolean;
-  cameraMode: CameraViewMode;
   onTogglePlay: () => void;
   onSeek: (targetSec: number) => void;
   onStepFrames: (frames: number) => void;
   onSetPlaybackRate: (rate: number) => void;
   onToggleMute: () => void;
   onToggleLoopActiveShot: () => void;
-  onSetCameraMode: (mode: CameraViewMode) => void;
 }
 
 const PLAYBACK_RATES = [0.25, 0.5, 1, 2] as const;
@@ -58,14 +53,12 @@ export const DirectorialTransportBar: React.FC<
   playbackRate,
   isMuted,
   loopActiveShot,
-  cameraMode,
   onTogglePlay,
   onSeek,
   onStepFrames,
   onSetPlaybackRate,
   onToggleMute,
   onToggleLoopActiveShot,
-  onSetCameraMode,
 }) => {
   const safeDuration = Math.max(0.1, durationSec);
   const currentSec = frame.timestampSec;
@@ -243,7 +236,7 @@ export const DirectorialTransportBar: React.FC<
           </div>
         </div>
 
-        {/* Center: Slow-Motion & Variable Playback Speed Selector */}
+        {/* Right: Slow-Motion & Variable Playback Speed Selector */}
         <div className="flex items-center gap-0.5 bg-surface-muted p-0.5 rounded-xl border border-border-main font-mono text-[10px] shadow-xs">
           {PLAYBACK_RATES.map((rate) => {
             const active = Math.abs(playbackRate - rate) < 0.01;
@@ -263,51 +256,6 @@ export const DirectorialTransportBar: React.FC<
               </button>
             );
           })}
-        </div>
-
-        {/* Right: 3-Way Camera POV Mode Toggle (Instant Cut) */}
-        <div className="flex items-center bg-surface-muted p-0.5 rounded-xl border border-border-main text-[11px] font-mono shadow-xs">
-          <button
-            type="button"
-            onClick={() => onSetCameraMode('scripted')}
-            className={`px-2.5 py-1 rounded-lg flex items-center gap-1.5 transition-all cursor-pointer ${
-              cameraMode === 'scripted'
-                ? 'bg-surface text-text-main font-semibold shadow-xs'
-                : 'text-text-muted hover:text-text-main'
-            }`}
-            title="Scripted Observer View (Driven by timeline while playing; releases to Free Orbit when paused)"
-          >
-            <Eye className="w-3.5 h-3.5 text-sky-500" />
-            <span>Scripted Observer</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => onSetCameraMode('free')}
-            className={`px-2.5 py-1 rounded-lg flex items-center gap-1.5 transition-all cursor-pointer ${
-              cameraMode === 'free'
-                ? 'bg-surface text-text-main font-semibold shadow-xs'
-                : 'text-text-muted hover:text-text-main'
-            }`}
-            title="Free Orbit View (Unlocks OrbitControls even during playback)"
-          >
-            <Orbit className="w-3.5 h-3.5 text-emerald-500" />
-            <span>Free Orbit</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => onSetCameraMode('stage-pov')}
-            className={`px-2.5 py-1 rounded-lg flex items-center gap-1.5 transition-all cursor-pointer ${
-              cameraMode === 'stage-pov'
-                ? 'bg-surface text-text-main font-semibold shadow-xs'
-                : 'text-text-muted hover:text-text-main'
-            }`}
-            title="Stage Camera POV (Instant cut to look directly through the 3D Stage Camera lens)"
-          >
-            <Camera className="w-3.5 h-3.5 text-amber-500" />
-            <span>Stage Cam POV</span>
-          </button>
         </div>
       </div>
     </footer>

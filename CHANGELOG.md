@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Diorama 2D UI Elevation: Top-Center Mode Switcher, Camera Presets & Streamlined Chrome (`src/ui/`, `src/stage/`, `src/App.tsx`)**:
+  - **Top-Center Floating Camera Mode Switcher (`CameraModeSwitcher.tsx`)**: Extracted the 3-way camera POV toggle (`Scripted Observer`, `Free Orbit`, `Stage Cam POV`) from the bottom transport deck into an elevated, centered tactile segmented pill at `top-3 left-1/2 -translate-x-1/2`, establishing a dedicated viewfinder mode header while decluttering the transport bar.
+  - **Directorial Camera Presets (`CameraPresetControls.tsx`, `cameraPresets.ts`, `ObserverCameraRig.tsx`)**: Added a 1-click angle snaps cluster in the top-right overlay (`Top/Plan 84°`, `Iso 45°`, `Front 12°`, `Side 90°`, `Reset`) that instantly snaps camera perspective and switches to Free Orbit without pausing playback.
+  - **Shot Breakdown HUD Title De-duplication & Collapse Toggle (`ShotBreakdownHud.tsx`)**: Stripped redundant `"Shot ## · "` title prefixes (`[SHOT 01] Slow Arc...` instead of `[SHOT 01] Shot 01 · Slow Arc...`) and added a 1-click fold chevron folding the card into a sleek single-line pill, saving ~70% screen space.
+  - **Contextual Viewfinder Guides Toggle (`LabelDisplayModeToggle.tsx`)**: Conditioned the `Guides` toggle to appear strictly when in `Stage Cam POV` (`cameraMode === 'stage-pov'`), keeping the 3D Observer view chrome uncluttered.
+  - **Camera Telemetry Capsule Micro-Labels (`CameraTelemetryCapsule.tsx`)**: Added inline muted monospace prefixes (`P 26.0° · Y 35.0° · [R -5.0°] · D 7.50m · TGT [0.0, 1.1, 0.0] · 50mm`) for instantaneous glanceability without hovering.
+  - **Streamlined Transport Deck (`DirectorialTransportBar.tsx`)**: Dedicated the bottom deck 100% to timeline scrubbing, frame-stepping, looping, timecode, and slow-motion playback speed.
 - **Unified Category Color System & Collapsible Sections (`src/ui/library/ScoreLibraryCard.tsx`, `src/ui/ScoreLibraryModal.tsx`, `src/ui/library/ScoreInspectorPane.tsx`)**:
   - Implemented **Unified Category Color Indicator (Option A)**: Replaced rainbow per-blueprint borders with a consistent architectural **Sky Blue** (`border-l-sky-500`, `bg-sky-500/15`, `text-sky-400`) accent border and tag badge for all bundled factory blueprints (`BP 01`–`BP 05`), while user-created projects share a warm **Amber** (`border-l-amber-500`, `bg-amber-500/15`, `text-amber-400`) accent.
   - Aligned inspector status chips in [`ScoreInspectorPane.tsx`](src/ui/library/ScoreInspectorPane.tsx) to match the Sky Blue (Bundled) and Amber (Custom) category palettes.
