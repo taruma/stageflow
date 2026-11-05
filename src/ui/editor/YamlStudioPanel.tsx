@@ -5,7 +5,7 @@
  * Wrapped in React.memo to ensure zero re-render overhead during 60fps WebGL playback.
  */
 
-import React, { useRef, useCallback, useState } from 'react';
+import React, { useRef, useCallback, useState, Suspense, lazy } from 'react';
 import type { ScoreDiagnostic } from '../../core/types';
 import {
   loadStoredEditorWordWrap,
@@ -16,6 +16,12 @@ import { YamlEditorHeader } from './YamlEditorHeader';
 import { YamlActionBar } from './YamlActionBar';
 import { YamlDiagnosticsBanner } from './YamlDiagnosticsBanner';
 import { YamlEditorCanvas, type YamlEditorHandle } from './YamlEditorCanvas';
+
+const ScoreAuthoringGuideModal = lazy(() =>
+  import('../guide/ScoreAuthoringGuideModal').then((m) => ({
+    default: m.ScoreAuthoringGuideModal,
+  }))
+);
 
 export interface YamlStudioPanelProps {
   isOpen: boolean;
@@ -47,6 +53,7 @@ export const YamlStudioPanel: React.FC<YamlStudioPanelProps> = React.memo(
     onClose,
   }) => {
     const editorCanvasRef = useRef<YamlEditorHandle | null>(null);
+    const [isGuideOpen, setIsGuideOpen] = useState(false);
 
     const [wordWrap, setWordWrap] = useState<boolean>(() => {
       return loadStoredEditorWordWrap() ?? true;
@@ -67,41 +74,56 @@ export const YamlStudioPanel: React.FC<YamlStudioPanelProps> = React.memo(
     if (!isOpen) return null;
 
     return (
-      <aside
-        aria-label="Choreography Score Editor"
-        className="w-full h-full bg-surface border-l border-border-main flex flex-col text-text-main overflow-hidden select-none"
-      >
-        {/* 1. Top Panel Header (Title, Live Sync Indicator, Close Button) */}
-        <YamlEditorHeader isBundled={isBundled} onClose={onClose} />
+      <>
+        <aside
+          aria-label="Choreography Score Editor"
+          className="w-full h-full bg-surface border-l border-border-main flex flex-col text-text-main overflow-hidden select-none"
+        >
+          {/* 1. Top Panel Header (Title, Live Sync Indicator, Guide Button, Close Button) */}
+          <YamlEditorHeader
+            isBundled={isBundled}
+            onOpenGuide={() => setIsGuideOpen(true)}
+            onClose={onClose}
+          />
 
-        {/* 2. Directorial Action Bar (Guide, Wrap, Copy, Fork to Edit) */}
-        <YamlActionBar
-          rawYaml={rawYaml}
-          isBundled={isBundled}
-          wordWrap={wordWrap}
-          onToggleWordWrap={handleToggleWordWrap}
-          onForkScore={onForkScore}
-        />
+          {/* 2. Directorial Action Bar (Wrap, Copy, Fork to Edit) */}
+          <YamlActionBar
+            rawYaml={rawYaml}
+            isBundled={isBundled}
+            wordWrap={wordWrap}
+            onToggleWordWrap={handleToggleWordWrap}
+            onForkScore={onForkScore}
+          />
 
-        {/* 3. Conditional Diagnostics Banner (Only appears on Error or Warning) */}
-        <YamlDiagnosticsBanner
-          parseError={parseError}
-          parseWarning={parseWarning}
-          diagnostics={diagnostics}
-          onJumpToLine={handleJumpToLine}
-        />
+          {/* 3. Conditional Diagnostics Banner (Only appears on Error or Warning) */}
+          <YamlDiagnosticsBanner
+            parseError={parseError}
+            parseWarning={parseWarning}
+            diagnostics={diagnostics}
+            onJumpToLine={handleJumpToLine}
+          />
 
-        {/* 4. CodeMirror 6 Editor Canvas */}
-        <YamlEditorCanvas
-          ref={editorCanvasRef}
-          rawYaml={rawYaml}
-          sceneId={sceneId}
-          isBundled={isBundled}
-          effectiveTheme={effectiveTheme}
-          wordWrap={wordWrap}
-          onChangeYaml={onChangeYaml}
-        />
-      </aside>
+          {/* 4. CodeMirror 6 Editor Canvas */}
+          <YamlEditorCanvas
+            ref={editorCanvasRef}
+            rawYaml={rawYaml}
+            sceneId={sceneId}
+            isBundled={isBundled}
+            effectiveTheme={effectiveTheme}
+            wordWrap={wordWrap}
+            onChangeYaml={onChangeYaml}
+          />
+        </aside>
+
+        {isGuideOpen && (
+          <Suspense fallback={null}>
+            <ScoreAuthoringGuideModal
+              isOpen={isGuideOpen}
+              onClose={() => setIsGuideOpen(false)}
+            />
+          </Suspense>
+        )}
+      </>
     );
   }
 );

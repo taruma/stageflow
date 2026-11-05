@@ -183,12 +183,14 @@ stageflow/
 │   │   │   └── VideoWorkspaceSubpanel.tsx # Modular directorial workspace subpanel below reference video
 │   │   ├── editor/                  # Modular CodeMirror 6 YAML Score Studio submodules
 │   │   │   ├── YamlStudioPanel.tsx  # In-flow right-column choreography score studio container
-│   │   │   ├── YamlEditorHeader.tsx # Streamlined top header (title, sync badge & close)
-│   │   │   ├── YamlActionBar.tsx    # Directorial action bar (Guide, Wrap toggle, Copy, Fork)
+│   │   │   ├── YamlEditorHeader.tsx # Top header with title, sync badge, Guide trigger & close
+│   │   │   ├── YamlActionBar.tsx    # Directorial action bar (Wrap toggle, Copy, Fork)
 │   │   │   ├── YamlDiagnosticsBanner.tsx # Diagnostic alert banner with line/col jump
 │   │   │   ├── YamlEditorCanvas.tsx # CodeMirror 6 DOM mounting & virtualized canvas
 │   │   │   ├── useCodeMirrorTheme.ts # Dynamic theme extension for Dark/Warm/Light/Pure Black
 │   │   │   └── useYamlEditor.ts     # Compartments, external sync guard & ~150ms debouncer
+│   │   ├── guide/                   # In-app choreography score authoring manual
+│   │   │   └── ScoreAuthoringGuideModal.tsx # Lazy-loaded Markdown + KaTeX LaTeX documentation dialog
 │   │   ├── library/                 # Modular score library submodules
 │   │   │   ├── ScoreLibraryCard.tsx # Cinematic choreography score card with color tags & telemetry
 │   │   │   ├── ScoreInspectorPane.tsx # Rich master-detail choreography inspector & action bar

@@ -5,16 +5,17 @@
  */
 
 import React from 'react';
-import { Code2, X } from 'lucide-react';
+import { BookOpen, Code2, X } from 'lucide-react';
 import { UI_TOKENS } from '../tokens/ui';
 
 export interface YamlEditorHeaderProps {
   isBundled: boolean;
+  onOpenGuide?: () => void;
   onClose: () => void;
 }
 
 export const YamlEditorHeader: React.FC<YamlEditorHeaderProps> = React.memo(
-  ({ isBundled, onClose }) => {
+  ({ isBundled, onOpenGuide, onClose }) => {
     return (
       <div className="h-10 px-4 border-b border-border-main flex items-center justify-between gap-2 select-none bg-surface-subtle shrink-0">
         <div className="flex items-center gap-2 min-w-0">
@@ -36,14 +37,28 @@ export const YamlEditorHeader: React.FC<YamlEditorHeaderProps> = React.memo(
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={onClose}
-          className={UI_TOKENS.button.iconClose}
-          title="Close Editor"
-        >
-          <X className="w-4 h-4" />
-        </button>
+        <div className="flex items-center gap-1.5 shrink-0">
+          {onOpenGuide && (
+            <button
+              type="button"
+              onClick={onOpenGuide}
+              className="px-2 py-1 rounded-md bg-surface hover:bg-surface-hover border border-border-main text-[10px] font-mono text-text-body hover:text-text-main flex items-center gap-1 cursor-pointer transition-all shadow-2xs active:scale-95"
+              title="Open YAML Score Authoring Guide"
+            >
+              <BookOpen className="w-3 h-3 text-text-muted" />
+              <span>Guide</span>
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={onClose}
+            className={UI_TOKENS.button.iconClose}
+            title="Close Editor"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
       </div>
     );
   }

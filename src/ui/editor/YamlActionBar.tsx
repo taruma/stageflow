@@ -1,11 +1,11 @@
 /**
  * Directorial Action Bar for the YAML Score Editor.
- * Houses Guide, Wrap, Copy, and Fork-to-Edit action pills.
+ * Houses Wrap, Copy, and Fork-to-Edit action pills.
+ * The Guide button is located in the top YamlEditorHeader.
  */
 
 import React, { useState, useCallback } from 'react';
-import { ArrowRight, BookOpen, Check, Copy, WrapText } from 'lucide-react';
-import yamlAuthoringGuideRaw from '../../../docs/YAML_AUTHORING_GUIDE.md?raw';
+import { ArrowRight, Check, Copy, WrapText } from 'lucide-react';
 
 export interface YamlActionBarProps {
   rawYaml: string;
@@ -13,14 +13,6 @@ export interface YamlActionBarProps {
   wordWrap: boolean;
   onToggleWordWrap: () => void;
   onForkScore?: () => void;
-}
-
-function openGuideInNewTab() {
-  const blob = new Blob([yamlAuthoringGuideRaw], {
-    type: 'text/plain;charset=utf-8',
-  });
-  const url = URL.createObjectURL(blob);
-  window.open(url, '_blank');
 }
 
 export const YamlActionBar: React.FC<YamlActionBarProps> = React.memo(
@@ -36,16 +28,6 @@ export const YamlActionBar: React.FC<YamlActionBarProps> = React.memo(
     return (
       <div className="px-3.5 py-1.5 border-b border-border-subtle bg-surface flex items-center justify-between gap-1.5 select-none shrink-0">
         <div className="flex items-center gap-1.5">
-          <button
-            type="button"
-            onClick={openGuideInNewTab}
-            className="px-2 py-1 rounded-md bg-surface-subtle hover:bg-surface-hover border border-border-main text-[10px] font-mono text-text-body hover:text-text-main flex items-center gap-1 cursor-pointer transition-all shadow-2xs active:scale-95"
-            title="Open StageFlow YAML Authoring Manual in new tab"
-          >
-            <BookOpen className="w-3 h-3 text-text-muted" />
-            <span>Guide</span>
-          </button>
-
           <button
             type="button"
             onClick={onToggleWordWrap}
