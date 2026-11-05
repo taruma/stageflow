@@ -28,7 +28,7 @@ export const ActiveScoreIndicator: React.FC<ActiveScoreIndicatorProps> = ({
     <button
       type="button"
       onClick={onOpenLibrary}
-      className="flex items-center gap-2 px-2.5 py-1 rounded-md bg-slate-900/90 hover:bg-slate-800 text-slate-200 border border-slate-700/80 hover:border-sky-500/40 transition-colors cursor-pointer min-w-0 max-w-[280px] sm:max-w-[420px] text-left group"
+      className="flex items-center gap-2 px-2.5 py-1 rounded-md bg-slate-900/90 hover:bg-slate-800 text-slate-200 border border-slate-700/80 hover:border-sky-500/40 transition-colors cursor-pointer min-w-0 max-w-[180px] sm:max-w-[240px] xl:max-w-[340px] text-left group"
       title={`Active Score: "${activeTitle}" — Click to open Score Library`}
     >
       <Film className="w-3.5 h-3.5 text-sky-400 shrink-0 group-hover:text-sky-300 transition-colors" />

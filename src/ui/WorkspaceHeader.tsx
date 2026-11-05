@@ -55,7 +55,7 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
   return (
     <header className="relative z-30 h-12 shrink-0 px-3 bg-[#0a0f1d] border-b border-slate-800/90 flex items-center justify-between gap-3 select-none">
       {/* Left Wing: Brand Identity, File Menu & Active Score Indicator */}
-      <div className="flex items-center gap-2.5 min-w-0">
+      <div className="flex items-center gap-2.5 min-w-0 max-w-[calc(50%-80px)]">
         {/* Brand Logo & Title */}
         <div className="flex items-center gap-2 shrink-0">
           <div className="w-7 h-7 rounded-lg bg-sky-500/15 border border-sky-400/40 flex items-center justify-center text-sky-400 shadow-inner">
@@ -95,11 +95,13 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
         />
       </div>
 
-      {/* Center Stage: Centered Workspace Split Segmented Control */}
-      <LayoutSegmentedControl
-        splitPreset={splitPreset}
-        onSelectSplitPreset={onSelectSplitPreset}
-      />
+      {/* Center Stage: Mathematically Centered at 50% of Header Width */}
+      <div className="absolute left-1/2 -translate-x-1/2 hidden lg:flex items-center pointer-events-auto">
+        <LayoutSegmentedControl
+          splitPreset={splitPreset}
+          onSelectSplitPreset={onSelectSplitPreset}
+        />
+      </div>
 
       {/* Right Wing: Dedicated Score Library Button & Live YAML Drawer Toggle */}
       <div className="flex items-center gap-2 shrink-0">

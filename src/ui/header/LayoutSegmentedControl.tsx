@@ -20,7 +20,7 @@ export const LayoutSegmentedControl: React.FC<LayoutSegmentedControlProps> = ({
     <div
       role="group"
       aria-label="Workspace Layout Modes"
-      className="hidden lg:flex items-center bg-slate-950/90 p-0.5 rounded-lg border border-slate-800/90 text-[10px] font-mono shadow-inner"
+      className="flex items-center bg-slate-950/90 p-0.5 rounded-lg border border-slate-800/90 text-[10px] font-mono shadow-inner"
     >
       <button
         type="button"
