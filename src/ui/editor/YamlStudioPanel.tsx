@@ -1,7 +1,7 @@
 /**
  * Studio Editor Panel for StageFlow's 3-Column Directorial Workspace.
  * Hosts the CodeMirror 6 YAML editor canvas, theme synchronizer,
- * sticky diagnostics banner, and streamlined action toolbar.
+ * sticky diagnostics banner, and decoupled action toolbar.
  * Wrapped in React.memo to ensure zero re-render overhead during 60fps WebGL playback.
  */
 
@@ -13,6 +13,7 @@ import {
 } from '../../core/storage/localStorageUi';
 import type { StoragePersistenceStatus } from '../StorageStatusBadge';
 import { YamlEditorHeader } from './YamlEditorHeader';
+import { YamlActionBar } from './YamlActionBar';
 import { YamlDiagnosticsBanner } from './YamlDiagnosticsBanner';
 import { YamlEditorCanvas, type YamlEditorHandle } from './YamlEditorCanvas';
 
@@ -37,7 +38,6 @@ export const YamlStudioPanel: React.FC<YamlStudioPanelProps> = React.memo(
     parseError,
     parseWarning,
     diagnostics,
-    storageStatus = 'bundled',
     isBundled = false,
     effectiveTheme = 'dark',
     onChangeYaml,
@@ -69,27 +69,27 @@ export const YamlStudioPanel: React.FC<YamlStudioPanelProps> = React.memo(
         aria-label="Choreography Score Editor"
         className="w-full h-full bg-surface border-l border-border-main flex flex-col text-text-main overflow-hidden select-none"
       >
-        {/* 1. Action Header Toolbar */}
-        <YamlEditorHeader
+        {/* 1. Top Panel Header (Title, Live Sync Indicator, Close Button) */}
+        <YamlEditorHeader isBundled={isBundled} onClose={onClose} />
+
+        {/* 2. Directorial Action Bar (Guide, Wrap, Copy, Fork to Edit) */}
+        <YamlActionBar
           rawYaml={rawYaml}
           isBundled={isBundled}
           wordWrap={wordWrap}
           onToggleWordWrap={handleToggleWordWrap}
-          onClose={onClose}
+          onForkScore={onForkScore}
         />
 
-        {/* 2. Sticky Diagnostics & Status Banner */}
+        {/* 3. Conditional Diagnostics Banner (Only appears on Error or Warning) */}
         <YamlDiagnosticsBanner
-          isBundled={isBundled}
           parseError={parseError}
           parseWarning={parseWarning}
           diagnostics={diagnostics}
-          storageStatus={storageStatus}
-          onForkScore={onForkScore}
           onJumpToLine={handleJumpToLine}
         />
 
-        {/* 3. CodeMirror 6 Editor Canvas */}
+        {/* 4. CodeMirror 6 Editor Canvas */}
         <YamlEditorCanvas
           ref={editorCanvasRef}
           rawYaml={rawYaml}

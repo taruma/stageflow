@@ -168,13 +168,16 @@ Adopts professional 3D viewport convention (Blender, Unreal Engine, Maya) distri
   - **Dynamic Theme Adaptation (`useCodeMirrorTheme.ts`)**: Uses CodeMirror `Compartment` instances to dynamically adapt editor chrome, line numbers, cursor, selection, and syntax tokens (amber keys, emerald strings, sky measurements, purple booleans, and muted slate comments) across StageFlow's 4 active themes (`Dark Obsidian`, `Warm Paper`, `Light Stone`, `Pure Black`) with zero reload lag.
 - **Protected Bundled Presets (Read-Only)**: When viewing factory Blueprints 01–05, editing is locked (`EditorState.readOnly.of(true)`) and surfaces a sky-blue banner with a prominent **`[ Fork to Edit → ]`** button. Clicking it clones the score into IndexedDB and immediately unlocks the editor.
 - **Debounced Live Sync & Re-Evaluation (~150ms)**: When editing custom projects, typing updates locally with zero input latency at 60fps/144fps, while `parseStageScore` and 3D diorama re-evaluation trigger after 150ms of typing inactivity, debouncing writes to IndexedDB and preventing WebGL stutter.
-- **Sticky Status & Line/Col Diagnostics Banner (`YamlDiagnosticsBanner.tsx`)**:
-  - Displays exact line and column numbers on syntax errors (`Error at Line X, Col Y`) extracted from `YAMLParseError.linePos` with a 1-click **`[ Jump ]`** button that positions the cursor and scrolls smoothly to the invalid line.
-  - Keeps the line numbers gutter clean and distraction-free.
-  - When valid, displays emerald pulse `● Live Sync Active`, `StorageStatusBadge`, and `Frame_t = f(t)`.
-- **Streamlined Action Toolbar (`YamlEditorHeader.tsx`)**:
-  - Features a clean action bar: **Title & Status**, **`[ Guide ]`** (opens YAML manual in a new tab), **`[ Wrap ]`** (toggles soft line-wrapping on `.cm-scroller` via a dynamic CodeMirror `Compartment`, persisted in `localStorage` under `stageflow:ui:editor-word-wrap`), **`[ Copy ]`** (copies full YAML with feedback), and **`[ Close ]`**.
+- **Top Panel Header (`YamlEditorHeader.tsx`)**:
+  - Compact title bar housing the editor title (`Live YAML Score`), a status badge (`● Live Sync` with pulsing dot or `Read-Only` for bundled blueprints), and an isolated `[ ✕ ]` close button.
+  - Omit redundant clutter (`Meters...` subtitle, storage badges, and mathematical slogans) for a clean directorial look.
+- **Directorial Action Bar (`YamlActionBar.tsx`)**:
+  - Dedicated sub-header strip housing primary editorial actions: **`[ Guide ]`** (opens YAML manual in a new tab), **`[ Wrap ]`** (toggles soft line-wrapping on `.cm-scroller` via a dynamic CodeMirror `Compartment`, persisted in `localStorage` under `stageflow:ui:editor-word-wrap`), **`[ Copy ]`** (copies full YAML with visual feedback), and **`[ Fork to Edit → ]`** (when viewing bundled blueprints).
   - Redundant project-level actions (`Duplicate`, `Reset`) are omitted as they reside in the Score Library.
+- **Conditional Diagnostics & Alert Banner (`YamlDiagnosticsBanner.tsx`)**:
+  - Renders `null` when the score is valid, giving maximum vertical space directly to the CodeMirror 6 canvas without an empty idle strip.
+  - Displays exact line and column numbers on syntax errors (`Line X, Col Y`) extracted from `YAMLParseError.linePos` with a 1-click **`[ Jump ]`** button that positions the cursor and scrolls smoothly to the invalid line.
+  - Displays amber warnings for non-fatal schema diagnostics.
 - **Backward Compatibility**: `YamlInspectorDrawer.tsx` is preserved as a thin adapter delegating to `YamlStudioPanel.tsx`.
 
 ### 4.4 Drag-and-Drop Custom Asset Loader (`useFileDropLoader.ts`)
