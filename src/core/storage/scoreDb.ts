@@ -54,6 +54,17 @@ export async function getStoredScore(
   }
 }
 
+export async function checkScoreExists(id: string): Promise<boolean> {
+  try {
+    const db = await getScoreDatabase();
+    const count = await db.count(STORE_NAME, id);
+    return count > 0;
+  } catch (err) {
+    console.warn(`[scoreDb] Failed to check existence for '${id}':`, err);
+    return false;
+  }
+}
+
 export async function saveStoredScore(record: StoredScoreRecord): Promise<void> {
   try {
     const db = await getScoreDatabase();

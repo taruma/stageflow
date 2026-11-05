@@ -69,6 +69,12 @@ export type StoragePersistenceStatus =
   | 'custom'
   | 'saving';
 
+export interface ToastNotification {
+  id: string;
+  message: string;
+  type?: 'info' | 'success' | 'warning' | 'error';
+}
+
 export type EntityKind = 'character' | 'prop' | 'marker';
 
 export interface SceneEntityDef {

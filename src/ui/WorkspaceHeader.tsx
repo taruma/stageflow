@@ -1,6 +1,7 @@
 /**
  * Top Studio Header Bar for StageFlow.
- * Houses the Scene Catalog Selector, File Upload trigger, Layout Split Presets,
+ * Houses the Scene Catalog Selector (Grouped into Bundled Blueprints & Custom Projects),
+ * File Upload trigger, Manage Projects trigger, Layout Split Presets,
  * and Live YAML Score Drawer toggle.
  */
 
@@ -10,6 +11,7 @@ import {
   Code2,
   Columns2,
   Film,
+  FolderKanban,
   Maximize2,
   PanelLeft,
   PanelRight,
@@ -31,6 +33,8 @@ export interface WorkspaceHeaderProps {
   onSelectSplitPreset: (preset: SplitPreset) => void;
   onToggleYamlDrawer: () => void;
   onUploadFiles: (files: FileList) => void;
+  onOpenManageProjects?: () => void;
+  onCreateBlankProject?: () => void;
 }
 
 export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
@@ -43,8 +47,21 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
   onSelectSplitPreset,
   onToggleYamlDrawer,
   onUploadFiles,
+  onOpenManageProjects,
+  onCreateBlankProject,
 }) => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const bundledItems = catalog.filter((item) => !item.isCustom);
+  const customItems = catalog.filter((item) => item.isCustom);
+
+  const handleDropdownChange = (value: string) => {
+    if (value === '__NEW_BLANK__') {
+      onCreateBlankProject?.();
+    } else {
+      onSelectScene(value);
+    }
+  };
 
   return (
     <header className="h-12 shrink-0 px-3 bg-[#0a0f1d] border-b border-slate-800/90 flex items-center justify-between gap-3 select-none z-20">
@@ -66,22 +83,56 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
 
         <div className="h-5 w-px bg-slate-800 shrink-0 hidden sm:block" />
 
-        {/* Scene Switcher */}
+        {/* Scene Switcher with Semantic Optgroups */}
         <div className="flex items-center gap-1.5 min-w-0">
           <Film className="w-3.5 h-3.5 text-slate-400 shrink-0 hidden sm:block" />
           <select
             value={activeSceneId}
-            onChange={(e) => onSelectScene(e.target.value)}
-            className="bg-slate-900/90 hover:bg-slate-800/90 text-slate-200 text-xs font-mono px-2.5 py-1 rounded-md border border-slate-700/80 focus:outline-none focus:border-sky-400 transition-colors truncate max-w-[240px] sm:max-w-[300px] cursor-pointer"
+            onChange={(e) => handleDropdownChange(e.target.value)}
+            className="bg-slate-900/90 hover:bg-slate-800/90 text-slate-200 text-xs font-mono px-2.5 py-1 rounded-md border border-slate-700/80 focus:outline-none focus:border-sky-400 transition-colors truncate max-w-[220px] sm:max-w-[280px] cursor-pointer"
             title="Switch active choreography score"
           >
-            {catalog.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.title}
-                {item.isCustom ? ' (Custom)' : ''}
-              </option>
-            ))}
+            <optgroup label="Bundled Blueprints">
+              {bundledItems.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.title}
+                </option>
+              ))}
+            </optgroup>
+
+            {customItems.length > 0 && (
+              <optgroup label="Custom Projects">
+                {customItems.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.title}
+                  </option>
+                ))}
+              </optgroup>
+            )}
+
+            <optgroup label="Actions">
+              <option value="__NEW_BLANK__">+ New Blank Project...</option>
+            </optgroup>
           </select>
+
+          {/* Manage Custom Projects Button */}
+          {onOpenManageProjects && (
+            <button
+              type="button"
+              onClick={onOpenManageProjects}
+              className="px-2 py-1 rounded-md bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-sky-300 border border-slate-700/80 hover:border-sky-500/40 text-[11px] font-mono transition-colors cursor-pointer shrink-0 flex items-center gap-1"
+              title="Manage Custom Projects (Rename, Export, Delete)"
+            >
+              <FolderKanban className="w-3.5 h-3.5 text-sky-400" />
+              <span className="hidden sm:inline">Projects</span>
+              {customItems.length > 0 && (
+                <span className="text-[9px] bg-sky-500/20 text-sky-300 px-1 rounded-full font-mono font-bold">
+                  {customItems.length}
+                </span>
+              )}
+            </button>
+          )}
+
           <StorageStatusBadge
             status={storageStatus}
             className="hidden sm:inline-flex shrink-0"

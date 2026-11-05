@@ -94,3 +94,68 @@ export const INITIAL_CATALOG_ITEMS: ScoreCatalogItem[] = [
     score: parsed05.score,
   },
 ];
+
+/**
+ * Checks whether a given scene ID corresponds to a factory bundled blueprint.
+ */
+export function isBundledSceneId(id: string): boolean {
+  return INITIAL_CATALOG_ITEMS.some((item) => item.id === id);
+}
+
+/**
+ * Generates a clean, minimal valid StageFlow choreography YAML score for new custom projects.
+ */
+export function generateBlankScoreYaml(id: string, title = 'New Custom Scene'): string {
+  return `# ==============================================================================
+# STAGEFLOW CHOREOGRAPHY SCORE — ${title.toUpperCase()}
+# ==============================================================================
+version: "1.0"
+id: "${id}"
+title: "${title}"
+subtitle: "Custom 3D Staging & Camera Diorama"
+video: "procedural://demo"
+aspect_ratio: "16:9"
+duration: 10.0
+
+stage:
+  width: 10
+  depth: 10
+  grid_step: 1
+  observer_camera:
+    target: [0, 1.1, 0]
+    distance: 7.5
+    pitch: 25
+    yaw: 35
+    lens: 35mm
+  stage_camera:
+    target: [0, 1.25, 0]
+    distance: 4.5
+    pitch: 5
+    yaw: 0
+    lens: 35mm
+
+entities:
+  - id: "actor_1"
+    label: "Actor 1"
+    kind: "character"
+    position: [0, 0, 0]
+    facing: 0
+    height: 1.75
+    color: "#00d2ff"
+
+shots:
+  - id: "shot_01"
+    name: "Establishing Shot"
+    start: 0.0
+    end: 10.0
+    maneuver: "static"
+    easing: "smooth"
+    camera:
+      target: "actor_1"
+      distance: 4.5
+      pitch: 5
+      yaw: 0
+      lens: 35mm
+`;
+}
+

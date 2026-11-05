@@ -8,6 +8,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Protected Bundled Presets & Fork-on-Edit Architecture (`src/core/`, `src/hooks/`, `src/ui/`)**:
+  - Implemented the Observable / ShaderToy template protection pattern: factory Blueprints (01–05) are immutably protected reference baselines.
+  - Added `isBundledSceneId` and `generateBlankScoreYaml` helpers in [`src/core/scoreCatalog.ts`](src/core/scoreCatalog.ts) and `checkScoreExists` in [`src/core/storage/scoreDb.ts`](src/core/storage/scoreDb.ts).
+  - Added `forkScoreAsCustom`, `deleteCustomScore`, `renameCustomScore`, and `createBlankScore` in [`src/hooks/useScorePersistence.ts`](src/hooks/useScorePersistence.ts).
+  - Updated [`src/ui/YamlInspectorDrawer.tsx`](src/ui/YamlInspectorDrawer.tsx) with read-only textarea locking (`readOnly={isBundled}`) for bundled presets, displaying an informational top banner and a prominent **`[ Fork to Edit ]`** button that clones the blueprint into an editable custom project with zero risk of accidental preset corruption.
+  - Added **Auto-Fork Collision Guard** on drag-and-drop / file upload in [`src/App.tsx`](src/App.tsx): dropping any score whose `id` matches a bundled scene automatically assigns a unique custom ID and saves to `Custom Projects` instead of overwriting the factory baseline.
+  - Added **Legacy Draft Auto-Migration** during startup hydration in [`src/hooks/useScorePersistence.ts`](src/hooks/useScorePersistence.ts): detects any modified drafts previously stored under bundled IDs (such as *"The Expansion"* under `demo-blueprint`), automatically migrates them into standalone `Custom Projects`, and restores factory presets to pristine condition with zero data loss.
+- **Dedicated Project Management Modal (`src/ui/ManageProjectsModal.tsx`)**:
+  - Added an accessible modal dialog opened via the `[ Projects ]` button in [`src/ui/WorkspaceHeader.tsx`](src/ui/WorkspaceHeader.tsx) with custom project count badging.
+  - Features real-time project count, inline title renaming, 1-click `.yaml` file export/download, and delete confirmation with smooth fallback to Blueprint 01.
+- **Transient Toast Notification System (`src/ui/ToastContainer.tsx`, `src/core/types.ts`)**:
+  - Added `ToastNotification` type in [`src/core/types.ts`](src/core/types.ts) and a lightweight, floating feedback banner container in [`src/ui/ToastContainer.tsx`](src/ui/ToastContainer.tsx) rendering 3-second auto-dismissing notifications for file drops, auto-forks, project deletions, and exports.
+- **Grouped Scene Selector with Semantic `<optgroup>` (`src/ui/WorkspaceHeader.tsx`)**:
+  - Structured the header scene switcher into distinct semantic categories: `Bundled Blueprints` and `Custom Projects`, accompanied by an instant `+ New Blank Project...` action.
+- **Unit Test Coverage for Storage & Presets (`tests/unit/storage.test.ts`)**:
+  - Added test suites verifying `isBundledSceneId` classification across all bundled blueprints and custom IDs, as well as template generation and schema validity for `generateBlankScoreYaml`.
 - **Bundled Blueprint 05: Two Rooms — The Threshold Crossing (`src/scores/blueprint_05_two_rooms.yaml`, `src/core/scoreCatalog.ts`)**:
   - Authored a 30-second, 17-shot `2.39:1` scope choreography score across two spatial zones (Living Room at Stage Left `-X` and Bedroom at Stage Right `+X`) separated by a central Hallway Threshold (`doorway`).
   - Featured 3 actors with distinct physical heights (`samira` at `1.84m`, `ruby` at `1.68m`, and `rosa` at `1.54m`), static furniture props (`living_table`, `lounge_sofa`, `bedroom_desk`, `canopy_bed`), and a dynamically carried item prop (`cup` lifted from the Living Room table at `y=0.78m`, carried at hand height `y=1.05m` across the threshold, and placed onto Rosa's Bedroom desk at `y=0.75m`).

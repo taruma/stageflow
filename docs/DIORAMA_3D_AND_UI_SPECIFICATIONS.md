@@ -108,12 +108,13 @@ Scene entities (`character`, `prop`, `marker`) are rendered with unambiguous ori
 
 ### 4.3 Slide-Out Live YAML Score Drawer (`YamlInspectorDrawer.tsx`)
 - Toggled via the top-right `[ YAML Score ]` button (closes with `Escape` or `X`).
-- Provides a live monospace editor bound to `parseStageScore()`.
-- Valid edits immediately re-evaluate the 3D stage in real time (`Frame_t = f(t)`); syntax errors display a non-blocking diagnostic banner while preserving the last valid 3D stage state.
+- **Protected Bundled Presets (Read-Only)**: When viewing factory Blueprints 01–05, editing is locked (`readOnly={true}`) and surfaces an informational banner with a prominent **`[ Fork to Edit ]`** button. Clicking it clones the score into a Custom Project and immediately unlocks the live editor.
+- **Custom Projects Live Auto-Save**: When viewing Custom Projects, edits immediately re-evaluate the 3D stage in real time (`Frame_t = f(t)`) and auto-save debounced to IndexedDB, with a **`[ Duplicate ]`** button in the header. Syntax errors display a non-blocking diagnostic banner while preserving the last valid 3D stage state.
 - Includes a 1-click **`[ Guide ]`** button that opens [`docs/YAML_AUTHORING_GUIDE.md`](YAML_AUTHORING_GUIDE.md) in a new browser tab for side-by-side reference.
 
 ### 4.4 Drag-and-Drop Custom Asset Loader (`useFileDropLoader.ts`)
 - Dropping any `.yaml`/`.yml`/`.json` file or `.mp4`/`.webm`/`.mov` video file anywhere onto the window (or selecting via `[ Load Video / YAML ]`) binds the assets in browser memory (`URL.createObjectURL`) with zero server upload required.
+- **Auto-Fork Collision Guard**: If a dropped YAML file has an `id` that matches a bundled preset (e.g. `demo-blueprint`), StageFlow automatically forks it with a unique custom ID, preserving the factory preset intact and saving the file to `Custom Projects`.
 
 ### 4.5 Storage Persistence Indicator (`StorageStatusBadge.tsx`)
 - Displayed in the top studio header and the YAML inspector status bar.
@@ -125,6 +126,12 @@ Scene entities (`character`, `prop`, `marker`) are rendered with unambiguous ori
 
 ### 4.6 Reset Confirmation Modal (`ConfirmResetModal.tsx`)
 - Accessible modal dialog protecting against accidental data loss.
+
+### 4.7 Custom Project Management & Toast Notifications (`ManageProjectsModal.tsx`, `ToastContainer.tsx`)
+- **Grouped Scene Selector (`WorkspaceHeader.tsx`)**: The scene switcher dropdown uses semantic `<optgroup>` tags dividing `Bundled Blueprints` and `Custom Projects`, with a `+ New Blank Project...` action at the bottom.
+- **Dedicated Project Management Modal (`ManageProjectsModal.tsx`)**: Accessible via the `[ Projects ]` button in the header. Lists all custom projects with project count badges, live inline title renaming, 1-click YAML file export/download, and delete confirmation with smooth fallback to Blueprint 01.
+- **Transient Toast Feedback (`ToastContainer.tsx`)**: Lightweight 3-second floating feedback banners confirming file drops, auto-forks, project deletions, and exports.
+- **Legacy Draft Auto-Migration**: On startup hydration, any legacy drafts in IndexedDB that modified bundled presets are automatically migrated into standalone Custom Projects with zero data loss.
 
 ### 4.7 Directorial HUD & Optical Telemetry (`ShotBreakdownHud.tsx`, `StageCamMonitorCanvas.tsx`)
 - **Top-Left Shot Breakdown HUD (`ShotBreakdownHud.tsx`)**:

@@ -104,3 +104,34 @@ describe('localStorageUi — Synchronous UI Preferences Persistence', () => {
     expect(loadStoredViewfinderGuides()).toBe(false);
   });
 });
+
+import { isBundledSceneId, generateBlankScoreYaml } from '../../src/core/scoreCatalog';
+import { parseStageScore } from '../../src/core/scoreParser';
+
+describe('scoreCatalog — Bundled Presets & Blank Project Generator', () => {
+  it('correctly identifies bundled scene IDs and custom scene IDs', () => {
+    expect(isBundledSceneId('demo-blueprint')).toBe(true);
+    expect(isBundledSceneId('blueprint-02-dialogue')).toBe(true);
+    expect(isBundledSceneId('blueprint-03-ball-pass')).toBe(true);
+    expect(isBundledSceneId('blueprint-04-cinematography-tutorial')).toBe(true);
+    expect(isBundledSceneId('blueprint-05-two-rooms')).toBe(true);
+
+    expect(isBundledSceneId('the-expansion')).toBe(false);
+    expect(isBundledSceneId('custom-project-123')).toBe(false);
+    expect(isBundledSceneId('random-id')).toBe(false);
+  });
+
+  it('generates a valid, parseable blank choreography score', () => {
+    const yaml = generateBlankScoreYaml('my-new-shot', 'My New Shot');
+    expect(yaml).toContain('id: "my-new-shot"');
+    expect(yaml).toContain('title: "My New Shot"');
+
+    const result = parseStageScore(yaml, 'my-new-shot');
+    expect(result.error).toBeNull();
+    expect(result.score).not.toBeNull();
+    expect(result.score?.id).toBe('my-new-shot');
+    expect(result.score?.title).toBe('My New Shot');
+    expect(result.score?.shots.length).toBeGreaterThan(0);
+    expect(result.score?.entities.length).toBeGreaterThan(0);
+  });
+});

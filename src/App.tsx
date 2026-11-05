@@ -6,9 +6,10 @@
  */
 
 import React, { useState, useCallback, useEffect } from 'react';
-import type { LabelDisplayMode } from './core/types';
+import type { LabelDisplayMode, ToastNotification } from './core/types';
 import {
   INITIAL_CATALOG_ITEMS,
+  isBundledSceneId,
   type ScoreCatalogItem,
 } from './core/scoreCatalog';
 import { parseStageScore } from './core/scoreParser';
@@ -41,6 +42,8 @@ import { CameraTelemetryCapsule } from './ui/CameraTelemetryCapsule';
 import { DirectorialTransportBar } from './ui/DirectorialTransportBar';
 import { YamlInspectorDrawer } from './ui/YamlInspectorDrawer';
 import { ConfirmResetModal } from './ui/ConfirmResetModal';
+import { ManageProjectsModal } from './ui/ManageProjectsModal';
+import { ToastContainer } from './ui/ToastContainer';
 import { LabelDisplayModeToggle } from './ui/LabelDisplayModeToggle';
 import { StageCamViewfinderOverlay } from './ui/StageCamViewfinderOverlay';
 import { HeadlessRecorderView } from './recorder/HeadlessRecorderView';
@@ -78,6 +81,27 @@ const InteractiveStudioApp: React.FC = () => {
   const [showGuides, setShowGuidesState] = useState<boolean>(
     () => loadStoredViewfinderGuides() ?? true
   );
+
+  // Manage Projects Dialog state
+  const [isManageProjectsOpen, setIsManageProjectsOpen] = useState(false);
+
+  // Floating Toast Notifications state
+  const [toasts, setToasts] = useState<ToastNotification[]>([]);
+
+  const showToast = useCallback(
+    (message: string, type: ToastNotification['type'] = 'info') => {
+      const id = `toast-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+      setToasts((prev) => [...prev, { id, message, type }]);
+      setTimeout(() => {
+        setToasts((prev) => prev.filter((t) => t.id !== id));
+      }, 3200);
+    },
+    []
+  );
+
+  const dismissToast = useCallback((id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
 
   const initialItem =
     INITIAL_CATALOG_ITEMS.find((item) => item.id === activeSceneId) ??
@@ -157,7 +181,7 @@ const InteractiveStudioApp: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleCycleLabelMode, handleToggleGuides]);
 
-  // IndexedDB Score Persistence Hook (Hydration, Draft Auto-saving, Confirmed Reset)
+  // IndexedDB Score Persistence Hook (Hydration, Forking, Draft Auto-saving, Project Lifecycle)
   const scorePersistence = useScorePersistence({
     catalog,
     activeSceneId,
@@ -197,7 +221,7 @@ const InteractiveStudioApp: React.FC = () => {
     [catalog, mediaClock, setActiveSceneId]
   );
 
-  // Live YAML editing in the Inspector Drawer (YAML as authoritative SSOT)
+  // Live YAML editing in the Inspector Drawer (custom projects only)
   const handleChangeYaml = useCallback(
     (nextYaml: string) => {
       setRawYaml(nextYaml);
@@ -231,23 +255,50 @@ const InteractiveStudioApp: React.FC = () => {
       const fallbackId = fileName.replace(/\.(yaml|yml|json)$/i, '');
       const parsed = parseStageScore(yamlText, fallbackId);
       if (parsed.score) {
+        let finalId = parsed.score.id;
+        let finalYaml = yamlText;
+        let wasBundledConflict = false;
+
+        // Auto-fork collision protection: never overwrite bundled presets
+        if (isBundledSceneId(finalId)) {
+          wasBundledConflict = true;
+          const timestamp = Date.now().toString(36);
+          const safeSlug = (fallbackId || finalId || 'scene')
+            .replace(/[^a-z0-9]+/gi, '-')
+            .toLowerCase();
+          finalId = `custom-${safeSlug}-${timestamp}`;
+
+          if (/^id:\s*["']?[^"'\n\r]+["']?/m.test(finalYaml)) {
+            finalYaml = finalYaml.replace(
+              /^id:\s*["']?[^"'\n\r]+["']?/m,
+              `id: "${finalId}"`
+            );
+          } else {
+            finalYaml = `id: "${finalId}"\n${finalYaml}`;
+          }
+        }
+
+        const finalParsed = parseStageScore(finalYaml, finalId);
+        const resolvedScore = finalParsed.score ?? parsed.score;
+
         const newItem: ScoreCatalogItem = {
-          id: parsed.score.id,
-          title: parsed.score.title,
-          subtitle: parsed.score.subtitle,
-          rawYaml: yamlText,
-          score: parsed.score,
+          id: finalId,
+          title: resolvedScore.title,
+          subtitle: resolvedScore.subtitle,
+          rawYaml: finalYaml,
+          score: resolvedScore,
           isCustom: true,
         };
+
         setCatalog((prev) => {
           const filtered = prev.filter((item) => item.id !== newItem.id);
           return [...filtered, newItem];
         });
         setActiveSceneId(newItem.id);
-        setRawYaml(yamlText);
-        setActiveScore(parsed.score);
+        setRawYaml(finalYaml);
+        setActiveScore(resolvedScore);
         setParseError(null);
-        setParseWarning(parsed.warning ?? null);
+        setParseWarning(finalParsed.warning ?? parsed.warning ?? null);
         setVideoOverrideUrl(null);
         mediaClock.seek(0);
 
@@ -256,26 +307,43 @@ const InteractiveStudioApp: React.FC = () => {
           id: newItem.id,
           title: newItem.title,
           subtitle: newItem.subtitle,
-          rawYaml: yamlText,
+          rawYaml: finalYaml,
           isCustom: true,
           updatedAt: Date.now(),
         });
+
+        if (wasBundledConflict) {
+          showToast(
+            `Bundled ID detected: imported "${resolvedScore.title}" as new Custom Project`,
+            'info'
+          );
+        } else {
+          showToast(
+            `Imported "${resolvedScore.title}" into Custom Projects`,
+            'success'
+          );
+        }
       } else {
         setRawYaml(yamlText);
         setParseError(parsed.error);
         setParseWarning(null);
         setIsYamlDrawerOpenState(true);
+        showToast(
+          `Failed to parse YAML: ${parsed.error ?? 'Syntax error'}`,
+          'error'
+        );
       }
     },
-    [mediaClock, setActiveSceneId]
+    [mediaClock, setActiveSceneId, showToast]
   );
 
   const handleLoadVideoBlobUrl = useCallback(
     (blobUrl: string) => {
       setVideoOverrideUrl(blobUrl);
       mediaClock.seek(0);
+      showToast('Loaded local video override', 'info');
     },
-    [mediaClock]
+    [mediaClock, showToast]
   );
 
   const fileDrop = useFileDropLoader({
@@ -331,6 +399,13 @@ const InteractiveStudioApp: React.FC = () => {
         onSelectSplitPreset={handleSelectSplitPreset}
         onToggleYamlDrawer={handleToggleYamlDrawer}
         onUploadFiles={fileDrop.processFiles}
+        onOpenManageProjects={() => setIsManageProjectsOpen(true)}
+        onCreateBlankProject={async () => {
+          const blank = await scorePersistence.createBlankScore();
+          if (blank) {
+            showToast(`Created new blank project "${blank.title}"`, 'success');
+          }
+        }}
       />
 
       {/* Main Resizable Split Workspace (Video Panel + 3D Blueprint Diorama) */}
@@ -351,6 +426,7 @@ const InteractiveStudioApp: React.FC = () => {
             onApplyVideoUrlOverride={(url) => {
               setVideoOverrideUrl(url);
               mediaClock.seek(0);
+              showToast('Applied custom video URL override', 'info');
             }}
           />
         }
@@ -429,7 +505,14 @@ const InteractiveStudioApp: React.FC = () => {
         parseError={parseError}
         parseWarning={parseWarning}
         storageStatus={scorePersistence.storageStatus}
+        isBundled={isBundledSceneId(activeSceneId)}
         onChangeYaml={handleChangeYaml}
+        onForkScore={async () => {
+          const forked = await scorePersistence.forkScoreAsCustom(activeSceneId);
+          if (forked) {
+            showToast(`Forked "${forked.title}" as Custom Project`, 'success');
+          }
+        }}
         onResetDefault={() => scorePersistence.setIsResetModalOpen(true)}
         onClose={() => {
           setIsYamlDrawerOpenState(false);
@@ -444,6 +527,38 @@ const InteractiveStudioApp: React.FC = () => {
         onConfirm={scorePersistence.confirmResetActiveScore}
         onCancel={() => scorePersistence.setIsResetModalOpen(false)}
       />
+
+      {/* Manage Custom Projects Dialog Modal */}
+      <ManageProjectsModal
+        isOpen={isManageProjectsOpen}
+        customProjects={catalog.filter((item) => item.isCustom)}
+        activeSceneId={activeSceneId}
+        onSelectProject={(id) => handleSelectScene(id)}
+        onRenameProject={async (id, newTitle) => {
+          const ok = await scorePersistence.renameCustomScore(id, newTitle);
+          if (ok) {
+            showToast(`Project renamed to "${newTitle}"`, 'success');
+          }
+          return ok;
+        }}
+        onDeleteProject={async (id) => {
+          const ok = await scorePersistence.deleteCustomScore(id);
+          if (ok) {
+            showToast('Custom project deleted', 'info');
+          }
+          return ok;
+        }}
+        onCreateBlankProject={async () => {
+          const blank = await scorePersistence.createBlankScore();
+          if (blank) {
+            showToast(`Created new blank project "${blank.title}"`, 'success');
+          }
+        }}
+        onClose={() => setIsManageProjectsOpen(false)}
+      />
+
+      {/* Floating Toast Notification Container */}
+      <ToastContainer toasts={toasts} onDismiss={dismissToast} />
     </div>
   );
 };

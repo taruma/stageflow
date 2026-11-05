@@ -168,7 +168,9 @@ stageflow/
 │   │   ├── ShotBreakdownHud.tsx     # Top-left active shot, lens, maneuver & staging note overlay
 │   │   ├── CameraTelemetryCapsule.tsx  # Live degree/meter readout with 1-click YAML snippet copy
 │   │   ├── DirectorialTransportBar.tsx # Shot-marker scrubber, shot chips, speed (0.25x-2x) & POV toggle
-│   │   ├── YamlInspectorDrawer.tsx  # Slide-out live YAML editor with non-blocking syntax diagnostics
+│   │   ├── YamlInspectorDrawer.tsx  # Slide-out live YAML editor with read-only protection & fork-on-edit
+│   │   ├── ManageProjectsModal.tsx  # Accessible modal for custom project rename, export & deletion
+│   │   ├── ToastContainer.tsx       # Floating animated toast notification banners
 │   │   ├── LabelDisplayModeToggle.tsx # Floating 3-mode 3D diorama label toggle (All / Cam / Off)
 │   │   ├── StageCamViewfinderOverlay.tsx # Optical film gate, look-around mask & composition guides
 │   │   ├── ConfirmResetModal.tsx    # Accessible confirmation dialog modal for discarding drafts
