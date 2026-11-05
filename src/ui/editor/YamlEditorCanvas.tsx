@@ -15,12 +15,13 @@ export interface YamlEditorCanvasProps {
   rawYaml: string;
   isBundled: boolean;
   effectiveTheme: 'dark' | 'warm' | 'light';
+  wordWrap?: boolean;
   onChangeYaml: (newYaml: string) => void;
 }
 
 export const YamlEditorCanvas = React.memo(
   forwardRef<YamlEditorHandle, YamlEditorCanvasProps>(
-    ({ rawYaml, isBundled, effectiveTheme, onChangeYaml }, ref) => {
+    ({ rawYaml, isBundled, effectiveTheme, wordWrap, onChangeYaml }, ref) => {
       const containerRef = useRef<HTMLDivElement | null>(null);
 
       const { jumpToLine, focus } = useYamlEditor({
@@ -28,6 +29,7 @@ export const YamlEditorCanvas = React.memo(
         rawYaml,
         isBundled,
         effectiveTheme,
+        wordWrap,
         onChangeYaml,
         debounceMs: 150,
       });

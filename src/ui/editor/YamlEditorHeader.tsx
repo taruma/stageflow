@@ -5,13 +5,15 @@
  */
 
 import React, { useState, useCallback } from 'react';
-import { BookOpen, Check, Code2, Copy, X } from 'lucide-react';
+import { BookOpen, Check, Code2, Copy, WrapText, X } from 'lucide-react';
 import yamlAuthoringGuideRaw from '../../../docs/YAML_AUTHORING_GUIDE.md?raw';
 import { UI_TOKENS } from '../tokens/ui';
 
 export interface YamlEditorHeaderProps {
   rawYaml: string;
   isBundled: boolean;
+  wordWrap: boolean;
+  onToggleWordWrap: () => void;
   onClose: () => void;
 }
 
@@ -24,7 +26,7 @@ function openGuideInNewTab() {
 }
 
 export const YamlEditorHeader: React.FC<YamlEditorHeaderProps> = React.memo(
-  ({ rawYaml, isBundled, onClose }) => {
+  ({ rawYaml, isBundled, wordWrap, onToggleWordWrap, onClose }) => {
     const [copied, setCopied] = useState(false);
 
     const handleCopyAll = useCallback(() => {
@@ -61,6 +63,20 @@ export const YamlEditorHeader: React.FC<YamlEditorHeaderProps> = React.memo(
           >
             <BookOpen className="w-3 h-3 text-text-muted" />
             <span>Guide</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={onToggleWordWrap}
+            className={`px-2 py-1 rounded-lg border text-[10px] font-mono flex items-center gap-1 cursor-pointer transition-all shadow-2xs active:scale-95 ${
+              wordWrap
+                ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30 font-medium'
+                : 'bg-surface hover:bg-surface-hover border-border-main text-text-body hover:text-text-main'
+            }`}
+            title={wordWrap ? 'Disable soft line-wrapping' : 'Enable soft line-wrapping'}
+          >
+            <WrapText className="w-3 h-3" />
+            <span>Wrap</span>
           </button>
 
           <button

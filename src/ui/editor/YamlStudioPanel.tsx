@@ -5,8 +5,12 @@
  * Wrapped in React.memo to ensure zero re-render overhead during 60fps WebGL playback.
  */
 
-import React, { useRef, useCallback } from 'react';
+import React, { useRef, useCallback, useState } from 'react';
 import type { ScoreDiagnostic } from '../../core/types';
+import {
+  loadStoredEditorWordWrap,
+  saveStoredEditorWordWrap,
+} from '../../core/storage/localStorageUi';
 import type { StoragePersistenceStatus } from '../StorageStatusBadge';
 import { YamlEditorHeader } from './YamlEditorHeader';
 import { YamlDiagnosticsBanner } from './YamlDiagnosticsBanner';
@@ -42,6 +46,18 @@ export const YamlStudioPanel: React.FC<YamlStudioPanelProps> = React.memo(
   }) => {
     const editorCanvasRef = useRef<YamlEditorHandle | null>(null);
 
+    const [wordWrap, setWordWrap] = useState<boolean>(() => {
+      return loadStoredEditorWordWrap() ?? true;
+    });
+
+    const handleToggleWordWrap = useCallback(() => {
+      setWordWrap((prev) => {
+        const next = !prev;
+        saveStoredEditorWordWrap(next);
+        return next;
+      });
+    }, []);
+
     const handleJumpToLine = useCallback((line: number, column?: number) => {
       editorCanvasRef.current?.jumpToLine(line, column);
     }, []);
@@ -57,6 +73,8 @@ export const YamlStudioPanel: React.FC<YamlStudioPanelProps> = React.memo(
         <YamlEditorHeader
           rawYaml={rawYaml}
           isBundled={isBundled}
+          wordWrap={wordWrap}
+          onToggleWordWrap={handleToggleWordWrap}
           onClose={onClose}
         />
 
@@ -77,6 +95,7 @@ export const YamlStudioPanel: React.FC<YamlStudioPanelProps> = React.memo(
           rawYaml={rawYaml}
           isBundled={isBundled}
           effectiveTheme={effectiveTheme}
+          wordWrap={wordWrap}
           onChangeYaml={onChangeYaml}
         />
       </aside>

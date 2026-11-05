@@ -21,6 +21,7 @@ export interface UseYamlEditorOptions {
   rawYaml: string;
   isBundled: boolean;
   effectiveTheme: 'dark' | 'warm' | 'light';
+  wordWrap?: boolean;
   onChangeYaml: (newYaml: string) => void;
   debounceMs?: number;
 }
@@ -35,12 +36,14 @@ export function useYamlEditor({
   rawYaml,
   isBundled,
   effectiveTheme,
+  wordWrap = true,
   onChangeYaml,
   debounceMs = 150,
 }: UseYamlEditorOptions): UseYamlEditorResult {
   const viewRef = useRef<EditorView | null>(null);
   const readOnlyCompartmentRef = useRef(new Compartment());
   const themeCompartmentRef = useRef(new Compartment());
+  const wrapCompartmentRef = useRef(new Compartment());
   const lastDispatchedTextRef = useRef<string>(rawYaml);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -58,7 +61,9 @@ export function useYamlEditor({
       extensions: [
         basicSetup,
         yaml(),
-        EditorView.lineWrapping,
+        wrapCompartmentRef.current.of(
+          wordWrap ? EditorView.lineWrapping : []
+        ),
         history(),
         search({ top: true }),
         keymap.of([
@@ -147,6 +152,18 @@ export function useYamlEditor({
       ),
     });
   }, [effectiveTheme]);
+
+  // 5. Dynamic Word Wrap Reconfiguration
+  useEffect(() => {
+    const view = viewRef.current;
+    if (!view) return;
+
+    view.dispatch({
+      effects: wrapCompartmentRef.current.reconfigure(
+        wordWrap ? EditorView.lineWrapping : []
+      ),
+    });
+  }, [wordWrap]);
 
   // 5. Jump to designated line & column
   const jumpToLine = useCallback((line: number, column = 1) => {

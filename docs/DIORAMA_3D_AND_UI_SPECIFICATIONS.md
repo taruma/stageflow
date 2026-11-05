@@ -173,7 +173,7 @@ Adopts professional 3D viewport convention (Blender, Unreal Engine, Maya) distri
   - Keeps the line numbers gutter clean and distraction-free.
   - When valid, displays emerald pulse `● Live Sync Active`, `StorageStatusBadge`, and `Frame_t = f(t)`.
 - **Streamlined Action Toolbar (`YamlEditorHeader.tsx`)**:
-  - Features a clean action bar: **Title & Status**, **`[ Guide ]`** (opens YAML manual in a new tab), **`[ Copy ]`** (copies full YAML with feedback), and **`[ Close ]`**.
+  - Features a clean action bar: **Title & Status**, **`[ Guide ]`** (opens YAML manual in a new tab), **`[ Wrap ]`** (toggles soft line-wrapping on `.cm-scroller` via a dynamic CodeMirror `Compartment`, persisted in `localStorage` under `stageflow:ui:editor-word-wrap`), **`[ Copy ]`** (copies full YAML with feedback), and **`[ Close ]`**.
   - Redundant project-level actions (`Duplicate`, `Reset`) are omitted as they reside in the Score Library.
 - **Backward Compatibility**: `YamlInspectorDrawer.tsx` is preserved as a thin adapter delegating to `YamlStudioPanel.tsx`.
 

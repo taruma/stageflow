@@ -23,6 +23,7 @@ const STORAGE_KEYS = {
   RIGHT_SPLIT_PCT: 'stageflow:ui:right-split-pct',
   VIDEO_HEIGHT_PCT: 'stageflow:ui:video-height-pct',
   SUBPANEL_COLLAPSED: 'stageflow:ui:subpanel-collapsed',
+  EDITOR_WORD_WRAP: 'stageflow:ui:editor-word-wrap',
 } as const;
 
 export function loadStoredSplitPreset(): SplitPreset | null {
@@ -278,4 +279,24 @@ export function saveStoredSubpanelCollapsed(collapsed: boolean): void {
     // Ignore storage quota or access errors
   }
 }
+
+export function loadStoredEditorWordWrap(): boolean | null {
+  try {
+    const val = localStorage.getItem(STORAGE_KEYS.EDITOR_WORD_WRAP);
+    if (val === 'true') return true;
+    if (val === 'false') return false;
+  } catch {
+    // Ignore storage quota or access errors
+  }
+  return null;
+}
+
+export function saveStoredEditorWordWrap(wrap: boolean): void {
+  try {
+    localStorage.setItem(STORAGE_KEYS.EDITOR_WORD_WRAP, String(wrap));
+  } catch {
+    // Ignore storage quota or access errors
+  }
+}
+
 

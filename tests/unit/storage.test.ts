@@ -24,6 +24,8 @@ import {
   saveStoredVideoHeightPct,
   loadStoredSubpanelCollapsed,
   saveStoredSubpanelCollapsed,
+  loadStoredEditorWordWrap,
+  saveStoredEditorWordWrap,
 } from '../../src/core/storage/localStorageUi';
 import { getDioramaThemeColors } from '../../src/stage/dioramaTheme';
 
@@ -198,6 +200,16 @@ describe('localStorageUi — Synchronous UI Preferences Persistence', () => {
     expect(loadStoredSubpanelCollapsed()).toBe(true);
     saveStoredSubpanelCollapsed(false);
     expect(loadStoredSubpanelCollapsed()).toBe(false);
+  });
+
+  it('persists and hydrates editor word wrap preference', () => {
+    expect(loadStoredEditorWordWrap()).toBeNull();
+
+    saveStoredEditorWordWrap(true);
+    expect(loadStoredEditorWordWrap()).toBe(true);
+
+    saveStoredEditorWordWrap(false);
+    expect(loadStoredEditorWordWrap()).toBe(false);
   });
 
   it('provides distinct, valid hex colors for all diorama theme categories', () => {
