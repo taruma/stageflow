@@ -23,6 +23,7 @@ export const ShotBreakdownHud: React.FC<ShotBreakdownHudProps> = ({
   isPlaying,
 }) => {
   const [isCollapsed, setIsCollapsed] = useState(true);
+
   const shot = frame.activeShot;
   const stageCam = frame.stageCamera;
   const lensMm = Math.round(stageCam.transform.pose.focalLengthMm);
@@ -58,14 +59,23 @@ export const ShotBreakdownHud: React.FC<ShotBreakdownHudProps> = ({
 
   return (
     <div className="absolute top-3 left-3 max-w-sm sm:max-w-md flex flex-col gap-1.5 pointer-events-none select-none z-10">
-      <div className="px-3 py-2 rounded-2xl bg-surface/95 backdrop-blur-md border border-border-main shadow-lg flex flex-col gap-1 text-text-main pointer-events-auto transition-all">
+      <div
+        role="button"
+        tabIndex={0}
+        aria-expanded={!isCollapsed}
+        onClick={() => setIsCollapsed((prev) => !prev)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            setIsCollapsed((prev) => !prev);
+          }
+        }}
+        className="px-3 py-2 rounded-2xl bg-surface/95 backdrop-blur-md border border-border-main hover:border-border-hover shadow-lg flex flex-col gap-1 text-text-main pointer-events-auto transition-all cursor-pointer group select-none focus:outline-none focus:ring-1 focus:ring-accent-primary/40"
+        title={isCollapsed ? 'Click to expand shot breakdown' : 'Click to collapse shot breakdown'}
+      >
         {/* COLLAPSED VIEW: Strictly 2 lines with precision truncation */}
         {isCollapsed ? (
-          <div
-            onClick={() => setIsCollapsed(false)}
-            className="space-y-1 cursor-pointer group"
-            title="Click to expand shot breakdown"
-          >
+          <div className="space-y-1">
             {/* Line 1: #xx Tag + Clean Title + Expand Chevron */}
             <div className="flex items-center justify-between gap-2 min-w-0">
               <div className="flex items-center gap-1.5 min-w-0 flex-1">
@@ -77,18 +87,12 @@ export const ShotBreakdownHud: React.FC<ShotBreakdownHudProps> = ({
                 </span>
               </div>
 
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsCollapsed(false);
-                }}
-                aria-label="Expand shot breakdown"
-                className="p-1 rounded-lg hover:bg-surface-subtle text-text-faint hover:text-text-main transition-colors duration-100 shrink-0 cursor-pointer focus:outline-none"
-                title="Expand shot breakdown"
+              <div
+                aria-hidden="true"
+                className="p-1 rounded-lg text-text-faint group-hover:text-text-main group-hover:bg-surface-subtle transition-colors duration-100 shrink-0"
               >
                 <ChevronRight className="w-3.5 h-3.5" />
-              </button>
+              </div>
             </div>
 
             {/* Line 2: Compact Telemetry & Status String */}
@@ -128,19 +132,16 @@ export const ShotBreakdownHud: React.FC<ShotBreakdownHudProps> = ({
                 )}
               </div>
 
-              <button
-                type="button"
-                onClick={() => setIsCollapsed(true)}
-                aria-label="Collapse shot breakdown"
-                className="p-1 rounded-lg hover:bg-surface-subtle text-text-faint hover:text-text-main transition-colors duration-100 shrink-0 cursor-pointer focus:outline-none"
-                title="Collapse shot breakdown"
+              <div
+                aria-hidden="true"
+                className="p-1 rounded-lg text-text-faint group-hover:text-text-main group-hover:bg-surface-subtle transition-colors duration-100 shrink-0"
               >
                 <ChevronDown className="w-3.5 h-3.5" />
-              </button>
+              </div>
             </div>
 
             {/* Title Row */}
-            <div className="text-xs font-sans font-semibold text-text-main leading-snug">
+            <div className="text-xs font-sans font-semibold text-text-main leading-snug group-hover:text-accent-primary transition-colors">
               {cleanLabel}
             </div>
 

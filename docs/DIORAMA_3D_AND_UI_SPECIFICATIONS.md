@@ -122,7 +122,7 @@ Scene entities (`character`, `prop`, `marker`) are rendered with unambiguous ori
 
 ### 4.2 4-Corner Directorial HUD Architecture (Wide Mode $\ge 580\text{px}$)
 Adopts professional 3D viewport convention (Blender, Unreal Engine, Maya) distributing chrome strictly to the 4 corners while leaving the center stage sightline 100% clean:
-1. **Top-Left (Metadata & Context)**: [`ShotBreakdownHud.tsx`](../src/ui/ShotBreakdownHud.tsx) displaying `#xx` active shot tag, clean title, and optical focal length. Defaults to a sleek 2-line collapsed pill to maintain a low profile; click anywhere on the card to expand full directorial notes.
+1. **Top-Left (Metadata & Context)**: [`ShotBreakdownHud.tsx`](../src/ui/ShotBreakdownHud.tsx) displaying `#xx` active shot tag, clean title, and optical focal length. Defaults to a sleek 2-line collapsed pill to maintain a low profile; click anywhere on the card to toggle between collapsed and expanded states as a persistent directorial widget (retaining its state during 3D orbit and timeline playback without unexpected click-outside auto-dismissals).
 2. **Top-Right (Display & Legend)**: [`LabelDisplayModeToggle.tsx`](../src/ui/LabelDisplayModeToggle.tsx) providing rapid toggles for 3D character/camera billboard labels (`All`, `Cam`, `Off`) and viewfinder composition guides.
 3. **Bottom-Left (Camera Workstation Dock)**: 2-tier stacked dock positioned immediately above the transport scrubber deck:
    - **Upper Tier ([`CameraPresetControls.tsx`](../src/ui/CameraPresetControls.tsx))**: 1-click angle snaps featuring bespoke **isometric 3D ViewCube SVG icons** (Top plan, Iso 45°, Front proscenium, Side profile, and Reset) with rich tooltips, eliminating text clutter and avoiding popup menus.
