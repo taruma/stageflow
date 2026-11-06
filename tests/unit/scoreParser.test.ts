@@ -4,6 +4,7 @@ import {
   normalizeCameraEasing,
   normalizeCameraManeuver,
   normalizeEntityKind,
+  normalizeEntityShape,
   parseAngleToRad,
   parseLensFocalLengthMm,
   parseOptionalVec3,
@@ -538,6 +539,26 @@ observer_shots:
       expect(normalizeEntityKind('prop')).toBe('prop');
       expect(normalizeEntityKind('marker')).toBe('marker');
       expect(normalizeEntityKind('unknown')).toBe('character');
+
+      // Prop shapes and aliases
+      expect(normalizeEntityShape('prop', 'box')).toBe('box');
+      expect(normalizeEntityShape('prop', undefined)).toBe('box');
+      expect(normalizeEntityShape('prop', 'sphere')).toBe('sphere');
+      expect(normalizeEntityShape('prop', 'ball')).toBe('sphere');
+      expect(normalizeEntityShape('prop', 'cylinder')).toBe('cylinder');
+      expect(normalizeEntityShape('prop', 'can')).toBe('cylinder');
+      expect(normalizeEntityShape('prop', 'capsule')).toBe('capsule');
+      expect(normalizeEntityShape('prop', 'pill')).toBe('capsule');
+
+      // Marker shapes and aliases
+      expect(normalizeEntityShape('marker', 'x')).toBe('x');
+      expect(normalizeEntityShape('marker', undefined)).toBe('x');
+      expect(normalizeEntityShape('marker', 't')).toBe('t');
+      expect(normalizeEntityShape('marker', 't-mark')).toBe('t');
+      expect(normalizeEntityShape('marker', 'circle')).toBe('circle');
+      expect(normalizeEntityShape('marker', 'ring')).toBe('circle');
+      expect(normalizeEntityShape('marker', 'puck')).toBe('puck');
+      expect(normalizeEntityShape('marker', 'disc')).toBe('puck');
     });
 
     it('parses base spherical camera pose and resolves entity targets', () => {

@@ -83,7 +83,7 @@ StageFlow models a standard 35mm full-frame sensor with horizontal gate width $W
 
 ## 4. Entities, Anchors & Orientation
 
-Each entity $i$ declared in `entities:` has a kind $k_i \in \{\text{"character"}, \text{"prop"}, \text{"marker"}\}$, floor/base coordinate $\vec{p}_i = (x_i, y_i, z_i)$, height $h_i$, radius $r_i$, and horizontal facing angle $\psi_{\text{entity}, i}$.
+Each entity $i$ declared in `entities:` has a kind $k_i \in \{\text{"character"}, \text{"prop"}, \text{"marker"}\}$, an optional geometric shape $s_i$ (for props: $\text{"box"}$, $\text{"sphere"}$, $\text{"cylinder"}$, $\text{"capsule"}$; for markers: $\text{"x"}$, $\text{"t"}$, $\text{"circle"}$, $\text{"puck"}$), floor/base coordinate $\vec{p}_i = (x_i, y_i, z_i)$, height $h_i$, radius $r_i$, and horizontal facing angle $\psi_{\text{entity}, i}$.
 
 ### 4.1 Default Geometry & Intrinsic Look-At Anchor ($\vec{A}_i$)
 When a camera `target` or `from` references an entity by `id` or `label`, it resolves to the entity's intrinsic 3D anchor $\vec{A}_i$:

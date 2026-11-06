@@ -74,6 +74,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added dedicated unit test suite [`tests/unit/entityEngine.test.ts`](tests/unit/entityEngine.test.ts) covering target resolution variants, ground trail generation thresholds, and direct evaluator calls across all 89 test cases.
 
 ### Added
+- **Prop Primitive Shapes & Stage Floor Gaffer Tape Markers (`src/core/*`, `src/stage/*`, `src/scores/*`, `tests/unit/*`, `docs/*`)**:
+  - Added support for multiple 3D geometric primitive shapes for props (`shape: "box" | "sphere" | "cylinder" | "capsule"`) with automatic sphere diameter height derivation and aliases (`ball`, `cup`, `pill`).
+  - Added support for theatrical and cinematic stage floor gaffer tape spike marks for markers (`shape: "x" | "t" | "circle" | "puck"`) rendered flat at $Y = 0.005\text{m}$, with the "T" mark orienting with marker rotation.
+  - Updated bundled Blueprints: BP 03 (*The Long Distance Pass*) now renders the soccer ball as a true 3D kinetic sphere (`shape: "sphere"`), and BP 05 (*Two Rooms*) renders the porcelain cup as a cylinder (`shape: "cylinder"`) and hallway threshold as a "T" spike mark (`shape: "t"`).
+  - Added unit test coverage in [`tests/unit/scoreParser.test.ts`](tests/unit/scoreParser.test.ts) validating shape normalization and score parsing.
+  - Synchronized architectural specifications in [`docs/YAML_AUTHORING_GUIDE.md`](docs/YAML_AUTHORING_GUIDE.md), [`docs/STAGEFLOW_SCRIPT_SPECIFICATION.md`](docs/STAGEFLOW_SCRIPT_SPECIFICATION.md), and [`docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md`](docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md).
 - **Automated Guide Snippet & Schema Verification Test Suite (`tests/unit/guideSnippets.test.ts`)**:
   - Created an automated Vitest test suite that extracts and parses all 23 YAML score code blocks from [`docs/YAML_AUTHORING_GUIDE.md`](docs/YAML_AUTHORING_GUIDE.md) using `yaml.parse` and `parseScoreYaml`, guaranteeing zero syntax or indentation regressions.
   - Added assertions validating all documented enum aliases (`target_offset`, `target_pos`, `cam_height`, `cam_dist`, `elev`, `azimuth`, `fov`, `lens_mm`, `start_time`, `end_time`) and confirming parser normalization matches canonical properties.

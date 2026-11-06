@@ -79,6 +79,18 @@ Scene entities (`character`, `prop`, `marker`) are rendered with unambiguous ori
   - Stylized semi-transparent capsule torso column (`height = 1.75m`), shoulder cross-bar, and head sphere.
   - **Directional Eye-Visor Wedge & Ground Chevron**: A white visor cone on the front of the head (`+Z` local forward) paired with a ground chevron arrow pointing along `rotationYRad`, making character gaze and body facing immediately readable from overhead or side angles.
   - **Ground Contact Ring**: Circular base disc at `y = 0.012m` that expands and brightens when `highlighted === true`.
+- **Geometric Props (`kind === 'prop'`)**:
+  - Parametric 3D solid resting at floor level ($Y = 0$), centered vertically at $h/2$, supporting four geometric primitives via `shape:`:
+    - `box` *(default)*: `<boxGeometry args={[radius * 2, height, radius * 2]} />`
+    - `sphere`: `<sphereGeometry args={[radius, 32, 32]} />` resting on the floor at $Y = \text{radius}$
+    - `cylinder`: `<cylinderGeometry args={[radius, radius, height, 32]} />`
+    - `capsule`: `<capsuleGeometry args={[radius, Math.max(0.01, height - radius * 2), 8, 20]} />`
+- **Stage Floor Gaffer Tape Markers (`kind === 'marker'`)**:
+  - Authentic theatrical/cinematic floor spike marks rendered flat at $Y = 0.005\text{m}$, supporting four styles via `shape:`:
+    - `x` *(default)*: Two crossed gaffer tape rectangles rotated $\pm 45^\circ$
+    - `t`: Classic director's "T" mark with toe line crossbar and heel stem, rotating dynamically with entity `rotation`
+    - `circle`: Flat floor stage zone ring
+    - `puck`: Elevated 3D cylinder beacon puck
 - **Dynamic Floor Movement Trail**:
   - When an entity moves during the active blocking cue or shot (`trailPoints.length >= 2`), renders a dashed floor trajectory curve tracing their full active movement path across the stage (persisting across camera cuts when driven by decoupled `blocking:`, and clearing during stationary holds/gaps).
 - **Floating Identity Badges (`StageBillboardLabel.tsx`)**:

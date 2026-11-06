@@ -88,10 +88,15 @@ export interface ToastNotification {
 
 export type EntityKind = 'character' | 'prop' | 'marker';
 
+export type PropShape = 'box' | 'cylinder' | 'sphere' | 'capsule';
+export type MarkerShape = 'x' | 't' | 'circle' | 'puck';
+export type EntityShape = PropShape | MarkerShape;
+
 export interface SceneEntityDef {
   id: string;
   label: string;
   kind: EntityKind;
+  shape?: EntityShape;
   position: Vec3;       // Base position in meters (Y=0 is floor)
   rotationYRad: number; // Base facing yaw in radians (0 = +Z, PI = -Z)
   height: number;       // Height in meters (default 1.75m for character, 0.8m for prop)

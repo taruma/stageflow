@@ -115,6 +115,130 @@ export const DirectionalMannequin: React.FC<DirectionalMannequinProps> = ({
   const torsoHeight = Math.max(0.4, height - 0.55);
   const torsoY = torsoHeight * 0.5 + 0.12;
 
+  const renderPropShape = () => {
+    const shape = def.shape ?? 'box';
+    const material = (
+      <meshStandardMaterial
+        color={color}
+        emissive={color}
+        emissiveIntensity={highlighted ? 0.35 : 0.15}
+        transparent
+        opacity={highlighted ? 0.85 : 0.55}
+        roughness={0.35}
+        metalness={0.15}
+      />
+    );
+
+    switch (shape) {
+      case 'sphere': {
+        const sphereRadius = radius > 0 ? radius : height * 0.5;
+        return (
+          <mesh position={[0, sphereRadius, 0]}>
+            <sphereGeometry args={[sphereRadius, 32, 32]} />
+            {material}
+          </mesh>
+        );
+      }
+      case 'cylinder': {
+        return (
+          <mesh position={[0, height * 0.5, 0]}>
+            <cylinderGeometry args={[radius, radius, height, 32]} />
+            {material}
+          </mesh>
+        );
+      }
+      case 'capsule': {
+        const capRadius = radius;
+        const bodyLen = Math.max(0.01, height - capRadius * 2);
+        return (
+          <mesh position={[0, height * 0.5, 0]}>
+            <capsuleGeometry args={[capRadius, bodyLen, 8, 20]} />
+            {material}
+          </mesh>
+        );
+      }
+      case 'box':
+      default: {
+        return (
+          <mesh position={[0, height * 0.5, 0]}>
+            <boxGeometry args={[radius * 2, height, radius * 2]} />
+            {material}
+          </mesh>
+        );
+      }
+    }
+  };
+
+  const renderMarkerShape = () => {
+    const shape = def.shape ?? 'x';
+    const tapeThickness = 0.003;
+    const stripWidth = Math.max(0.04, radius * 0.28);
+    const stripLen = radius * 2;
+    const tapeMaterial = (
+      <meshBasicMaterial
+        color={color}
+        transparent
+        opacity={highlighted ? 0.95 : 0.8}
+        side={THREE.DoubleSide}
+      />
+    );
+
+    switch (shape) {
+      case 't': {
+        const stemLen = radius * 1.5;
+        return (
+          <group position={[0, 0.005, 0]}>
+            {/* Top crossbar (horizontal along X) */}
+            <mesh position={[0, 0, 0]}>
+              <boxGeometry args={[stripLen, tapeThickness, stripWidth]} />
+              {tapeMaterial}
+            </mesh>
+            {/* Vertical stem (pointing along -Z) */}
+            <mesh position={[0, 0.0005, -stemLen * 0.5]}>
+              <boxGeometry args={[stripWidth, tapeThickness, stemLen]} />
+              {tapeMaterial}
+            </mesh>
+          </group>
+        );
+      }
+      case 'circle': {
+        return (
+          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.005, 0]}>
+            <ringGeometry args={[radius * 0.72, radius, 32]} />
+            {tapeMaterial}
+          </mesh>
+        );
+      }
+      case 'puck': {
+        return (
+          <mesh position={[0, Math.max(0.04, height * 0.5), 0]}>
+            <cylinderGeometry
+              args={[radius * 0.6, radius, Math.max(0.08, height), 16]}
+            />
+            {tapeMaterial}
+          </mesh>
+        );
+      }
+      case 'x':
+      default: {
+        return (
+          <group position={[0, 0.005, 0]}>
+            {/* Diagonal tape 1 (+45 deg) */}
+            <mesh rotation={[0, Math.PI / 4, 0]}>
+              <boxGeometry args={[stripWidth, tapeThickness, stripLen]} />
+              {tapeMaterial}
+            </mesh>
+            {/* Diagonal tape 2 (-45 deg) */}
+            <mesh rotation={[0, -Math.PI / 4, 0]} position={[0, 0.0005, 0]}>
+              <boxGeometry args={[stripWidth, tapeThickness, stripLen]} />
+              {tapeMaterial}
+            </mesh>
+          </group>
+        );
+      }
+    }
+  };
+
   return (
     <group>
       {/* Dynamic Floor Movement Trail (World Space) */}
@@ -135,7 +259,11 @@ export const DirectionalMannequin: React.FC<DirectionalMannequinProps> = ({
       {/* 60fps Animated Entity Transform Group (controlled imperatively to avoid JSX prop overwrite) */}
       <group ref={groupRef}>
         {/* Ground Contact Shadow & Selection Ring */}
-        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.012, 0]}>
+        <mesh
+          rotation={[-Math.PI / 2, 0, 0]}
+          position={[0, 0.012, 0]}
+          visible={def.kind !== 'marker' || highlighted}
+        >
           <ringGeometry
             args={[
               radius * 0.92,
@@ -152,13 +280,15 @@ export const DirectionalMannequin: React.FC<DirectionalMannequinProps> = ({
         </mesh>
 
         {/* Ground Facing Direction Arrow (+Z Forward) */}
-        <Line
-          points={forwardIndicatorPoints}
-          color={color}
-          lineWidth={highlighted ? 2.2 : 1.4}
-          transparent
-          opacity={highlighted ? 0.95 : 0.65}
-        />
+        {(def.kind !== 'marker' || def.shape === 'puck' || def.rotationYRad !== 0) && (
+          <Line
+            points={forwardIndicatorPoints}
+            color={color}
+            lineWidth={highlighted ? 2.2 : 1.4}
+            transparent
+            opacity={highlighted ? 0.95 : 0.65}
+          />
+        )}
 
         {def.kind === 'character' ? (
           <group>
@@ -207,22 +337,9 @@ export const DirectionalMannequin: React.FC<DirectionalMannequinProps> = ({
             </mesh>
           </group>
         ) : def.kind === 'prop' ? (
-          <mesh position={[0, height * 0.5, 0]}>
-            <boxGeometry args={[radius * 2, height, radius * 2]} />
-            <meshStandardMaterial
-              color={color}
-              emissive={color}
-              emissiveIntensity={0.15}
-              transparent
-              opacity={0.55}
-              wireframe={false}
-            />
-          </mesh>
+          renderPropShape()
         ) : (
-          <mesh position={[0, 0.08, 0]}>
-            <cylinderGeometry args={[radius * 0.6, radius, 0.14, 16]} />
-            <meshBasicMaterial color={color} transparent opacity={0.75} />
-          </mesh>
+          renderMarkerShape()
         )}
 
         {/* Floating Identity Badge (Ultra-Compact Micro-Pill) */}

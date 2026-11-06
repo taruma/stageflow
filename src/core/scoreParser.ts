@@ -23,6 +23,7 @@ import {
   normalizeCameraEasing,
   normalizeCameraManeuver,
   normalizeEntityKind,
+  normalizeEntityShape,
   parseAngleToRad,
   parseBlockingCues,
   parseLensFocalLengthMm,
@@ -44,6 +45,7 @@ export {
   normalizeCameraEasing,
   normalizeCameraManeuver,
   normalizeEntityKind,
+  normalizeEntityShape,
   parseAngleToRad,
   parseBlockingCues,
   parseLensFocalLengthMm,
@@ -174,6 +176,7 @@ export function parseStageScore(
     .map((item, idx) => {
       const ent = item as Record<string, unknown>;
       const kind: EntityKind = normalizeEntityKind(ent.kind);
+      const shape = normalizeEntityShape(kind, ent.shape);
 
       const defaultHeight =
         kind === 'character'
@@ -189,6 +192,22 @@ export function parseStageScore(
           ? ENTITY_DEFAULTS.PROP_RADIUS_M
           : ENTITY_DEFAULTS.MARKER_RADIUS_M;
 
+      const parsedRadius =
+        typeof ent.radius === 'number' && ent.radius > 0
+          ? ent.radius
+          : defaultRadius;
+
+      // If a prop is a sphere and height is omitted, default height to diameter (2 * radius)
+      const defaultHeightForShape =
+        kind === 'prop' && shape === 'sphere'
+          ? parsedRadius * 2
+          : defaultHeight;
+
+      const parsedHeight =
+        typeof ent.height === 'number' && ent.height > 0
+          ? ent.height
+          : defaultHeightForShape;
+
       const defaultColor =
         kind === 'character'
           ? idx % 2 === 0
@@ -202,16 +221,11 @@ export function parseStageScore(
         id: String(ent.id ?? `entity_${idx + 1}`),
         label: String(ent.label ?? ent.id ?? `Entity ${idx + 1}`),
         kind,
+        ...(shape ? { shape } : {}),
         position: parseVec3(ent.position, { x: 0, y: 0, z: 0 }),
         rotationYRad: parseAngleToRad(ent.rotation ?? ent.yaw, 0) ?? 0,
-        height:
-          typeof ent.height === 'number' && ent.height > 0
-            ? ent.height
-            : defaultHeight,
-        radius:
-          typeof ent.radius === 'number' && ent.radius > 0
-            ? ent.radius
-            : defaultRadius,
+        height: parsedHeight,
+        radius: parsedRadius,
         color:
           typeof ent.color === 'string' && ent.color.trim().length > 0
             ? ent.color.trim()

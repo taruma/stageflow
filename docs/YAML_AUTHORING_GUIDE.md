@@ -382,6 +382,7 @@ entities:
   - id: "desk"
     label: "Oak Desk"
     kind: "prop"
+    shape: "box"               # "box" (default) | "sphere" | "cylinder" | "capsule"
     position: [0, 0, 0]
     height: 0.78
     radius: 0.45
@@ -390,16 +391,17 @@ entities:
   - id: "mark_door"
     label: "Doorway Mark"
     kind: "marker"
+    shape: "t"                 # "x" (default) | "t" | "circle" | "puck"
     position: [0, 0, 3.5]
     color: "#fb7185"
 ```
 
 #### Entity Kinds & Physical Proxy Geometry
-| `kind` | 3D Blueprint Mesh Representation | Default `height` | Default `radius` | Intrinsic Look-At Anchor ($\vec{A}$) |
-| :--- | :--- | :--- | :--- | :--- |
-| **`"character"`** | Torso column, shoulder bar, head sphere, forward eye visor wedge, ground gaze arrow | `1.75m` | `0.26m` | $(x, y + 0.90h, z)$ (`~1.575m` eye level) |
-| **`"prop"`** | Semi-transparent bounding prism box ($2r \times h \times 2r$) | `0.85m` | `0.35m` | $(x, y + 0.50h, z)$ (`0.425m` center volume) |
-| **`"marker"`** | Low-profile floor beacon cylinder with concentric pulse ring | `0.15m` | `0.25m` | $(x, y + 0.50h, z)$ (`0.075m` floor level) |
+| `kind` | Supported `shape` Values | 3D Blueprint Mesh Representation | Default `height` | Default `radius` | Intrinsic Look-At Anchor ($\vec{A}$) |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **`"character"`** | — | Torso column, shoulder bar, head sphere, forward eye visor wedge, ground gaze arrow | `1.75m` | `0.26m` | $(x, y + 0.90h, z)$ (`~1.575m` eye level) |
+| **`"prop"`** | `box` *(default)*, `sphere`, `cylinder`, `capsule` | Parametric geometric solid (resting on floor at $Y=0$, centered at $h/2$) | `0.85m` | `0.35m` | $(x, y + 0.50h, z)$ (`0.425m` center volume) |
+| **`"marker"`** | `x` *(default)*, `t`, `circle`, `puck` | Flat floor gaffer tape spike mark ($Y=0.005\text{m}$) or legacy 3D puck | `0.15m` | `0.25m` | $(x, y + 0.50h, z)$ (`0.075m` floor level) |
 
 ---
 

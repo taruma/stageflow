@@ -10,6 +10,7 @@ import type {
   CameraEasing,
   CameraManeuver,
   EntityKind,
+  EntityShape,
   SceneEntityDef,
   Vec3,
 } from './types';
@@ -154,6 +155,29 @@ export function normalizeEntityKind(raw: unknown): EntityKind {
   if (rawKind === 'prop') return 'prop';
   if (rawKind === 'marker') return 'marker';
   return 'character';
+}
+
+export function normalizeEntityShape(
+  kind: EntityKind,
+  raw: unknown
+): EntityShape | undefined {
+  if (kind === 'prop') {
+    if (!raw) return 'box';
+    const s = String(raw).trim().toLowerCase();
+    if (s === 'sphere' || s === 'ball') return 'sphere';
+    if (s === 'cylinder' || s === 'column' || s === 'can' || s === 'cup') return 'cylinder';
+    if (s === 'capsule' || s === 'pill') return 'capsule';
+    return 'box';
+  }
+  if (kind === 'marker') {
+    if (!raw) return 'x';
+    const s = String(raw).trim().toLowerCase();
+    if (s === 't' || s === 't-mark' || s === 't_mark') return 't';
+    if (s === 'circle' || s === 'ring' || s === 'dot') return 'circle';
+    if (s === 'puck' || s === 'disc' || s === 'cylinder') return 'puck';
+    return 'x';
+  }
+  return undefined;
 }
 
 export function resolveEntityIdentifier(

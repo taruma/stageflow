@@ -83,6 +83,7 @@ entities:
   - id: "cup"
     label: "Porcelain Cup"
     kind: "prop"
+    shape: "cylinder"
     position: [-4.8, 0.78, 0.2]
     rotation: 0
     height: 0.22
@@ -112,6 +113,7 @@ entities:
   - id: "doorway"
     label: "Hallway Threshold"
     kind: "marker"
+    shape: "t"
     position: [0.0, 0, -0.4]
     rotation: 90
     height: 0.12
