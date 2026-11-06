@@ -92,11 +92,17 @@ export type PropShape = 'box' | 'cylinder' | 'sphere' | 'capsule';
 export type MarkerShape = 'x' | 't' | 'circle' | 'puck';
 export type EntityShape = PropShape | MarkerShape;
 
+export type CharacterStyle = 'mannequin' | 'edges' | 'silhouette' | 'wireframe';
+export type PropStyle = 'edges' | 'glass' | 'solid' | 'wireframe';
+export type MarkerStyle = 'tape' | 'glow' | 'beacon';
+export type EntityStyle = CharacterStyle | PropStyle | MarkerStyle;
+
 export interface SceneEntityDef {
   id: string;
   label: string;
   kind: EntityKind;
   shape?: EntityShape;
+  style?: EntityStyle;
   position: Vec3;       // Base position in meters (Y=0 is floor)
   rotationYRad: number; // Base facing yaw in radians (0 = +Z, PI = -Z)
   height: number;       // Height in meters (default 1.75m for character, 0.8m for prop)

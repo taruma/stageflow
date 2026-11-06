@@ -8,6 +8,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Visual Presentation Styles for Scene Entities (`src/core/types.ts`, `src/core/scorePrimitives.ts`, `src/stage/DirectionalMannequin.tsx`, `tests/unit/*`, `docs/*`)**:
+  - Implemented customizable presentation styles (`style:`) for all 3 entity kinds with optimized directorial defaults:
+    - **Characters** (`kind: "character"`): `mannequin` (default stylized figure), `edges` (soft 20% opacity with CAD contour lines), `silhouette` (high-contrast dark matte body `#0f172a` with illuminated pure white eye visor cone for optical composition and framing studies), and `wireframe` (blueprint wireframe mesh cage).
+    - **Props** (`kind: "prop"`): `edges` (default soft 20% transparent mass with crisp Drei `<Edges threshold={15} color={color} />` contour lines), `glass` (classic 45% translucent volume without edges), `solid` (dense 88% opaque solid architectural mass), and `wireframe` (blueprint wireframe lattice cage).
+    - **Markers** (`kind: "marker"`): `tape` (default flat theatrical floor spike mark at $Y = 0.005\text{m}$), `glow` (flat floor tape mark paired with an illuminated soft emissive halo disc at $Y = 0.002\text{m}$), and `beacon` (floor mark paired with an elevated vertical glowing beacon pin at $0.44\text{m}$ and illuminated sphere tip).
+  - Added `normalizeEntityStyle(kind, raw)` helper in `src/core/scorePrimitives.ts` with alias handling (`hologram`, `cad`, `silhouette`, `ink`, `flat`, `glass`, `ghost`, `solid`, `wireframe`, `glow`, `beacon`).
+  - Updated `src/scores/blueprints/blueprint_05_two_rooms.yaml` showcasing `style: "edges"`, `style: "solid"`, and `style: "glow"`.
+  - Added unit test coverage in `tests/unit/scoreParser.test.ts` verifying style normalization, aliases, and YAML score parsing.
+  - Synchronized living documentation across `docs/YAML_AUTHORING_GUIDE.md`, `docs/STAGEFLOW_SCRIPT_SPECIFICATION.md`, and `docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md`.
+- **Parametric Prop Primitive Shapes & Floor Tape Spike Markers (`src/core/types.ts`, `src/core/scorePrimitives.ts`, `src/stage/DirectionalMannequin.tsx`, `tests/unit/*`, `docs/*`)**:
+  - Added `shape:` attribute for `kind: "prop"` supporting `box` (default), `sphere`, `cylinder`, and `capsule`.
+  - Added `shape:` attribute for `kind: "marker"` supporting `x` (default crossed gaffer tape), `t` (director's T-mark), `circle` (floor zone ring), and `puck` (elevated 3D marker).
+  - Implemented shape normalizers in `src/core/scorePrimitives.ts` with aliases (`ball`, `column`, `pill`, `ring`, `disc`).
 - **3-Tier Provenance Taxonomy (`study`, `blueprint`, `custom`) & Score Subfolder Restructure (`src/scores/*`, `src/core/types.ts`, `src/core/scoreCatalog.ts`, `src/ui/*`)**:
   - Organized scores into decoupled subfolders: `src/scores/studies/` for directorial scene studies authored by Taruma Sakti, and `src/scores/blueprints/` for synthetic camera-blocking presets and testbeds (BP 01–05).
   - Introduced `ScoreCategory = 'study' | 'blueprint' | 'custom'` across `src/core/types.ts` and `ScoreCatalogItem`.

@@ -76,21 +76,24 @@ To eliminate 1-frame asynchronous ghosting between 60fps WebGL transforms (`fram
 
 Scene entities (`character`, `prop`, `marker`) are rendered with unambiguous orientation and blocking cues:
 - **Character Mannequin (`kind === 'character'`)**:
-  - Stylized semi-transparent capsule torso column (`height = 1.75m`), shoulder cross-bar, and head sphere.
+  - Stylized geometric figure supporting four presentation styles via `style:`:
+    - `mannequin` *(default)*: Semi-transparent capsule torso column (`height = 1.75m`), shoulder cross-bar, and head sphere.
+    - `edges`: Hologram/CAD wire-contour look with `<Edges threshold={20} color={color} />` and soft 20% opacity.
+    - `silhouette`: High-contrast dark matte body (`#0f172a`) with illuminated pure white eye visor cone, ideal for optical framing and composition studies.
+    - `wireframe`: Pure blueprint wireframe mesh cage.
   - **Directional Eye-Visor Wedge & Ground Chevron**: A white visor cone on the front of the head (`+Z` local forward) paired with a ground chevron arrow pointing along `rotationYRad`, making character gaze and body facing immediately readable from overhead or side angles.
   - **Ground Contact Ring**: Circular base disc at `y = 0.012m` that expands and brightens when `highlighted === true`.
 - **Geometric Props (`kind === 'prop'`)**:
-  - Parametric 3D solid resting at floor level ($Y = 0$), centered vertically at $h/2$, supporting four geometric primitives via `shape:`:
-    - `box` *(default)*: `<boxGeometry args={[radius * 2, height, radius * 2]} />`
-    - `sphere`: `<sphereGeometry args={[radius, 32, 32]} />` resting on the floor at $Y = \text{radius}$
-    - `cylinder`: `<cylinderGeometry args={[radius, radius, height, 32]} />`
-    - `capsule`: `<capsuleGeometry args={[radius, Math.max(0.01, height - radius * 2), 8, 20]} />`
+  - Parametric 3D solid resting at floor level ($Y = 0$), centered vertically at $h/2$, supporting four geometric primitives via `shape:` (`box`, `sphere`, `cylinder`, `capsule`) and four presentation styles via `style:`:
+    - `edges` *(default)*: Soft 20% transparent mass with crisp Drei `<Edges threshold={15} color={color} />` contour lines.
+    - `glass`: Translucent 45% volumetric mass without outline edges.
+    - `solid`: Dense 88% opaque solid architectural mass with specular highlights.
+    - `wireframe`: Blueprint wireframe lattice cage.
 - **Stage Floor Gaffer Tape Markers (`kind === 'marker'`)**:
-  - Authentic theatrical/cinematic floor spike marks rendered flat at $Y = 0.005\text{m}$, supporting four styles via `shape:`:
-    - `x` *(default)*: Two crossed gaffer tape rectangles rotated $\pm 45^\circ$
-    - `t`: Classic director's "T" mark with toe line crossbar and heel stem, rotating dynamically with entity `rotation`
-    - `circle`: Flat floor stage zone ring
-    - `puck`: Elevated 3D cylinder beacon puck
+  - Authentic theatrical/cinematic floor spike marks rendered flat at $Y = 0.005\text{m}$, supporting four geometric shapes via `shape:` (`x`, `t`, `circle`, `puck`) and three presentation styles via `style:`:
+    - `tape` *(default)*: Clean flat floor spike mark.
+    - `glow`: Flat floor spike mark paired with an illuminated soft emissive halo disc at $Y = 0.002\text{m}$.
+    - `beacon`: Floor mark paired with an elevated glowing beacon pin ($0.44\text{m}$) and illuminated sphere tip.
 - **Dynamic Floor Movement Trail**:
   - When an entity moves during the active blocking cue or shot (`trailPoints.length >= 2`), renders a dashed floor trajectory curve tracing their full active movement path across the stage (persisting across camera cuts when driven by decoupled `blocking:`, and clearing during stationary holds/gaps).
 - **Floating Identity Badges (`StageBillboardLabel.tsx`)**:

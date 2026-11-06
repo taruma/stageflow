@@ -11,6 +11,7 @@ import type {
   CameraManeuver,
   EntityKind,
   EntityShape,
+  EntityStyle,
   SceneEntityDef,
   Vec3,
 } from './types';
@@ -178,6 +179,36 @@ export function normalizeEntityShape(
     return 'x';
   }
   return undefined;
+}
+
+export function normalizeEntityStyle(
+  kind: EntityKind,
+  raw: unknown
+): EntityStyle {
+  if (kind === 'character') {
+    if (!raw) return 'mannequin';
+    const s = String(raw).trim().toLowerCase();
+    if (s === 'edges' || s === 'hologram' || s === 'cad') return 'edges';
+    if (s === 'silhouette' || s === 'ink' || s === 'flat') return 'silhouette';
+    if (s === 'wireframe' || s === 'wire' || s === 'lines') return 'wireframe';
+    return 'mannequin';
+  }
+  if (kind === 'prop') {
+    if (!raw) return 'edges';
+    const s = String(raw).trim().toLowerCase();
+    if (s === 'glass' || s === 'ghost' || s === 'translucent') return 'glass';
+    if (s === 'solid' || s === 'opaque' || s === 'matte') return 'solid';
+    if (s === 'wireframe' || s === 'wire' || s === 'lines') return 'wireframe';
+    return 'edges';
+  }
+  if (kind === 'marker') {
+    if (!raw) return 'tape';
+    const s = String(raw).trim().toLowerCase();
+    if (s === 'glow' || s === 'pulse' || s === 'luminous') return 'glow';
+    if (s === 'beacon' || s === 'puck' || s === 'pin' || s === 'stand') return 'beacon';
+    return 'tape';
+  }
+  return 'mannequin';
 }
 
 export function resolveEntityIdentifier(

@@ -235,6 +235,8 @@ entities:
   - id: "actor_a"                     # string (unique identifier)
     label: "Subject A"                # string (display badge name)
     kind: "character"                 # "character" | "prop" | "marker" (aliases: "actor", "person", "set", " furniture")
+    shape: "box"                      # prop: "box"|"sphere"|"cylinder"|"capsule"; marker: "x"|"t"|"circle"|"puck"
+    style: "mannequin"                # character: "mannequin"|"edges"|"silhouette"|"wireframe"; prop: "edges"|"glass"|"solid"|"wireframe"; marker: "tape"|"glow"|"beacon"
     position: [-1.2, 0, 0]            # [x, y, z] in meters (Y=0 is floor)
     rotation: 90                      # number (deg; 0=+Z, 90=+X, -90=-X, 180=-Z)
     height: 1.75                      # number (m, optional; defaults by kind)

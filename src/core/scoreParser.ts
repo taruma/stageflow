@@ -24,6 +24,7 @@ import {
   normalizeCameraManeuver,
   normalizeEntityKind,
   normalizeEntityShape,
+  normalizeEntityStyle,
   parseAngleToRad,
   parseBlockingCues,
   parseLensFocalLengthMm,
@@ -46,6 +47,7 @@ export {
   normalizeCameraManeuver,
   normalizeEntityKind,
   normalizeEntityShape,
+  normalizeEntityStyle,
   parseAngleToRad,
   parseBlockingCues,
   parseLensFocalLengthMm,
@@ -177,6 +179,7 @@ export function parseStageScore(
       const ent = item as Record<string, unknown>;
       const kind: EntityKind = normalizeEntityKind(ent.kind);
       const shape = normalizeEntityShape(kind, ent.shape);
+      const style = normalizeEntityStyle(kind, ent.style);
 
       const defaultHeight =
         kind === 'character'
@@ -222,6 +225,7 @@ export function parseStageScore(
         label: String(ent.label ?? ent.id ?? `Entity ${idx + 1}`),
         kind,
         ...(shape ? { shape } : {}),
+        style,
         position: parseVec3(ent.position, { x: 0, y: 0, z: 0 }),
         rotationYRad: parseAngleToRad(ent.rotation ?? ent.yaw, 0) ?? 0,
         height: parsedHeight,

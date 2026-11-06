@@ -373,6 +373,7 @@ entities:
   - id: "detective"
     label: "Detective Miller"
     kind: "character"
+    style: "mannequin"         # "mannequin" (default) | "edges" | "silhouette" | "wireframe"
     position: [-1.2, 0, 0]     # [x, y, z] in meters (Y=0 is floor plane)
     rotation: 90               # Facing +90° (toward +X Stage Right)
     height: 1.82               # Height in meters
@@ -383,6 +384,7 @@ entities:
     label: "Oak Desk"
     kind: "prop"
     shape: "box"               # "box" (default) | "sphere" | "cylinder" | "capsule"
+    style: "edges"             # "edges" (default) | "glass" | "solid" | "wireframe"
     position: [0, 0, 0]
     height: 0.78
     radius: 0.45
@@ -392,6 +394,7 @@ entities:
     label: "Doorway Mark"
     kind: "marker"
     shape: "t"                 # "x" (default) | "t" | "circle" | "puck"
+    style: "glow"              # "tape" (default) | "glow" | "beacon"
     position: [0, 0, 3.5]
     color: "#fb7185"
 ```
@@ -402,6 +405,23 @@ entities:
 | **`"character"`** | — | Torso column, shoulder bar, head sphere, forward eye visor wedge, ground gaze arrow | `1.75m` | `0.26m` | $(x, y + 0.90h, z)$ (`~1.575m` eye level) |
 | **`"prop"`** | `box` *(default)*, `sphere`, `cylinder`, `capsule` | Parametric geometric solid (resting on floor at $Y=0$, centered at $h/2$) | `0.85m` | `0.35m` | $(x, y + 0.50h, z)$ (`0.425m` center volume) |
 | **`"marker"`** | `x` *(default)*, `t`, `circle`, `puck` | Flat floor gaffer tape spike mark ($Y=0.005\text{m}$) or legacy 3D puck | `0.15m` | `0.25m` | $(x, y + 0.50h, z)$ (`0.075m` floor level) |
+
+#### Entity Visual Presentation Styles (`style:`)
+Every entity can customize its diorama rendering mode via `style:` while maintaining full backward compatibility (omitting `style:` applies the optimized directorial default):
+
+| `kind` | `style` Option | Default | Accepted Aliases | Visual Description in 3D Diorama |
+| :--- | :--- | :---: | :--- | :--- |
+| **`"character"`** | `mannequin` | **Yes** | — | Stylized architectural figure (translucent torso capsule, shoulder bar, head sphere, pure white $+Z$ eye visor wedge, and ground gaze arrow). |
+| | `edges` | No | `hologram`, `cad` | Soft 20% transparent body with crisp CAD contour lines (`<Edges threshold={20} />`). |
+| | `silhouette` | No | `ink`, `flat` | High-contrast dark matte body (`#0f172a`) with illuminated pure white eye visor cone, ideal for framing and composition studies. |
+| | `wireframe` | No | `wire`, `lines` | Pure blueprint geometric wireframe cage. |
+| **`"prop"`** | `edges` | **Yes** | — | Soft 20% transparent volume with crisp Drei `<Edges threshold={15} color={color} />` outlines. |
+| | `glass` | No | `ghost`, `translucent` | Classic StageFlow 45% translucent volume without outline edges. |
+| | `solid` | No | `opaque`, `matte` | Dense 88% opaque solid architectural mass with soft lighting highlights. |
+| | `wireframe` | No | `wire`, `lines` | Blueprint architectural wireframe mesh cage. |
+| **`"marker"`** | `tape` | **Yes** | — | Authentic theatrical/cinematic flat floor gaffer tape mark directly on the stage floor ($Y = 0.005\text{m}$). |
+| | `glow` | No | `pulse`, `luminous` | Flat floor tape mark paired with an illuminated soft emissive halo disc ($Y = 0.002\text{m}$). |
+| | `beacon` | No | `pin`, `stand` | Floor mark paired with an elevated vertical glowing beacon pin ($0.44\text{m}$) and illuminated sphere tip. |
 
 ---
 

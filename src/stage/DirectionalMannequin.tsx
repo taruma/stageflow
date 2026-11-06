@@ -11,13 +11,16 @@
 
 import React, { useRef, useMemo, useLayoutEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Line } from '@react-three/drei';
+import { Line, Edges } from '@react-three/drei';
 import * as THREE from 'three';
 import { ENTITY_DEFAULTS } from '../core/constants';
 import type {
   CameraViewMode,
+  CharacterStyle,
   EvaluatedEntityState,
   LabelDisplayMode,
+  MarkerStyle,
+  PropStyle,
   StageFrame,
 } from '../core/types';
 import { StageBillboardLabel } from './StageBillboardLabel';
@@ -115,19 +118,131 @@ export const DirectionalMannequin: React.FC<DirectionalMannequinProps> = ({
   const torsoHeight = Math.max(0.4, height - 0.55);
   const torsoY = torsoHeight * 0.5 + 0.12;
 
+  const renderCharacter = () => {
+    const charStyle = (def.style as CharacterStyle) ?? 'mannequin';
+    const isSilhouette = charStyle === 'silhouette';
+    const isWireframe = charStyle === 'wireframe';
+    const hasEdges = charStyle === 'edges';
+
+    const bodyColor = isSilhouette ? '#0f172a' : color;
+    const bodyEmissive = isSilhouette ? (highlighted ? color : '#000000') : color;
+    const bodyEmissiveIntensity = isSilhouette
+      ? (highlighted ? 0.35 : 0)
+      : isWireframe
+      ? (highlighted ? 0.5 : 0.2)
+      : (highlighted ? 0.35 : (hasEdges ? 0.08 : 0.14));
+
+    const torsoOpacity = isSilhouette
+      ? (highlighted ? 0.98 : 0.95)
+      : hasEdges
+      ? (highlighted ? 0.45 : 0.20)
+      : (highlighted ? 0.82 : 0.52);
+
+    const shoulderOpacity = isSilhouette
+      ? (highlighted ? 0.98 : 0.95)
+      : hasEdges
+      ? (highlighted ? 0.40 : 0.18)
+      : (highlighted ? 0.75 : 0.45);
+
+    const headOpacity = isSilhouette
+      ? (highlighted ? 0.98 : 0.95)
+      : hasEdges
+      ? (highlighted ? 0.50 : 0.25)
+      : 0.9;
+
+    return (
+      <group>
+        {/* Stylized Architectural Torso Column */}
+        <mesh position={[0, torsoY, 0]}>
+          <capsuleGeometry args={[radius * 0.72, torsoHeight * 0.55, 8, 20]} />
+          <meshStandardMaterial
+            color={bodyColor}
+            emissive={bodyEmissive}
+            emissiveIntensity={bodyEmissiveIntensity}
+            transparent={!isSilhouette}
+            opacity={torsoOpacity}
+            roughness={isSilhouette ? 0.85 : 0.35}
+            metalness={isSilhouette ? 0.05 : 0.2}
+            wireframe={isWireframe}
+          />
+          {hasEdges && <Edges threshold={20} color={color} />}
+        </mesh>
+
+        {/* Shoulder Cross-Bar to make body silhouette immediately clear */}
+        <mesh position={[0, height - 0.42, 0]}>
+          <boxGeometry args={[radius * 2.1, 0.12, radius * 0.95]} />
+          <meshStandardMaterial
+            color={bodyColor}
+            emissive={bodyEmissive}
+            emissiveIntensity={bodyEmissiveIntensity}
+            transparent={!isSilhouette}
+            opacity={shoulderOpacity}
+            roughness={isSilhouette ? 0.85 : 0.35}
+            metalness={isSilhouette ? 0.05 : 0.2}
+            wireframe={isWireframe}
+          />
+          {hasEdges && <Edges threshold={20} color={color} />}
+        </mesh>
+
+        {/* Mannequin Head Sphere */}
+        <mesh position={[0, headY, 0]}>
+          <sphereGeometry args={[0.14, 20, 20]} />
+          <meshStandardMaterial
+            color={bodyColor}
+            emissive={bodyEmissive}
+            emissiveIntensity={
+              isSilhouette
+                ? (highlighted ? 0.45 : 0)
+                : (highlighted ? 0.45 : 0.2)
+            }
+            transparent={!isSilhouette}
+            opacity={headOpacity}
+            roughness={isSilhouette ? 0.85 : 0.35}
+            wireframe={isWireframe}
+          />
+          {hasEdges && <Edges threshold={20} color={color} />}
+        </mesh>
+
+        {/* Directional Eye Visor / Nose Wedge (+Z Forward) */}
+        <mesh position={[0, headY, 0.13]} rotation={[Math.PI / 2, 0, 0]}>
+          <coneGeometry args={[0.065, 0.14, 4]} />
+          <meshBasicMaterial color="#ffffff" />
+        </mesh>
+      </group>
+    );
+  };
+
   const renderPropShape = () => {
     const shape = def.shape ?? 'box';
+    const propStyle = (def.style as PropStyle) ?? 'edges';
+    const isWireframe = propStyle === 'wireframe';
+    const hasEdges = propStyle === 'edges';
+    const isSolid = propStyle === 'solid';
+
+    const opacity = isSolid
+      ? (highlighted ? 0.96 : 0.88)
+      : hasEdges
+      ? (highlighted ? 0.45 : 0.20)
+      : (highlighted ? 0.75 : 0.45);
+
+    const emissiveIntensity = isWireframe
+      ? (highlighted ? 0.5 : 0.2)
+      : (highlighted ? 0.35 : (hasEdges ? 0.08 : 0.15));
+
     const material = (
       <meshStandardMaterial
         color={color}
         emissive={color}
-        emissiveIntensity={highlighted ? 0.35 : 0.15}
-        transparent
-        opacity={highlighted ? 0.85 : 0.55}
-        roughness={0.35}
-        metalness={0.15}
+        emissiveIntensity={emissiveIntensity}
+        transparent={!isSolid || highlighted}
+        opacity={opacity}
+        roughness={isSolid ? 0.4 : 0.35}
+        metalness={isSolid ? 0.1 : 0.15}
+        wireframe={isWireframe}
       />
     );
+
+    const edgesChild = hasEdges ? <Edges threshold={15} color={color} /> : null;
 
     switch (shape) {
       case 'sphere': {
@@ -136,6 +251,7 @@ export const DirectionalMannequin: React.FC<DirectionalMannequinProps> = ({
           <mesh position={[0, sphereRadius, 0]}>
             <sphereGeometry args={[sphereRadius, 32, 32]} />
             {material}
+            {edgesChild}
           </mesh>
         );
       }
@@ -144,6 +260,7 @@ export const DirectionalMannequin: React.FC<DirectionalMannequinProps> = ({
           <mesh position={[0, height * 0.5, 0]}>
             <cylinderGeometry args={[radius, radius, height, 32]} />
             {material}
+            {edgesChild}
           </mesh>
         );
       }
@@ -154,6 +271,7 @@ export const DirectionalMannequin: React.FC<DirectionalMannequinProps> = ({
           <mesh position={[0, height * 0.5, 0]}>
             <capsuleGeometry args={[capRadius, bodyLen, 8, 20]} />
             {material}
+            {edgesChild}
           </mesh>
         );
       }
@@ -163,6 +281,7 @@ export const DirectionalMannequin: React.FC<DirectionalMannequinProps> = ({
           <mesh position={[0, height * 0.5, 0]}>
             <boxGeometry args={[radius * 2, height, radius * 2]} />
             {material}
+            {edgesChild}
           </mesh>
         );
       }
@@ -171,6 +290,10 @@ export const DirectionalMannequin: React.FC<DirectionalMannequinProps> = ({
 
   const renderMarkerShape = () => {
     const shape = def.shape ?? 'x';
+    const markerStyle = (def.style as MarkerStyle) ?? 'tape';
+    const isGlow = markerStyle === 'glow';
+    const isBeacon = markerStyle === 'beacon';
+
     const tapeThickness = 0.003;
     const stripWidth = Math.max(0.04, radius * 0.28);
     const stripLen = radius * 2;
@@ -183,10 +306,42 @@ export const DirectionalMannequin: React.FC<DirectionalMannequinProps> = ({
       />
     );
 
+    const glowHalo = isGlow ? (
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.002, 0]}>
+        <ringGeometry args={[0, radius * 1.35, 32]} />
+        <meshBasicMaterial
+          color={color}
+          transparent
+          opacity={highlighted ? 0.45 : 0.22}
+          side={THREE.DoubleSide}
+        />
+      </mesh>
+    ) : null;
+
+    const beaconVerticalPin = isBeacon ? (
+      <group position={[0, 0, 0]}>
+        {/* Vertical glowing beacon stem pin */}
+        <mesh position={[0, 0.22, 0]}>
+          <cylinderGeometry args={[0.014, 0.014, 0.42, 12]} />
+          <meshBasicMaterial
+            color={color}
+            transparent
+            opacity={highlighted ? 1.0 : 0.85}
+          />
+        </mesh>
+        {/* Floating beacon tip */}
+        <mesh position={[0, 0.44, 0]}>
+          <sphereGeometry args={[0.045, 16, 16]} />
+          <meshBasicMaterial color="#ffffff" />
+        </mesh>
+      </group>
+    ) : null;
+
+    let shapeMesh: React.ReactNode;
     switch (shape) {
       case 't': {
         const stemLen = radius * 1.5;
-        return (
+        shapeMesh = (
           <group position={[0, 0.005, 0]}>
             {/* Top crossbar (horizontal along X) */}
             <mesh position={[0, 0, 0]}>
@@ -200,17 +355,19 @@ export const DirectionalMannequin: React.FC<DirectionalMannequinProps> = ({
             </mesh>
           </group>
         );
+        break;
       }
       case 'circle': {
-        return (
+        shapeMesh = (
           <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.005, 0]}>
             <ringGeometry args={[radius * 0.72, radius, 32]} />
             {tapeMaterial}
           </mesh>
         );
+        break;
       }
       case 'puck': {
-        return (
+        shapeMesh = (
           <mesh position={[0, Math.max(0.04, height * 0.5), 0]}>
             <cylinderGeometry
               args={[radius * 0.6, radius, Math.max(0.08, height), 16]}
@@ -218,10 +375,11 @@ export const DirectionalMannequin: React.FC<DirectionalMannequinProps> = ({
             {tapeMaterial}
           </mesh>
         );
+        break;
       }
       case 'x':
       default: {
-        return (
+        shapeMesh = (
           <group position={[0, 0.005, 0]}>
             {/* Diagonal tape 1 (+45 deg) */}
             <mesh rotation={[0, Math.PI / 4, 0]}>
@@ -235,8 +393,17 @@ export const DirectionalMannequin: React.FC<DirectionalMannequinProps> = ({
             </mesh>
           </group>
         );
+        break;
       }
     }
+
+    return (
+      <group>
+        {glowHalo}
+        {shapeMesh}
+        {beaconVerticalPin}
+      </group>
+    );
   };
 
   return (
@@ -291,51 +458,7 @@ export const DirectionalMannequin: React.FC<DirectionalMannequinProps> = ({
         )}
 
         {def.kind === 'character' ? (
-          <group>
-            {/* Stylized Architectural Torso Column */}
-            <mesh position={[0, torsoY, 0]}>
-              <capsuleGeometry args={[radius * 0.72, torsoHeight * 0.55, 8, 20]} />
-              <meshStandardMaterial
-                color={color}
-                emissive={color}
-                emissiveIntensity={highlighted ? 0.35 : 0.14}
-                transparent
-                opacity={highlighted ? 0.82 : 0.52}
-                roughness={0.35}
-                metalness={0.2}
-              />
-            </mesh>
-
-            {/* Shoulder Cross-Bar to make body silhouette immediately clear */}
-            <mesh position={[0, height - 0.42, 0]}>
-              <boxGeometry args={[radius * 2.1, 0.12, radius * 0.95]} />
-              <meshStandardMaterial
-                color={color}
-                emissive={color}
-                emissiveIntensity={highlighted ? 0.3 : 0.12}
-                transparent
-                opacity={highlighted ? 0.75 : 0.45}
-              />
-            </mesh>
-
-            {/* Mannequin Head Sphere */}
-            <mesh position={[0, headY, 0]}>
-              <sphereGeometry args={[0.14, 20, 20]} />
-              <meshStandardMaterial
-                color={color}
-                emissive={color}
-                emissiveIntensity={highlighted ? 0.45 : 0.2}
-                transparent
-                opacity={0.9}
-              />
-            </mesh>
-
-            {/* Directional Eye Visor / Nose Wedge (+Z Forward) */}
-            <mesh position={[0, headY, 0.13]} rotation={[Math.PI / 2, 0, 0]}>
-              <coneGeometry args={[0.065, 0.14, 4]} />
-              <meshBasicMaterial color="#ffffff" />
-            </mesh>
-          </group>
+          renderCharacter()
         ) : def.kind === 'prop' ? (
           renderPropShape()
         ) : (

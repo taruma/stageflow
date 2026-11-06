@@ -94,6 +94,7 @@ entities:
   - id: "living_table"
     label: "Living Room Table"
     kind: "prop"
+    style: "edges"
     position: [-4.8, 0, 0.2]
     rotation: 0
     height: 0.78
@@ -103,6 +104,7 @@ entities:
   - id: "lounge_sofa"
     label: "Lounge Sofa"
     kind: "prop"
+    style: "solid"
     position: [-8.2, 0, -2.2]
     rotation: 45
     height: 0.85
@@ -114,6 +116,7 @@ entities:
     label: "Hallway Threshold"
     kind: "marker"
     shape: "t"
+    style: "glow"
     position: [0.0, 0, -0.4]
     rotation: 90
     height: 0.12
@@ -124,6 +127,7 @@ entities:
   - id: "bedroom_desk"
     label: "Bedroom Desk"
     kind: "prop"
+    style: "edges"
     position: [5.2, 0, 0.5]
     rotation: 0
     height: 0.75
@@ -133,6 +137,7 @@ entities:
   - id: "canopy_bed"
     label: "Bedroom Canopy Bed"
     kind: "prop"
+    style: "solid"
     position: [8.0, 0, -2.4]
     rotation: -90
     height: 0.65

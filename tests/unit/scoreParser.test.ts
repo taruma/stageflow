@@ -5,6 +5,7 @@ import {
   normalizeCameraManeuver,
   normalizeEntityKind,
   normalizeEntityShape,
+  normalizeEntityStyle,
   parseAngleToRad,
   parseLensFocalLengthMm,
   parseOptionalVec3,
@@ -559,6 +560,33 @@ observer_shots:
       expect(normalizeEntityShape('marker', 'ring')).toBe('circle');
       expect(normalizeEntityShape('marker', 'puck')).toBe('puck');
       expect(normalizeEntityShape('marker', 'disc')).toBe('puck');
+
+      // Entity presentation styles & aliases
+      expect(normalizeEntityStyle('character', undefined)).toBe('mannequin');
+      expect(normalizeEntityStyle('character', 'mannequin')).toBe('mannequin');
+      expect(normalizeEntityStyle('character', 'edges')).toBe('edges');
+      expect(normalizeEntityStyle('character', 'hologram')).toBe('edges');
+      expect(normalizeEntityStyle('character', 'cad')).toBe('edges');
+      expect(normalizeEntityStyle('character', 'silhouette')).toBe('silhouette');
+      expect(normalizeEntityStyle('character', 'ink')).toBe('silhouette');
+      expect(normalizeEntityStyle('character', 'wireframe')).toBe('wireframe');
+      expect(normalizeEntityStyle('character', 'wire')).toBe('wireframe');
+
+      expect(normalizeEntityStyle('prop', undefined)).toBe('edges');
+      expect(normalizeEntityStyle('prop', 'edges')).toBe('edges');
+      expect(normalizeEntityStyle('prop', 'glass')).toBe('glass');
+      expect(normalizeEntityStyle('prop', 'ghost')).toBe('glass');
+      expect(normalizeEntityStyle('prop', 'translucent')).toBe('glass');
+      expect(normalizeEntityStyle('prop', 'solid')).toBe('solid');
+      expect(normalizeEntityStyle('prop', 'opaque')).toBe('solid');
+      expect(normalizeEntityStyle('prop', 'wireframe')).toBe('wireframe');
+
+      expect(normalizeEntityStyle('marker', undefined)).toBe('tape');
+      expect(normalizeEntityStyle('marker', 'tape')).toBe('tape');
+      expect(normalizeEntityStyle('marker', 'glow')).toBe('glow');
+      expect(normalizeEntityStyle('marker', 'pulse')).toBe('glow');
+      expect(normalizeEntityStyle('marker', 'beacon')).toBe('beacon');
+      expect(normalizeEntityStyle('marker', 'pin')).toBe('beacon');
     });
 
     it('parses base spherical camera pose and resolves entity targets', () => {
@@ -714,6 +742,36 @@ shots:
       expect(c3.lookAt).toBe('arthur');
       expect(c3.easing).toBe('ease-out');
       expect(c3.visible).toBe(false);
+    });
+
+    it('parses entity style property for characters, props, and markers in YAML score', () => {
+      const yaml = `
+version: "1.0"
+id: "style-test"
+title: "Entity Style Test"
+entities:
+  - id: "actor"
+    kind: "character"
+    style: "silhouette"
+  - id: "table"
+    kind: "prop"
+    shape: "box"
+    style: "solid"
+  - id: "halo"
+    kind: "marker"
+    shape: "circle"
+    style: "glow"
+shots:
+  - id: "s1"
+    start: 0
+    end: 2
+`;
+      const { score, error } = parseStageScore(yaml);
+      expect(error).toBeNull();
+      expect(score).not.toBeNull();
+      expect(score!.entities[0].style).toBe('silhouette');
+      expect(score!.entities[1].style).toBe('solid');
+      expect(score!.entities[2].style).toBe('glow');
     });
   });
 });
