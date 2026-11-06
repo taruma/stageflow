@@ -13,6 +13,7 @@ import React, { useRef, useMemo, useLayoutEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Line } from '@react-three/drei';
 import * as THREE from 'three';
+import { ENTITY_DEFAULTS } from '../core/constants';
 import type {
   CameraViewMode,
   EvaluatedEntityState,
@@ -110,7 +111,7 @@ export const DirectionalMannequin: React.FC<DirectionalMannequinProps> = ({
     [radius]
   );
 
-  const headY = height - 0.18;
+  const headY = height * ENTITY_DEFAULTS.CHARACTER_LOOK_ANCHOR_RATIO;
   const torsoHeight = Math.max(0.4, height - 0.55);
   const torsoY = torsoHeight * 0.5 + 0.12;
 

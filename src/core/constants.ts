@@ -66,7 +66,7 @@ export const DEFAULT_STAGE_CAMERA_POSE: SphericalPose = {
 export const ENTITY_DEFAULTS = {
   CHARACTER_HEIGHT_M: 1.75,
   CHARACTER_RADIUS_M: 0.26,
-  CHARACTER_LOOK_ANCHOR_RATIO: 0.78, // Chest / eye-line target height ratio (~1.36m)
+  CHARACTER_LOOK_ANCHOR_RATIO: 0.9, // Eye-level target height ratio (~1.575m for standard 1.75m character)
   PROP_HEIGHT_M: 0.85,
   PROP_RADIUS_M: 0.35,
   MARKER_HEIGHT_M: 0.15,

@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- **Default Character Look-At Anchor to Eye Level & Mannequin Alignment (`src/core/constants.ts`, `src/stage/DirectionalMannequin.tsx`, `tests/unit/*`, `docs/*`)**:
+  - Updated `ENTITY_DEFAULTS.CHARACTER_LOOK_ANCHOR_RATIO` from `0.78` (~$1.365\text{m}$) to `0.90` (~$1.575\text{m}$ for a standard $1.75\text{m}$ character) so that targeting a character (`target: "<actor>"`) centers optical lines-of-sight and crosshairs on eye level rather than the shoulder cross-bar.
+  - Aligned [`src/stage/DirectionalMannequin.tsx`](src/stage/DirectionalMannequin.tsx) head and eye visor positioning with `ENTITY_DEFAULTS.CHARACTER_LOOK_ANCHOR_RATIO` to ensure 100% mathematical parity between character gaze, mannequin head sphere, and camera target anchors.
+  - Updated unit test assertions in [`tests/unit/frameEngine.test.ts`](tests/unit/frameEngine.test.ts) and [`tests/unit/scoreParser.test.ts`](tests/unit/scoreParser.test.ts).
+  - Synchronized architectural specifications in [`docs/CORE_MATH_AND_SCORE_SPECIFICATIONS.md`](docs/CORE_MATH_AND_SCORE_SPECIFICATIONS.md), [`docs/STAGEFLOW_SCRIPT_SPECIFICATION.md`](docs/STAGEFLOW_SCRIPT_SPECIFICATION.md), and [`docs/YAML_AUTHORING_GUIDE.md`](docs/YAML_AUTHORING_GUIDE.md).
 - **Choreography Score Authoring Manual Restructure (`docs/YAML_AUTHORING_GUIDE.md`, `src/ui/guide/guideUtils.ts`, `tests/unit/guideUtils.test.ts`)**:
   - Restructured the entire YAML Score Authoring Manual into an authoritative developer-to-developer Single Source of Truth (SSOT) focused 100% exclusively on declarative YAML score authoring across 7 chapters:
     - Chapter 1: Introduction & Spatial Architecture ($Y$-Up metric model, metric bounds, time/hold rules, root anatomical hierarchy).

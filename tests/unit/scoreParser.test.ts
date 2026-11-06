@@ -608,7 +608,7 @@ observer_shots:
         entities
       );
       expect(stageCamPose.target.x).toBe(2);
-      expect(stageCamPose.target.y).toBeCloseTo(0 + 1.75 * 0.78 + 0.5, 4);
+      expect(stageCamPose.target.y).toBeCloseTo(0 + 1.75 * 0.9 + 0.5, 4);
       expect(stageCamPose.target.z).toBe(3);
     });
 

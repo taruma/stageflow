@@ -153,10 +153,10 @@ shots:
     expect(error).toBeNull();
     expect(score).not.toBeNull();
 
-    // Default character height 1.75m * anchor ratio 0.78 = 1.365m eye-level anchor
-    const expectedAnchorY = 1.365;
+    // Default character height 1.75m * anchor ratio 0.90 = 1.575m eye-level anchor
+    const expectedAnchorY = 1.575;
 
-    // At t = 0.0s (start of Shot 1): camera is at actor_a + [0, 0, 4] -> [-2, 1.365, 4], target [-2, 1.365, 0]
+    // At t = 0.0s (start of Shot 1): camera is at actor_a + [0, 0, 4] -> [-2, 1.575, 4], target [-2, 1.575, 0]
     const f0 = computeStageFrame(0.0, score!);
     expect(f0.stageCamera.transform.target.x).toBeCloseTo(-2, 3);
     expect(f0.stageCamera.transform.target.y).toBeCloseTo(expectedAnchorY, 3);
@@ -164,13 +164,13 @@ shots:
     expect(f0.stageCamera.transform.position.y).toBeCloseTo(expectedAnchorY, 3);
     expect(f0.stageCamera.transform.position.z).toBeCloseTo(4, 3);
 
-    // At t = 2.99s (end of Shot 1): camera is at actor_a + [0, 0, 2] -> [-2, 1.365, 2], target [-2, 1.365, 0]
+    // At t = 2.99s (end of Shot 1): camera is at actor_a + [0, 0, 2] -> [-2, 1.575, 2], target [-2, 1.575, 0]
     const fBeforeCut = computeStageFrame(2.99, score!);
     expect(fBeforeCut.stageCamera.transform.target.x).toBeCloseTo(-2, 2);
     expect(fBeforeCut.stageCamera.transform.position.x).toBeCloseTo(-2, 2);
 
-    // At t = 3.0s (instantaneous cut to Shot 2): target MUST immediately be actor_b [2, 1.365, 0]
-    // with yaw = 180 deg (facing back: delta Z = -3) -> camera pos [2, 1.365, -3]
+    // At t = 3.0s (instantaneous cut to Shot 2): target MUST immediately be actor_b [2, 1.575, 0]
+    // with yaw = 180 deg (facing back: delta Z = -3) -> camera pos [2, 1.575, -3]
     const fCut = computeStageFrame(3.0, score!);
     expect(fCut.stageCamera.shotId).toBe('shot-2');
     expect(fCut.stageCamera.transform.target.x).toBeCloseTo(2, 3);
@@ -651,7 +651,7 @@ shots:
     expect(error).toBeNull();
     expect(score).not.toBeNull();
 
-    const baseAnchorY = 1.75 * 0.78; // 1.365m
+    const baseAnchorY = 1.75 * 0.9; // 1.575m
 
     // In Shot 1 (t = 2.0s), target is offset by [+0.5, +0.3, -0.2] and eye translates identically
     const f1 = computeStageFrame(2.0, score!);
@@ -708,7 +708,7 @@ shots:
     expect(error).toBeNull();
     expect(score).not.toBeNull();
 
-    const baseAnchorY = 1.75 * 0.78; // 1.365m
+    const baseAnchorY = 1.75 * 0.9; // 1.575m
 
     // At t = 0.0s, offsetY = -1.0m
     const f0 = computeStageFrame(0.0, score!);
@@ -812,7 +812,7 @@ shots:
 
     // Shot 14: Headroom Bias (-0.40m Y offset on Partner)
     const f14 = computeStageFrame(16.8, score);
-    const heroAnchorY = 1.75 * 0.78;
+    const heroAnchorY = 1.75 * 0.9;
     expect(f14.stageCamera.shotId).toBe('shot-14');
     expect(f14.stageCamera.transform.target.y).toBeCloseTo(heroAnchorY - 0.4, 2);
     expect(f14.stageCamera.targetOffset!.y).toBeCloseTo(-0.4, 2);
@@ -1274,10 +1274,10 @@ shots:
 
       const fallback = { x: 0, y: 0, z: 0 };
 
-      // Character look-at eye-line height: 1.75 * 0.78 = 1.365m
+      // Character look-at eye-line height: 1.75 * 0.9 = 1.575m
       const pActor = resolveTargetPoint3D('actor', entities, fallback);
       expect(pActor.x).toBe(1);
-      expect(pActor.y).toBeCloseTo(1.365, 3);
+      expect(pActor.y).toBeCloseTo(1.575, 3);
       expect(pActor.z).toBe(2);
 
       // Prop center height: 1.0 * 0.5 = 0.5m
@@ -1293,7 +1293,7 @@ shots:
       // Offset applied
       const pOffset = resolveTargetPoint3D('actor', entities, fallback, { x: 0.5, y: -0.2, z: 1.0 });
       expect(pOffset.x).toBeCloseTo(1.5, 3);
-      expect(pOffset.y).toBeCloseTo(1.165, 3);
+      expect(pOffset.y).toBeCloseTo(1.375, 3);
       expect(pOffset.z).toBeCloseTo(3.0, 3);
     });
 

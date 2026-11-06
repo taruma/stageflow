@@ -90,7 +90,7 @@ When a camera `target` or `from` references an entity by `id` or `label`, it res
 
 | `kind` | Default `height` ($h$) | Default `radius` ($r$) | Anchor Elevation Ratio | Resolved Look-At Anchor $\vec{A}_i$ |
 | :--- | :---: | :---: | :---: | :--- |
-| `"character"` | $1.75\text{ m}$ | $0.26\text{ m}$ | $0.78 h$ | $(x_i,\; y_i + 0.78 h_i,\; z_i)$ *(default $y = 1.365\text{ m}$)* |
+| `"character"` | $1.75\text{ m}$ | $0.26\text{ m}$ | $0.90 h$ | $(x_i,\; y_i + 0.90 h_i,\; z_i)$ *(default $y = 1.575\text{ m}$ eye level)* |
 | `"prop"` | $0.85\text{ m}$ | $0.35\text{ m}$ | $0.50 h$ | $(x_i,\; y_i + 0.50 h_i,\; z_i)$ *(default $y = 0.425\text{ m}$)* |
 | `"marker"` | $0.15\text{ m}$ | $0.25\text{ m}$ | $0.50 h$ | $(x_i,\; y_i + 0.50 h_i,\; z_i)$ *(default $y = 0.075\text{ m}$)* |
 

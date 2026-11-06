@@ -13,7 +13,7 @@ StageFlow uses a standardized, human-intuitive metric coordinate system in YAML 
   - $+Y$: Vertical Elevation ($Y = 0$ is the stage floor plane)
   - $+Z$: Downstage / Front (toward the default viewer)
 - **Spatial Units**: **Metric Meters ($1\text{ Three.js unit} = 1\text{m}$)**.
-  - Standard character height: `1.75m` (chest/eye-line look-at anchor at `0.78 * height ≈ 1.365m`).
+  - Standard character height: `1.75m` (eye-level look-at anchor at `0.90 * height ≈ 1.575m`).
   - Default stage floor: `10m × 10m` with `1.0m` major grid sections and `0.25m` minor subdivisions.
 - **Angular Units**:
   - **In YAML Scores & UI Readouts**: Authored and displayed in **human degrees (`deg`)** (e.g., `pitch: 26`, `yaw: -35`, `rotation: 90`).

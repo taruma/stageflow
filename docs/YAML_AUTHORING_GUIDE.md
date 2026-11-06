@@ -397,7 +397,7 @@ entities:
 #### Entity Kinds & Physical Proxy Geometry
 | `kind` | 3D Blueprint Mesh Representation | Default `height` | Default `radius` | Intrinsic Look-At Anchor ($\vec{A}$) |
 | :--- | :--- | :--- | :--- | :--- |
-| **`"character"`** | Torso column, shoulder bar, head sphere, forward eye visor wedge, ground gaze arrow | `1.75m` | `0.26m` | $(x, y + 0.78h, z)$ (`~1.365m` chest/eye level) |
+| **`"character"`** | Torso column, shoulder bar, head sphere, forward eye visor wedge, ground gaze arrow | `1.75m` | `0.26m` | $(x, y + 0.90h, z)$ (`~1.575m` eye level) |
 | **`"prop"`** | Semi-transparent bounding prism box ($2r \times h \times 2r$) | `0.85m` | `0.35m` | $(x, y + 0.50h, z)$ (`0.425m` center volume) |
 | **`"marker"`** | Low-profile floor beacon cylinder with concentric pulse ring | `0.15m` | `0.25m` | $(x, y + 0.50h, z)$ (`0.075m` floor level) |
 
