@@ -7,6 +7,7 @@ import blueprint02Raw from '../scores/blueprint_02_dialogue.yaml?raw';
 import blueprint03Raw from '../scores/blueprint_03_ball_pass.yaml?raw';
 import blueprint04Raw from '../scores/blueprint_04_cinematography_tutorial.yaml?raw';
 import blueprint05Raw from '../scores/blueprint_05_two_rooms.yaml?raw';
+import vectorFieldRaw from '../scores/vector_field.yaml?raw';
 import type { StageScore } from './types';
 import { parseStageScore } from './scoreParser';
 
@@ -17,6 +18,16 @@ export interface ScoreCatalogItem {
   rawYaml: string;
   score: StageScore;
   isCustom?: boolean;
+}
+
+const parsedVectorField = parseStageScore(
+  vectorFieldRaw,
+  'vector-field-taruma-sakti'
+);
+if (!parsedVectorField.score) {
+  throw new Error(
+    `Failed to parse bundled vector_field.yaml: ${parsedVectorField.error}`
+  );
 }
 
 const parsedDemo = parseStageScore(demoBlueprintRaw, 'demo-blueprint');
@@ -58,6 +69,13 @@ if (!parsed05.score) {
 }
 
 export const INITIAL_CATALOG_ITEMS: ScoreCatalogItem[] = [
+  {
+    id: parsedVectorField.score.id,
+    title: parsedVectorField.score.title,
+    subtitle: parsedVectorField.score.subtitle,
+    rawYaml: vectorFieldRaw,
+    score: parsedVectorField.score,
+  },
   {
     id: parsedDemo.score.id,
     title: parsedDemo.score.title,

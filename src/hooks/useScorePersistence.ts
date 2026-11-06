@@ -115,8 +115,13 @@ export function useScorePersistence({
       const mergedCatalog = [...INITIAL_CATALOG_ITEMS, ...storedCustomItems];
       setCatalog(mergedCatalog);
 
-      // Reconcile active scene: honor localStorage pointer across custom and bundled scenes
-      const preferredId = loadStoredActiveSceneId() ?? activeSceneId;
+      // Reconcile active scene: honor URL param or localStorage pointer across custom and bundled scenes
+      const sceneFromUrl =
+        typeof window !== 'undefined'
+          ? new URLSearchParams(window.location.search).get('scene')
+          : null;
+      const preferredId =
+        sceneFromUrl ?? loadStoredActiveSceneId() ?? activeSceneId;
       const targetItem =
         mergedCatalog.find((item) => item.id === preferredId) ??
         mergedCatalog[0];

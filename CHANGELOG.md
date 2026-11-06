@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Vector Field Production Scene Integration as Default Score (`src/scores/vector_field.yaml`, `src/core/scoreCatalog.ts`, `src/core/storage/localStorageUi.ts`, `src/ui/library/ScoreLibraryCard.tsx`, `src/App.tsx`, `src/hooks/useScorePersistence.ts`, `tests/unit/*`)**:
+  - Bundled Taruma Sakti's 32-shot spatial choreography breakdown *"Vector Field"* ([`src/scores/vector_field.yaml`](src/scores/vector_field.yaml), 1,080 lines) synchronized to YouTube (`https://www.youtube.com/watch?v=1ly8QX31Uqw`) as the first-class default scene loaded when opening the web application.
+  - Positioned `vector-field-taruma-sakti` at index 0 of `INITIAL_CATALOG_ITEMS` in [`src/core/scoreCatalog.ts`](src/core/scoreCatalog.ts).
+  - Added seamless `DEFAULT_SCENE_VERSION` (`v2`) migration in [`src/core/storage/localStorageUi.ts`](src/core/storage/localStorageUi.ts) so returning visitors previously cached on legacy `demo-blueprint` automatically default to *Vector Field* on initial reload without resetting user-created custom projects.
+  - Added URL query parameter deep linking support (`?scene=<id>`) in [`src/App.tsx`](src/App.tsx) and [`src/hooks/useScorePersistence.ts`](src/hooks/useScorePersistence.ts) to allow direct scene loading via URL links.
+  - Assigned a distinct `FEATURED` indigo badge in [`src/ui/library/ScoreLibraryCard.tsx`](src/ui/library/ScoreLibraryCard.tsx) for *Vector Field* in the Score Library modal.
+  - Updated unit test assertions in [`tests/unit/scoreParser.test.ts`](tests/unit/scoreParser.test.ts) and [`tests/unit/storage.test.ts`](tests/unit/storage.test.ts) verifying all 6 bundled catalog items pass Golden Equivalence and schema validation.
+
 ### Changed
 - **Extended Observer Zoom Out & Recalibrated Blueprint Depth Fog (`src/core/constants.ts`, `src/stage/*`, `tests/unit/*`, `docs/*`)**:
   - Increased `CAMERA_LIMITS.MAX_DISTANCE_M` from `40.0m` to `100.0m` in `src/core/constants.ts` to support long-lens telephoto coverage across large outdoor stages, sports fields, and master views.

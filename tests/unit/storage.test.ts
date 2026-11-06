@@ -232,6 +232,7 @@ import { parseStageScore } from '../../src/core/scoreParser';
 
 describe('scoreCatalog — Bundled Presets & Blank Project Generator', () => {
   it('correctly identifies bundled scene IDs and custom scene IDs', () => {
+    expect(isBundledSceneId('vector-field-taruma-sakti')).toBe(true);
     expect(isBundledSceneId('demo-blueprint')).toBe(true);
     expect(isBundledSceneId('blueprint-02-dialogue')).toBe(true);
     expect(isBundledSceneId('blueprint-03-ball-pass')).toBe(true);

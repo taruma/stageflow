@@ -62,21 +62,25 @@ function resolveScoreYaml(input: string): { yaml: string; id: string } {
     return { yaml, id: filename };
   }
 
-  // Check numeric shortcuts: 01, 02, 03, 04, 05
-  const numMatch = input.match(/^0?([1-9]\d*)$/);
+  // Check numeric shortcuts: 01, 02, 03, 04, 05 (mapped to Blueprint numbers)
+  const numMatch = input.match(/^(?:bp)?0?([1-9]\d*)$/i);
   if (numMatch) {
-    const idx = parseInt(numMatch[1], 10) - 1;
-    if (INITIAL_CATALOG_ITEMS[idx]) {
-      return {
-        yaml: INITIAL_CATALOG_ITEMS[idx].rawYaml,
-        id: INITIAL_CATALOG_ITEMS[idx].id,
-      };
+    const num = parseInt(numMatch[1], 10);
+    const targetBpId = num === 1 ? 'demo-blueprint' : `blueprint-0${num}`;
+    const bpItem = INITIAL_CATALOG_ITEMS.find(
+      (item) =>
+        item.id.toLowerCase().startsWith(targetBpId) || item.id === targetBpId
+    );
+    if (bpItem) {
+      return { yaml: bpItem.rawYaml, id: bpItem.id };
     }
   }
 
-  // Check catalog IDs
+  // Check catalog IDs or substring matches (e.g. vector-field, demo-blueprint)
   const catalogItem = INITIAL_CATALOG_ITEMS.find(
-    (item) => item.id.toLowerCase() === input.toLowerCase()
+    (item) =>
+      item.id.toLowerCase() === input.toLowerCase() ||
+      item.id.toLowerCase().includes(input.toLowerCase())
   );
   if (catalogItem) {
     return { yaml: catalogItem.rawYaml, id: catalogItem.id };

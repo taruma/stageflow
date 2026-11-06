@@ -44,6 +44,13 @@ function getScoreBadgeInfo(item: ScoreCatalogItem): BlueprintBadgeInfo {
 
   // Extract BP number if matches demo or blueprint-0X pattern
   let tag = 'BLUEPRINT';
+  if (item.id === 'vector-field-taruma-sakti') {
+    return {
+      tag: 'FEATURED',
+      badgeClass: 'bg-indigo-500/15 text-indigo-600 dark:text-indigo-300 border-indigo-400/30',
+      accentBorder: 'border-l-indigo-500',
+    };
+  }
   if (item.id === 'demo-blueprint') {
     tag = 'BP 01';
   } else {

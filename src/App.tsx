@@ -86,6 +86,10 @@ const InteractiveStudioApp: React.FC = () => {
 
   // Synchronously hydrate active scene id from localStorage
   const [activeSceneId, setActiveSceneIdState] = useState<string>(() => {
+    const sceneParam = urlParams?.get('scene');
+    if (sceneParam) {
+      return sceneParam;
+    }
     const stored = loadStoredActiveSceneId();
     return stored || INITIAL_CATALOG_ITEMS[0].id;
   });

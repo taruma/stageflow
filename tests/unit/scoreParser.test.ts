@@ -154,14 +154,23 @@ shots:
     expect(res2.score?.videoUrl).toBe('https://youtu.be/dQw4w9WgXcQ');
   });
 
-  it('registers and bundles Blueprint 01, Blueprint 02, Blueprint 03, and Blueprint 04 in the initial catalog', () => {
-    expect(INITIAL_CATALOG_ITEMS).toHaveLength(5);
+  it('registers and bundles Vector Field, Blueprint 01, Blueprint 02, Blueprint 03, Blueprint 04, and Blueprint 05 in the initial catalog', () => {
+    expect(INITIAL_CATALOG_ITEMS).toHaveLength(6);
 
-    const bp01 = INITIAL_CATALOG_ITEMS[0];
+
+    const bpVectorField = INITIAL_CATALOG_ITEMS[0];
+    expect(bpVectorField.id).toBe('vector-field-taruma-sakti');
+    expect(bpVectorField.score.title).toBe('Vector Field');
+    expect(bpVectorField.score.shots).toHaveLength(32);
+    expect(bpVectorField.score.blocking).toBeDefined();
+    expect(bpVectorField.score.observerShots).toBeDefined();
+    expect(bpVectorField.score.observerShots).toHaveLength(6);
+
+    const bp01 = INITIAL_CATALOG_ITEMS[1];
     expect(bp01.id).toBe('demo-blueprint');
     expect(bp01.score.shots).toHaveLength(1);
 
-    const bp02 = INITIAL_CATALOG_ITEMS[1];
+    const bp02 = INITIAL_CATALOG_ITEMS[2];
     expect(bp02.id).toBe('blueprint-02-dialogue');
     expect(bp02.score.durationSec).toBe(26);
     expect(bp02.score.shots).toHaveLength(6);
@@ -176,7 +185,7 @@ shots:
     expect(bp02.score.observerShots).toBeDefined();
     expect(bp02.score.observerShots).toHaveLength(3);
 
-    const bp03 = INITIAL_CATALOG_ITEMS[2];
+    const bp03 = INITIAL_CATALOG_ITEMS[3];
     expect(bp03.id).toBe('blueprint-03-ball-pass');
     expect(bp03.score.durationSec).toBe(16);
     expect(bp03.score.shots).toHaveLength(6);
@@ -190,14 +199,14 @@ shots:
       'recoil',
     ]);
 
-    const bp04 = INITIAL_CATALOG_ITEMS[3];
+    const bp04 = INITIAL_CATALOG_ITEMS[4];
     expect(bp04.id).toBe('blueprint-04-cinematography-tutorial');
     expect(bp04.score.durationSec).toBe(20.0);
     expect(bp04.score.shots).toHaveLength(16);
     expect(bp04.score.observerShots).toBeDefined();
     expect(bp04.score.observerShots).toHaveLength(1);
 
-    const bp05 = INITIAL_CATALOG_ITEMS[4];
+    const bp05 = INITIAL_CATALOG_ITEMS[5];
     expect(bp05.id).toBe('blueprint-05-two-rooms');
     expect(bp05.score.durationSec).toBe(30.0);
     expect(bp05.score.shots).toHaveLength(17);
@@ -628,15 +637,24 @@ observer_shots:
       expect(spec!.waypoints).toHaveLength(1);
     });
 
-    it('verifies all 4 bundled scene catalog items parse identically without errors (Golden Equivalence)', () => {
-      expect(INITIAL_CATALOG_ITEMS).toHaveLength(5);
+    it('verifies all 6 bundled scene catalog items parse identically without errors (Golden Equivalence)', () => {
+      expect(INITIAL_CATALOG_ITEMS).toHaveLength(6);
+
+
+    const bpVectorField = INITIAL_CATALOG_ITEMS[0];
+    expect(bpVectorField.id).toBe('vector-field-taruma-sakti');
+    expect(bpVectorField.score.title).toBe('Vector Field');
+    expect(bpVectorField.score.shots).toHaveLength(32);
+    expect(bpVectorField.score.blocking).toBeDefined();
+    expect(bpVectorField.score.observerShots).toBeDefined();
+    expect(bpVectorField.score.observerShots).toHaveLength(6);
       for (const item of INITIAL_CATALOG_ITEMS) {
         expect(item.score).toBeDefined();
         expect(item.score.shots.length).toBeGreaterThan(0);
         expect(item.score.durationSec).toBeGreaterThan(0);
         expect(item.score.stage.width).toBeGreaterThan(0);
         expect(item.score.stage.depth).toBeGreaterThan(0);
-        if (item.id === 'blueprint-05-two-rooms') {
+        if (item.id === 'blueprint-05-two-rooms' || item.id === 'vector-field-taruma-sakti') {
           expect(item.score.blocking).toBeDefined();
         } else {
           expect(item.score.blocking).toBeUndefined();

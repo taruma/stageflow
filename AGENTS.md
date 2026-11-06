@@ -105,7 +105,7 @@ stageflow/
 │   ├── DIORAMA_3D_AND_UI_SPECIFICATIONS.md
 │   └── VISUAL_DESIGN_SYSTEM.md      # SSOT for typography, theme engine, UI_TOKENS & palettes
 ├── scripts/                         # CLI Automation & Offline Tooling
-│   └── record/                      # Deterministic 60fps Playwright + FFmpeg Viewport Recorder
+│   └── record/                      # 60fps Playwright + FFmpeg Viewport Recorder
 │       ├── cli.ts                   # CLI entry point, argument parsing & usage help
 │       ├── playwrightDriver.ts      # Headless Chromium lifecycle & frame-stepping loop
 │       ├── ffmpegPipeline.ts        # FFmpeg pipe encoder (libx264, VP9, GIF, PNG sequence)
@@ -115,13 +115,14 @@ stageflow/
 ├── public/                          # Static web assets & media files
 ├── src/
 │   ├── recorder/                    # Headless Recording Bridge & Render Environment
-│   │   ├── HeadlessRecorderView.tsx # Lightweight full-window Canvas mounted on ?mode=headless-render
+│   │   ├── HeadlessRecorderView.tsx # Canvas mounted on ?mode=headless-render
 │   │   └── recorderTypes.ts         # Bridge schemas & window.__STAGEFLOW_RECORDER__ interface
 │   ├── scores/                      # Bundled Choreography Scores (*.yaml)
+│   │   ├── vector_field.yaml        # Vector Field: 32-shot spatial breakdown (Default Scene)
 │   │   ├── demo_blueprint.yaml      # Blueprint 01: Single-shot two-shot arc score
-│   │   ├── blueprint_02_dialogue.yaml # Blueprint 02: 6-shot dialogue coverage flow
-│   │   ├── blueprint_03_ball_pass.yaml # Blueprint 03: 30m 3-actor ball pass, parabolic arc & roll tracking
-│   │   ├── blueprint_04_cinematography_tutorial.yaml # Blueprint 04: 16-shot framing & roll tutorial
+│   │   ├── blueprint_02_dialogue.yaml # Blueprint 02: 6-shot dialogue coverage
+│   │   ├── blueprint_03_ball_pass.yaml # Blueprint 03: 3-actor ball pass & roll tracking
+│   │   ├── blueprint_04_cinematography_tutorial.yaml # Blueprint 04: 16-shot framing tutorial
 │   │   └── blueprint_05_two_rooms.yaml # Blueprint 05: 17-shot two-room threshold crossing
 │   ├── core/                        # Layer 1: Pure TypeScript Math, Optics & Stateless Frame Engine
 │   │   ├── types.ts                 # Canonical interfaces (StageScore, ShotCue, ObserverShotCue, BlockingCueSpec, StageFrame)

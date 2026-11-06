@@ -14,6 +14,7 @@ const STORAGE_KEYS = {
   SPLIT_PRESET: 'stageflow:ui:split-preset',
   DRAWER_OPEN: 'stageflow:ui:yaml-drawer-open',
   ACTIVE_SCENE_ID: 'stageflow:ui:active-scene-id',
+  DEFAULT_SCENE_VERSION: 'stageflow:ui:default-scene-version',
   LABEL_MODE: 'stageflow:ui:label-mode',
   VIEWFINDER_GUIDES: 'stageflow:ui:viewfinder-guides',
   THEME_MODE: 'stageflow:ui:theme-mode',
@@ -74,6 +75,16 @@ export function saveStoredYamlDrawerOpen(isOpen: boolean): void {
 
 export function loadStoredActiveSceneId(): string | null {
   try {
+    const version = localStorage.getItem(STORAGE_KEYS.DEFAULT_SCENE_VERSION);
+    if (version !== 'v2') {
+      const existing = localStorage.getItem(STORAGE_KEYS.ACTIVE_SCENE_ID);
+      // Migrate legacy default ('demo-blueprint') to new default so returning users get Vector Field
+      if (existing === 'demo-blueprint' || !existing) {
+        localStorage.removeItem(STORAGE_KEYS.ACTIVE_SCENE_ID);
+      }
+      localStorage.setItem(STORAGE_KEYS.DEFAULT_SCENE_VERSION, 'v2');
+      return localStorage.getItem(STORAGE_KEYS.ACTIVE_SCENE_ID);
+    }
     return localStorage.getItem(STORAGE_KEYS.ACTIVE_SCENE_ID);
   } catch {
     // Ignore localStorage access restrictions
