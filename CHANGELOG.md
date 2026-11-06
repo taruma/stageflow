@@ -7,7 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Choreography Score Authoring Manual Restructure (`docs/YAML_AUTHORING_GUIDE.md`, `src/ui/guide/guideUtils.ts`, `tests/unit/guideUtils.test.ts`)**:
+  - Restructured the entire YAML Score Authoring Manual into an authoritative developer-to-developer Single Source of Truth (SSOT) using a 5-tier progressive disclosure model across 8 chapters:
+    - Chapter 1: Introduction & Spatial Architecture ($Y$-Up metric model, metric bounds, time/hold rules, root anatomical hierarchy).
+    - Chapter 2: Quickstart & Minimal Score Anatomy (25-line runnable minimal score, incremental additions for camera/blocking, authoring cheatsheet, 8 common beginner mistakes).
+    - Chapter 3: Scene Foundation (root metadata, video bindings with YouTube and procedural simulator, stage perimeter bounds, baseline camera presets with roll and target offsets, entity proxy definitions).
+    - Chapter 4: Camera System & Optics (full-frame focal length to vertical FOV conversion table, 11 camera maneuvers, 9 easing curves, 7-step orbit priority resolution, multi-waypoint spline paths, reserved fields audit).
+    - Chapter 5: Film Coverage & Multi-Shot Scoring (`shots:` timeline schema, standard vs. continuous cut mode, consolidated shot-boundary state reset matrix, prime lens mounting vs. zoom semantics).
+    - Chapter 6: Decoupled Entity Blocking & Continuous Kinematics (root `blocking:` timeline schemas format A and B, two-pass evaluator, Option A continuous 16-segment movement floor trails, legacy entity kinematic overrides, `observer_shots:` 3-tier hierarchy).
+    - Chapter 7: CodeMirror 6 Studio Workflow & Directorial Tooling (3-column layout, CodeMirror 6 editor capabilities, telemetry capture feedback loop, keyboard shortcuts).
+    - Chapter 8: Director's Cookbook & Production Blueprints (8 production choreography recipes with architectural walkthroughs and references to bundled Blueprints BP 01–BP 05).
+  - Adopted developer-to-developer technical tone for Chapters 1 and 3–6, while adopting cinematographer/director creative perspectives for Chapter 2 and Chapter 8.
+  - Standardized callouts to plain markdown blockquotes with bold labels (`> **Note:**`, `> **Tip:**`, `> **Warning:**`), replacing raw GitHub-style alerts for clean rendering in both GitHub and the in-app guide.
+  - Updated in-app sticky quick-jump navigation rail in [`src/ui/guide/guideUtils.ts`](src/ui/guide/guideUtils.ts) to map 1:1 to the 8 restructured chapters.
+  - Updated [`tests/unit/guideUtils.test.ts`](tests/unit/guideUtils.test.ts) to verify heading structure, slug generation, and code fence integrity for the restructured manual.
+
 ### Fixed
+- **Recipe 5 Code Fence Syntax (`docs/YAML_AUTHORING_GUIDE.md`)**:
+  - Fixed an unclosed code block fence in Recipe 5 (Whip Pan Transition) that caused downstream recipe sections to render as raw preformatted text, and corrected the cookbook recipe count to 8.
 - **Display Math Block Formatting & Vite Markdown HMR (`docs/STAGEFLOW_SCRIPT_SPECIFICATION.md`, `docs/CORE_MATH_AND_SCORE_SPECIFICATIONS.md`, `vite.config.ts`)**:
   - Placed opening and closing `$` delimiters on their own isolated lines around `\begin{aligned} ... \end{aligned}` blocks.
   - Resolves a KaTeX/remark-math parser failure where `$\begin{aligned}` on a single line was treated as inline math, creating an unclosed delimiter that swallowed 25,500+ characters of downstream sections into an unrendered red error block.
@@ -31,6 +49,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added dedicated unit test suite [`tests/unit/entityEngine.test.ts`](tests/unit/entityEngine.test.ts) covering target resolution variants, ground trail generation thresholds, and direct evaluator calls across all 89 test cases.
 
 ### Added
+- **Automated Guide Snippet & Schema Verification Test Suite (`tests/unit/guideSnippets.test.ts`)**:
+  - Created an automated Vitest test suite that extracts and parses all 24 YAML score code blocks from [`docs/YAML_AUTHORING_GUIDE.md`](docs/YAML_AUTHORING_GUIDE.md) using `yaml.parse` and `parseScoreYaml`, guaranteeing zero syntax or indentation regressions.
+  - Added assertions validating all documented enum aliases (`target_offset`, `target_pos`, `cam_height`, `cam_dist`, `elev`, `azimuth`, `fov`, `lens_mm`, `start_time`, `end_time`) and confirming parser normalization matches canonical properties.
+  - Added regression assertions verifying that reserved fields `track` (`trackTarget`) and waypoint `at` parse cleanly without throwing errors.
 - **Phase 1 Code-First YAML Editor Studio with CodeMirror 6 (`src/ui/editor/`, `App.tsx`, `package.json`)**:
   - Replaced the legacy plain `<textarea>` in [`YamlInspectorDrawer.tsx`](src/ui/YamlInspectorDrawer.tsx) with a decoupled, professional CodeMirror 6 editor engine ([`YamlStudioPanel.tsx`](src/ui/editor/YamlStudioPanel.tsx)) mounted in the right studio column.
   - Integrated Lezer-based YAML syntax highlighting (`@codemirror/lang-yaml`), line numbers gutter, soft line-wrapping (`EditorView.lineWrapping`), 2-space tab indent (`indentWithTab`), and native search/replace (`Ctrl+F`).

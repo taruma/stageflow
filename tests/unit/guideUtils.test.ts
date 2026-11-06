@@ -23,10 +23,20 @@ describe('guideUtils', () => {
   });
 
   it('slugifies headings reliably without double hyphens or punctuation', () => {
-    expect(slugify('1. Mental Model & Core Rules')).toBe('1-mental-model-core-rules');
-    expect(slugify('2. 3D Stage Coordinate System & Compass')).toBe('2-3d-stage-coordinate-system-compass');
-    expect(slugify('4. Scene Entities (entities:)')).toBe('4-scene-entities-entities');
-    expect(slugify("9. Director's Cookbook: 6 Cinematography Recipes")).toBe('9-director-s-cookbook-6-cinematography-recipes');
+    expect(slugify('1. Introduction & Spatial Architecture')).toBe('1-introduction-spatial-architecture');
+    expect(slugify('2. Quickstart & Minimal Score Anatomy')).toBe('2-quickstart-minimal-score-anatomy');
+    expect(slugify('3. Scene Foundation (Root, Stage & Entities)')).toBe('3-scene-foundation-root-stage-entities');
+    expect(slugify("8. Director's Cookbook (8 Production Recipes)")).toBe('8-director-s-cookbook-8-production-recipes');
+  });
+
+  it('ensures docs/YAML_AUTHORING_GUIDE.md code blocks have perfectly balanced fences', () => {
+    const fenceLines = yamlAuthoringGuideRaw
+      .split('\n')
+      .map((line) => line.trim())
+      .filter((line) => line.startsWith('```'));
+
+    expect(fenceLines.length).toBeGreaterThan(0);
+    expect(fenceLines.length % 2).toBe(0);
   });
 
   it('ensures every guide shortcut corresponds to an actual h2 in docs/YAML_AUTHORING_GUIDE.md', () => {

@@ -15,15 +15,14 @@ export interface GuideSectionShortcut {
 
 export const GUIDE_DOC_SHORTCUTS: Record<GuideDocType, GuideSectionShortcut[]> = {
   guide: [
-    { label: 'Rules', id: 'section-1' },
-    { label: 'Coordinates', id: 'section-2' },
-    { label: 'Schema', id: 'section-3' },
-    { label: 'Entities', id: 'section-4' },
-    { label: 'Shots', id: 'section-5' },
-    { label: 'Cameras', id: 'section-6' },
-    { label: 'Blocking', id: 'section-7' },
-    { label: 'Workflow', id: 'section-8' },
-    { label: 'Recipes', id: 'section-9' },
+    { label: 'Intro', id: 'section-1' },
+    { label: 'Quickstart', id: 'section-2' },
+    { label: 'Foundation', id: 'section-3' },
+    { label: 'Cameras', id: 'section-4' },
+    { label: 'Coverage', id: 'section-5' },
+    { label: 'Timelines', id: 'section-6' },
+    { label: 'Workflow', id: 'section-7' },
+    { label: 'Cookbook', id: 'section-8' },
   ],
   spec: [
     { label: 'Coordinates', id: 'section-1' },

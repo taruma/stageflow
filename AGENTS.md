@@ -92,14 +92,14 @@ stageflow/
 ├── .agents/                         # Workspace Skills & Customizations
 │   └── skills/
 │       ├── stageflow-score-debugger/    # Choreography Score Kinematic & Visual Debugger Skill (SKILL.md)
-│       └── stageflow-viewport-recorder/ # Deterministic 60fps Viewport Video Recorder Skill (SKILL.md)
+│       └── stageflow-viewport-recorder/ # 60fps Viewport Video Recorder Skill (SKILL.md)
 ├── AGENTS.md                        # Root governance, workflow rules & invariant router (< 24 KB)
 ├── CHANGELOG.md                     # Semantic version release log & unreleased change tracking
 ├── SPECIFICATION.md                 # Foundational product vision & system mechanics
 ├── README.md                        # Quickstart overview & CLI command reference
 ├── docs/                            # Detailed technical & architectural specifications (SSOT)
 │   ├── STAGEFLOW_SCRIPT_SPECIFICATION.md # Pure mathematical & formal YAML script specification
-│   ├── YAML_AUTHORING_GUIDE.md      # Complete YAML score manual, syntax reference & recipes
+│   ├── YAML_AUTHORING_GUIDE.md      # Authoring SSOT: quickstart, schema reference, studio workflow & cookbook
 │   ├── CORE_MATH_AND_SCORE_SPECIFICATIONS.md
 │   ├── MEDIA_CLOCK_AND_SYNC_SPECIFICATIONS.md
 │   ├── DIORAMA_3D_AND_UI_SPECIFICATIONS.md
@@ -121,8 +121,8 @@ stageflow/
 │   │   ├── demo_blueprint.yaml      # Blueprint 01: Single-shot two-shot arc score
 │   │   ├── blueprint_02_dialogue.yaml # Blueprint 02: 6-shot dialogue coverage flow
 │   │   ├── blueprint_03_ball_pass.yaml # Blueprint 03: 30m 3-actor ball pass, parabolic arc & roll tracking
-│   │   ├── blueprint_04_cinematography_tutorial.yaml # Blueprint 04: 16-shot framing, movement, roll & offset tutorial
-│   │   └── blueprint_05_two_rooms.yaml # Blueprint 05: 30s 17-shot two-room threshold crossing with decoupled blocking:
+│   │   ├── blueprint_04_cinematography_tutorial.yaml # Blueprint 04: 16-shot framing & roll tutorial
+│   │   └── blueprint_05_two_rooms.yaml # Blueprint 05: 17-shot two-room threshold crossing
 │   ├── core/                        # Layer 1: Pure TypeScript Math, Optics & Stateless Frame Engine
 │   │   ├── types.ts                 # Canonical interfaces (StageScore, ShotCue, ObserverShotCue, BlockingCueSpec, StageFrame)
 │   │   ├── constants.ts             # Metric bounds, sensor constants, blueprint color palette
@@ -222,6 +222,8 @@ stageflow/
         ├── frameEngine.test.ts
         ├── scoreParser.test.ts
         ├── scoreYamlUtils.test.ts
+        ├── guideUtils.test.ts
+        ├── guideSnippets.test.ts
         ├── storage.test.ts
         └── recorder.test.ts
 ```
