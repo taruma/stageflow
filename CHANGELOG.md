@@ -34,6 +34,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Automatically runs contract validations across all study and blueprint scores without hardcoding project-specific shot counts or timestamps.
 
 ### Changed
+- **Slim Minimalist Character Shoulder Crossbar ([`src/stage/DirectionalMannequin.tsx`](src/stage/DirectionalMannequin.tsx))**:
+  - Refined character proxy shoulder crossbar dimensions from broad boxy geometry (`[radius * 2.1, 0.12, radius * 0.95]`) to sleek minimalist proportions (`[radius * 1.4, 0.08, radius * 0.55]`) centered at `y = height - 0.40m`, reducing visual clutter and preventing geometric overlap in tight multi-actor dialogue staging.
 - **Extended Observer Zoom Out & Recalibrated Blueprint Depth Fog (`src/core/constants.ts`, `src/stage/*`, `tests/unit/*`, `docs/*`)**:
   - Increased `CAMERA_LIMITS.MAX_DISTANCE_M` from `40.0m` to `100.0m` in `src/core/constants.ts` to support long-lens telephoto coverage across large outdoor stages, sports fields, and master views.
   - Increased `OrbitControls.maxDistance` from `38m` to `100m` in [`src/stage/ObserverCameraRig.tsx`](src/stage/ObserverCameraRig.tsx), eliminating the artificial zoom wall and enabling full pull-back overview behind distant Stage Camera positions.

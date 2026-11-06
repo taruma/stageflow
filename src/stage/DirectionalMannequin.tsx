@@ -168,9 +168,9 @@ export const DirectionalMannequin: React.FC<DirectionalMannequinProps> = ({
           {hasEdges && <Edges threshold={20} color={color} />}
         </mesh>
 
-        {/* Shoulder Cross-Bar to make body silhouette immediately clear */}
-        <mesh position={[0, height - 0.42, 0]}>
-          <boxGeometry args={[radius * 2.1, 0.12, radius * 0.95]} />
+        {/* Shoulder Cross-Bar to make body silhouette immediately clear (Slim Minimalist) */}
+        <mesh position={[0, height - 0.40, 0]}>
+          <boxGeometry args={[radius * 1.4, 0.08, radius * 0.55]} />
           <meshStandardMaterial
             color={bodyColor}
             emissive={bodyEmissive}
