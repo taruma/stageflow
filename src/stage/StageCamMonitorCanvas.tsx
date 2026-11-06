@@ -54,11 +54,11 @@ export const StageCamMonitorCanvas: React.FC<StageCamMonitorCanvasProps> = ({
         camera={{
           fov: uiFrame.stageCamera.transform.fovDeg,
           near: 0.1,
-          far: 150,
+          far: 250,
         }}
       >
         <color attach="background" args={[themeColors.bg]} />
-        <fog attach="fog" args={[themeColors.fog, 16, 42]} />
+        <fog attach="fog" args={[themeColors.fog, 45, 160]} />
 
         {/* Shared Diorama Scene (Lighting, Metric Floor Grid, Directional Mannequins) */}
         <BlueprintStageScene

@@ -275,7 +275,7 @@ export const ObserverCameraRig: React.FC<ObserverCameraRigProps> = ({
       enableDamping
       dampingFactor={0.08}
       minDistance={0.5}
-      maxDistance={38}
+      maxDistance={100}
       maxPolarAngle={MAX_SAFE_POLAR_ANGLE_RAD}
       onChange={() => handleControlsChange(false)}
     />

@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- **Extended Observer Zoom Out & Recalibrated Blueprint Depth Fog (`src/core/constants.ts`, `src/stage/*`, `tests/unit/*`, `docs/*`)**:
+  - Increased `CAMERA_LIMITS.MAX_DISTANCE_M` from `40.0m` to `100.0m` in `src/core/constants.ts` to support long-lens telephoto coverage across large outdoor stages, sports fields, and master views.
+  - Increased `OrbitControls.maxDistance` from `38m` to `100m` in [`src/stage/ObserverCameraRig.tsx`](src/stage/ObserverCameraRig.tsx), eliminating the artificial zoom wall and enabling full pull-back overview behind distant Stage Camera positions.
+  - Recalibrated 3D diorama scene depth fog from `[16m, 42m]` to `[45m, 160m]` and expanded camera clipping far plane from `150m` to `250m` across [`src/stage/DioramaCanvas.tsx`](src/stage/DioramaCanvas.tsx) and [`src/stage/StageCamMonitorCanvas.tsx`](src/stage/StageCamMonitorCanvas.tsx), guaranteeing 100% crisp visuals across working stage setups without blacking out when pulling back to 100m.
+  - Added unit test coverage in [`tests/unit/sphericalMath.test.ts`](tests/unit/sphericalMath.test.ts) verifying distance boundary clamping up to `MAX_DISTANCE_M` (100.0m).
+  - Synchronized architectural specifications and schema limits in [`docs/YAML_AUTHORING_GUIDE.md`](docs/YAML_AUTHORING_GUIDE.md), [`docs/STAGEFLOW_SCRIPT_SPECIFICATION.md`](docs/STAGEFLOW_SCRIPT_SPECIFICATION.md), [`docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md`](docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md), and [`docs/VISUAL_DESIGN_SYSTEM.md`](docs/VISUAL_DESIGN_SYSTEM.md).
 - **Default Character Look-At Anchor to Eye Level & Mannequin Alignment (`src/core/constants.ts`, `src/stage/DirectionalMannequin.tsx`, `tests/unit/*`, `docs/*`)**:
   - Updated `ENTITY_DEFAULTS.CHARACTER_LOOK_ANCHOR_RATIO` from `0.78` (~$1.365\text{m}$) to `0.90` (~$1.575\text{m}$ for a standard $1.75\text{m}$ character) so that targeting a character (`target: "<actor>"`) centers optical lines-of-sight and crosshairs on eye level rather than the shoulder cross-bar.
   - Aligned [`src/stage/DirectionalMannequin.tsx`](src/stage/DirectionalMannequin.tsx) head and eye visor positioning with `ENTITY_DEFAULTS.CHARACTER_LOOK_ANCHOR_RATIO` to ensure 100% mathematical parity between character gaze, mannequin head sphere, and camera target anchors.

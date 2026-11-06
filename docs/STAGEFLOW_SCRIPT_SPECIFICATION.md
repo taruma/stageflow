@@ -28,7 +28,7 @@ Every camera state (both `stage_camera` and `observer_camera`) is parameterized 
 $$P = \left(\vec{T},\; d,\; \theta,\; \psi,\; \gamma,\; f_{\text{mm}}\right)$$
 
 - $\vec{T} = (T_x, T_y, T_z) \in \mathbb{R}^3$: Look-at target anchor point in meters.
-- $d \in [0.4, 80.0]\text{ m}$: Radial distance from $\vec{T}$ to the camera nodal point $\vec{E}$.
+- $d \in [0.4, 100.0]\text{ m}$: Radial distance from $\vec{T}$ to the camera nodal point $\vec{E}$.
 - $\theta \in [-85^\circ, +85^\circ]$: Pitch (elevation angle above/below the horizontal plane of $\vec{T}$).
   - $\theta > 0^\circ$: Camera is elevated above $\vec{T}$, looking downward.
   - $\theta < 0^\circ$: Camera is positioned below $\vec{T}$, looking upward.

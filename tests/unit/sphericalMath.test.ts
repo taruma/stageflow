@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   cartesianToSpherical,
+  clampSphericalPose,
   computeFloorClampedMaxPolarAngle,
   computeLookAtYawRad,
   degToRad,
@@ -11,6 +12,7 @@ import {
   shortestAngleDiff,
   sphericalToCartesian,
 } from '../../src/core/sphericalMath';
+import { CAMERA_LIMITS } from '../../src/core/constants';
 import type { SphericalPose } from '../../src/core/types';
 
 describe('sphericalMath — Metric Coordinates & Shortest-Angle Unwrapping', () => {
@@ -277,6 +279,40 @@ describe('sphericalMath — Metric Coordinates & Shortest-Angle Unwrapping', () 
       const angle = computeFloorClampedMaxPolarAngle(1.0, 0.0);
       expect(Number.isFinite(angle)).toBe(true);
       expect(angle).toBeGreaterThan(0);
+    });
+
+    it('enforces metric camera distance bounds up to MAX_DISTANCE_M (100.0m)', () => {
+      expect(CAMERA_LIMITS.MAX_DISTANCE_M).toBe(100.0);
+
+      // Distance below minimum (0.4m) clamps to 0.4m
+      const clampedMin = clampSphericalPose({
+        target: { x: 0, y: 1, z: 0 },
+        distance: 0.1,
+        pitch: 0,
+        yaw: 0,
+        focalLengthMm: 35,
+      });
+      expect(clampedMin.distance).toBe(CAMERA_LIMITS.MIN_DISTANCE_M);
+
+      // Valid long distance up to 100m preserves exactly
+      const validLong = clampSphericalPose({
+        target: { x: 0, y: 1, z: 0 },
+        distance: 95.0,
+        pitch: 0,
+        yaw: 0,
+        focalLengthMm: 35,
+      });
+      expect(validLong.distance).toBe(95.0);
+
+      // Distance exceeding 100m clamps to MAX_DISTANCE_M
+      const clampedMax = clampSphericalPose({
+        target: { x: 0, y: 1, z: 0 },
+        distance: 150.0,
+        pitch: 0,
+        yaw: 0,
+        focalLengthMm: 35,
+      });
+      expect(clampedMax.distance).toBe(100.0);
     });
   });
 });

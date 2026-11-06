@@ -72,12 +72,12 @@ export const DioramaCanvas: React.FC<DioramaCanvasProps> = ({
         camera={{
           fov: 40,
           near: 0.1,
-          far: 150,
+          far: 250,
           position: [4.5, 3.5, 6.0],
         }}
       >
         <color attach="background" args={[themeColors.bg]} />
-        <fog attach="fog" args={[themeColors.fog, 16, 42]} />
+        <fog attach="fog" args={[themeColors.fog, 45, 160]} />
 
         {/* 60fps Stateless Frame Evaluator Tick */}
         <FrameLoopTicker onTick={evaluateTick60fps} />

@@ -80,7 +80,7 @@ The engine enforces spatial and optical safety bounds across all evaluators:
 
 | Dimension | Minimum Allowed | Maximum Allowed | Fallback on Invalid / NaN |
 | :--- | :--- | :--- | :--- |
-| **Camera Distance ($d$)** | `0.4m` | `40.0m` | `5.0m` |
+| **Camera Distance ($d$)** | `0.4m` | `100.0m` | `5.0m` |
 | **Camera Pitch ($\theta$)** | `-85.0°` | `+85.0°` | `14.3°` (`0.25 rad`) |
 | **Lens Focal Length ($f$)** | `12mm` | `200mm` | `50mm` |
 | **Shot Duration ($\Delta t$)** | `0.1s` | No upper bound | Clamped to $\text{start} + 0.1\text{s}$ |
@@ -418,7 +418,7 @@ StageFlow uses a unified spherical camera model across both the Illustrative Sta
 | **`target_offset`**| `[dx, dy, dz]` | `m` | Both | `targetOffset` | World-space metric offset added to target anchor. Resets to `[0,0,0]` if omitted. |
 | **`target_offset_start`** | `[dx, dy, dz]` | `m` | Both | `targetOffsetStart` | Starting target offset vector. |
 | **`target_offset_end`** | `[dx, dy, dz]` | `m` | Both | `targetOffsetEnd` | Ending target offset vector. |
-| **`distance`** | `number` | `m` | Both | — | Destination radial distance from target (`0.4m` to `40.0m`). |
+| **`distance`** | `number` | `m` | Both | — | Destination radial distance from target (`0.4m` to `100.0m`). |
 | **`distance_start`** | `number` | `m` | Both | — | Explicit starting distance. |
 | **`distance_end`** | `number` | `m` | Both | — | Explicit ending distance. |
 | **`pitch`** | `number` | `deg`| Both | — | Destination elevation angle (`-85°` to `+85°`). |

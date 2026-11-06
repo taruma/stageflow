@@ -116,7 +116,7 @@ The active diorama colors are computed purely in JavaScript via [`getDioramaPale
 | Palette Element | Dark Mode | Warm Mode | Light Mode |
 | :--- | :--- | :--- | :--- |
 | **Clear Color / Background** | `#0c0a09` | `#f3efe6` | `#f5f5f4` |
-| **Depth Fog (`16m`–`42m`)** | `#0c0a09` | `#f3efe6` | `#f5f5f4` |
+| **Depth Fog (`45m`–`160m`)** | `#0c0a09` | `#f3efe6` | `#f5f5f4` |
 | **Ground Plane Floor** | `#171514` | `#faf7f0` | `#ffffff` |
 | **Primary Section Grid (1m)** | `#38bdf8` (Cyan) | `#b0a898` (Warm Grey) | `#a8a29e` (Stone Grey) |
 | **Minor Sub-Grid (0.25m)** | `#1e293b` (Slate) | `#dfd7c5` (Subtle Ivory) | `#e7e5e4` (Subtle Stone) |
