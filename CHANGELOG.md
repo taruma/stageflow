@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Vercel Web Analytics & Speed Insights (`package.json`, `src/App.tsx`)**:
+  - Integrated `@vercel/analytics/react` (`<Analytics />`) and `@vercel/speed-insights/react` (`<SpeedInsights />`) into the root application component in `src/App.tsx`.
+  - Configured conditional rendering so analytics and Core Web Vitals telemetry run in interactive studio and guide/specification documentation modes while remaining dormant during headless video recording runs (`isHeadlessRender`).
 - **Visual Presentation Styles for Scene Entities (`src/core/types.ts`, `src/core/scorePrimitives.ts`, `src/stage/DirectionalMannequin.tsx`, `tests/unit/*`, `docs/*`)**:
   - Implemented customizable presentation styles (`style:`) for all 3 entity kinds with optimized directorial defaults:
     - **Characters** (`kind: "character"`): `mannequin` (default stylized figure), `edges` (soft 20% opacity with CAD contour lines), `silhouette` (high-contrast dark matte body `#0f172a` with illuminated pure white eye visor cone for optical composition and framing studies), and `wireframe` (blueprint wireframe mesh cage).

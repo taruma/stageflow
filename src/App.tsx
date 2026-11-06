@@ -49,6 +49,8 @@ import { ToastContainer } from './ui/ToastContainer';
 import { DirectorialTransportBar } from './ui/DirectorialTransportBar';
 import { DioramaOverlayContainer } from './ui/DioramaOverlayContainer';
 import { HeadlessRecorderView } from './recorder/HeadlessRecorderView';
+import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 
 const ScoreAuthoringGuideView = React.lazy(() =>
   import('./ui/guide').then((m) => ({ default: m.ScoreAuthoringGuideView }))
@@ -607,14 +609,19 @@ export const App: React.FC = () => {
   if (isHeadlessRender) {
     return <HeadlessRecorderView />;
   }
-  if (isDocMode) {
-    return (
-      <React.Suspense fallback={null}>
-        <ScoreAuthoringGuideView initialDoc={isSpecMode ? 'spec' : 'guide'} />
-      </React.Suspense>
-    );
-  }
-  return <InteractiveStudioApp />;
+  return (
+    <>
+      {isDocMode ? (
+        <React.Suspense fallback={null}>
+          <ScoreAuthoringGuideView initialDoc={isSpecMode ? 'spec' : 'guide'} />
+        </React.Suspense>
+      ) : (
+        <InteractiveStudioApp />
+      )}
+      <Analytics />
+      <SpeedInsights />
+    </>
+  );
 };
 
 export default App;
