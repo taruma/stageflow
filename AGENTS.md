@@ -99,7 +99,7 @@ stageflow/
 ├── README.md                        # Quickstart overview & CLI command reference
 ├── docs/                            # Detailed technical & architectural specifications (SSOT)
 │   ├── STAGEFLOW_SCRIPT_SPECIFICATION.md # Pure mathematical & formal YAML script specification
-│   ├── YAML_AUTHORING_GUIDE.md      # Authoring SSOT: quickstart, schema reference, studio workflow & cookbook
+│   ├── YAML_AUTHORING_GUIDE.md      # Authoring SSOT: quickstart, schema reference, kinematics & cookbook
 │   ├── CORE_MATH_AND_SCORE_SPECIFICATIONS.md
 │   ├── MEDIA_CLOCK_AND_SYNC_SPECIFICATIONS.md
 │   ├── DIORAMA_3D_AND_UI_SPECIFICATIONS.md

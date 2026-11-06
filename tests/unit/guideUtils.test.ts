@@ -26,7 +26,7 @@ describe('guideUtils', () => {
     expect(slugify('1. Introduction & Spatial Architecture')).toBe('1-introduction-spatial-architecture');
     expect(slugify('2. Quickstart & Minimal Score Anatomy')).toBe('2-quickstart-minimal-score-anatomy');
     expect(slugify('3. Scene Foundation (Root, Stage & Entities)')).toBe('3-scene-foundation-root-stage-entities');
-    expect(slugify("8. Director's Cookbook (8 Production Recipes)")).toBe('8-director-s-cookbook-8-production-recipes');
+    expect(slugify("7. Director's Cookbook (8 Production Recipes)")).toBe('7-director-s-cookbook-8-production-recipes');
   });
 
   it('ensures docs/YAML_AUTHORING_GUIDE.md code blocks have perfectly balanced fences', () => {

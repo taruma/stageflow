@@ -1,6 +1,6 @@
 # StageFlow YAML Score Authoring Manual (`*.yaml`)
 
-This document is the authoritative Single Source of Truth (SSOT) for authoring, editing, and validating **StageFlow Choreography Scores** (`*.yaml`). It defines every parameter, enum, alias, default value, evaluation rule, and studio workflow supported by the StageFlow engine.
+This document is the authoritative Single Source of Truth (SSOT) for authoring, editing, and validating **StageFlow Choreography Scores** (`*.yaml`). It defines every parameter, enum, alias, default value, evaluation rule, and cinematography pattern supported by the StageFlow engine.
 
 ---
 
@@ -50,7 +50,7 @@ StageFlow operates in a right-handed, **$Y$-Up** 3D Cartesian space centered at 
 | **`y` (Vertical)** | Stage floor plane (`0.0m`) | **Overhead / Elevation** (`+Y`) | Below floor plane (`-Y`) | Meters (`m`) |
 | **`z` (Depth)** | Centerline of stage | **Downstage / Front** (`+Z`) | **Upstage / Back** (`-Z`) | Meters (`m`) |
 | **`pitch` (Elevation)** | Horizon / Eye-level (`0°`) | **High-angle overhead** looking down | **Low-angle hero** looking up | Degrees (`deg`)* |
-| **`yaw` (Azimuth)** | Camera on `+Z` looking at `-Z` | Clockwise orbit toward `+X` | Counter-clockwise orbit toward `-X` | Degrees (`deg`)* |
+| **`yaw` (Azimuth)** | Camera on `+Z` looking at `-Z` | **Counter-clockwise orbit toward `+X`** | **Clockwise orbit toward `-X`** | Degrees (`deg`)* |
 | **`roll` (Dutch angle)** | Level horizon (`0°`) | **Clockwise camera bank** (from operator POV) | **Counter-clockwise camera bank** | Degrees (`deg`)* |
 | **Entity `rotation`** | Mannequin faces `+Z` (downstage) | Faces toward `+X` (`+90°` = Stage Right) | Faces toward `-X` (`-90°` = Stage Left) | Degrees (`deg`)* |
 
@@ -144,7 +144,7 @@ This chapter provides an immediate, runnable boilerplate and a fast directorial 
 
 ### 2.1 Your First Score (60 Seconds)
 
-Copy and paste this minimal 25-line score directly into the **YAML Score Studio** in the right column of the workspace:
+Copy and paste this minimal 25-line score directly into your StageFlow score file:
 
 ```yaml
 version: "1.0"
@@ -258,7 +258,7 @@ The detective now translates smoothly from $t = 0.0\text{s}$ to $t = 8.0\text{s}
 
 ### 2.5 Learn From Bundled Blueprints
 
-The StageFlow library includes 5 production-grade blueprint scores accessible via the **Library** modal:
+StageFlow bundles 5 production-grade blueprint scores in `src/scores/`:
 
 1. **`demo_blueprint.yaml` (Blueprint 01: Two-Shot Arc)**: Single-shot profile two-shot to OTS arc using `50mm` standard prime.
 2. **`blueprint_02_dialogue.yaml` (Blueprint 02: Dialogue Flow)**: 6-shot dialogue scene demonstrating OTS reversal, 85mm low hero arc, Catmull-Rom spline, and decoupled diorama master orbits (`observer_shots:`).
@@ -269,7 +269,7 @@ The StageFlow library includes 5 production-grade blueprint scores accessible vi
 ### 2.6 The 8 Most Common Authoring Mistakes
 
 1. **Omitting `start` on a shot without declaring `continuous: true`**: In standard mode, omitting `start` defaults to `0.0s` and flags a warning in the editor.
-2. **Assuming `yaw` rotates counter-clockwise when positive**: Yaw increases toward `+X` (Stage Right), which is clockwise looking down at the stage floor.
+2. **Assuming `yaw` rotates clockwise when positive**: In StageFlow's right-handed Y-up coordinate space, positive yaw increases **counter-clockwise (CCW)** when viewed from overhead (+Y), moving from downstage (+Z / 6:00) toward Stage Right (+X / 3:00). Conversely, `direction: "cw"` commands decreasing yaw angles.
 3. **Using `"center"` as target inside `stage.stage_camera`**: Top-level `stage` camera targets resolve only to entity identifiers or explicit `[x, y, z]` arrays.
 4. **Expecting `roll` to hold across cuts without declaring it**: In accordance with Option A semantics, camera roll resets to level horizon (`0°`) at shot boundaries unless explicitly authored.
 5. **Declaring a single `distance:` in standard mode expecting motion**: A single value establishes a constant distance throughout the shot. To animate distance in standard mode, provide `distance_start` and `distance_end`.
@@ -588,7 +588,7 @@ The `shots:` array defines the film camera cuts, lens mounts, and editorial cove
 | **`end`** | `number` | `start + 5.0` | `_end` | Cue end timestamp in seconds (clamped to $\ge \text{start} + 0.1$). |
 | **`stage_camera`**| `object` | Baseline | `stageCamera` | Physical camera choreography within the diorama. |
 | **`observer_camera`**| `object` | Baseline | `observerCamera` | Legacy per-shot viewport camera choreography. |
-| **`entities`** | `object` | `{}` | — | Per-shot actor movement overrides and focus tags (see §6.7). |
+| **`entities`** | `object` | `{}` | — | Per-shot actor movement overrides and focus tags (see §6.4). |
 
 ### 5.2 Pose Inheritance: Standard vs. Continuous Mode
 
@@ -754,79 +754,7 @@ observer_shots:
 
 ---
 
-## 7. Studio Workflow (Editor, Telemetry & Diagnostics)
-
-StageFlow integrates an interactive 3D spatial authoring loop directly connected to the CodeMirror 6 score studio.
-
-### 7.1 Studio Layout & Controls
-
-The workspace divides into a 30 / 40 / 30 three-column studio:
-- **Left Column**: Reference video player with SMPTE container-query aspect-fit framing and directorial subpanel (`Notes` / `Stage Cam` monitor toggle).
-- **Center Column**: Interactive 3D blueprint diorama canvas with ViewCube angle presets (`Top`, `Iso`, `Front`, `Side`, `Reset`), 3-way camera mode segmented pill (`Scripted Observer`, `Free Orbit`, `Stage Cam POV`), and 4-corner HUD overlays.
-- **Right Column**: Full-height **YAML Score Studio** powered by CodeMirror 6.
-
-#### Header Bar Actions
-- **`File ▾` Menu**: Open Video or Score…, Export Active Score (.yaml), New Blank Score…, Manage Custom Scores, Score Library…, YAML Authoring Guide (`?mode=guide`), Script Technical Specification (`?mode=spec`).
-- **`[ ◫ Split | ⛶ Full ]`**: Toggles between split workspace and full-window diorama.
-- **`[ ✎ Edit ]` Pill**: Opens or closes the right-column YAML Score Studio.
-- **`[ Library ]`**: Opens the master-detail score catalog and project manager.
-- **Reset Layout**: Restores default column percentages (30/40/30) and expands the video subpanel.
-
-### 7.2 CodeMirror 6 YAML Studio
-
-The YAML editor panel includes professional IDE tooling:
-- **Syntax Highlighting**: Lezer-based YAML token coloring adapting smoothly across all 4 studio themes (`Dark Obsidian`, `Warm Paper`, `Light Stone`, `Pure Black`).
-- **Toolbar Actions**:
-  - **`[ Wrap ]`**: Toggles soft line wrapping without inserting newline characters.
-  - **`[ Copy ]`**: Copies complete raw YAML document to system clipboard.
-  - **`[ Fork to Edit → ]`**: Bundled factory blueprints (`BP 01`–`BP 05`) are read-only; clicking Fork duplicates the score into an editable Custom Project saved in IndexedDB (`idb`).
-- **Live Sync & Autosave**: Typing re-evaluates the 3D diorama with a debounced $150\text{ms}$ delay while preserving cursor stability during looped media playback. Valid custom scores autosave to IndexedDB with a $350\text{ms}$ debounce.
-
-### 7.3 Diagnostics Alert Banner & 1-Click Jump
-
-When a score contains syntax or schema errors, the editor collapses distractions and surfaces an alert banner:
-- **Syntax Errors**: Displays exact `Line X, Col Y` parse error location with a 1-click **`[ Jump ]`** button that focuses and scrolls the CodeMirror editor directly to the offending line.
-- **Schema Warnings**: Surfaces non-blocking directorial notices (e.g. reminding authors to provide `start:` timestamps or enable `continuous: true`).
-
-### 7.4 Interactive 3D Telemetry Capture Loop
-
-Authors do not need to guess spatial coordinates in their head:
-
-1. **Pause Playback (`Space`)**: Pausing in `Scripted Observer` mode automatically unlocks Three.js `OrbitControls` for free spatial navigation.
-2. **Frame the Camera in 3D**:
-   - **Left-Click + Drag**: Orbit view (`pitch` and `yaw`).
-   - **Right-Click + Drag** (or Two-Finger Drag): Pan target look-at point `[x, y, z]`.
-   - **Scroll Wheel**: Dolly distance in meters.
-3. **Read the Camera Telemetry Capsule**:
-   Look at the tactile capsule at bottom-right of the diorama:
-   ```text
-   P 26.0° · Y 38.0° · D 7.50m · TGT [0.00, 1.10, 0.00] · 35mm
-   ```
-   *(If camera roll is non-zero, it displays `· R <rollDeg>°`)*.
-4. **1-Click Copy YAML Snippet**:
-   Click the capsule once. It formats and copies a clean camera block to your clipboard:
-   ```yaml
-   target: [0.00, 1.10, 0.00]
-   distance: 7.50
-   pitch: 26.0
-   yaw: 38.0
-   lens: 35mm
-   ```
-5. **Paste into Editor**: Paste under `stage_camera:` or `observer_camera:`. The diorama updates immediately.
-
-### 7.5 Studio Keyboard Shortcuts
-| Key | Action |
-| :--- | :--- |
-| **`Space`** | Toggle playback play / pause |
-| **`[` / `]`** | Frame-step backward / forward by 1 frame |
-| **`←` / `→`** | Jump backward / forward by 1.0 second |
-| **`L`** | Cycle 3D diorama label display modes (`All` $\to$ `Cam Only` $\to$ `Off`) |
-| **`G`** | Toggle composition viewfinder safe-action guides (in Stage Cam POV) |
-| **`Esc`** | Close popovers, modal dialogues, and file menus |
-
----
-
-## 8. Director's Cookbook (8 Production Recipes)
+## 7. Director's Cookbook (8 Production Recipes)
 
 Copy-pasteable directorial recipes demonstrating core cinematography patterns.
 

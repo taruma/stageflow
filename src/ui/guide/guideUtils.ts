@@ -21,8 +21,7 @@ export const GUIDE_DOC_SHORTCUTS: Record<GuideDocType, GuideSectionShortcut[]> =
     { label: 'Cameras', id: 'section-4' },
     { label: 'Coverage', id: 'section-5' },
     { label: 'Timelines', id: 'section-6' },
-    { label: 'Workflow', id: 'section-7' },
-    { label: 'Cookbook', id: 'section-8' },
+    { label: 'Cookbook', id: 'section-7' },
   ],
   spec: [
     { label: 'Coordinates', id: 'section-1' },
