@@ -151,6 +151,7 @@ const InteractiveStudioApp: React.FC = () => {
       title: activeScore.title,
       rawYaml,
       score: activeScore,
+      category: 'custom',
       isCustom: false,
     });
   }, [activeSceneId, activeScore, rawYaml, handleExportScore]);
@@ -274,6 +275,7 @@ const InteractiveStudioApp: React.FC = () => {
           id: finalId,
           title: resolvedScore.title,
           subtitle: resolvedScore.subtitle,
+          category: 'custom',
           rawYaml: finalYaml,
           score: resolvedScore,
           isCustom: true,

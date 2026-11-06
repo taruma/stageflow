@@ -8,13 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- **Vector Field Production Scene Integration as Default Score (`src/scores/vector_field.yaml`, `src/core/scoreCatalog.ts`, `src/core/storage/localStorageUi.ts`, `src/ui/library/ScoreLibraryCard.tsx`, `src/App.tsx`, `src/hooks/useScorePersistence.ts`, `tests/unit/*`)**:
-  - Bundled Taruma Sakti's 32-shot spatial choreography breakdown *"Vector Field"* ([`src/scores/vector_field.yaml`](src/scores/vector_field.yaml), 1,080 lines) synchronized to YouTube (`https://www.youtube.com/watch?v=1ly8QX31Uqw`) as the first-class default scene loaded when opening the web application.
-  - Positioned `vector-field-taruma-sakti` at index 0 of `INITIAL_CATALOG_ITEMS` in [`src/core/scoreCatalog.ts`](src/core/scoreCatalog.ts).
-  - Added seamless `DEFAULT_SCENE_VERSION` (`v2`) migration in [`src/core/storage/localStorageUi.ts`](src/core/storage/localStorageUi.ts) so returning visitors previously cached on legacy `demo-blueprint` automatically default to *Vector Field* on initial reload without resetting user-created custom projects.
-  - Added URL query parameter deep linking support (`?scene=<id>`) in [`src/App.tsx`](src/App.tsx) and [`src/hooks/useScorePersistence.ts`](src/hooks/useScorePersistence.ts) to allow direct scene loading via URL links.
-  - Assigned a distinct `FEATURED` indigo badge in [`src/ui/library/ScoreLibraryCard.tsx`](src/ui/library/ScoreLibraryCard.tsx) for *Vector Field* in the Score Library modal.
-  - Updated unit test assertions in [`tests/unit/scoreParser.test.ts`](tests/unit/scoreParser.test.ts) and [`tests/unit/storage.test.ts`](tests/unit/storage.test.ts) verifying all 6 bundled catalog items pass Golden Equivalence and schema validation.
+- **3-Tier Provenance Taxonomy (`study`, `blueprint`, `custom`) & Score Subfolder Restructure (`src/scores/*`, `src/core/types.ts`, `src/core/scoreCatalog.ts`, `src/ui/*`)**:
+  - Organized scores into decoupled subfolders: `src/scores/studies/` for directorial scene studies authored by Taruma Sakti, and `src/scores/blueprints/` for synthetic camera-blocking presets and testbeds (BP 01–05).
+  - Introduced `ScoreCategory = 'study' | 'blueprint' | 'custom'` across `src/core/types.ts` and `ScoreCatalogItem`.
+  - Added **Vector Field** ([`src/scores/studies/vector_field.yaml`](src/scores/studies/vector_field.yaml), 1,080 lines, 32 shots, decoupled blocking, 6 observer moves) as the primary default scene loaded when opening the web application.
+  - Updated [`ScoreLibraryModal.tsx`](src/ui/ScoreLibraryModal.tsx) with 4-way filter tabs (`All`, `Studies`, `Blueprints`, `Custom`) and 3 distinct collapsible sections in the master list.
+  - Assigned a distinct `STUDY` violet badge in [`ScoreLibraryCard.tsx`](src/ui/library/ScoreLibraryCard.tsx) for scene studies.
+  - Added seamless `DEFAULT_SCENE_VERSION` (`v2`) migration in [`src/core/storage/localStorageUi.ts`](src/core/storage/localStorageUi.ts) to default returning cached visitors to *Vector Field* on initial reload without resetting custom projects.
+  - Added URL query parameter deep linking support (`?scene=<id>`) in [`src/App.tsx`](src/App.tsx) and [`src/hooks/useScorePersistence.ts`](src/hooks/useScorePersistence.ts).
+- **Universal Project-Agnostic Score Contract Test Suite (`tests/unit/scoreContract.test.ts`)**:
+  - Implemented `validateScoreContract(score: StageScore)` to rigorously verify any user-provided or study score against StageFlow optical, kinematic, and mathematical invariants (monotonic timestamps, valid maneuvers/easings, focal lengths, distance bounds, target resolution, and stateless 3D frame determinism).
+  - Automatically runs contract validations across all study and blueprint scores without hardcoding project-specific shot counts or timestamps.
 
 ### Changed
 - **Extended Observer Zoom Out & Recalibrated Blueprint Depth Fog (`src/core/constants.ts`, `src/stage/*`, `tests/unit/*`, `docs/*`)**:

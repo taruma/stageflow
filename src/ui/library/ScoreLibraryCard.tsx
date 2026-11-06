@@ -34,7 +34,7 @@ interface BlueprintBadgeInfo {
 }
 
 function getScoreBadgeInfo(item: ScoreCatalogItem): BlueprintBadgeInfo {
-  if (item.isCustom) {
+  if (item.category === 'custom' || item.isCustom) {
     return {
       tag: 'CUSTOM',
       badgeClass: 'bg-amber-500/15 text-amber-600 dark:text-amber-300 border-amber-400/30',
@@ -42,15 +42,16 @@ function getScoreBadgeInfo(item: ScoreCatalogItem): BlueprintBadgeInfo {
     };
   }
 
-  // Extract BP number if matches demo or blueprint-0X pattern
-  let tag = 'BLUEPRINT';
-  if (item.id === 'vector-field-taruma-sakti') {
+  if (item.category === 'study') {
     return {
-      tag: 'FEATURED',
-      badgeClass: 'bg-indigo-500/15 text-indigo-600 dark:text-indigo-300 border-indigo-400/30',
-      accentBorder: 'border-l-indigo-500',
+      tag: 'STUDY',
+      badgeClass: 'bg-violet-500/15 text-violet-600 dark:text-violet-300 border-violet-400/30',
+      accentBorder: 'border-l-violet-500',
     };
   }
+
+  // Extract BP number if matches demo or blueprint-0X pattern
+  let tag = 'BLUEPRINT';
   if (item.id === 'demo-blueprint') {
     tag = 'BP 01';
   } else {

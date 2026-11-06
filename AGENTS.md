@@ -117,13 +117,9 @@ stageflow/
 │   ├── recorder/                    # Headless Recording Bridge & Render Environment
 │   │   ├── HeadlessRecorderView.tsx # Canvas mounted on ?mode=headless-render
 │   │   └── recorderTypes.ts         # Bridge schemas & window.__STAGEFLOW_RECORDER__ interface
-│   ├── scores/                      # Bundled Choreography Scores (*.yaml)
-│   │   ├── vector_field.yaml        # Vector Field: 32-shot spatial breakdown (Default Scene)
-│   │   ├── demo_blueprint.yaml      # Blueprint 01: Single-shot two-shot arc score
-│   │   ├── blueprint_02_dialogue.yaml # Blueprint 02: 6-shot dialogue coverage
-│   │   ├── blueprint_03_ball_pass.yaml # Blueprint 03: 3-actor ball pass & roll tracking
-│   │   ├── blueprint_04_cinematography_tutorial.yaml # Blueprint 04: 16-shot framing tutorial
-│   │   └── blueprint_05_two_rooms.yaml # Blueprint 05: 17-shot two-room threshold crossing
+│   ├── scores/                      # Choreography Scores (*.yaml)
+│   │   ├── studies/                 # Directorial Scene Studies (e.g. vector_field.yaml)
+│   │   └── blueprints/              # Factory camera-blocking presets (BP 01–05)
 │   ├── core/                        # Layer 1: Pure TypeScript Math, Optics & Stateless Frame Engine
 │   │   ├── types.ts                 # Canonical interfaces (StageScore, ShotCue, ObserverShotCue, BlockingCueSpec, StageFrame)
 │   │   ├── constants.ts             # Metric bounds, sensor constants, blueprint color palette
@@ -222,6 +218,7 @@ stageflow/
         ├── entityEngine.test.ts
         ├── frameEngine.test.ts
         ├── scoreParser.test.ts
+        ├── scoreContract.test.ts
         ├── scoreYamlUtils.test.ts
         ├── guideUtils.test.ts
         ├── guideSnippets.test.ts

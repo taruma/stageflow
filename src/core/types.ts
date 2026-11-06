@@ -288,3 +288,12 @@ export interface ParseScoreResult {
   diagnostics?: ScoreDiagnostic[];
 }
 
+/**
+ * Provenance category for StageFlow choreography scores.
+ * - 'study': Authentic directorial scene studies authored by Taruma Sakti (e.g. Vector Field).
+ * - 'blueprint': Synthetic educational camera-blocking presets and testbeds (BP 01–05).
+ * - 'custom': User-authored, imported, or forked projects persisted in browser IndexedDB.
+ */
+export type ScoreCategory = 'study' | 'blueprint' | 'custom';
+
+

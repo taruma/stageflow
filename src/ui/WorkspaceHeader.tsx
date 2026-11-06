@@ -21,6 +21,7 @@ import { FileMenuDropdown } from './header/FileMenuDropdown';
 import { LayoutSegmentedControl } from './header/LayoutSegmentedControl';
 import { ActiveScoreIndicator } from './header/ActiveScoreIndicator';
 import { ThemeSelectorDropdown } from './header/ThemeSelectorDropdown';
+import type { FilterTab } from './ScoreLibraryModal';
 
 export type { SplitPreset, StoragePersistenceStatus };
 
@@ -40,7 +41,7 @@ export interface WorkspaceHeaderProps {
   onToggleEditMode: () => void;
   onUploadFiles: (files: FileList) => void;
   onExportActiveScore: () => void;
-  onOpenLibrary: (tab?: 'all' | 'bundled' | 'custom') => void;
+  onOpenLibrary: (tab?: FilterTab) => void;
   onResetLayout?: () => void;
   onSelectThemeMode?: (mode: AppThemeMode) => void;
   onSelectDioramaThemeMode?: (mode: DioramaThemeMode) => void;

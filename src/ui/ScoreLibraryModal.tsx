@@ -20,7 +20,7 @@ import { ScoreLibraryCard } from './library/ScoreLibraryCard';
 import { ScoreInspectorPane } from './library/ScoreInspectorPane';
 import { UI_TOKENS } from './tokens/ui';
 
-export type FilterTab = 'all' | 'bundled' | 'custom';
+export type FilterTab = 'all' | 'study' | 'blueprint' | 'custom';
 
 export interface ScoreLibraryModalProps {
   isOpen: boolean;
@@ -55,7 +55,8 @@ export const ScoreLibraryModal: React.FC<ScoreLibraryModalProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedScoreId, setSelectedScoreId] = useState<string>(activeSceneId);
   const [mobileView, setMobileView] = useState<'list' | 'details'>('list');
-  const [isBundledExpanded, setIsBundledExpanded] = useState(true);
+  const [isStudyExpanded, setIsStudyExpanded] = useState(true);
+  const [isBlueprintExpanded, setIsBlueprintExpanded] = useState(true);
   const [isCustomExpanded, setIsCustomExpanded] = useState(true);
   const listContainerRef = useRef<HTMLDivElement>(null);
 
@@ -82,18 +83,23 @@ export const ScoreLibraryModal: React.FC<ScoreLibraryModalProps> = ({
     return () => window.removeEventListener('keydown', handleKey);
   }, [isOpen, onClose]);
 
-  const bundledScores = useMemo(
-    () => catalog.filter((item) => !item.isCustom),
+  const studyScores = useMemo(
+    () => catalog.filter((item) => item.category === 'study'),
+    [catalog]
+  );
+  const blueprintScores = useMemo(
+    () => catalog.filter((item) => item.category === 'blueprint'),
     [catalog]
   );
   const customScores = useMemo(
-    () => catalog.filter((item) => item.isCustom),
+    () => catalog.filter((item) => item.category === 'custom' || item.isCustom),
     [catalog]
   );
 
   const filteredScores = useMemo(() => {
     let list = catalog;
-    if (activeTab === 'bundled') list = bundledScores;
+    if (activeTab === 'study') list = studyScores;
+    if (activeTab === 'blueprint') list = blueprintScores;
     if (activeTab === 'custom') list = customScores;
 
     if (!searchQuery.trim()) return list;
@@ -104,32 +110,37 @@ export const ScoreLibraryModal: React.FC<ScoreLibraryModalProps> = ({
         (item.subtitle && item.subtitle.toLowerCase().includes(q)) ||
         item.id.toLowerCase().includes(q)
     );
-  }, [catalog, activeTab, bundledScores, customScores, searchQuery]);
+  }, [catalog, activeTab, studyScores, blueprintScores, customScores, searchQuery]);
 
   // Grouped lists for the "All" tab
-  const { bundledFiltered, customFiltered } = useMemo(() => {
+  const { studyFiltered, blueprintFiltered, customFiltered } = useMemo(() => {
     return {
-      bundledFiltered: filteredScores.filter((item) => !item.isCustom),
-      customFiltered: filteredScores.filter((item) => item.isCustom),
+      studyFiltered: filteredScores.filter((item) => item.category === 'study'),
+      blueprintFiltered: filteredScores.filter((item) => item.category === 'blueprint'),
+      customFiltered: filteredScores.filter((item) => item.category === 'custom' || item.isCustom),
     };
   }, [filteredScores]);
 
   // Determine scores currently visible in the DOM (respecting activeTab and collapsible sections)
   const visibleScores = useMemo(() => {
-    if (activeTab === 'bundled') {
-      return bundledFiltered;
+    if (activeTab === 'study') {
+      return studyFiltered;
+    }
+    if (activeTab === 'blueprint') {
+      return blueprintFiltered;
     }
     if (activeTab === 'custom') {
       return customFiltered;
     }
-    if (activeTab === 'all' && (bundledFiltered.length > 0 || customFiltered.length > 0)) {
+    if (activeTab === 'all') {
       const items: ScoreCatalogItem[] = [];
-      if (isBundledExpanded) items.push(...bundledFiltered);
+      if (isStudyExpanded) items.push(...studyFiltered);
+      if (isBlueprintExpanded) items.push(...blueprintFiltered);
       if (isCustomExpanded) items.push(...customFiltered);
       return items;
     }
     return filteredScores;
-  }, [activeTab, bundledFiltered, customFiltered, isBundledExpanded, isCustomExpanded, filteredScores]);
+  }, [activeTab, studyFiltered, blueprintFiltered, customFiltered, isStudyExpanded, isBlueprintExpanded, isCustomExpanded, filteredScores]);
 
   // Find currently selected score object, falling back to first visible/filtered item
   const selectedScore = useMemo(() => {
@@ -267,14 +278,25 @@ export const ScoreLibraryModal: React.FC<ScoreLibraryModalProps> = ({
                   </button>
                   <button
                     type="button"
-                    onClick={() => setActiveTab('bundled')}
+                    onClick={() => setActiveTab('study')}
                     className={
-                      activeTab === 'bundled'
+                      activeTab === 'study'
                         ? UI_TOKENS.button.segmentedItemActive
                         : UI_TOKENS.button.segmentedItem
                     }
                   >
-                    Bundled ({bundledScores.length})
+                    Studies ({studyScores.length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('blueprint')}
+                    className={
+                      activeTab === 'blueprint'
+                        ? UI_TOKENS.button.segmentedItemActive
+                        : UI_TOKENS.button.segmentedItem
+                    }
+                  >
+                    Blueprints ({blueprintScores.length})
                   </button>
                   <button
                     type="button"
@@ -324,33 +346,74 @@ export const ScoreLibraryModal: React.FC<ScoreLibraryModalProps> = ({
                 <div className="py-16 text-center text-text-muted font-sans text-xs">
                   No choreography scores found matching your criteria.
                 </div>
-              ) : activeTab === 'all' && (bundledFiltered.length > 0 || customFiltered.length > 0) ? (
+              ) : activeTab === 'all' && (studyFiltered.length > 0 || blueprintFiltered.length > 0 || customFiltered.length > 0) ? (
                 <div className="space-y-2">
-                  {/* Bundled Blueprints Section */}
-                  {bundledFiltered.length > 0 && (
+                  {/* Scene Studies Section */}
+                  {studyFiltered.length > 0 && (
                     <div className="space-y-1.5">
                       <button
                         type="button"
-                        onClick={() => setIsBundledExpanded((prev) => !prev)}
-                        aria-expanded={isBundledExpanded}
+                        onClick={() => setIsStudyExpanded((prev) => !prev)}
+                        aria-expanded={isStudyExpanded}
                         className="w-full px-2 py-1 text-[10px] font-mono font-bold tracking-wider text-text-muted hover:text-text-main uppercase flex items-center justify-between rounded-md hover:bg-surface-subtle transition-colors group select-none cursor-pointer"
                       >
                         <div className="flex items-center gap-1.5">
                           <ChevronDown
                             className={`w-3.5 h-3.5 text-text-faint group-hover:text-text-main transition-transform duration-150 ${
-                              isBundledExpanded ? 'rotate-0' : '-rotate-90'
+                              isStudyExpanded ? 'rotate-0' : '-rotate-90'
                             }`}
                           />
-                          <span>Bundled Blueprints</span>
+                          <span>Scene Studies</span>
                         </div>
-                        <span className="text-[9.5px] px-1.5 py-0.2 rounded-full bg-surface-subtle border border-border-subtle group-hover:border-border-main text-text-muted font-mono">
-                          {bundledFiltered.length}
+                        <span className="text-[9.5px] px-1.5 py-0.2 rounded-full bg-violet-500/15 border border-violet-400/30 text-violet-600 dark:text-violet-300 font-mono">
+                          {studyFiltered.length}
                         </span>
                       </button>
 
-                      {isBundledExpanded && (
+                      {isStudyExpanded && (
                         <div className="space-y-1.5">
-                          {bundledFiltered.map((item) => (
+                          {studyFiltered.map((item) => (
+                            <ScoreLibraryCard
+                              key={item.id}
+                              item={item}
+                              isActive={item.id === activeSceneId}
+                              isSelected={item.id === selectedScore?.id}
+                              onSelect={() => {
+                                setSelectedScoreId(item.id);
+                                setMobileView('details');
+                              }}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Bundled Blueprints Section */}
+                  {blueprintFiltered.length > 0 && (
+                    <div className="space-y-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setIsBlueprintExpanded((prev) => !prev)}
+                        aria-expanded={isBlueprintExpanded}
+                        className="w-full px-2 py-1 text-[10px] font-mono font-bold tracking-wider text-text-muted hover:text-text-main uppercase flex items-center justify-between rounded-md hover:bg-surface-subtle transition-colors group select-none cursor-pointer"
+                      >
+                        <div className="flex items-center gap-1.5">
+                          <ChevronDown
+                            className={`w-3.5 h-3.5 text-text-faint group-hover:text-text-main transition-transform duration-150 ${
+                              isBlueprintExpanded ? 'rotate-0' : '-rotate-90'
+                            }`}
+                          />
+                          <span>Blueprints</span>
+                        </div>
+                        <span className="text-[9.5px] px-1.5 py-0.2 rounded-full bg-surface-subtle border border-border-subtle group-hover:border-border-main text-text-muted font-mono">
+                          {blueprintFiltered.length}
+                        </span>
+                      </button>
+
+                      {isBlueprintExpanded && (
+                        <div className="space-y-1.5">
+                          {blueprintFiltered.map((item) => (
                             <ScoreLibraryCard
                               key={item.id}
                               item={item}

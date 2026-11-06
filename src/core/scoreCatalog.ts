@@ -2,19 +2,20 @@
  * Bundled scene catalog registry for StageFlow.
  */
 
-import demoBlueprintRaw from '../scores/demo_blueprint.yaml?raw';
-import blueprint02Raw from '../scores/blueprint_02_dialogue.yaml?raw';
-import blueprint03Raw from '../scores/blueprint_03_ball_pass.yaml?raw';
-import blueprint04Raw from '../scores/blueprint_04_cinematography_tutorial.yaml?raw';
-import blueprint05Raw from '../scores/blueprint_05_two_rooms.yaml?raw';
-import vectorFieldRaw from '../scores/vector_field.yaml?raw';
-import type { StageScore } from './types';
+import demoBlueprintRaw from '../scores/blueprints/demo_blueprint.yaml?raw';
+import blueprint02Raw from '../scores/blueprints/blueprint_02_dialogue.yaml?raw';
+import blueprint03Raw from '../scores/blueprints/blueprint_03_ball_pass.yaml?raw';
+import blueprint04Raw from '../scores/blueprints/blueprint_04_cinematography_tutorial.yaml?raw';
+import blueprint05Raw from '../scores/blueprints/blueprint_05_two_rooms.yaml?raw';
+import vectorFieldRaw from '../scores/studies/vector_field.yaml?raw';
+import type { ScoreCategory, StageScore } from './types';
 import { parseStageScore } from './scoreParser';
 
 export interface ScoreCatalogItem {
   id: string;
   title: string;
   subtitle?: string;
+  category: ScoreCategory;
   rawYaml: string;
   score: StageScore;
   isCustom?: boolean;
@@ -73,43 +74,55 @@ export const INITIAL_CATALOG_ITEMS: ScoreCatalogItem[] = [
     id: parsedVectorField.score.id,
     title: parsedVectorField.score.title,
     subtitle: parsedVectorField.score.subtitle,
+    category: 'study',
     rawYaml: vectorFieldRaw,
     score: parsedVectorField.score,
+    isCustom: false,
   },
   {
     id: parsedDemo.score.id,
     title: parsedDemo.score.title,
     subtitle: parsedDemo.score.subtitle,
+    category: 'blueprint',
     rawYaml: demoBlueprintRaw,
     score: parsedDemo.score,
+    isCustom: false,
   },
   {
     id: parsed02.score.id,
     title: parsed02.score.title,
     subtitle: parsed02.score.subtitle,
+    category: 'blueprint',
     rawYaml: blueprint02Raw,
     score: parsed02.score,
+    isCustom: false,
   },
   {
     id: parsed03.score.id,
     title: parsed03.score.title,
     subtitle: parsed03.score.subtitle,
+    category: 'blueprint',
     rawYaml: blueprint03Raw,
     score: parsed03.score,
+    isCustom: false,
   },
   {
     id: parsed04.score.id,
     title: parsed04.score.title,
     subtitle: parsed04.score.subtitle,
+    category: 'blueprint',
     rawYaml: blueprint04Raw,
     score: parsed04.score,
+    isCustom: false,
   },
   {
     id: parsed05.score.id,
     title: parsed05.score.title,
     subtitle: parsed05.score.subtitle,
+    category: 'blueprint',
     rawYaml: blueprint05Raw,
     score: parsed05.score,
+    isCustom: false,
   },
 ];
 

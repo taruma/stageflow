@@ -15,6 +15,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { UI_TOKENS } from '../tokens/ui';
+import type { FilterTab } from '../ScoreLibraryModal';
 
 export interface FileMenuDropdownProps {
   isOpen: boolean;
@@ -24,7 +25,7 @@ export interface FileMenuDropdownProps {
   onUploadFiles: (files: FileList) => void;
   onExportActiveScore: () => void;
   onCreateBlankScore?: () => void;
-  onOpenLibrary: (tab?: 'all' | 'bundled' | 'custom') => void;
+  onOpenLibrary: (tab?: FilterTab) => void;
 }
 
 export const FileMenuDropdown: React.FC<FileMenuDropdownProps> = ({
