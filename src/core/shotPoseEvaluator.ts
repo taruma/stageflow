@@ -151,7 +151,9 @@ export function evaluateShotCameraPose(
   durationSec: number,
   entitiesById: Map<string, EvaluatedEntityState>,
   baselinePose?: SphericalPose,
-  startOffset: Vec3 = ZERO_OFFSET
+  startOffset: Vec3 = ZERO_OFFSET,
+  destOffset?: Vec3,
+  isContinuous = false
 ): SphericalPose {
   const u = evaluateCameraEasing(spec.easing, tRaw);
 
@@ -159,7 +161,8 @@ export function evaluateShotCameraPose(
     return evaluateSplineCameraPose(P0, spec, u, entitiesById);
   }
 
-  const endOffset = resolveShotDestOffset(spec);
+  const endOffset =
+    destOffset ?? resolveShotDestOffset(spec, startOffset, isContinuous);
   const destTarget =
     spec.target !== undefined
       ? resolveTargetPoint3D(spec.target, entitiesById, P0.target, endOffset)
@@ -179,7 +182,7 @@ export function evaluateShotCameraPose(
   }
 
   const effectiveBaseline = baselinePose ?? { ...P0, roll: 0 };
-  const destRoll = resolveShotDestRoll(P0, spec, effectiveBaseline);
+  const destRoll = resolveShotDestRoll(P0, spec, effectiveBaseline, isContinuous);
 
   const P1: SphericalPose = clampSphericalPose({
     target: destTarget,
@@ -205,6 +208,8 @@ export function sampleTrajectoryPoints(
   aspectRatio: number,
   baselinePose?: SphericalPose,
   startOffset: Vec3 = ZERO_OFFSET,
+  destOffset?: Vec3,
+  isContinuous = false,
   samples = 32
 ): Vec3[] {
   if (spec.maneuver === 'cut') {
@@ -220,7 +225,9 @@ export function sampleTrajectoryPoints(
       durationSec,
       entitiesById,
       baselinePose,
-      startOffset
+      startOffset,
+      destOffset,
+      isContinuous
     );
     const cart = sphericalToCartesian(pose, aspectRatio);
     points.push(cart.position);

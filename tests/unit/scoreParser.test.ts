@@ -513,6 +513,58 @@ observer_shots:
       expect(score!.observerShots![0].startSec).toBe(0.0);
       expect(score!.observerShots![0].endSec).toBe(27.0);
     });
+
+    it('supports shot-level continuous overrides and hybrid cut/oner configurations', () => {
+      const hybridYaml = `
+version: "1.0"
+id: "hybrid-shot-continuous-test"
+title: "Hybrid Shot Continuous Test"
+shots:
+  - id: "s1"
+    start: 0.0
+    end: 4.0
+  - id: "s2"
+    start: 4.0
+    end: 8.0
+  - id: "s3"
+    continuous: true
+    end: 14.0
+  - id: "s4"
+    start: 14.0
+    end: 20.0
+`;
+      const { score, error, warning } = parseStageScore(hybridYaml);
+      expect(error).toBeNull();
+      expect(warning).toBeNull();
+      expect(score!.shots[0].continuous).toBeUndefined();
+      expect(score!.shots[2].continuous).toBe(true);
+      expect(score!.shots[2].startSec).toBe(8.0); // Auto-chained from s2.endSec
+      expect(score!.shots[2].endSec).toBe(14.0);
+    });
+
+    it('allows shot-level continuous: false to override root continuous: true', () => {
+      const overrideYaml = `
+version: "1.0"
+id: "shot-override-test"
+title: "Shot Override Test"
+continuous: true
+shots:
+  - id: "s1"
+    end: 5.0
+  - id: "s2"
+    end: 10.0
+  - id: "s3"
+    continuous: false
+    start: 12.0
+    end: 18.0
+`;
+      const { score, error } = parseStageScore(overrideYaml);
+      expect(error).toBeNull();
+      expect(score!.continuous).toBe(true);
+      expect(score!.shots[1].startSec).toBe(5.0);
+      expect(score!.shots[2].continuous).toBe(false);
+      expect(score!.shots[2].startSec).toBe(12.0);
+    });
   });
   describe('Modular Submodules — scorePrimitives & cameraCueParser Direct Unit Contracts', () => {
     it('correctly parses vector primitives and fallbacks', () => {

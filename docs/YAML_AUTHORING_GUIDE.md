@@ -266,7 +266,7 @@ StageFlow organizes choreography scores into a clean 3-tier taxonomy (`study`, `
 1. **Omitting `start` on a shot without declaring `continuous: true`**: In standard mode, omitting `start` defaults to `0.0s` and flags a warning in the editor.
 2. **Assuming `yaw` rotates clockwise when positive**: In StageFlow's right-handed Y-up coordinate space, positive yaw increases **counter-clockwise (CCW)** when viewed from overhead (+Y), moving from downstage (+Z / 6:00) toward Stage Right (+X / 3:00). Conversely, `direction: "cw"` commands decreasing yaw angles.
 3. **Confusing camera `target_offset` with root-level `offset`**: Root `offset: 0.0` calibrates the global media clock in seconds; to shift a camera's 3D look-at point in meters, use `target_offset: [dx, dy, dz]` (or `targetOffset`).
-4. **Expecting `roll` to hold across cuts without declaring it**: In accordance with Option A semantics, camera roll resets to level horizon (`0°`) at shot boundaries unless explicitly authored.
+4. **Expecting `roll` to hold across standard cuts without declaring it**: In standard mode (`continuous: false`), camera roll resets to level horizon (`0°`) at shot boundaries unless explicitly authored or chained via `continuous: true`.
 5. **Declaring a single `distance:` in standard mode expecting motion**: A single value establishes a constant distance throughout the shot. To animate distance in standard mode, provide `distance_start` and `distance_end`.
 6. **Writing entity movement in `shots[].entities` when root `blocking:` is present**: When root `blocking:` exists, it claims exclusive kinematic authority over position and rotation; per-shot entity maps provide only `highlighted: true` and `note:` overlays.
 7. **Entity ID mismatch**: Entity keys in `shots[].entities` must match the entity `id` exactly.
@@ -434,7 +434,7 @@ StageFlow uses a unified spherical camera model across both the Illustrative Sta
 | **`easing`** | `string` | — | Both | — | Temporal velocity profile (see §4.4). Default: `smooth`. |
 | **`target`** | `string \| array`| `m` | Both | — | Destination look-at anchor (entity ID, `"center"`, or `[x,y,z]`). |
 | **`from`** | `string \| array`| `m` | Both | — | Starting look-at anchor at shot start (glides from `from` to `target`). |
-| **`target_offset`**| `[dx, dy, dz]` | `m` | Both | `targetOffset` | World-space metric offset added to target anchor. Resets to `[0,0,0]` if omitted. |
+| **`target_offset`**| `[dx, dy, dz]` | `m` | Both | `targetOffset` | World-space metric offset added to target anchor. Resets to `[0,0,0]` on standard cuts if omitted (persists/glides in `continuous: true`). |
 | **`target_offset_start`** | `[dx, dy, dz]` | `m` | Both | `targetOffsetStart` | Starting target offset vector. |
 | **`target_offset_end`** | `[dx, dy, dz]` | `m` | Both | `targetOffsetEnd` | Ending target offset vector. |
 | **`distance`** | `number` | `m` | Both | — | Destination radial distance from target (`0.4m` to `100.0m`). |
@@ -447,7 +447,7 @@ StageFlow uses a unified spherical camera model across both the Illustrative Sta
 | **`yaw_start`** | `number` | `deg`| Both | `yawStart` | Explicit starting azimuth angle. |
 | **`yaw_end`** | `number` | `deg`| Both | `yawEnd` | Explicit ending azimuth angle. |
 | **`yaw_delta`** | `number` | `deg`| Both | `yawDelta` | Relative azimuthal rotation from starting yaw (e.g. `yaw_delta: 90`). |
-| **`roll`** | `number` | `deg`| Both | `dutch` | Optical axis roll angle. Resets to `0°` if omitted. |
+| **`roll`** | `number` | `deg`| Both | `dutch` | Optical axis roll angle. Resets to `0°` on standard cuts if omitted (persists/glides in `continuous: true`). |
 | **`roll_start`** | `number` | `deg`| Both | `rollStart` | Explicit starting roll angle. |
 | **`roll_end`** | `number` | `deg`| Both | `rollEnd` | Explicit ending roll angle. |
 | **`roll_delta`** | `number` | `deg`| Both | `rollDelta` | Relative roll delta (e.g. `roll_delta: 360` for complete barrel roll). |
@@ -602,6 +602,7 @@ The `shots:` array defines the film camera cuts, lens mounts, and editorial cove
 | **`description`** | `string` | `""` | `note` | Directorial staging summary displayed in top-left HUD. |
 | **`start`** | `number` | `0.0` | `_start` | Cue start timestamp in seconds. |
 | **`end`** | `number` | `start + 5.0` | `_end` | Cue end timestamp in seconds (clamped to $\ge \text{start} + 0.1$). |
+| **`continuous`** | `boolean` | Inherits root | — | When `true`, auto-chains start time and camera kinematics from previous shot. |
 | **`stage_camera`**| `object` | Baseline | `stageCamera` | Physical camera choreography within the diorama. |
 | **`observer_camera`**| `object` | Baseline | `observerCamera` | Legacy per-shot viewport camera choreography. |
 | **`entities`** | `object` | `{}` | — | Per-shot actor movement overrides and focus tags (see §6.4). |
@@ -613,11 +614,14 @@ The `shots:` array defines the film camera cuts, lens mounts, and editorial cove
 - If a shot declares a single value (`distance: 3.5`, `pitch: 8`, `yaw: 45`), the camera holds that value statically from `start` to `end`.
 - To animate camera position in standard mode, both start and end bounds must be authored (`distance_start` + `distance_end`).
 - Omitting a parameter entirely inherits the terminal pose of the preceding shot.
+- Omitted Dutch angles (`roll`) and framing offsets (`target_offset`) reset cleanly to neutral baselines ($0^\circ$ and $[0, 0, 0]$) at shot boundaries (Option A).
 
-#### Continuous Mode (`continuous: true`)
-- Opt-in single-take "oner" mode declared at the score root.
+#### Continuous Mode (`continuous: true` at Root or on a Shot)
+- Opt-in single-take "oner" mode declared at the score root or on individual shots.
 - **Contiguous timeline auto-chaining**: Omitted `start` timestamps automatically inherit the previous shot's `end` timestamp (`shots[0]` defaults to `0.0s`). Explicit `start:` timestamps remain strictly respected.
-- **Physical camera parameter chaining**: For moving maneuvers (`maneuver !== 'cut'`), omitting `distance_start`, `pitch_start`, or `yaw_start` automatically pulls starting values from the previous shot's terminal pose. The camera glides seamlessly into the new setup without coordinate jumps.
+- **Physical camera parameter chaining**: For moving maneuvers (`maneuver !== 'cut'`), omitting `distance_start`, `pitch_start`, or `yaw_start` automatically pulls starting values from the previous shot's terminal pose.
+- **Unbroken Dutch Angle & Offset Continuity**: In continuous mode, the camera operates as an unbroken physical rig. `roll` and `target_offset` persist across boundaries without snapping to neutral. Omitting `roll` holds the angle; declaring `roll: 0` glides smoothly back to level horizon.
+- **Shot-Level Hybrid Flexibility**: Setting `continuous: true` on an individual shot creates a multi-beat continuous sequence inside an otherwise standard cut scene. Setting `continuous: false` on a shot overrides root continuous mode to author an independent cut.
 
 ```yaml
 # Standard Mode: Explicit start/end required for motion
@@ -634,24 +638,49 @@ continuous: true
 shots:
   - id: "shot-1"
     end: 5.0
-    stage_camera: { target: "hero", distance: 4.0, pitch: 12, yaw: 0, lens: 35mm }
+    stage_camera: { target: "hero", distance: 4.0, pitch: 12, yaw: 0, roll: 15, lens: 35mm }
   - id: "shot-2"
     end: 10.0
-    # Automatically starts at t=5.0s, starting distance 4.0m, pitch 12°, yaw 0°
+    # Automatically starts at t=5.0s, starting distance 4.0m, pitch 12°, yaw 0°, roll 15°
     stage_camera: { target: "hero", maneuver: "dolly", distance: 2.2, pitch: 6, yaw: 45, lens: 50mm }
+```
+
+```yaml
+# Hybrid Scene: Standard cuts with an opt-in continuous 2-beat oner
+shots:
+  - id: "shot-1" # Cut (Wide)
+    start: 0.0
+    end: 4.0
+    stage_camera: { target: "hero", distance: 5.0, pitch: 10, yaw: 0 }
+  - id: "shot-2" # Cut (Medium with Dutch angle)
+    start: 4.0
+    end: 8.0
+    stage_camera: { target: "hero", distance: 2.5, pitch: 14, yaw: -25, roll: 12 }
+  - id: "shot-3" # Cut to start of Steadicam move
+    start: 8.0
+    end: 12.0
+    stage_camera: { target: "hero", maneuver: "dolly", distance: 1.8, pitch: 10, yaw: 30, roll: 10 }
+  - id: "shot-4" # Continuous extension of shot-3!
+    continuous: true # Starts at 12.0s; glides from shot-3 pose and preserves 10° roll
+    end: 16.0
+    stage_camera: { target: "door", maneuver: "dolly", distance: 1.4, yaw: 75 }
+  - id: "shot-5" # Standard Cut! (Roll cleanly resets to 0° baseline)
+    start: 16.0
+    end: 20.0
+    stage_camera: { target: "hero", distance: 4.0, pitch: 15, yaw: 0 }
 ```
 
 ### 5.3 Consolidated Boundary Reset Matrix
 
 At shot boundaries, parameters behave according to Option A deterministic reset semantics:
 
-| Parameter | At Shot Boundary when Omitted | How to Persist or Animate |
-| :--- | :--- | :--- |
-| **`distance` / `pitch` / `yaw`** | Glides from previous terminal pose (in `continuous: true` mode with moving maneuver); otherwise holds authored value | Author explicit `*_start` and `*_end` spans |
-| **`roll` (Dutch angle)** | **Resets to `0°` (Level horizon)** | Re-declare `roll: <deg>`, or author `roll_start` / `roll_end` |
-| **`target_offset`** | **Resets to `[0, 0, 0]`** | Re-declare `target_offset`, or author `target_offset_start` / `target_offset_end` |
-| **`lens` (Focal length)** | Holds previous prime focal length | Declare `lens: <f>` for discrete prime mount; author `lens_start` + `lens_end` for zoom |
-| **`target`** | **Cuts instantly to new anchor point** | Author `from: "<prev_anchor>"` to smoothly pan across subjects |
+| Parameter | At Shot Boundary when Omitted (Standard Cut) | In Continuous Mode (`continuous: true`) | How to Persist or Animate |
+| :--- | :--- | :--- | :--- |
+| **`distance` / `pitch` / `yaw`** | Holds authored value statically | Glides from previous terminal pose | Author explicit `*_start` and `*_end` spans |
+| **`roll` (Dutch angle)** | **Resets to `0°` (Level horizon)** | **Glides / holds preceding roll** | Re-declare `roll: <deg>`, or author `roll_start` / `roll_end` |
+| **`target_offset`** | **Resets to `[0, 0, 0]`** | **Glides / holds preceding offset** | Re-declare `target_offset`, or author `target_offset_start` / `target_offset_end` |
+| **`lens` (Focal length)** | Holds previous prime focal length | Holds previous prime focal length | Declare `lens: <f>` for discrete prime mount; author `lens_start` + `lens_end` for zoom |
+| **`target`** | **Cuts instantly to new anchor point** | **Cuts instantly unless `from:` is specified** | Author `from: "<prev_anchor>"` to smoothly pan across subjects |
 
 ---
 

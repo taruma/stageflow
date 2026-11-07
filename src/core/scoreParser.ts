@@ -267,10 +267,21 @@ export function parseStageScore(
         typeof rawStartCandidate === 'number' &&
         Number.isFinite(rawStartCandidate);
 
+      const shotContinuous =
+        typeof sh.continuous === 'boolean'
+          ? sh.continuous
+          : sh.continuous === 'true' || sh.continuous === 'yes'
+          ? true
+          : sh.continuous === 'false' || sh.continuous === 'no'
+          ? false
+          : undefined;
+
+      const isContinuous = shotContinuous ?? continuous;
+
       let startSec: number;
       if (hasExplicitStart) {
         startSec = Math.max(0, rawStartCandidate);
-      } else if (continuous) {
+      } else if (isContinuous) {
         startSec = prevShotEndSec;
       } else {
         startSec = 0;
@@ -318,6 +329,7 @@ export function parseStageScore(
             : idx + 1,
         label: String(sh.label ?? sh.name ?? `Shot ${idx + 1}`),
         description: String(sh.description ?? sh.note ?? ''),
+        ...(shotContinuous !== undefined ? { continuous: shotContinuous } : {}),
         startSec,
         endSec,
         stageCamera: parseStageCameraCueSpec(
@@ -370,7 +382,7 @@ export function parseStageScore(
       : 0;
 
   const warning =
-    !continuous && missingStartShotIds.length > 0
+    missingStartShotIds.length > 0
       ? `Shot "${missingStartShotIds[0]}" omits "start" (defaulted to 0.0s). Add "start:" or declare "continuous: true" at root to auto-chain.`
       : null;
 

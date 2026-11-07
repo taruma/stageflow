@@ -14,13 +14,15 @@ import { ENTITY_DEFAULTS } from './constants';
 export const ZERO_OFFSET: Vec3 = { x: 0, y: 0, z: 0 };
 
 /**
- * Resolves starting roll for a shot according to Option A semantics:
- * Resets to baselinePose.roll (0 rad) unless explicitly specified or continuing a delta/end.
+ * Resolves starting roll for a shot:
+ * - In standard mode (isContinuous = false): Resets to baselinePose.roll (0 rad) unless explicitly specified or continuing a delta/end (Option A).
+ * - In continuous mode (isContinuous = true): Preserves prevPose.roll unless explicitly specified, gliding into authored roll.
  */
 export function resolveShotStartRoll(
   spec: CameraCueSpec,
   prevPose: SphericalPose,
-  baselinePose: SphericalPose
+  baselinePose: SphericalPose,
+  isContinuous = false
 ): number {
   if (spec.rollStartRad !== undefined) {
     return spec.rollStartRad;
@@ -32,15 +34,16 @@ export function resolveShotStartRoll(
     return prevPose.roll;
   }
   if (spec.rollRad !== undefined) {
-    return spec.rollRad;
+    return isContinuous ? prevPose.roll : spec.rollRad;
   }
-  return baselinePose.roll;
+  return isContinuous ? prevPose.roll : baselinePose.roll;
 }
 
 export function resolveShotDestRoll(
   P0: SphericalPose,
   spec: CameraCueSpec,
-  baselinePose: SphericalPose
+  baselinePose: SphericalPose,
+  isContinuous = false
 ): number {
   if (spec.rollEndRad !== undefined) {
     return spec.rollEndRad;
@@ -51,16 +54,18 @@ export function resolveShotDestRoll(
   if (spec.rollRad !== undefined) {
     return spec.rollRad;
   }
-  return baselinePose.roll;
+  return isContinuous ? P0.roll : baselinePose.roll;
 }
 
 /**
- * Resolves starting 3D target offset for a shot according to Option A semantics:
- * Resets to (0, 0, 0) unless explicitly specified or continuing via target_offset_end.
+ * Resolves starting 3D target offset for a shot:
+ * - In standard mode (isContinuous = false): Resets to (0, 0, 0) unless explicitly specified or continuing via target_offset_end (Option A).
+ * - In continuous mode (isContinuous = true): Preserves prevOffset unless explicitly specified, gliding into authored offset.
  */
 export function resolveShotStartOffset(
   spec: CameraCueSpec,
-  prevOffset: Vec3 = ZERO_OFFSET
+  prevOffset: Vec3 = ZERO_OFFSET,
+  isContinuous = false
 ): Vec3 {
   if (spec.targetOffsetStart !== undefined) {
     return { ...spec.targetOffsetStart };
@@ -69,19 +74,23 @@ export function resolveShotStartOffset(
     return spec.targetOffset ? { ...spec.targetOffset } : { ...prevOffset };
   }
   if (spec.targetOffset !== undefined) {
-    return { ...spec.targetOffset };
+    return isContinuous ? { ...prevOffset } : { ...spec.targetOffset };
   }
-  return { ...ZERO_OFFSET };
+  return isContinuous ? { ...prevOffset } : { ...ZERO_OFFSET };
 }
 
-export function resolveShotDestOffset(spec: CameraCueSpec): Vec3 {
+export function resolveShotDestOffset(
+  spec: CameraCueSpec,
+  prevOffset: Vec3 = ZERO_OFFSET,
+  isContinuous = false
+): Vec3 {
   if (spec.targetOffsetEnd !== undefined) {
     return { ...spec.targetOffsetEnd };
   }
   if (spec.targetOffset !== undefined) {
     return { ...spec.targetOffset };
   }
-  return { ...ZERO_OFFSET };
+  return isContinuous ? { ...prevOffset } : { ...ZERO_OFFSET };
 }
 
 /**

@@ -170,10 +170,11 @@ StageFlow is a **stateless functional evaluator** (`Frame_t = f(t, score)`). Eff
    - **Tier 2 (Per-Shot `shots[].entities`)**: When root `blocking` is omitted, at the start of shot $k$, every entity inherits its terminal position $\vec{p}_{\text{end}, k-1}$, facing angle $\psi_{\text{end}, k-1}$, and `visible` flag from shot $k - 1$, unless overridden by `from` in `shots[k].entities.<id>`. `highlighted` is evaluated per-shot (defaults to `false` if omitted in shot $k$).
    - **Tier 3 (Static `entities`)**: Holds baseline position and rotation.
 2. **Camera Spatial Chaining (`continuous: false` vs. `continuous: true`)**:
-   - **Standard Mode (`continuous: false`, default)**: Each shot explicitly declares `start` and `end`. If a shot specifies single-value `distance`, `pitch`, or `yaw` without `*_start`, the camera starts and ends the shot at that value (unless `*_end` is also provided). Omitting a parameter inherits the previous shot's terminal value.
-   - **Continuous Mode (`continuous: true` at root)**:
-     - **Timeline**: If `shots[0]` omits `start`, $t_{\text{start}, 0} = 0.0$. If `shots[k]` ($k \ge 1$) omits `start`, $t_{\text{start}, k} = t_{\text{end}, k-1}$. Explicit `start` values are always honored.
-     - **Pose Flow**: For any moving maneuver (`maneuver !== "cut"`) on `shots[k]` ($k \ge 1$), omitting `distance_start`, `pitch_start`, or `yaw_start` automatically binds the shot's starting pose $P_0$ to the previous shot's terminal pose $P_{\text{end}, k-1}$, interpolating smoothly to the newly authored `distance`, `pitch`, and `yaw`.
+   - **Standard Mode (`continuous: false`, default)**: Each shot explicitly declares `start` and `end`. If a shot specifies single-value `distance`, `pitch`, or `yaw` without `*_start`, the camera starts and ends the shot at that value (unless `*_end` is also provided). Omitting a parameter inherits the previous shot's terminal value. Dutch angle (`roll`) and `target_offset` reset to neutral baselines ($0^\circ$ and $\vec{0}$) at shot boundaries when omitted (Option A).
+   - **Continuous Mode (`continuous: true` at root or `shots[k].continuous: true`)**:
+     - **Timeline**: If `shots[0]` omits `start`, $t_{\text{start}, 0} = 0.0$. If `shots[k]` ($k \ge 1$) omits `start`, $t_{\text{start}, k} = t_{\text{end}, k-1}$. Explicit `start` values are always honored. Shot-level `continuous: false` overrides root `continuous: true` to author an independent cut.
+     - **Pose Flow**: For any moving maneuver (`maneuver !== "cut"`) on continuous `shots[k]` ($k \ge 1$), omitting `distance_start`, `pitch_start`, or `yaw_start` automatically binds the shot's starting pose $P_0$ to the previous shot's terminal pose $P_{\text{end}, k-1}$, interpolating smoothly to the newly authored destination.
+     - **Unbroken Roll & Target Offset Continuity**: In continuous mode, `roll` and `target_offset` preserve across shot boundaries without snapping to zero. If omitted, they persist from $P_{\text{end}, k-1}$; if specified, they smoothly ease from the preceding terminal state to the newly authored destination.
 3. **Discrete Prime Lens Mounting**:
    - Specifying `lens: 50mm` mounts that focal length immediately at $t_{\text{start}}$ and holds it constant ($f_0 = f_1 = 50\text{ mm}$).
    - Omitting `lens`, `lens_start`, and `lens_end` preserves the previous shot's terminal focal length.
@@ -181,9 +182,9 @@ StageFlow is a **stateless functional evaluator** (`Frame_t = f(t, score)`). Eff
 4. **Look-At Target Snapping vs. Panning (`target` vs. `from`)**:
    - Specifying `target` without `from` snaps the look-at anchor to `target` at $t_{\text{start}}$ ($\vec{T}_0 = \vec{T}_1 = \vec{T}_{\text{target}}$). If the target is a moving entity, $\vec{T}(t)$ tracks the entity's live position throughout the shot.
    - Specifying both `from` and `target` interpolates the look-at anchor from $\vec{T}_{\text{from}}(t)$ to $\vec{T}_{\text{target}}(t)$.
-5. **Shot-Boundary Reset of `roll` and `target_offset` (Option A Semantics)**:
-   - Unlike $d, \theta, \psi$, both `roll` and `target_offset` reset to baseline ($0\text{ rad}$ and $[0, 0, 0]$) at shot boundaries whenever omitted.
-   - To persist or animate them across a shot, specify `roll`, `roll_start`/`roll_end`, `roll_delta`, `target_offset`, or `target_offset_start`/`target_offset_end`.
+5. **Shot-Boundary Reset vs. Continuous Flow of `roll` and `target_offset`**:
+   - **Standard Cuts (`continuous: false`)**: Unlike $d, \theta, \psi$, both `roll` and `target_offset` reset to neutral baselines ($0\text{ rad}$ and $[0, 0, 0]$) at shot boundaries whenever omitted (Option A). To persist or animate them across a standard cut, specify `roll`, `roll_start`/`roll_end`, `roll_delta`, `target_offset`, or `target_offset_start`/`target_offset_end`.
+   - **Continuous Mode (`continuous: true` at root or `shots[k].continuous: true`)**: On moving maneuvers ($k \ge 1$), both `roll` and `target_offset` preserve across shot boundaries—persisting from $P_{\text{end}, k-1}$ when omitted and smoothly interpolating from the preceding terminal value when specified.
 6. **Observer Camera Resolution Hierarchy**:
    - **Tier 1**: Root `observerShots` (decoupled timeline; takes complete precedence if non-empty, holding $P_{\text{end}}$ across uncued gaps).
    - **Tier 2**: Per-shot `shots[].observerCamera`.
@@ -225,6 +226,10 @@ StageFlow is a **stateless functional evaluator** (`Frame_t = f(t, score)`). Eff
 | | `shots` | `ShotCue[]` (non-empty array of film coverage shots, $\text{length} \ge 1$) |
 | | `observerShots` | `ObserverShotCue[] \| undefined` (optional Tier 1 decoupled observer timeline) |
 | | `blocking` | `BlockingCueSpec[] \| undefined` (optional Tier 1 decoupled entity blocking timeline) |
+| **`ShotCue`** | `id`, `shotNumber`, `label`, `description` | `string` identifiers and notes; `number` shot index |
+| | `continuous` | `boolean \| undefined` (shot-level contiguous timeline & pose-flow override) |
+| | `startSec`, `endSec` | $t_{\text{start}}, t_{\text{end}} \ge 0.0\text{ s}$ shot timing bounds |
+| | `stageCamera`, `observerCamera`, `entities` | Optional `StageCameraCueSpec`, `CameraCueSpec`, and per-shot `EntityCueOverride` map |
 | **`SphericalPose`** | `target` | `Vec3` $\{x, y, z\} \in \mathbb{R}^3\text{ m}$ |
 | | `distance` | `number` $d \in [0.4, 100.0]\text{ m}$ |
 | | `pitch`, `yaw`, `roll` | `number` angles in **radians**: $\theta \in [-1.4835, +1.4835]$, $\psi \in \mathbb{R}$, $\gamma \in \mathbb{R}$ |

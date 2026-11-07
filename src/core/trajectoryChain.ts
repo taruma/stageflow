@@ -56,6 +56,7 @@ interface NormalizedCameraCue {
   id: string;
   startSec: number;
   endSec: number;
+  continuous?: boolean;
   spec: CameraCueSpec;
 }
 
@@ -82,6 +83,7 @@ function extractTrackCues(
         id: s.id,
         startSec: s.startSec,
         endSec: s.endSec,
+        continuous: s.continuous,
         spec,
       });
     }
@@ -115,12 +117,14 @@ function sampleCueTrajectoryPoints(
     return [];
   }
 
-  const durationSec = Math.max(0.016, cue.endSec - cue.startSec);
-  const startOffset = resolveShotStartOffset(spec, prevEndOffset);
   const isContinuousStageMove =
     role === 'stage' &&
-    Boolean(score.continuous) &&
+    Boolean(cue.continuous ?? score.continuous) &&
     !isFirst;
+
+  const durationSec = Math.max(0.016, cue.endSec - cue.startSec);
+  const startOffset = resolveShotStartOffset(spec, prevEndOffset, isContinuousStageMove);
+  const endOffset = resolveShotDestOffset(spec, prevEndOffset, isContinuousStageMove);
 
   const startDistance =
     spec.distanceStart ??
@@ -140,7 +144,12 @@ function sampleCueTrajectoryPoints(
       ? prevEndPose.yaw
       : spec.yawRad ?? prevEndPose.yaw);
 
-  const startRoll = resolveShotStartRoll(spec, prevEndPose, baselinePose);
+  const startRoll = resolveShotStartRoll(spec, prevEndPose, baselinePose, isContinuousStageMove);
+  const prevBaseTarget: Vec3 = {
+    x: prevEndPose.target.x - prevEndOffset.x,
+    y: prevEndPose.target.y - prevEndOffset.y,
+    z: prevEndPose.target.z - prevEndOffset.z,
+  };
 
   const points: Vec3[] = [];
   for (let i = 0; i <= samples; i++) {
@@ -152,20 +161,20 @@ function sampleCueTrajectoryPoints(
       ? resolveTargetPoint3D(
           spec.from,
           entitiesById,
-          prevEndPose.target,
+          prevBaseTarget,
           startOffset
         )
       : spec.target
       ? resolveTargetPoint3D(
           spec.target,
           entitiesById,
-          prevEndPose.target,
+          prevBaseTarget,
           startOffset
         )
       : {
-          x: prevEndPose.target.x + startOffset.x,
-          y: prevEndPose.target.y + startOffset.y,
-          z: prevEndPose.target.z + startOffset.z,
+          x: prevBaseTarget.x + startOffset.x,
+          y: prevBaseTarget.y + startOffset.y,
+          z: prevBaseTarget.z + startOffset.z,
         };
 
     const P_start = clampSphericalPose({
@@ -185,7 +194,9 @@ function sampleCueTrajectoryPoints(
       durationSec,
       entitiesById,
       baselinePose,
-      startOffset
+      startOffset,
+      endOffset,
+      isContinuousStageMove
     );
     const cart = sphericalToCartesian(pose, score.aspectRatio);
     points.push(cart.position);
@@ -240,10 +251,22 @@ function getOrCreateCueTrackCache(
     );
     cueTrajectoryPoints.set(cue.id, points);
 
+    const isContinuous =
+      role === 'stage' &&
+      Boolean(cue.continuous ?? score.continuous) &&
+      i > 0 &&
+      cue.spec.maneuver !== 'cut';
+
     // Advance runningPose and runningOffset for contiguous chaining
     const { entitiesById: endEntities } = evaluateEntitiesAtTime(cue.endSec, score);
-    const startOffset = resolveShotStartOffset(cue.spec, runningOffset);
-    const endOffset = resolveShotDestOffset(cue.spec);
+    const prevEndOffset = runningOffset;
+    const prevBaseTarget: Vec3 = {
+      x: runningPose.target.x - prevEndOffset.x,
+      y: runningPose.target.y - prevEndOffset.y,
+      z: runningPose.target.z - prevEndOffset.z,
+    };
+    const startOffset = resolveShotStartOffset(cue.spec, prevEndOffset, isContinuous);
+    const endOffset = resolveShotDestOffset(cue.spec, prevEndOffset, isContinuous);
     cueStartOffsets.set(cue.id, startOffset);
     cueEndOffsets.set(cue.id, endOffset);
     runningOffset = endOffset;
@@ -252,27 +275,21 @@ function getOrCreateCueTrackCache(
       ? resolveTargetPoint3D(
           cue.spec.from,
           endEntities,
-          runningPose.target,
+          prevBaseTarget,
           startOffset
         )
       : cue.spec.target
       ? resolveTargetPoint3D(
           cue.spec.target,
           endEntities,
-          runningPose.target,
+          prevBaseTarget,
           startOffset
         )
       : {
-          x: runningPose.target.x + startOffset.x,
-          y: runningPose.target.y + startOffset.y,
-          z: runningPose.target.z + startOffset.z,
+          x: prevBaseTarget.x + startOffset.x,
+          y: prevBaseTarget.y + startOffset.y,
+          z: prevBaseTarget.z + startOffset.z,
         };
-
-    const isContinuous =
-      role === 'stage' &&
-      Boolean(score.continuous) &&
-      i > 0 &&
-      cue.spec.maneuver !== 'cut';
 
     const pStart = clampSphericalPose({
       target: startTarget,
@@ -287,7 +304,7 @@ function getOrCreateCueTrackCache(
         (isContinuous || cue.spec.yawDeltaRad !== undefined
           ? runningPose.yaw
           : cue.spec.yawRad ?? runningPose.yaw),
-      roll: resolveShotStartRoll(cue.spec, runningPose, baselinePose),
+      roll: resolveShotStartRoll(cue.spec, runningPose, baselinePose, isContinuous),
       focalLengthMm:
         cue.spec.focalLengthStartMm ?? cue.spec.focalLengthMm ?? runningPose.focalLengthMm,
     });
@@ -302,7 +319,9 @@ function getOrCreateCueTrackCache(
       dur,
       endEntities,
       baselinePose,
-      startOffset
+      startOffset,
+      endOffset,
+      isContinuous
     );
     cueEndPoses.set(cue.id, runningPose);
   }
@@ -376,30 +395,41 @@ export function evaluateCameraTrack(
       Math.max(0, (elapsedSec - activeCue.startSec) / durationSec)
     );
 
+    const unshiftedBaseTarget: Vec3 = {
+      x: basePose.target.x - startOffset.x,
+      y: basePose.target.y - startOffset.y,
+      z: basePose.target.z - startOffset.z,
+    };
+
     const startTarget = spec.from
       ? resolveTargetPoint3D(
           spec.from,
           entitiesById,
-          basePose.target,
+          unshiftedBaseTarget,
           startOffset
         )
       : spec.target
       ? resolveTargetPoint3D(
           spec.target,
           entitiesById,
-          basePose.target,
+          unshiftedBaseTarget,
           startOffset
         )
-      : {
-          x: basePose.target.x + startOffset.x,
-          y: basePose.target.y + startOffset.y,
-          z: basePose.target.z + startOffset.z,
-        };
+      : { ...basePose.target };
 
     const startPose = clampSphericalPose({
       ...basePose,
       target: startTarget,
     });
+
+    const endOffset =
+      trackCacheData.cueEndOffsets.get(activeCue.id) ?? resolveShotDestOffset(spec);
+    const activeCueIdx = cues.findIndex((c) => c.id === activeCue.id);
+    const isContinuous =
+      role === 'stage' &&
+      Boolean(activeCue.continuous ?? score.continuous) &&
+      activeCueIdx > 0 &&
+      activeCue.spec.maneuver !== 'cut';
 
     const livePose = evaluateShotCameraPose(
       startPose,
@@ -408,14 +438,14 @@ export function evaluateCameraTrack(
       durationSec,
       entitiesById,
       baselinePose,
-      startOffset
+      startOffset,
+      endOffset,
+      isContinuous
     );
     const trajectoryPoints =
       trackCacheData.cueTrajectoryPoints.get(activeCue.id) ?? [];
 
     const u = evaluateCameraEasing(spec.easing, tRaw);
-    const endOffset =
-      trackCacheData.cueEndOffsets.get(activeCue.id) ?? resolveShotDestOffset(spec);
     const liveOffset: Vec3 = {
       x: startOffset.x + (endOffset.x - startOffset.x) * u,
       y: startOffset.y + (endOffset.y - startOffset.y) * u,

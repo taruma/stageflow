@@ -209,6 +209,7 @@ export interface ShotCue {
   shotNumber: number;
   label: string;
   description: string;
+  continuous?: boolean; // When true, auto-chains start time and camera kinematics from preceding shot
   startSec: number;
   endSec: number;
   stageCamera?: StageCameraCueSpec;

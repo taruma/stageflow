@@ -504,6 +504,220 @@ shots:
     expect(fEndRecover.stageCamera.transform.pose.roll).toBeCloseTo(0, 5);
   });
 
+  it('preserves camera roll seamlessly across shot boundaries under continuous: true without snapping to 0 deg', () => {
+    const yaml = `
+version: "1.0"
+id: "continuous-roll-test"
+title: "Continuous Roll Test"
+continuous: true
+shots:
+  - id: "shot-1"
+    end: 4.0
+    stage_camera:
+      target: [0, 1, 0]
+      distance: 3.0
+      roll: 18
+  - id: "shot-2"
+    end: 8.0
+    stage_camera:
+      maneuver: "dolly"
+      easing: "linear"
+      distance: 2.0
+  - id: "shot-3"
+    end: 12.0
+    stage_camera:
+      maneuver: "dolly"
+      easing: "linear"
+      distance: 1.5
+      roll: 0
+`;
+    const { score } = parseStageScore(yaml);
+    expect(score).not.toBeNull();
+
+    // In Shot 1 (t = 2.0s), roll is 18 deg
+    const f1 = computeStageFrame(2.0, score!);
+    expect(f1.stageCamera.transform.pose.roll).toBeCloseTo(18 * (Math.PI / 180), 4);
+
+    // At t = 4.0s (transition into Shot 2), roll glides/holds seamlessly at 18 deg (no 0 deg snap!)
+    const f2Start = computeStageFrame(4.0, score!);
+    expect(f2Start.stageCamera.shotId).toBe('shot-2');
+    expect(f2Start.stageCamera.transform.pose.roll).toBeCloseTo(18 * (Math.PI / 180), 4);
+
+    // Midpoint of Shot 2 (t = 6.0s), roll remains 18 deg
+    const f2Mid = computeStageFrame(6.0, score!);
+    expect(f2Mid.stageCamera.transform.pose.roll).toBeCloseTo(18 * (Math.PI / 180), 4);
+
+    // At t = 8.0s (transition into Shot 3), roll starts at 18 deg and glides toward 0 deg
+    const f3Start = computeStageFrame(8.0, score!);
+    expect(f3Start.stageCamera.shotId).toBe('shot-3');
+    expect(f3Start.stageCamera.transform.pose.roll).toBeCloseTo(18 * (Math.PI / 180), 4);
+
+    // Midpoint of Shot 3 (t = 10.0s), roll is halfway (9 deg)
+    const f3Mid = computeStageFrame(10.0, score!);
+    expect(f3Mid.stageCamera.transform.pose.roll).toBeCloseTo(9 * (Math.PI / 180), 3);
+
+    // At t = 12.0s (end of Shot 3), roll reaches 0 deg
+    const f3End = computeStageFrame(12.0, score!);
+    expect(f3End.stageCamera.transform.pose.roll).toBeCloseTo(0, 5);
+  });
+
+  it('preserves and glides target_offset seamlessly across shot boundaries under continuous: true without snapping', () => {
+    const yaml = `
+version: "1.0"
+id: "continuous-offset-test"
+title: "Continuous Target Offset Test"
+continuous: true
+shots:
+  - id: "shot-1"
+    end: 4.0
+    stage_camera:
+      target: [0, 1, 0]
+      distance: 3.0
+      target_offset: [0.6, 0.4, 0.0]
+  - id: "shot-2"
+    end: 8.0
+    stage_camera:
+      maneuver: "dolly"
+      easing: "linear"
+      distance: 2.0
+  - id: "shot-3"
+    end: 12.0
+    stage_camera:
+      maneuver: "dolly"
+      easing: "linear"
+      distance: 1.5
+      target_offset: [0.0, 0.0, 0.0]
+`;
+    const { score } = parseStageScore(yaml);
+    expect(score).not.toBeNull();
+
+    // Shot 1 has target offset [0.6, 0.4, 0.0]
+    const f1 = computeStageFrame(2.0, score!);
+    expect(f1.stageCamera.targetOffset!.x).toBeCloseTo(0.6, 3);
+    expect(f1.stageCamera.targetOffset!.y).toBeCloseTo(0.4, 3);
+
+    // At t = 4.0s (transition into Shot 2), offset holds seamlessly without snapping to 0 or double-accumulating
+    const f2Start = computeStageFrame(4.0, score!);
+    expect(f2Start.stageCamera.shotId).toBe('shot-2');
+    expect(f2Start.stageCamera.targetOffset!.x).toBeCloseTo(0.6, 3);
+    expect(f2Start.stageCamera.targetOffset!.y).toBeCloseTo(0.4, 3);
+    expect(f2Start.stageCamera.baseTarget!.x).toBeCloseTo(0.0, 4);
+    expect(f2Start.stageCamera.baseTarget!.y).toBeCloseTo(1.0, 4);
+    expect(f2Start.stageCamera.transform.pose.target.x).toBeCloseTo(0.6, 3);
+    expect(f2Start.stageCamera.transform.pose.target.y).toBeCloseTo(1.4, 3);
+
+    // At t = 6.0s (mid of Shot 2), offset remains [0.6, 0.4, 0.0]
+    const f2Mid = computeStageFrame(6.0, score!);
+    expect(f2Mid.stageCamera.targetOffset!.x).toBeCloseTo(0.6, 3);
+    expect(f2Mid.stageCamera.targetOffset!.y).toBeCloseTo(0.4, 3);
+    expect(f2Mid.stageCamera.transform.pose.target.x).toBeCloseTo(0.6, 3);
+    expect(f2Mid.stageCamera.transform.pose.target.y).toBeCloseTo(1.4, 3);
+
+    // At t = 10.0s (mid of Shot 3 with linear easing to 0), offset is halfway [0.3, 0.2, 0.0]
+    const f3Mid = computeStageFrame(10.0, score!);
+    expect(f3Mid.stageCamera.targetOffset!.x).toBeCloseTo(0.3, 3);
+    expect(f3Mid.stageCamera.targetOffset!.y).toBeCloseTo(0.2, 3);
+    expect(f3Mid.stageCamera.transform.pose.target.x).toBeCloseTo(0.3, 3);
+    expect(f3Mid.stageCamera.transform.pose.target.y).toBeCloseTo(1.2, 3);
+
+    // At t = 12.0s, offset settles at [0.0, 0.0, 0.0] and target settles at [0.0, 1.0, 0.0]
+    const f3End = computeStageFrame(12.0, score!);
+    expect(f3End.stageCamera.targetOffset!.x).toBeCloseTo(0.0, 4);
+    expect(f3End.stageCamera.targetOffset!.y).toBeCloseTo(0.0, 4);
+    expect(f3End.stageCamera.transform.pose.target.x).toBeCloseTo(0.0, 4);
+    expect(f3End.stageCamera.transform.pose.target.y).toBeCloseTo(1.0, 4);
+  });
+
+  it('evaluates hybrid cut and oner sequences cleanly using shot-level continuous: true', () => {
+    const yaml = `
+version: "1.0"
+id: "hybrid-oner-cut-test"
+title: "Hybrid Oner and Cut Sequence"
+shots:
+  - id: "shot-1"
+    start: 0.0
+    end: 4.0
+    stage_camera:
+      target: [0, 1, 0]
+      distance: 4.0
+      pitch: 10
+      yaw: 0
+  - id: "shot-2"
+    start: 4.0
+    end: 8.0
+    stage_camera:
+      target: [0, 1, 0]
+      distance: 3.0
+      pitch: 15
+      yaw: -30
+      roll: 20
+  - id: "shot-3"
+    start: 8.0
+    end: 12.0
+    stage_camera:
+      target: [0, 1, 0]
+      maneuver: "dolly"
+      distance: 2.0
+      pitch: 12
+      yaw: 45
+      roll: 16
+  - id: "shot-4"
+    continuous: true
+    end: 16.0
+    stage_camera:
+      maneuver: "dolly"
+      easing: "linear"
+      distance: 1.5
+      pitch: 6
+      yaw: 90
+  - id: "shot-5"
+    start: 16.0
+    end: 20.0
+    stage_camera:
+      target: [0, 1, 0]
+      distance: 5.0
+      pitch: 20
+      yaw: 0
+`;
+    const { score } = parseStageScore(yaml);
+    expect(score).not.toBeNull();
+
+    // Shot 2 has 20 deg roll
+    const f2 = computeStageFrame(6.0, score!);
+    expect(f2.stageCamera.transform.pose.roll).toBeCloseTo(20 * (Math.PI / 180), 4);
+
+    // Shot 3 is a cut with roll: 16 deg
+    const f3 = computeStageFrame(9.0, score!);
+    expect(f3.stageCamera.transform.pose.roll).toBeCloseTo(16 * (Math.PI / 180), 4);
+
+    // Shot 4 is continuous: true! Auto-chains start at 12.0s
+    expect(score!.shots[3].startSec).toBe(12.0);
+    const f4Start = computeStageFrame(12.0, score!);
+    expect(f4Start.stageCamera.shotId).toBe('shot-4');
+    // Distance glides from 2.0m, pitch from 12 deg, yaw from 45 deg, roll from 16 deg
+    expect(f4Start.stageCamera.transform.pose.distance).toBeCloseTo(2.0, 3);
+    expect(f4Start.stageCamera.transform.pose.pitch).toBeCloseTo(12 * (Math.PI / 180), 3);
+    expect(f4Start.stageCamera.transform.pose.yaw).toBeCloseTo(45 * (Math.PI / 180), 3);
+    expect(f4Start.stageCamera.transform.pose.roll).toBeCloseTo(16 * (Math.PI / 180), 3);
+
+    // Midpoint of Shot 4 (t = 14.0s, linear easing):
+    // distance: (2.0 + 1.5) / 2 = 1.75m
+    // pitch: (12 + 6) / 2 = 9 deg
+    // yaw: (45 + 90) / 2 = 67.5 deg
+    // roll: holds 16 deg
+    const f4Mid = computeStageFrame(14.0, score!);
+    expect(f4Mid.stageCamera.transform.pose.distance).toBeCloseTo(1.75, 3);
+    expect(f4Mid.stageCamera.transform.pose.pitch).toBeCloseTo(9 * (Math.PI / 180), 3);
+    expect(f4Mid.stageCamera.transform.pose.yaw).toBeCloseTo(67.5 * (Math.PI / 180), 3);
+    expect(f4Mid.stageCamera.transform.pose.roll).toBeCloseTo(16 * (Math.PI / 180), 3);
+
+    // Shot 5 is a standard cut: Option A reset kicks in for omitted roll (resets to 0 deg)
+    const f5 = computeStageFrame(17.0, score!);
+    expect(f5.stageCamera.shotId).toBe('shot-5');
+    expect(f5.stageCamera.transform.pose.distance).toBeCloseTo(5.0, 3);
+    expect(f5.stageCamera.transform.pose.roll).toBeCloseTo(0, 5);
+  });
+
   it('validates Blueprint 03 30m ball-pass choreography, parabolic arc, Ruby orbit, straight pass and camera roll tracking', () => {
     const bp3Item = INITIAL_CATALOG_ITEMS.find(
       (item) => item.id === 'blueprint-03-ball-pass'
