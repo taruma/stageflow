@@ -11,8 +11,9 @@ import type { GuideDocType, GuideTocItem } from './guideUtils';
 export interface GuideSidebarTocProps {
   items: GuideTocItem[];
   activeId: string;
-  filterQuery: string;
+  filterInput: string;
   onFilterChange: (query: string) => void;
+  onClearFilter: () => void;
   onSelectSection: (id: string) => void;
   activeDoc: GuideDocType;
   onCloseMobileDrawer?: () => void;
@@ -26,8 +27,9 @@ interface TocGroup {
 export const GuideSidebarToc: React.FC<GuideSidebarTocProps> = ({
   items,
   activeId,
-  filterQuery,
+  filterInput,
   onFilterChange,
+  onClearFilter,
   onSelectSection,
   activeDoc,
   onCloseMobileDrawer,
@@ -57,9 +59,9 @@ export const GuideSidebarToc: React.FC<GuideSidebarTocProps> = ({
     return list;
   }, [items]);
 
-  // Filter groups according to filterQuery
+  // Filter groups according to filterInput
   const filteredGroups = useMemo(() => {
-    const q = filterQuery.trim().toLowerCase();
+    const q = filterInput.trim().toLowerCase();
     if (!q) return groups;
 
     return groups
@@ -82,7 +84,7 @@ export const GuideSidebarToc: React.FC<GuideSidebarTocProps> = ({
         return null;
       })
       .filter((g): g is TocGroup => g !== null);
-  }, [groups, filterQuery]);
+  }, [groups, filterInput]);
 
   const handleItemClick = (id: string) => {
     onSelectSection(id);
@@ -111,16 +113,16 @@ export const GuideSidebarToc: React.FC<GuideSidebarTocProps> = ({
           <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
           <input
             type="text"
-            value={filterQuery}
+            value={filterInput}
             onChange={(e) => onFilterChange(e.target.value)}
             placeholder={`Filter ${isSpec ? 'spec' : 'guide'} topics...`}
             className="w-full pl-8 pr-7 py-1 text-xs font-mono bg-surface border border-border-main rounded-md text-text-main placeholder-text-muted focus:outline-none focus:border-amber-500 transition-colors shadow-2xs"
           />
-          {filterQuery && (
+          {filterInput && (
             <button
               type="button"
-              onClick={() => onFilterChange('')}
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 text-text-muted hover:text-text-main rounded"
+              onClick={onClearFilter}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 text-text-muted hover:text-text-main rounded cursor-pointer"
               title="Clear search"
             >
               <X className="w-3 h-3" />
@@ -133,7 +135,7 @@ export const GuideSidebarToc: React.FC<GuideSidebarTocProps> = ({
       <div className="flex-1 overflow-y-auto custom-scrollbar space-y-3 pr-1">
         {filteredGroups.length === 0 ? (
           <div className="py-8 px-2 text-center text-text-muted font-mono text-xs">
-            No sections match &ldquo;{filterQuery}&rdquo;
+            No sections match &ldquo;{filterInput}&rdquo;
           </div>
         ) : (
           filteredGroups.map((group) => {

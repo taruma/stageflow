@@ -208,8 +208,9 @@ stageflow/
 │   │   ├── LabelDisplayModeToggle.tsx # Floating 3-mode 3D diorama label toggle (All / Cam / Off)
 │   │   ├── StageCamViewfinderOverlay.tsx # Optical film gate, look-around mask & composition guides
 │   │   ├── ConfirmResetModal.tsx    # Accessible confirmation dialog modal for discarding drafts
-│   │   └── StorageStatusBadge.tsx   # Visual status badge (Bundled vs. IndexedDB draft)
-│   ├── App.tsx                      # Root application state wiring
+│   │   ├── StorageStatusBadge.tsx   # Visual status badge (Bundled vs. IndexedDB draft)
+│   │   └── InteractiveStudioApp.tsx # 3D choreography diorama & split workspace orchestrator
+│   ├── App.tsx                      # Code-split root mode switcher & suspense router
 │   ├── main.tsx                     # Application entry point
 │   └── index.css                    # Tailwind CSS v4 + blueprint design tokens
 └── tests/

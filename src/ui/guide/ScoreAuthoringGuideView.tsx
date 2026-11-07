@@ -5,7 +5,7 @@
  * with zero WebGL diorama, video player, or transport deck overhead.
  */
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
@@ -39,16 +39,34 @@ export const ScoreAuthoringGuideView: React.FC<ScoreAuthoringGuideViewProps> = (
     }
     return 'guide';
   });
-  const [filterQuery, setFilterQuery] = useState('');
+  const [filterInput, setFilterInput] = useState('');
+  const [debouncedFilterQuery, setDebouncedFilterQuery] = useState('');
   const [activeId, setActiveId] = useState<string>('section-1');
   const [isMobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+
+  // 150ms debounce for markdown AST compilation & KaTeX math rendering
+  useEffect(() => {
+    if (!filterInput) {
+      setDebouncedFilterQuery('');
+      return;
+    }
+    const timer = setTimeout(() => {
+      setDebouncedFilterQuery(filterInput);
+    }, 150);
+    return () => clearTimeout(timer);
+  }, [filterInput]);
+
+  const handleClearFilter = useCallback(() => {
+    setFilterInput('');
+    setDebouncedFilterQuery('');
+  }, []);
 
   const currentRawDoc = activeDoc === 'spec' ? scriptSpecificationRaw : yamlAuthoringGuideRaw;
   const tocItems = useMemo(() => extractGuideToc(currentRawDoc), [currentRawDoc]);
 
   const displayedContent = useMemo(() => {
-    if (!filterQuery.trim()) return currentRawDoc;
-    const query = filterQuery.toLowerCase();
+    if (!debouncedFilterQuery.trim()) return currentRawDoc;
+    const query = debouncedFilterQuery.toLowerCase();
     const lines = currentRawDoc.split('\n');
     const matchedIndices: number[] = [];
 
@@ -57,7 +75,7 @@ export const ScoreAuthoringGuideView: React.FC<ScoreAuthoringGuideViewProps> = (
     });
 
     if (matchedIndices.length === 0) {
-      return `_No matches found for **"${filterQuery}"**. Try searching for coordinate axes, maneuver names, or lenses._`;
+      return `_No matches found for **"${debouncedFilterQuery}"**. Try searching for coordinate axes, maneuver names, or lenses._`;
     }
 
     const contextLines = new Set<number>();
@@ -68,7 +86,7 @@ export const ScoreAuthoringGuideView: React.FC<ScoreAuthoringGuideViewProps> = (
     });
 
     const sorted = Array.from(contextLines).sort((a, b) => a - b);
-    const result: string[] = [`_Found ${matchedIndices.length} matches for **"${filterQuery}"**:_\n\n---`];
+    const result: string[] = [`_Found ${matchedIndices.length} matches for **"${debouncedFilterQuery}"**:_\n\n---`];
     let lastIdx = -1;
 
     sorted.forEach((idx) => {
@@ -78,12 +96,12 @@ export const ScoreAuthoringGuideView: React.FC<ScoreAuthoringGuideViewProps> = (
     });
 
     return result.join('\n');
-  }, [currentRawDoc, filterQuery]);
+  }, [currentRawDoc, debouncedFilterQuery]);
 
   const handleSwitchDoc = (nextDoc?: GuideDocType, anchor?: string) => {
     if (nextDoc && nextDoc !== activeDoc) {
       setActiveDoc(nextDoc);
-      setFilterQuery('');
+      handleClearFilter();
       const url = new URL(window.location.href);
       url.searchParams.set('mode', nextDoc);
       window.history.replaceState({}, '', url.pathname + url.search);
@@ -108,8 +126,8 @@ export const ScoreAuthoringGuideView: React.FC<ScoreAuthoringGuideViewProps> = (
       }
     };
 
-    if (filterQuery.trim()) {
-      setFilterQuery('');
+    if (filterInput.trim()) {
+      handleClearFilter();
       setTimeout(jump, 60);
     } else {
       jump();
@@ -260,8 +278,9 @@ export const ScoreAuthoringGuideView: React.FC<ScoreAuthoringGuideViewProps> = (
           <GuideSidebarToc
             items={tocItems}
             activeId={activeId}
-            filterQuery={filterQuery}
-            onFilterChange={setFilterQuery}
+            filterInput={filterInput}
+            onFilterChange={setFilterInput}
+            onClearFilter={handleClearFilter}
             onSelectSection={handleJumpToSection}
             activeDoc={activeDoc}
           />
@@ -305,8 +324,9 @@ export const ScoreAuthoringGuideView: React.FC<ScoreAuthoringGuideViewProps> = (
               <GuideSidebarToc
                 items={tocItems}
                 activeId={activeId}
-                filterQuery={filterQuery}
-                onFilterChange={setFilterQuery}
+                filterInput={filterInput}
+                onFilterChange={setFilterInput}
+                onClearFilter={handleClearFilter}
                 onSelectSection={handleJumpToSection}
                 activeDoc={activeDoc}
                 onCloseMobileDrawer={() => setMobileDrawerOpen(false)}

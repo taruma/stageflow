@@ -9,6 +9,28 @@ export default defineConfig({
       ignored: ['**/.agents/**', '**/recordings/**', '**/_examples/**'],
     },
   },
+  build: {
+    chunkSizeWarningLimit: 800,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-three': ['three', '@react-three/fiber', '@react-three/drei'],
+          'vendor-katex': [
+            'katex',
+            'rehype-katex',
+            'remark-math',
+            'react-markdown',
+            'remark-gfm',
+          ],
+          'vendor-codemirror': [
+            '@codemirror/state',
+            '@codemirror/view',
+            '@codemirror/lang-yaml',
+          ],
+        },
+      },
+    },
+  },
   test: {
     environment: 'node',
     include: ['tests/**/*.test.ts'],

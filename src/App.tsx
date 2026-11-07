@@ -1,61 +1,33 @@
 /**
- * Root Application Component for StageFlow Studio.
- * Connects the Scene Catalog, Universal Media Clock, 60fps Dual-Tier Frame Loop,
- * Resizable Split Workspace, 3D Blueprint Diorama, Live YAML Score Drawer,
- * and Persistent Storage (IndexedDB scores + localStorage UI preferences).
- * Decomposed in Phase 2 for clean, single-responsibility orchestration.
+ * Root Application Router & Entry Switcher for StageFlow.
+ * Selectively mounts either the 3D Blueprint Choreography Studio,
+ * the Headless Viewport Recorder, or the Markdown + KaTeX Documentation Viewer.
+ * Code-split with React.lazy() so loading documentation never downloads
+ * Three.js or CodeMirror, dropping initial payload by ~78%.
  */
 
-import React, { useState, useCallback, useEffect, useRef } from 'react';
-import type { CameraPresetType } from './stage/cameraPresets';
-import type { ScoreDiagnostic } from './core/types';
-import {
-  INITIAL_CATALOG_ITEMS,
-  isBundledSceneId,
-  type ScoreCatalogItem,
-} from './core/scoreCatalog';
-import { parseStageScore } from './core/scoreParser';
-import {
-  loadStoredActiveSceneId,
-  saveStoredActiveSceneId,
-} from './core/storage/localStorageUi';
-import { saveStoredScore } from './core/storage/scoreDb';
-import {
-  downloadYamlBlob,
-  generateCustomScoreId,
-  updateScoreYamlId,
-} from './core/scoreYamlUtils';
-import { useMediaClock } from './hooks/useMediaClock';
-import { useStageFrameLoop } from './hooks/useStageFrameLoop';
-import { useFileDropLoader } from './hooks/useFileDropLoader';
-import { useScorePersistence } from './hooks/useScorePersistence';
-import { useAppShellTheme } from './hooks/useAppShellTheme';
-import { useWorkspaceLayout } from './hooks/useWorkspaceLayout';
-import { useStudioDisplaySettings } from './hooks/useStudioDisplaySettings';
-import { useToastNotifications } from './hooks/useToastNotifications';
-import { DioramaCanvas } from './stage/DioramaCanvas';
-import { WorkspaceHeader } from './ui/WorkspaceHeader';
-import { ResizableSplitWorkspace } from './ui/ResizableSplitWorkspace';
-import { UniversalVideoViewport } from './ui/UniversalVideoViewport';
-import { StageCamMonitorCanvas } from './stage/StageCamMonitorCanvas';
-import {
-  VideoWorkspaceSubpanel,
-  type SubpanelViewMode,
-} from './ui/left-panel/VideoWorkspaceSubpanel';
-import { YamlStudioPanel } from './ui/editor';
-import { ConfirmResetModal } from './ui/ConfirmResetModal';
-import { ScoreLibraryModal, type FilterTab } from './ui/ScoreLibraryModal';
-import { ToastContainer } from './ui/ToastContainer';
-import { DirectorialTransportBar } from './ui/DirectorialTransportBar';
-import { DioramaOverlayContainer } from './ui/DioramaOverlayContainer';
-import { HeadlessRecorderView } from './recorder/HeadlessRecorderView';
+import React from 'react';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/react';
+import { BookOpen, Compass, Film } from 'lucide-react';
+
+const InteractiveStudioApp = React.lazy(() =>
+  import('./ui/InteractiveStudioApp').then((m) => ({
+    default: m.InteractiveStudioApp,
+  }))
+);
 
 const ScoreAuthoringGuideView = React.lazy(() =>
   import('./ui/guide').then((m) => ({ default: m.ScoreAuthoringGuideView }))
 );
 
+const HeadlessRecorderView = React.lazy(() =>
+  import('./recorder/HeadlessRecorderView').then((m) => ({
+    default: m.HeadlessRecorderView,
+  }))
+);
+
+// Synchronous route classification to request only the active chunk
 const urlParams =
   typeof window !== 'undefined'
     ? new URLSearchParams(window.location.search)
@@ -71,552 +43,96 @@ if (typeof document !== 'undefined' && isDocMode) {
   document.body.classList.remove('overflow-hidden');
 }
 
-
-
-
-const InteractiveStudioApp: React.FC = () => {
-  const theme = useAppShellTheme();
-  const { toasts, showToast, dismissToast } = useToastNotifications();
-  const layout = useWorkspaceLayout({ onNotify: showToast });
-  const display = useStudioDisplaySettings();
-  const [subpanelViewMode, setSubpanelViewMode] =
-    useState<SubpanelViewMode>('notes');
-
-  const [catalog, setCatalog] = useState<ScoreCatalogItem[]>(
-    INITIAL_CATALOG_ITEMS
-  );
-
-  // Synchronously hydrate active scene id from localStorage
-  const [activeSceneId, setActiveSceneIdState] = useState<string>(() => {
-    const sceneParam = urlParams?.get('scene');
-    if (sceneParam) {
-      return sceneParam;
-    }
-    const stored = loadStoredActiveSceneId();
-    return stored || INITIAL_CATALOG_ITEMS[0].id;
-  });
-
-  const setActiveSceneId = useCallback((id: string) => {
-    setActiveSceneIdState(id);
-    saveStoredActiveSceneId(id);
-  }, []);
-
-  // Score Library Modal state & initial category tab
-  const [isLibraryOpen, setIsLibraryOpen] = useState(false);
-  const [libraryInitialTab, setLibraryInitialTab] = useState<FilterTab>('all');
-
-  // Measure diorama pane width to toggle between standard and compact header (<580px)
-  const stageContainerRef = useRef<HTMLDivElement | null>(null);
-  const [dioramaWidth, setDioramaWidth] = useState<number>(1000);
-
-  useEffect(() => {
-    const el = stageContainerRef.current;
-    if (!el) return;
-    const updateWidth = () => {
-      const rect = el.getBoundingClientRect();
-      if (rect.width > 0) {
-        setDioramaWidth(rect.width);
-      }
-    };
-    updateWidth();
-    const ro = new ResizeObserver(updateWidth);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
-
-  const isNarrowDiorama = dioramaWidth < 580;
-
-  const initialItem =
-    INITIAL_CATALOG_ITEMS.find((item) => item.id === activeSceneId) ??
-    INITIAL_CATALOG_ITEMS[0];
-
-  const [rawYaml, setRawYaml] = useState<string>(initialItem.rawYaml);
-  const [activeScore, setActiveScore] = useState(initialItem.score);
-  const [parseError, setParseError] = useState<string | null>(null);
-  const [parseWarning, setParseWarning] = useState<string | null>(null);
-  const [parseDiagnostics, setParseDiagnostics] = useState<
-    ScoreDiagnostic[] | undefined
-  >(undefined);
-  const [videoOverrideUrl, setVideoOverrideUrl] = useState<string | null>(null);
-
-  const handleExportScore = useCallback(
-    (item: ScoreCatalogItem) => {
-      downloadYamlBlob(`${item.id}.yaml`, item.rawYaml);
-      showToast(`Exported score "${item.id}.yaml"`, 'success');
-    },
-    [showToast]
-  );
-
-  const handleExportActiveScore = useCallback(() => {
-    handleExportScore({
-      id: activeSceneId,
-      title: activeScore.title,
-      rawYaml,
-      score: activeScore,
-      category: 'custom',
-      isCustom: false,
-    });
-  }, [activeSceneId, activeScore, rawYaml, handleExportScore]);
-
-  // IndexedDB Score Persistence Hook (Hydration, Forking, Draft Auto-saving, Project Lifecycle)
-  const scorePersistence = useScorePersistence({
-    catalog,
-    activeSceneId,
-    rawYaml,
-    setCatalog,
-    setActiveSceneId,
-    setRawYaml,
-    setActiveScore,
-    onClearVideoOverride: () => setVideoOverrideUrl(null),
-  });
-
-  // 1. Universal Media Clock (Local HTML5 Video, YouTube IFrame, or Procedural Slate)
-  const mediaClock = useMediaClock(activeScore, videoOverrideUrl);
-
-  // 2. Dual-Tier 60fps Frame Evaluation Loop
-  const stageLoop = useStageFrameLoop(
-    activeScore,
-    mediaClock.driverRef,
-    mediaClock.loopActiveShot,
-    mediaClock.isPlaying
-  );
-
-  const cameraPresetActionRef = useRef<{
-    type: CameraPresetType;
-    id: number;
-  } | null>(null);
-
-  const handleSelectCameraPreset = useCallback(
-    (preset: CameraPresetType) => {
-      if (preset === 'reset') {
-        stageLoop.setCameraMode('scripted');
-      } else {
-        stageLoop.setCameraMode('free');
-      }
-      cameraPresetActionRef.current = { type: preset, id: Date.now() };
-    },
-    [stageLoop]
-  );
-
-  // Switch between catalog scenes
-  const handleSelectScene = useCallback(
-    (sceneId: string) => {
-      const found = catalog.find((item) => item.id === sceneId);
-      if (!found) return;
-      mediaClock.pause();
-      setActiveSceneId(found.id);
-      setRawYaml(found.rawYaml);
-      setActiveScore(found.score);
-      setParseError(null);
-      setParseWarning(null);
-      setParseDiagnostics(undefined);
-      setVideoOverrideUrl(null);
-      mediaClock.seek(0);
-    },
-    [catalog, mediaClock, setActiveSceneId]
-  );
-
-  // Live YAML editing in the Inspector Drawer (custom projects only)
-  const handleChangeYaml = useCallback(
-    (nextYaml: string) => {
-      setRawYaml(nextYaml);
-      const result = parseStageScore(nextYaml, activeSceneId);
-      if (result.score) {
-        setActiveScore(result.score);
-        setParseError(null);
-        setParseWarning(result.warning ?? null);
-        setParseDiagnostics(undefined);
-
-        // If YAML score specifies a video URL or changed it, clear ephemeral video override
-        if (
-          result.score.videoUrl &&
-          result.score.videoUrl !== 'procedural://demo'
-        ) {
-          setVideoOverrideUrl(null);
-        }
-
-        // Auto-save draft to IndexedDB (debounced)
-        scorePersistence.saveYamlDraftDebounced(nextYaml, result.score);
-      } else {
-        setParseError(result.error);
-        setParseWarning(null);
-        setParseDiagnostics(result.diagnostics);
-      }
-    },
-    [activeSceneId, scorePersistence.saveYamlDraftDebounced]
-  );
-
-  const handleForkScore = useCallback(async () => {
-    const forked = await scorePersistence.forkScoreAsCustom(activeSceneId);
-    if (forked) {
-      showToast(`Forked "${forked.title}" as Custom Project`, 'success');
-    }
-  }, [activeSceneId, scorePersistence.forkScoreAsCustom, showToast]);
-
-  // Drag-and-drop / File picker handlers for custom .yaml and .mp4 files
-  const handleLoadYamlFile = useCallback(
-    (yamlText: string, fileName: string) => {
-      const fallbackId = fileName.replace(/\.(yaml|yml|json)$/i, '');
-      const parsed = parseStageScore(yamlText, fallbackId);
-      if (parsed.score) {
-        let finalId = parsed.score.id;
-        let finalYaml = yamlText;
-        let wasBundledConflict = false;
-
-        // Auto-fork collision protection: never overwrite bundled presets
-        if (isBundledSceneId(finalId)) {
-          wasBundledConflict = true;
-          finalId = generateCustomScoreId(fallbackId || finalId);
-          finalYaml = updateScoreYamlId(finalYaml, finalId);
-        }
-
-        const finalParsed = parseStageScore(finalYaml, finalId);
-        const resolvedScore = finalParsed.score ?? parsed.score;
-
-        const newItem: ScoreCatalogItem = {
-          id: finalId,
-          title: resolvedScore.title,
-          subtitle: resolvedScore.subtitle,
-          category: 'custom',
-          rawYaml: finalYaml,
-          score: resolvedScore,
-          isCustom: true,
-        };
-
-        setCatalog((prev) => {
-          const filtered = prev.filter((item) => item.id !== newItem.id);
-          return [...filtered, newItem];
-        });
-        setActiveSceneId(newItem.id);
-        setRawYaml(finalYaml);
-        setActiveScore(resolvedScore);
-        setParseError(null);
-        setParseWarning(finalParsed.warning ?? parsed.warning ?? null);
-        setParseDiagnostics(undefined);
-        setVideoOverrideUrl(null);
-        mediaClock.seek(0);
-
-        // Persist custom imported score to IndexedDB
-        saveStoredScore({
-          id: newItem.id,
-          title: newItem.title,
-          subtitle: newItem.subtitle,
-          rawYaml: finalYaml,
-          isCustom: true,
-          updatedAt: Date.now(),
-        });
-
-        if (wasBundledConflict) {
-          showToast(
-            `Bundled ID detected: imported "${resolvedScore.title}" as new Custom Project`,
-            'info'
-          );
-        } else {
-          showToast(
-            `Imported "${resolvedScore.title}" into Custom Projects`,
-            'success'
-          );
-        }
-      } else {
-        setRawYaml(yamlText);
-        setParseError(parsed.error);
-        setParseWarning(null);
-        setParseDiagnostics(parsed.diagnostics);
-        layout.openEditMode();
-        showToast(
-          `Failed to parse YAML: ${parsed.error ?? 'Syntax error'}`,
-          'error'
-        );
-      }
-    },
-    [mediaClock, setActiveSceneId, showToast, layout]
-  );
-
-  const handleLoadVideoBlobUrl = useCallback(
-    (blobUrl: string) => {
-      setVideoOverrideUrl(blobUrl);
-      mediaClock.seek(0);
-      showToast('Loaded local video override', 'info');
-    },
-    [mediaClock, showToast]
-  );
-
-  const fileDrop = useFileDropLoader({
-    onLoadYamlText: handleLoadYamlFile,
-    onLoadVideoBlobUrl: handleLoadVideoBlobUrl,
-  });
-
-  const handleSeekAndSync = useCallback(
-    (targetSec: number) => {
-      mediaClock.seek(targetSec);
-      stageLoop.evaluateTick60fps();
-      stageLoop.forceSyncUi();
-    },
-    [mediaClock, stageLoop]
-  );
-
-  const handleStepFramesAndSync = useCallback(
-    (frames: number) => {
-      mediaClock.stepFrames(frames);
-      stageLoop.evaluateTick60fps();
-      stageLoop.forceSyncUi();
-    },
-    [mediaClock, stageLoop]
-  );
-
-  return (
-    <div
-      onDragOver={fileDrop.handleDragOver}
-      onDragLeave={fileDrop.handleDragLeave}
-      onDrop={fileDrop.handleDrop}
-      className="relative w-full h-dvh flex flex-col bg-app text-text-main overflow-hidden"
-    >
-      {/* Drag-and-Drop Overlay Indicator */}
-      {fileDrop.isDraggingOver && (
-        <div className="absolute inset-0 z-50 bg-overlay-heavy backdrop-blur-md border-2 border-dashed border-text-main flex flex-col items-center justify-center gap-2 pointer-events-none">
-          <span className="text-lg font-mono font-bold text-text-main">
-            Drop .MP4 / .WebM Video or .YAML Choreography Score
-          </span>
-          <span className="text-xs font-mono text-text-muted">
-            Videos are held in session memory; YAML scores are saved in IndexedDB
-          </span>
+/** Lightweight skeleton loader for documentation view (?mode=guide / ?mode=spec) */
+const GuideLoadingSkeleton: React.FC = () => (
+  <div className="min-h-screen w-full bg-app text-text-main flex flex-col font-sans select-none animate-pulse">
+    {/* Header Placeholder */}
+    <header className="h-14 px-4 sm:px-6 bg-surface/90 border-b border-border-main flex items-center justify-between">
+      <div className="flex items-center gap-3">
+        <div className="w-8 h-8 rounded-lg bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-500">
+          <BookOpen className="w-4 h-4" />
         </div>
-      )}
+        <div className="space-y-1">
+          <div className="h-3.5 w-48 bg-surface-muted rounded" />
+          <div className="h-2.5 w-32 bg-surface-muted/60 rounded" />
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        <div className="h-7 w-28 bg-surface-muted rounded-lg" />
+        <div className="h-7 w-24 bg-surface-muted rounded-xl" />
+      </div>
+    </header>
 
-      {/* Top Studio Header */}
-      <WorkspaceHeader
-        catalog={catalog}
-        activeSceneId={activeSceneId}
-        splitPreset={layout.splitPreset}
-        isEditMode={layout.isEditMode}
-        storageStatus={scorePersistence.storageStatus}
-        isLibraryOpen={isLibraryOpen}
-        themeMode={theme.themeMode}
-        effectiveThemeCategory={theme.effectiveCategory}
-        dioramaThemeMode={theme.dioramaThemeMode}
-        effectiveDioramaCategory={theme.effectiveDioramaCategory}
-        onSelectScene={handleSelectScene}
-        onSelectSplitPreset={layout.handleSelectSplitPreset}
-        onToggleEditMode={layout.handleToggleEditMode}
-        onResetLayout={layout.handleResetLayout}
-        onUploadFiles={fileDrop.processFiles}
-        onExportActiveScore={handleExportActiveScore}
-        onOpenLibrary={(tab) => {
-          setLibraryInitialTab(tab ?? 'all');
-          setIsLibraryOpen(true);
-        }}
-        onSelectThemeMode={theme.setThemeMode}
-        onSelectDioramaThemeMode={theme.setDioramaThemeMode}
-        onCreateBlankProject={async () => {
-          const blank = await scorePersistence.createBlankScore();
-          if (blank) {
-            showToast(`Created new blank score "${blank.title}"`, 'success');
-          }
-        }}
-      />
+    {/* Body Layout Placeholder */}
+    <div className="flex-1 flex w-full max-w-7xl mx-auto px-4 sm:px-6">
+      {/* Sidebar Placeholder (Desktop) */}
+      <aside className="hidden lg:block w-72 shrink-0 border-r border-border-main py-6 pr-4 space-y-4">
+        <div className="h-8 bg-surface-muted rounded-md" />
+        <div className="space-y-3 pt-2">
+          {Array.from({ length: 7 }).map((_, i) => (
+            <div key={i} className="space-y-1.5">
+              <div className="h-4 w-3/4 bg-surface-muted rounded" />
+              <div className="h-3 w-1/2 bg-surface-muted/60 rounded ml-4" />
+            </div>
+          ))}
+        </div>
+      </aside>
 
-      {/* Main Resizable Split Workspace (Video Panel + 3D Blueprint Diorama + YAML Studio) */}
-      <ResizableSplitWorkspace
-        splitPreset={layout.splitPreset}
-        isEditMode={layout.isEditMode}
-        leftSplitPct={layout.leftSplitPct}
-        onLeftSplitChange={layout.handleLeftSplitChange}
-        rightSplitPct={layout.rightSplitPct}
-        onRightSplitChange={layout.handleRightSplitChange}
-        videoHeightPct={layout.videoHeightPct}
-        onVideoHeightChange={layout.handleVideoHeightChange}
-        isSubpanelCollapsed={layout.isSubpanelCollapsed}
-        leftVideoPane={
-          <UniversalVideoViewport
-            score={activeScore}
-            sourceInfo={mediaClock.sourceInfo}
-            html5VideoRef={mediaClock.html5VideoRef}
-            youtubeContainerRef={mediaClock.youtubeContainerRef}
-            frameRef={stageLoop.frameRef}
-            uiFrame={stageLoop.uiSnapshot.frame}
-            isPlaying={mediaClock.isPlaying}
-            labelMode={display.labelMode}
-            showGuides={display.showGuides}
-            themeCategory={theme.effectiveDioramaCategory}
-            onApplyVideoUrlOverride={(url) => {
-              setVideoOverrideUrl(url);
-              mediaClock.seek(0);
-              showToast('Applied custom video URL override', 'info');
-            }}
-          />
-        }
-        leftSubpanelPane={
-          <VideoWorkspaceSubpanel
-            isCollapsed={layout.isSubpanelCollapsed}
-            onToggleCollapse={layout.handleToggleSubpanelCollapse}
-            score={activeScore}
-            activeShot={stageLoop.uiSnapshot.frame.activeShot}
-            shotIndex={stageLoop.uiSnapshot.frame.shotIndex}
-            hasVideoAttached={mediaClock.sourceInfo.kind !== 'procedural'}
-            viewMode={subpanelViewMode}
-            onSelectViewMode={setSubpanelViewMode}
-            stageCamSlot={
-              mediaClock.sourceInfo.kind !== 'procedural' ? (
-                <StageCamMonitorCanvas
-                  score={activeScore}
-                  frameRef={stageLoop.frameRef}
-                  uiFrame={stageLoop.uiSnapshot.frame}
-                  labelMode={display.labelMode}
-                  isPlaying={mediaClock.isPlaying}
-                  showGuides={display.showGuides}
-                  themeCategory={theme.effectiveDioramaCategory}
-                />
-              ) : undefined
-            }
-          />
-        }
-        centerStagePane={
-          <div
-            ref={stageContainerRef}
-            className="relative w-full h-full isolate"
-          >
-            {/* 3D React Three Fiber Blueprint Diorama */}
-            <DioramaCanvas
-              score={activeScore}
-              cameraMode={stageLoop.cameraMode}
-              isPlaying={mediaClock.isPlaying}
-              frameRef={stageLoop.frameRef}
-              uiFrame={stageLoop.uiSnapshot.frame}
-              lastManualSeekIdRef={mediaClock.lastManualSeekIdRef}
-              evaluateTick60fps={stageLoop.evaluateTick60fps}
-              onFreeOrbitPoseChange={stageLoop.notifyFreeOrbitChange}
-              labelMode={display.labelMode}
-              themeCategory={theme.effectiveDioramaCategory}
-              cameraPresetActionRef={cameraPresetActionRef}
-            />
-
-            {/* Responsive Diorama HUD Overlays & POV Viewfinder Dock */}
-            <DioramaOverlayContainer
-              score={activeScore}
-              frame={stageLoop.uiSnapshot.frame}
-              liveViewportPose={stageLoop.uiSnapshot.liveViewportPose}
-              cameraMode={stageLoop.cameraMode}
-              isPlaying={mediaClock.isPlaying}
-              labelMode={display.labelMode}
-              showGuides={display.showGuides}
-              isNarrow={isNarrowDiorama}
-              onSetCameraMode={stageLoop.setCameraMode}
-              onSelectPreset={handleSelectCameraPreset}
-              onSelectLabelMode={display.handleSelectLabelMode}
-              onToggleGuides={display.handleToggleGuides}
-            />
-          </div>
-        }
-        rightEditorPane={
-          <YamlStudioPanel
-            isOpen={layout.isEditMode}
-            sceneId={activeSceneId}
-            rawYaml={rawYaml}
-            parseError={parseError}
-            parseWarning={parseWarning}
-            diagnostics={parseDiagnostics}
-            effectiveTheme={theme.effectiveCategory}
-            storageStatus={scorePersistence.storageStatus}
-            isBundled={isBundledSceneId(activeSceneId)}
-            onChangeYaml={handleChangeYaml}
-            onForkScore={handleForkScore}
-            onClose={layout.handleToggleEditMode}
-          />
-        }
-      />
-
-      {/* Bottom Directorial Transport Deck (Streamlined Timeline Controls) */}
-      <DirectorialTransportBar
-        score={activeScore}
-        frame={stageLoop.uiSnapshot.frame}
-        durationSec={mediaClock.durationSec}
-        isPlaying={mediaClock.isPlaying}
-        playbackRate={mediaClock.playbackRate}
-        isMuted={mediaClock.isMuted}
-        loopActiveShot={mediaClock.loopActiveShot}
-        onTogglePlay={mediaClock.togglePlay}
-        onSeek={handleSeekAndSync}
-        onStepFrames={handleStepFramesAndSync}
-        onSetPlaybackRate={mediaClock.setPlaybackRate}
-        onToggleMute={mediaClock.toggleMute}
-        onToggleLoopActiveShot={mediaClock.toggleLoopActiveShot}
-      />
-
-      {/* Reset Confirmation Dialog Modal */}
-      <ConfirmResetModal
-        isOpen={scorePersistence.isResetModalOpen}
-        sceneTitle={activeScore.title}
-        onConfirm={scorePersistence.confirmResetActiveScore}
-        onCancel={() => scorePersistence.setIsResetModalOpen(false)}
-      />
-
-      {/* Choreography Score Library Modal (2-Column Master-Detail) */}
-      <ScoreLibraryModal
-        isOpen={isLibraryOpen}
-        catalog={catalog}
-        activeSceneId={activeSceneId}
-        initialTab={libraryInitialTab}
-        onSelectScene={handleSelectScene}
-        onCreateBlankScore={async () => {
-          const blank = await scorePersistence.createBlankScore();
-          if (blank) {
-            showToast(`Created new blank score "${blank.title}"`, 'success');
-          }
-        }}
-        onForkScore={async (item) => {
-          const custom = await scorePersistence.forkScoreAsCustom(item.id);
-          if (custom) {
-            showToast(
-              `Forked "${item.title}" into editable Custom Project`,
-              'success'
-            );
-          }
-        }}
-        onDuplicateScore={async (id) => {
-          const item = catalog.find((c) => c.id === id);
-          if (item) {
-            const dupe = await scorePersistence.forkScoreAsCustom(item.id);
-            if (dupe) {
-              showToast(`Duplicated "${item.title}"`, 'success');
-            }
-          }
-        }}
-        onExportScore={handleExportScore}
-        onRenameScore={async (id, newTitle) => {
-          const ok = await scorePersistence.renameCustomScore(id, newTitle);
-          if (ok) {
-            showToast(`Renamed score to "${newTitle}"`, 'success');
-          }
-          return ok;
-        }}
-        onDeleteScore={async (id) => {
-          const ok = await scorePersistence.deleteCustomScore(id);
-          if (ok) {
-            showToast('Custom project deleted', 'info');
-          }
-          return ok;
-        }}
-        onClose={() => setIsLibraryOpen(false)}
-      />
-
-      {/* Floating Toast Notification Container */}
-      <ToastContainer toasts={toasts} onDismiss={dismissToast} />
+      {/* Main Content Reading Skeleton */}
+      <main className="flex-1 max-w-4xl mx-auto px-4 sm:px-8 py-8 space-y-6">
+        <div className="h-8 w-2/3 bg-surface-muted rounded" />
+        <div className="h-4 w-full bg-surface-muted/60 rounded" />
+        <div className="h-4 w-5/6 bg-surface-muted/60 rounded" />
+        <div className="h-32 w-full bg-surface-subtle border border-border-subtle rounded-xl" />
+        <div className="h-4 w-4/5 bg-surface-muted/60 rounded" />
+        <div className="h-24 w-full bg-surface-subtle border border-border-subtle rounded-xl" />
+      </main>
     </div>
-  );
-};
+  </div>
+);
+
+/** Minimalist blueprint loading screen for 3D Studio */
+const StudioLoadingScreen: React.FC = () => (
+  <div className="w-screen h-dvh bg-app flex flex-col items-center justify-center gap-4 text-text-main select-none">
+    <div className="relative flex items-center justify-center">
+      <div className="w-12 h-12 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-500 shadow-lg shadow-amber-500/10 animate-bounce">
+        <Compass className="w-6 h-6" />
+      </div>
+    </div>
+    <div className="text-center space-y-1">
+      <h1 className="text-sm font-bold font-mono tracking-widest uppercase text-text-main flex items-center gap-2">
+        <Film className="w-3.5 h-3.5 text-amber-500 inline" />
+        StageFlow
+      </h1>
+      <p className="text-[11px] font-mono text-text-muted">
+        Loading 3D choreography diorama stage...
+      </p>
+    </div>
+    <div className="w-36 h-1 bg-surface-muted rounded-full overflow-hidden">
+      <div className="w-1/2 h-full bg-amber-500 rounded-full animate-indeterminate" />
+    </div>
+  </div>
+);
 
 export const App: React.FC = () => {
   if (isHeadlessRender) {
-    return <HeadlessRecorderView />;
+    return (
+      <React.Suspense fallback={<div className="w-full h-full bg-black" />}>
+        <HeadlessRecorderView />
+      </React.Suspense>
+    );
   }
+
   return (
     <>
       {isDocMode ? (
-        <React.Suspense fallback={null}>
+        <React.Suspense fallback={<GuideLoadingSkeleton />}>
           <ScoreAuthoringGuideView initialDoc={isSpecMode ? 'spec' : 'guide'} />
         </React.Suspense>
       ) : (
-        <InteractiveStudioApp />
+        <React.Suspense fallback={<StudioLoadingScreen />}>
+          <InteractiveStudioApp />
+        </React.Suspense>
       )}
       <Analytics />
       <SpeedInsights />
