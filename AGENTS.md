@@ -59,7 +59,7 @@ Types: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`.
 
 > [!IMPORTANT]
 > Detailed technical specifications are modularized under [`docs/`](docs/). Before planning, inspecting, or modifying files in any domain below, the agent **MUST** call `read_file` on the corresponding specification document:
-> - **Layer 1: Core Math, Optics, Trajectories & YAML Score Schema** (`src/core/*`, `src/scores/*.yaml`, `tests/unit/*`): Read [`docs/CORE_MATH_AND_SCORE_SPECIFICATIONS.md`](docs/CORE_MATH_AND_SCORE_SPECIFICATIONS.md) and [`docs/YAML_AUTHORING_GUIDE.md`](docs/YAML_AUTHORING_GUIDE.md).
+> - **Layer 1: Core Math, Optics, Trajectories & YAML Score Schema** (`src/core/*`, `src/scores/*.yaml`, `tests/unit/*`): Read [`docs/CORE_MATH_AND_SCORE_SPECIFICATIONS.md`](docs/CORE_MATH_AND_SCORE_SPECIFICATIONS.md), [`docs/STAGEFLOW_SCRIPT_SPECIFICATION.md`](docs/STAGEFLOW_SCRIPT_SPECIFICATION.md), and [`docs/YAML_AUTHORING_GUIDE.md`](docs/YAML_AUTHORING_GUIDE.md).
 > - **Layer 2 & 3: Universal Media Clock, YouTube Sync & Dual-Tier 60fps Loop** (`src/media/*`, `src/hooks/*`): Read [`docs/MEDIA_CLOCK_AND_SYNC_SPECIFICATIONS.md`](docs/MEDIA_CLOCK_AND_SYNC_SPECIFICATIONS.md).
 > - **Layer 4 & 5: 3D Blueprint Diorama, Dual-Camera Rigs & 2D Workspace UI** (`src/stage/*`, `src/ui/*`, `src/App.tsx`): Read [`docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md`](docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md) and [`docs/VISUAL_DESIGN_SYSTEM.md`](docs/VISUAL_DESIGN_SYSTEM.md).
 
@@ -98,8 +98,8 @@ stageflow/
 ├── SPECIFICATION.md                 # Foundational product vision & system mechanics
 ├── README.md                        # Quickstart overview & CLI command reference
 ├── docs/                            # Detailed technical & architectural specifications (SSOT)
-│   ├── STAGEFLOW_SCRIPT_SPECIFICATION.md # Pure mathematical & formal YAML script specification
-│   ├── YAML_AUTHORING_GUIDE.md      # Authoring SSOT: quickstart, schema reference, kinematics & cookbook
+│   ├── STAGEFLOW_SCRIPT_SPECIFICATION.md # Engine SSOT: mathematical model, optics & AST contract
+│   ├── YAML_AUTHORING_GUIDE.md      # Authoring SSOT: quickstart, YAML schema, aliases & cookbook
 │   ├── CORE_MATH_AND_SCORE_SPECIFICATIONS.md
 │   ├── MEDIA_CLOCK_AND_SYNC_SPECIFICATIONS.md
 │   ├── DIORAMA_3D_AND_UI_SPECIFICATIONS.md

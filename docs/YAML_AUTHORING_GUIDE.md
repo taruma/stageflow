@@ -1,6 +1,8 @@
 # StageFlow YAML Score Authoring Manual (`*.yaml`)
 
-This document is the authoritative Single Source of Truth (SSOT) for authoring, editing, and validating **StageFlow Choreography Scores** (`*.yaml`). It defines every parameter, enum, alias, default value, evaluation rule, and cinematography pattern supported by the StageFlow engine.
+This document is the authoritative **Single Source of Truth (SSOT)** for authoring, editing, and validating **StageFlow Choreography Scores** (`*.yaml`). It defines every declarative parameter, enum, alias, default value, authoring convention, and cinematography recipe supported by the StageFlow studio.
+
+> **Companion Technical Specification**: For the formal mathematical model, spherical-to-Cartesian projection matrices, sensor trigonometry, and closed-form curve equations, consult the [**StageFlow Script Technical & Mathematical Specification (`docs/STAGEFLOW_SCRIPT_SPECIFICATION.md`)**](./STAGEFLOW_SCRIPT_SPECIFICATION.md) (`?mode=spec`).
 
 ---
 
@@ -54,17 +56,7 @@ StageFlow operates in a right-handed, **$Y$-Up** 3D Cartesian space centered at 
 | **`roll` (Dutch angle)** | Level horizon (`0°`) | **Clockwise camera bank** (from operator POV) | **Counter-clockwise camera bank** | Degrees (`deg`)* |
 | **Entity `rotation`** | Mannequin faces `+Z` (downstage) | Faces toward `+X` (`+90°` = Stage Right) | Faces toward `-X` (`-90°` = Stage Left) | Degrees (`deg`)* |
 
-> **Note:** All angles in YAML default to **human degrees** (`deg`). If you explicitly pass a string suffixed with `"rad"` (such as `"1.57rad"`), the parser interprets it directly as radians. Degree string suffixes such as `"45deg"` and `"45°"` are also accepted.
-
-From a spherical pose $(\vec{T}, d, \theta, \psi, \gamma)$, the 3D camera eye position $\vec{E} = (x, y, z)$ is computed as:
-
-$$
-\begin{aligned}
-x_{\text{eye}} &= T_x + d \cdot \cos(\text{pitch}) \cdot \sin(\text{yaw}) \\
-y_{\text{eye}} &= T_y + d \cdot \sin(\text{pitch}) \\
-z_{\text{eye}} &= T_z + d \cdot \cos(\text{pitch}) \cdot \cos(\text{yaw})
-\end{aligned}
-$$
+> **Note:** All angles in YAML default to **human degrees** (`deg`). If you explicitly pass a string suffixed with `"rad"` (such as `"1.57rad"`), the parser interprets it directly as radians. Degree string suffixes such as `"45deg"` and `"45°"` are also accepted. For the exact spherical-to-Cartesian forward/inverse projection equations and roll basis vectors, see [`STAGEFLOW_SCRIPT_SPECIFICATION.md §2`](./STAGEFLOW_SCRIPT_SPECIFICATION.md#2-spherical-camera-model-forward-kinematics).
 
 ### 1.3 Timeline & Execution Model
 
@@ -106,8 +98,8 @@ duration: 10.0
 stage:
   width: 10
   depth: 10
-  observer_camera: { target: [0, 1.1, 0], distance: 7.5, pitch: 26, yaw: 38, lens: 35mm }
-  stage_camera: { target: "hero", distance: 3.5, pitch: 8, yaw: -20, lens: 50mm }
+  observer_camera: { target: [0, 1.0, 0], distance: 7.5, pitch: 26, yaw: 38, lens: 35mm }
+  stage_camera: { target: "hero", distance: 3.2, pitch: 6, yaw: -25, lens: 50mm }
 
 # ==============================================================================
 # 3. SCENE ENTITIES (entities:)
@@ -247,18 +239,18 @@ The detective now translates smoothly from $t = 0.0\text{s}$ to $t = 8.0\text{s}
 | :--- | :--- |
 | **`cut`** | Instantaneous spatial jump; suppresses trajectory line rendering |
 | **`dolly`** | Linear push-in, pull-out, or lateral truck directly between two 3D points |
-| **`arc`** | Quadratic Bezier trajectory with mid-flight distance breathing and $+Y$ lift |
+| **`arc`** | Quadratic Bezier trajectory with mid-flight distance breathing (`1.12`) and $+Y$ lift |
 | **`swoop`** | Bezier arc with an additional dynamic $+4.58^\circ$ pitch elevation crest |
 | **`orbit`** | Turntable revolution around target at constant distance and pitch |
 | **`sweep`** | Azimuthal pan sweep across a target sector |
 | **`spiral`** | Helical corkscrew combining continuous rotation with vertical pitch and distance shift |
 | **`dive`** | Fast perigee dive that dips closer at first quarter and pulls back at three quarters |
-| **`recoil`** | Shockwave impulse kick ($t \cdot e^{-5t}$) that settles back onto the subject |
+| **`recoil`** | Shockwave impulse kick (`breathe: 1.25` default) that settles back onto the subject |
 | **`spline`** | Smooth $C^1$ Catmull-Rom curve passing through an arbitrary sequence of `waypoints:` |
 
 ### 2.5 Learn From Bundled Blueprints
 
-StageFlow bundles 5 production-grade blueprint scores in `src/scores/`:
+StageFlow bundles 5 production-grade blueprint scores in `src/scores/blueprints/`:
 
 1. **`demo_blueprint.yaml` (Blueprint 01: Two-Shot Arc)**: Single-shot profile two-shot to OTS arc using `50mm` standard prime.
 2. **`blueprint_02_dialogue.yaml` (Blueprint 02: Dialogue Flow)**: 6-shot dialogue scene demonstrating OTS reversal, 85mm low hero arc, Catmull-Rom spline, and decoupled diorama master orbits (`observer_shots:`).
@@ -270,7 +262,7 @@ StageFlow bundles 5 production-grade blueprint scores in `src/scores/`:
 
 1. **Omitting `start` on a shot without declaring `continuous: true`**: In standard mode, omitting `start` defaults to `0.0s` and flags a warning in the editor.
 2. **Assuming `yaw` rotates clockwise when positive**: In StageFlow's right-handed Y-up coordinate space, positive yaw increases **counter-clockwise (CCW)** when viewed from overhead (+Y), moving from downstage (+Z / 6:00) toward Stage Right (+X / 3:00). Conversely, `direction: "cw"` commands decreasing yaw angles.
-3. **Using `"center"` as target inside `stage.stage_camera`**: Top-level `stage` camera targets resolve only to entity identifiers or explicit `[x, y, z]` arrays.
+3. **Confusing camera `target_offset` with root-level `offset`**: Root `offset: 0.0` calibrates the global media clock in seconds; to shift a camera's 3D look-at point in meters, use `target_offset: [dx, dy, dz]` (or `targetOffset`).
 4. **Expecting `roll` to hold across cuts without declaring it**: In accordance with Option A semantics, camera roll resets to level horizon (`0°`) at shot boundaries unless explicitly authored.
 5. **Declaring a single `distance:` in standard mode expecting motion**: A single value establishes a constant distance throughout the shot. To animate distance in standard mode, provide `distance_start` and `distance_end`.
 6. **Writing entity movement in `shots[].entities` when root `blocking:` is present**: When root `blocking:` exists, it claims exclusive kinematic authority over position and rotation; per-shot entity maps provide only `highlighted: true` and `note:` overlays.
@@ -294,7 +286,7 @@ This chapter defines scene-level metadata, video source binding, stage metric di
 | **`continuous`**| `boolean` | `false` | `"true"`, `"yes"` | Opt-in flag activating contiguous timeline chaining and forward pose flow. |
 | **`video`** | `string \| object` | `"procedural://demo"` | `video_url`, `videoUrl` | Video media binding (see §3.2). |
 | **`aspect_ratio`**| `string \| number` | `"16:9"` | `aspectRatio` | Stage and film gate aspect ratio (e.g. `"16:9"`, `"2.39:1"`, `1.777`). |
-| **`duration`** | `number` | Auto | — | Total duration in seconds. Defaults to maximum end timestamp across all timelines. |
+| **`duration`** | `number` | Auto | — | Total duration in seconds. Defaults to maximum end timestamp across all timelines (`shots`, `observer_shots`, `blocking`). |
 | **`offset`** | `number` | `0.0` | — | Global A/V clock calibration offset in seconds. |
 | **`stage`** | `object` | `{}` | — | Floor boundaries, metric grid divisions, and baseline camera poses. |
 | **`entities`** | `array` | `[]` | — | List of characters, props, and floor markers present on stage. |
@@ -335,7 +327,7 @@ stage:
 
   # Baseline pose for Viewport Camera (used before Shot 1 or when unscripted)
   observer_camera:
-    target: [0, 1.1, 0]
+    target: [0, 1.0, 0]
     distance: 7.5
     pitch: 26
     yaw: 38
@@ -345,14 +337,14 @@ stage:
   # Baseline pose for Illustrative Stage Camera
   stage_camera:
     target: "actor_a"
-    distance: 3.5
-    pitch: 8
-    yaw: -20
+    distance: 3.2
+    pitch: 6
+    yaw: -25
     roll: 0
     lens: 50mm
 ```
 
-#### Stage Baseline Defaults
+#### Stage Baseline Defaults (`constants.ts`)
 | Parameter | `stage.observer_camera` Default | `stage.stage_camera` Default |
 | :--- | :--- | :--- |
 | **`target`** | `[0.0, 1.0, 0.0]` | `[0.0, 1.2, 0.0]` |
@@ -362,7 +354,7 @@ stage:
 | **`roll`** | `0.0°` | `0.0°` |
 | **`lens`** | `35mm` | `50mm` |
 
-> **Warning:** Inside `stage.stage_camera` and `stage.observer_camera`, string targets resolve only to declared entity identifiers or labels. The preset string `"center"` is not resolved inside the static `stage:` block; use explicit `[0, 1.0, 0]` instead.
+> **Tip:** Both `stage.stage_camera` and `stage.observer_camera` accept declared entity identifiers/labels (e.g. `"actor_a"`), stage presets (`"center"`, `"origin"`, `"stage"` $\to$ `[0.0, 1.0, 0.0]`), or explicit `[x, y, z]` coordinates, plus optional `target_offset`.
 
 ### 3.4 Scene Entities (`entities:`)
 
@@ -400,11 +392,13 @@ entities:
 ```
 
 #### Entity Kinds & Physical Proxy Geometry
-| `kind` | Supported `shape` Values | 3D Blueprint Mesh Representation | Default `height` | Default `radius` | Intrinsic Look-At Anchor ($\vec{A}$) |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **`"character"`** | — | Torso column, shoulder bar, head sphere, forward eye visor wedge, ground gaze arrow | `1.75m` | `0.26m` | $(x, y + 0.90h, z)$ (`~1.575m` eye level) |
-| **`"prop"`** | `box` *(default)*, `sphere`, `cylinder`, `capsule` | Parametric geometric solid (resting on floor at $Y=0$, centered at $h/2$) | `0.85m` | `0.35m` | $(x, y + 0.50h, z)$ (`0.425m` center volume) |
-| **`"marker"`** | `x` *(default)*, `t`, `circle`, `puck` | Flat floor gaffer tape spike mark ($Y=0.005\text{m}$) or legacy 3D puck | `0.15m` | `0.25m` | $(x, y + 0.50h, z)$ (`0.075m` floor level) |
+| `kind` | Accepted `kind` Aliases | Supported `shape` Values (& Aliases) | Default `height` | Default `radius` | Intrinsic Look-At Anchor ($\vec{A}$) |
+| :--- | :--- | :--- | :---: | :---: | :--- |
+| **`"character"`** | `actor`, `person` | — | `1.75m` | `0.26m` | $(x, y + 0.90h, z)$ (`~1.575m` eye level) |
+| **`"prop"`** | `set`, `furniture`, `item`, `object` | `box` *(default)*, `sphere` (`ball`), `cylinder` (`column`, `can`, `cup`), `capsule` (`pill`) | `0.85m`* | `0.35m` | $(x, y + 0.50h, z)$ (`0.425m` center volume) |
+| **`"marker"`** | `spike`, `mark` | `x` *(default)*, `t` (`t-mark`, `t_mark`), `circle` (`ring`, `dot`), `puck` (`disc`, `cylinder`) | `0.15m` | `0.25m` | $(x, y + 0.50h, z)$ (`0.075m` floor level) |
+
+*\*When a prop uses `shape: "sphere"` and omits `height`, its height automatically defaults to its diameter $2 \times \text{radius}$ (`0.70m` for default `0.35m` radius).*
 
 #### Entity Visual Presentation Styles (`style:`)
 Every entity can customize its diorama rendering mode via `style:` while maintaining full backward compatibility (omitting `style:` applies the optimized directorial default):
@@ -421,7 +415,7 @@ Every entity can customize its diorama rendering mode via `style:` while maintai
 | | `wireframe` | No | `wire`, `lines` | Blueprint architectural wireframe mesh cage. |
 | **`"marker"`** | `tape` | **Yes** | — | Authentic theatrical/cinematic flat floor gaffer tape mark directly on the stage floor ($Y = 0.005\text{m}$). |
 | | `glow` | No | `pulse`, `luminous` | Flat floor tape mark paired with an illuminated soft emissive halo disc ($Y = 0.002\text{m}$). |
-| | `beacon` | No | `pin`, `stand` | Floor mark paired with an elevated vertical glowing beacon pin ($0.44\text{m}$) and illuminated sphere tip. |
+| | `beacon` | No | `pin`, `stand`, `puck` | Floor mark paired with an elevated vertical glowing beacon pin ($0.44\text{m}$) and illuminated sphere tip. |
 
 ---
 
@@ -460,7 +454,7 @@ StageFlow uses a unified spherical camera model across both the Illustrative Sta
 | **`direction`** | `"cw" \| "ccw"` | — | Both | `clockwise`, `counterclockwise` | Azimuthal direction for `orbit`, `sweep`, and `spiral`. Default: `cw`. |
 | **`revolutions`** | `number` | turns | Both | — | Number of full $360^\circ$ revolutions for `orbit` or `spiral`. |
 | **`orbit_speed`** | `number` | `deg/s` | Both | `orbitSpeed` | Angular velocity in degrees per second for `orbit`. |
-| **`breathe`** | `number` | ratio | Both | — | Distance breathing multiplier for `arc` (default: 1.12) and `recoil`. |
+| **`breathe`** | `number` | ratio | Both | — | Distance breathing multiplier for `arc`/`swoop` (default: `1.12`) and impulse kick multiplier for `recoil` (default: `1.25`). |
 | **`waypoints`** | `array` | — | Both | — | List of intermediate control poses for `maneuver: "spline"`. |
 | **`frustum_depth`**| `number` | `m` | Stage only | `cone_length` | Depth of 3D gate frustum. `0` or omitted auto-matches distance to target. |
 | **`frustum_color`**| `string` | hex | Stage only | — | Hex color token for frustum lines and focus frame (default: `"#f59e0b"`). |
@@ -469,60 +463,59 @@ StageFlow uses a unified spherical camera model across both the Illustrative Sta
 ### 4.2 Aiming & Anchors (`target`, `from`, `target_offset`)
 
 A camera look-at anchor $\vec{T}$ resolves in one of three ways:
-1. **Entity Identifier or Label**: Automatically binds to the entity's intrinsic anchor ($\vec{A} = [x, y + r_{\text{anchor}} \cdot h, z]$). As the entity moves across the stage, the camera dynamically tracks their position.
+1. **Entity Identifier or Label**: Automatically binds to the entity's intrinsic anchor (eye-level `0.90h` for characters; center-volume `0.50h` for props/markers). As the entity moves across the stage, the camera dynamically tracks their position.
 2. **Stage Presets (`"center"`, `"origin"`, `"stage"`)**: Resolves to the stage center chest level: `[0.0, 1.0, 0.0]`.
 3. **Explicit 3D Vector**: Authored as `[x, y, z]` or `{x, y, z}` in world meters.
 
 #### World Target Offsets (`target_offset`)
 The `target_offset: [dx, dy, dz]` vector displaces the resolved look-at anchor in world space:
-
-$$\vec{T}_{\text{effective}} = \vec{T}_{\text{anchor}} + [dx, dy, dz]$$
-
-Use `target_offset: [0, 0.25, 0]` to establish lead headroom above an actor's eye-line, or `target_offset: [0.4, 0, 0]` for Rule-of-Thirds lead-room in the direction of gaze.
+- Use `target_offset: [0, 0.25, 0]` to establish lead headroom above an actor's eye-line.
+- Use `target_offset: [0.4, 0, 0]` for Rule-of-Thirds lead-room in the direction of gaze.
 
 ### 4.3 Maneuver Catalog
 
-| Maneuver | Path Geometry | Evaluated Fields | Ignored Fields | Engine Specifics |
-| :--- | :--- | :--- | :--- | :--- |
-| **`cut`** | Instantaneous destination hold | `target`, `distance`, `pitch`, `yaw`, `roll`, `lens` | `show_path` | Suppresses trajectory ribbon rendering. |
-| **`dolly`** | Linear 3D interpolation | `target`, `from`, `distance_*`, `pitch_*`, `yaw_*`, `roll_*`, `lens_*` | `revolutions`, `orbit_speed`, `breathe` | Direct linear translation between start and destination poses. |
-| **`straight`** | Identical to `dolly` | Same as `dolly` | Same as `dolly` | Synonym for `dolly`. |
-| **`arc`** | Quadratic Bezier curve | `yaw_start`, `yaw_end`, `breathe` | `revolutions`, `orbit_speed` | Quadratic curve bowing outward by $0.14 \times \text{chord}$ with $0.16 \times \text{chord}$ $+Y$ lift and distance breathing ($1.12$). |
-| **`swoop`** | Bezier curve with elevation crest | `yaw_start`, `yaw_end`, `breathe` | `revolutions`, `orbit_speed` | Adds $+0.08\text{ rad}$ ($\approx +4.58^\circ$) sinusoidal pitch elevation crest at mid-shot. |
-| **`orbit`** | Turntable revolution | `direction`, `revolutions`, `orbit_speed`, `yaw_delta`, `yaw_*` | `from` | Revolves around target azimuthally. Follows 7-step priority resolution (§4.5). |
-| **`sweep`** | Sector sweep | Same as `orbit` | `from` | Synonym for `orbit`. |
-| **`spiral`** | Helical corkscrew | `direction`, `revolutions`, `distance_*`, `pitch_*` | `yaw`, `yaw_end` | Continuous azimuthal revolution while linearly translating distance and pitch. |
-| **`dive`** | Sinusoidal perigee dip | `distance_*`, `pitch_*` | `revolutions`, `breathe` | Modulates distance by $1 - 0.14\sin(2\pi u)$ and pitch by $-0.12\sin(\pi u)\text{ rad}$. |
-| **`recoil`** | Impact shockwave damper | `breathe`, `distance_*` | `revolutions` | Adds impulse displacement $\Delta d = (b - 1) d_0 \cdot 3.5 \tau e^{-5\tau}$. Requires explicit `breathe > 1.0`. |
-| **`spline`** | $C^1$ Catmull-Rom spline | `waypoints`, `easing` | `yaw_delta`, `revolutions` | Interpolates smoothly through arbitrary waypoint sequence with angle unwrapping. |
+> For the exact closed-form trajectory equations $P(u)$, see [`STAGEFLOW_SCRIPT_SPECIFICATION.md §5.3`](./STAGEFLOW_SCRIPT_SPECIFICATION.md#5-temporal-easing-trajectory-maneuvers).
+
+| Maneuver | Accepted Aliases | Path Geometry | Evaluated Fields | Ignored Fields | Directorial Behavior & Defaults |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **`cut`** | `static`, `hold` | Instantaneous destination hold | `target`, `distance`, `pitch`, `yaw`, `roll`, `lens` | `show_path` | Cuts immediately to destination pose and suppresses trajectory ribbon. |
+| **`dolly`** | `straight`, `linear`, `push`, `pull` | Linear 3D interpolation | `target`, `from`, `distance_*`, `pitch_*`, `yaw_*`, `roll_*`, `lens_*` | `revolutions`, `orbit_speed`, `breathe` | Direct linear translation between start and destination poses. |
+| **`arc`** | — | Quadratic Bezier curve | `yaw_start`, `yaw_end`, `breathe` | `revolutions`, `orbit_speed` | Bows outward by $14\%$ of chord with $16\%$ $+Y$ lift and mid-shot distance breathing (default `breathe: 1.12`). |
+| **`swoop`** | — | Bezier curve with elevation crest | `yaw_start`, `yaw_end`, `breathe` | `revolutions`, `orbit_speed` | Same as `arc` plus a $+4.58^\circ$ mid-shot pitch elevation crest. |
+| **`orbit`** | `turntable` | Turntable revolution | `direction`, `revolutions`, `orbit_speed`, `yaw_delta`, `yaw_*` | `from` | Revolves around target azimuthally following 7-step priority (§4.5). |
+| **`sweep`** | `pan` | Sector sweep | Same as `orbit` | `from` | Azimuthal sweep sharing `orbit` kinematics. |
+| **`spiral`** | `corkscrew` | Helical corkscrew | `direction`, `revolutions`, `distance_*`, `pitch_*` | `yaw`, `yaw_end` | Continuous azimuthal revolution (default `revolutions: 0.5`) while translating distance and pitch. |
+| **`dive`** | `flyby` | Sinusoidal perigee dip | `distance_*`, `pitch_*` | `revolutions`, `breathe` | Dips $14\%$ closer at first quarter, pulls back at three quarters, and dips pitch by $-6.88^\circ$ at mid-shot. |
+| **`recoil`** | `punch` | Impact shockwave damper | `breathe`, `distance_*` | `revolutions` | Default `breathe: 1.25`. Executes an immediate impulse kick backward before settling onto destination pose. |
+| **`spline`** | `path` | $C^1$ Catmull-Rom spline | `waypoints`, `easing` | `yaw_delta`, `revolutions` | Interpolates smoothly through arbitrary waypoint sequence with shortest-arc angle unwrapping. |
 
 ### 4.4 Easing Velocity Profiles
 
-Normalized shot time $\tau = \frac{t - \text{start}}{\text{end} - \text{start}} \in [0, 1]$ maps to eased progress $u = E(\tau) \in [0, 1]$:
+> For the closed-form mathematical definitions $u = E(\tau)$, see [`STAGEFLOW_SCRIPT_SPECIFICATION.md §5.1`](./STAGEFLOW_SCRIPT_SPECIFICATION.md#5-temporal-easing-trajectory-maneuvers).
 
-| Easing | Velocity Profile | Mathematical Definition |
-| :--- | :--- | :--- |
-| **`smooth`** *(Default)* | Symmetric raised cosine | $u = \frac{1}{2}\big(1 - \cos(\pi \tau)\big)$ |
-| **`linear`** | Constant speed | $u = \tau$ |
-| **`ease-in`** | Cubic acceleration | $u = \tau^3$ |
-| **`ease-out`** | Cubic deceleration | $u = 1 - (1 - \tau)^3$ |
-| **`cruise`** | Trapezoidal dolly profile | $p = 0.25$ raised-cosine ramp-up $\to$ constant cruise $\to$ raised-cosine ramp-down |
-| **`accel`** | Smooth ramp into linear exit | $p = 0.40$ raised-cosine ramp-up into constant linear exit velocity |
-| **`deccel`** | Linear entry into smooth braking | Enters at constant linear speed into $p = 0.40$ raised-cosine deceleration |
-| **`expo`** | Dramatic exponential S-curve | $u = 0.5 \cdot 2^{20\tau - 10}$ for $\tau < 0.5$; $u = 1 - 0.5 \cdot 2^{-20\tau + 10}$ for $\tau \ge 0.5$ |
-| **`pop`** | Elastic spring overshoot | $u = \operatorname{clamp}\big(1 - e^{-6\tau}\cos(2.5\pi\tau),\; 0,\; 1.2\big)$ |
+| Easing | Accepted Aliases | Velocity Profile | Directorial Feel & Recommended Use Case |
+| :--- | :--- | :--- | :--- |
+| **`smooth`** *(Default)* | — | Symmetric raised cosine | Natural, organic acceleration and braking for general camera moves and character turns. |
+| **`linear`** | — | Constant velocity | Unmodulated mechanical motion; ideal for continuous turntable orbits or mid-action cuts. |
+| **`ease-in`** | `easein` | Cubic acceleration | Starts from a dead stop and accelerates into a cut or whip-pan exit. |
+| **`ease-out`** | `easeout` | Cubic deceleration | Enters at high velocity from a cut and settles gently onto a final composition. |
+| **`cruise`** | `trapezoid` | Trapezoidal dolly profile | Smooth $25\%$ ramp-up $\to$ constant steadicam/dolly track speed $\to$ smooth $25\%$ ramp-down. |
+| **`accel`** | `ramp-up` | Smooth ramp into linear exit | $40\%$ raised-cosine ramp-up from rest into constant exit velocity (first half of a multi-shot move). |
+| **`deccel`** | `decel`, `ramp-down` | Linear entry into smooth braking | Enters at constant speed from a preceding shot and brakes over the final $40\%$. |
+| **`expo`** | — | Dramatic exponential S-curve | Slow build followed by a high-velocity mid-shot snap and soft landing. |
+| **`pop`** | `bounce` | Elastic spring overshoot | Overshoots target slightly (up to $1.2\times$) before settling; ideal for whip-pans and impact reactions. |
 
 ### 4.5 Orbit Direction & Angle Resolution Priority
 
-When authoring `maneuver: "orbit"` or `"sweep"`, azimuthal delta $\Delta\psi$ resolves in strict 7-step priority:
+When authoring `maneuver: "orbit"` or `"sweep"`, the total rotation angle resolves in strict 7-step priority:
 
-1. **`revolutions:`**: $\Delta\psi = \text{sign} \cdot \text{revolutions} \cdot 2\pi \cdot u$ (where `cw` = $-1$, `ccw` = $+1$).
-2. **`orbit_speed:`**: $\Delta\psi = \text{sign} \cdot \text{orbitSpeedRad} \cdot \Delta t \cdot u$.
-3. **`yaw_delta:`**: $\Delta\psi = \text{yawDeltaRad} \cdot u$ (relative angular offset).
-4. **Explicit `direction:` + destination `yaw:`**: Forces rotation along the authored direction ($[-2\pi, 0]$ for `cw`, $[0, +2\pi]$ for `ccw`) via `directedAngleDiff`.
-5. **Both `yaw_start:` and `yaw_end:` authored**: $\Delta\psi = (\text{yaw\_end} - \text{yaw\_start}) \cdot u$ (preserves wide multi-quadrant arcs without shortest-arc collapse).
-6. **Destination `yaw:` without explicit direction**: Collapses to shortest Euclidean arc on $[-\pi, \pi]$ via `shortestAngleDiff`.
-7. **No parameters specified**: Defaults to a $\pm 45^\circ$ quarter-turn in the commanded direction.
+1. **`revolutions:`**: Multiplies full $360^\circ$ turns by the active `direction` (`"cw"` or `"ccw"`).
+2. **`orbit_speed:`**: Multiplies angular velocity ($\text{deg/s}$) by shot duration $\Delta t$ in the active `direction`.
+3. **`yaw_delta:`**: Rotates by the exact relative signed offset from the starting yaw.
+4. **Explicit `direction:` + destination `yaw:` (or `yaw_end:`)**: Forces the camera to travel the long or short way around the circle to honor `"cw"` vs. `"ccw"`.
+5. **Both `yaw_start:` and `yaw_end:` authored**: Interpolates directly across the authored span (`yaw_end - yaw_start`), preserving wide multi-quadrant sweeps without shortest-arc collapse.
+6. **Destination `yaw:` without explicit direction**: Takes the shortest Euclidean arc ($[-180^\circ, +180^\circ]$).
+7. **No angle parameters specified**: Defaults to a $\pm 45^\circ$ quarter-turn in the active `direction`.
 
 ```text
 Floor Clock Azimuth Orientation (Looking down at stage floor):
@@ -538,11 +531,9 @@ Floor Clock Azimuth Orientation (Looking down at stage floor):
 • "direction: ccw" (Counter-Clockwise): 6:00 -> 3:00 -> 12:00 (Increasing yaw values)
 ```
 
-### 4.6 Optics & Sensor Gate Math
+### 4.6 Optics & Vertical Field of View Reference
 
-StageFlow models a standard 35mm full-frame sensor ($W_{\text{sensor}} = 36.0\text{mm}$):
-
-$$H_{\text{sensor}} = \frac{36.0\text{mm}}{\text{aspectRatio}}, \qquad \text{FOV}_{\text{vert}} = 2 \arctan\left(\frac{H_{\text{sensor}}}{2 \cdot f_{\text{mm}}}\right) \cdot \frac{180}{\pi}$$
+StageFlow models a standard **35mm Full-Frame Sensor** ($36.0\text{mm}$ horizontal gate width). Varying the scene `aspect_ratio` adjusts the vertical sensor gate height and vertical FOV (see [`STAGEFLOW_SCRIPT_SPECIFICATION.md §3`](./STAGEFLOW_SCRIPT_SPECIFICATION.md#3-optical-sensor-film-gate-geometry) for sensor gate projection math):
 
 #### Vertical Field of View (FOV) Reference Table
 | Focal Length | `16:9` Widescreen | `2.39:1` Scope | `4:3` Academy |
@@ -712,9 +703,9 @@ blocking:
 
 ### 6.2 The Two-Pass Kinematic Evaluator
 
-When evaluating root `blocking:` cues at timestamp $t$, the engine executes a decoupled two-pass pipeline:
-- **Pass 1 (World Positions & Visibility Chains)**: Evaluates chronological position spans $\vec{P}_{\text{start}} \to \vec{P}_{\text{end}}$ and visibility toggles across all entities. During uncued intervals, entities persist their preceding terminal coordinates.
-- **Pass 2 (Facing Rotations & $C^0$ Gaze Handoffs)**: Once all world positions $\vec{P}(j, t)$ are known for every entity $j$, gaze headings are solved via $\operatorname{atan2}(\Delta x, \Delta z)$. When a cue specifying `look_at` concludes, its terminal facing yaw is sampled and forward-chained, ensuring continuous $0\text{ rad}$ transition handoffs into subsequent holds or turns.
+When evaluating root `blocking:` cues at timestamp $t$, the engine executes a decoupled two-pass pipeline (see [`STAGEFLOW_SCRIPT_SPECIFICATION.md §6`](./STAGEFLOW_SCRIPT_SPECIFICATION.md#6-timeline-chaining-boundary-semantics-p-0-to-p-1-to-dots-to-p-k)):
+- **Pass 1 (World Positions & Visibility Chains)**: Evaluates chronological position spans and visibility toggles across all entities. During uncued intervals, entities persist their preceding terminal coordinates.
+- **Pass 2 (Facing Rotations & $C^0$ Gaze Handoffs)**: Once all world positions are known for every entity, gaze headings are solved continuously. When a cue specifying `look_at` concludes, its terminal facing yaw is sampled and forward-chained, ensuring seamless transition handoffs into subsequent holds or turns.
 - **Ground Movement Trails**: While an entity translates inside an active cue with displacement $> 0.05\text{m}$, the diorama draws a **16-segment dashed floor movement trail** representing the full physical trajectory across all active camera cuts. During holds and stationary gaps, trails clear (`[]`).
 
 ### 6.3 Blocking Precedence & Hybrid Overlays
@@ -824,7 +815,7 @@ shots:
         highlighted: true
         look_at: "actor_a"
 ```
-*(Reference Blueprint: [`blueprint_02_dialogue.yaml`](../src/scores/blueprint_02_dialogue.yaml))*
+*(Reference Blueprint: [`blueprint_02_dialogue.yaml`](../src/scores/blueprints/blueprint_02_dialogue.yaml))*
 
 ---
 
@@ -852,7 +843,7 @@ shots:
       lens_end: 24mm
       show_path: true
 ```
-*(Reference Blueprint: [`blueprint_05_two_rooms.yaml`](../src/scores/blueprint_05_two_rooms.yaml))*
+*(Reference Blueprint: [`blueprint_05_two_rooms.yaml`](../src/scores/blueprints/blueprint_05_two_rooms.yaml))*
 
 ---
 
@@ -885,7 +876,7 @@ shots:
         easing: "cruise"
         highlighted: true
 ```
-*(Reference Blueprint: [`blueprint_05_two_rooms.yaml`](../src/scores/blueprint_05_two_rooms.yaml))*
+*(Reference Blueprint: [`blueprint_05_two_rooms.yaml`](../src/scores/blueprints/blueprint_05_two_rooms.yaml))*
 
 ---
 
@@ -912,7 +903,7 @@ shots:
       direction: "cw"
       lens: 35mm
 ```
-*(Reference Blueprint: [`blueprint_04_cinematography_tutorial.yaml`](../src/scores/blueprint_04_cinematography_tutorial.yaml))*
+*(Reference Blueprint: [`blueprint_04_cinematography_tutorial.yaml`](../src/scores/blueprints/blueprint_04_cinematography_tutorial.yaml))*
 
 ---
 
@@ -948,7 +939,7 @@ shots:
           yaw: 25
           lens: 50mm
 ```
-*(Reference Blueprint: [`blueprint_02_dialogue.yaml`](../src/scores/blueprint_02_dialogue.yaml))*
+*(Reference Blueprint: [`blueprint_02_dialogue.yaml`](../src/scores/blueprints/blueprint_02_dialogue.yaml))*
 
 ---
 
@@ -1003,7 +994,7 @@ observer_shots:
     yaw_end: 205
     lens: 35mm
 ```
-*(Reference Blueprint: [`blueprint_02_dialogue.yaml`](../src/scores/blueprint_02_dialogue.yaml))*
+*(Reference Blueprint: [`blueprint_02_dialogue.yaml`](../src/scores/blueprints/blueprint_02_dialogue.yaml))*
 
 ---
 
@@ -1077,7 +1068,7 @@ shots:
       yaw: 220
       lens: 35mm
 ```
-*(Reference Blueprint: [`blueprint_04_cinematography_tutorial.yaml`](../src/scores/blueprint_04_cinematography_tutorial.yaml))*
+*(Reference Blueprint: [`blueprint_04_cinematography_tutorial.yaml`](../src/scores/blueprints/blueprint_04_cinematography_tutorial.yaml))*
 
 ---
 
@@ -1142,4 +1133,4 @@ shots:
     end: 14.0
     stage_camera: { target: "arthur", maneuver: "orbit", distance: 2.0, pitch: 4, yaw_start: 25, yaw_end: 0, lens: 85mm }
 ```
-*(Reference Blueprint: [`blueprint_05_two_rooms.yaml`](../src/scores/blueprint_05_two_rooms.yaml))*
+*(Reference Blueprint: [`blueprint_05_two_rooms.yaml`](../src/scores/blueprints/blueprint_05_two_rooms.yaml))*

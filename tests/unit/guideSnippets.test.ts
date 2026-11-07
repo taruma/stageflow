@@ -126,11 +126,18 @@ entities:
     expect(normalizeCameraEasing('ramp-down')).toBe('deccel');
     expect(normalizeCameraEasing('trapezoid')).toBe('cruise');
 
-    // Entity kinds (unknown defaults to character)
+    // Entity kinds & documented aliases
     expect(normalizeEntityKind('character')).toBe('character');
-    expect(normalizeEntityKind('prop')).toBe('prop');
-    expect(normalizeEntityKind('marker')).toBe('marker');
     expect(normalizeEntityKind('actor')).toBe('character');
+    expect(normalizeEntityKind('person')).toBe('character');
+    expect(normalizeEntityKind('prop')).toBe('prop');
+    expect(normalizeEntityKind('set')).toBe('prop');
+    expect(normalizeEntityKind('furniture')).toBe('prop');
+    expect(normalizeEntityKind('item')).toBe('prop');
+    expect(normalizeEntityKind('object')).toBe('prop');
+    expect(normalizeEntityKind('marker')).toBe('marker');
+    expect(normalizeEntityKind('spike')).toBe('marker');
+    expect(normalizeEntityKind('mark')).toBe('marker');
   });
 
   it('asserts key alias equivalence between canonical keys and camelCase/legacy variants', () => {
@@ -214,5 +221,43 @@ shots:
     const cam = res.score!.shots[0].stageCamera!;
     expect(cam.trackTarget).toBe(false);
     expect(cam.waypoints?.[0].at).toBe(0.5);
+  });
+
+  it('defaults recoil maneuver breathe to 1.25 and resolves preset targets ("center", "origin", "stage") in baseline stage cameras', () => {
+    const yamlWithRecoilAndCenter = `version: "1.0"
+id: "recoil-center-test"
+title: "Recoil and Center Test"
+stage:
+  observer_camera:
+    target: "center"
+    target_offset: [0.5, 0.25, -0.5]
+  stage_camera:
+    target: "origin"
+shots:
+  - id: "s1"
+    start: 0.0
+    end: 4.0
+    stage_camera:
+      target: "center"
+      maneuver: "recoil"
+`;
+    const res = parseStageScore(yamlWithRecoilAndCenter);
+    expect(res.error).toBeNull();
+    expect(res.score).not.toBeNull();
+
+    // Baseline cameras resolve "center" and "origin" to [0, 1.0, 0] + offset
+    expect(res.score!.stage.defaultObserverPose.target).toEqual({
+      x: 0.5,
+      y: 1.25,
+      z: -0.5,
+    });
+    expect(res.score!.stage.defaultStageCameraPose.target).toEqual({
+      x: 0,
+      y: 1.0,
+      z: 0,
+    });
+
+    // Recoil maneuver defaults breathe to 1.25 when omitted
+    expect(res.score!.shots[0].stageCamera!.breathe).toBe(1.25);
   });
 });

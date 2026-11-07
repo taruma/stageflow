@@ -30,7 +30,7 @@ export const GUIDE_DOC_SHORTCUTS: Record<GuideDocType, GuideSectionShortcut[]> =
     { label: 'Entities', id: 'section-4' },
     { label: 'Maneuvers', id: 'section-5' },
     { label: 'Chaining', id: 'section-6' },
-    { label: 'Schema', id: 'section-7' },
+    { label: 'Contract', id: 'section-7' },
   ],
 };
 

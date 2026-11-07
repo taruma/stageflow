@@ -153,8 +153,18 @@ export function normalizeEntityKind(raw: unknown): EntityKind {
   const rawKind = String(raw ?? 'character')
     .trim()
     .toLowerCase();
-  if (rawKind === 'prop') return 'prop';
-  if (rawKind === 'marker') return 'marker';
+  if (
+    rawKind === 'prop' ||
+    rawKind === 'set' ||
+    rawKind === 'furniture' ||
+    rawKind === 'item' ||
+    rawKind === 'object'
+  ) {
+    return 'prop';
+  }
+  if (rawKind === 'marker' || rawKind === 'spike' || rawKind === 'mark') {
+    return 'marker';
+  }
   return 'character';
 }
 

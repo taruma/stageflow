@@ -773,5 +773,35 @@ shots:
       expect(score!.entities[1].style).toBe('solid');
       expect(score!.entities[2].style).toBe('glow');
     });
+    it('normalizes entity kind aliases (actor, person, set, furniture, item, object, spike, mark)', () => {
+      expect(normalizeEntityKind('actor')).toBe('character');
+      expect(normalizeEntityKind('person')).toBe('character');
+      expect(normalizeEntityKind('set')).toBe('prop');
+      expect(normalizeEntityKind('furniture')).toBe('prop');
+      expect(normalizeEntityKind('item')).toBe('prop');
+      expect(normalizeEntityKind('object')).toBe('prop');
+      expect(normalizeEntityKind('spike')).toBe('marker');
+      expect(normalizeEntityKind('mark')).toBe('marker');
+    });
+
+    it('defaults breathe to 1.25 for recoil maneuver and resolves stage preset targets in baseline cameras', () => {
+      const recoilSpec = parseCameraCueSpec({ maneuver: 'recoil' }, 50);
+      expect(recoilSpec).toBeDefined();
+      expect(recoilSpec!.breathe).toBe(1.25);
+
+      const arcSpec = parseCameraCueSpec({ maneuver: 'arc' }, 50);
+      expect(arcSpec!.breathe).toBe(1.12);
+
+      const dollySpec = parseCameraCueSpec({ maneuver: 'dolly' }, 50);
+      expect(dollySpec!.breathe).toBe(1.0);
+
+      const centerPose = { ...DEFAULT_OBSERVER_POSE, target: { x: 9, y: 9, z: 9 } };
+      resolveStageCamEntityTarget(
+        { target: 'center', target_offset: [0.5, 0.25, -0.5] },
+        centerPose,
+        []
+      );
+      expect(centerPose.target).toEqual({ x: 0.5, y: 1.25, z: -0.5 });
+    });
   });
 });

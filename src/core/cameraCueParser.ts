@@ -76,6 +76,19 @@ export function resolveStageCamEntityTarget(
   const camObj = rawCam as Record<string, unknown>;
   if (typeof camObj.target !== 'string') return;
   const tgtName = camObj.target.trim().toLowerCase();
+  const offset = parseOptionalVec3(
+    camObj.target_offset ?? camObj.targetOffset
+  );
+
+  if (tgtName === 'center' || tgtName === 'origin' || tgtName === 'stage') {
+    pose.target = {
+      x: offset?.x ?? 0,
+      y: 1.0 + (offset?.y ?? 0),
+      z: offset?.z ?? 0,
+    };
+    return;
+  }
+
   const matched = entities.find(
     (e) =>
       e.id.toLowerCase() === tgtName || e.label.toLowerCase() === tgtName
@@ -85,9 +98,6 @@ export function resolveStageCamEntityTarget(
       matched.kind === 'character'
         ? ENTITY_DEFAULTS.CHARACTER_LOOK_ANCHOR_RATIO
         : 0.5;
-    const offset = parseOptionalVec3(
-      camObj.target_offset ?? camObj.targetOffset
-    );
     pose.target = {
       x: matched.position.x + (offset?.x ?? 0),
       y: matched.position.y + matched.height * anchorRatio + (offset?.y ?? 0),
@@ -117,7 +127,11 @@ export function parseCameraCueSpec(
     cleanDir === 'ccw' || cleanDir === 'counterclockwise' ? 'ccw' : 'cw';
 
   const defaultBreathe =
-    maneuver === 'arc' || maneuver === 'swoop' ? 1.12 : 1.0;
+    maneuver === 'arc' || maneuver === 'swoop'
+      ? 1.12
+      : maneuver === 'recoil'
+      ? 1.25
+      : 1.0;
   const breathe =
     typeof obj.breathe === 'number' && Number.isFinite(obj.breathe)
       ? obj.breathe

@@ -1,6 +1,8 @@
 # Core Math, Optics & Choreography Score Specifications
 
-This document is the authoritative technical specification for **Layer 1 (`src/core/`)** and the **YAML Choreography Score Schema (`src/scores/*.yaml`)** in **StageFlow**. It is governed by [`AGENTS.md`](../AGENTS.md).
+This document is the authoritative technical specification for **Layer 1 (`src/core/`)** and the **YAML Choreography Score Schema (`src/scores/*.yaml`)** in **StageFlow**. It is governed by [`AGENTS.md`](../AGENTS.md) and complements the in-app manual pair:
+- [**`docs/STAGEFLOW_SCRIPT_SPECIFICATION.md`**](./STAGEFLOW_SCRIPT_SPECIFICATION.md) (`?mode=spec`) — Pure mathematical model, optical projections, closed-form trajectory equations, and normalized AST contract.
+- [**`docs/YAML_AUTHORING_GUIDE.md`**](./YAML_AUTHORING_GUIDE.md) (`?mode=guide`) — Declarative YAML authoring reference, accepted aliases, and production cinematography recipes.
 
 ---
 
@@ -14,6 +16,7 @@ StageFlow uses a standardized, human-intuitive metric coordinate system in YAML 
   - $+Z$: Downstage / Front (toward the default viewer)
 - **Spatial Units**: **Metric Meters ($1\text{ Three.js unit} = 1\text{m}$)**.
   - Standard character height: `1.75m` (eye-level look-at anchor at `0.90 * height ≈ 1.575m`).
+  - Standard prop height: `0.85m` (or `2 * radius = 0.70m` when `shape: "sphere"` omits `height`; center-volume look-at anchor at `0.50 * height`).
   - Default stage floor: `10m × 10m` with `1.0m` major grid sections and `0.25m` minor subdivisions.
 - **Angular Units**:
   - **In YAML Scores & UI Readouts**: Authored and displayed in **human degrees (`deg`)** (e.g., `pitch: 26`, `yaw: -35`, `rotation: 90`).
@@ -91,7 +94,7 @@ StageFlow models camera framing using standard **35mm Full-Frame Sensor Gate Wid
 
 ### 4.2 Forward Pose Chaining ($P_0 \to P_1 \to \dots \to P_k$) & Track Normalization
 In [`trajectoryChain.ts`](../src/core/trajectoryChain.ts), [`cameraTargetResolver.ts`](../src/core/cameraTargetResolver.ts), [`shotPoseEvaluator.ts`](../src/core/shotPoseEvaluator.ts), and [`entityEngine.ts`](../src/core/entityEngine.ts):
-- Each shot cuts cleanly (`0ms`) to its target anchor point (`spec.target`) unless explicit camera travel from another anchor is authored via `from:`.
+- Each shot cuts cleanly (`0ms`) to its target anchor point (`spec.target`) unless explicit camera travel from another anchor is authored via `from:`. Both baseline `stage` cameras and shot cues resolve entity IDs/labels, stage presets (`"center"`, `"origin"`, `"stage"` $\to$ `[0, 1.0, 0]`), and explicit `[x, y, z]` coordinates.
 - Continuous camera parameters (`distance`, `pitch`, `yaw`) forward-chain from the preceding shot's terminal pose $P_{\text{end}}$ when unspecified, but immediately adopt newly specified angles (`pitch`, `pitch_start`, `yaw`, `yaw_start`) without cross-shot drift.
 - **Option A Shot-Boundary Roll & Target-Offset Reset**: Unlike spatial position angles, both `roll` (Dutch angle) and `target_offset` (`[dx, dy, dz]` metric displacement from the base anchor) default to resetting to their neutral baselines (`0°` and `[0, 0, 0]`) at shot boundaries whenever a shot omits those parameters. To animate a continuous Dutch tilt or target offset across shots or smoothly recover back to neutral, authors specify `roll_start`/`roll_end` (or `roll_end: 0`) and `target_offset_start`/`target_offset_end` (or `target_offset_end: [0, 0, 0]`).
 - For moving camera maneuvers, `sampleCueTrajectoryPoints()` in [`trajectoryChain.ts`](../src/core/trajectoryChain.ts) pre-samples $N = 32$ 3D world-space coordinates across the entire shot duration ($t_k \in [\text{startSec}, \text{endSec}]$) evaluating moving targets at each temporal step. Results are cached in a pure `WeakMap<StageScore, CueTrackCache>` so intra-shot frames yield referentially stable (`===`) trajectory point arrays without floating/drifting tracks or React memoization jitter. Trajectory lines are visibility-gated to the active shot ID to prevent 1-frame asynchronous ghosting across cut boundaries.
@@ -109,11 +112,11 @@ In [`trajectoryChain.ts`](../src/core/trajectoryChain.ts), [`cameraTargetResolve
 - **11 Trajectory Maneuvers (`CameraManeuver`)**:
   - `cut`: Instantaneous jump to destination pose.
   - `dolly` / `straight`: Direct 3D linear interpolation of target, distance, pitch, yaw, and focal length.
-  - `arc` / `swoop`: 3D quadratic Bezier curve with $+Y$ elevation lift and mid-flight `breathe` distance pullback.
+  - `arc` / `swoop`: 3D quadratic Bezier curve with $+Y$ elevation lift and mid-flight `breathe` distance pullback (default `1.12`).
   - `orbit` / `sweep`: Continuous azimuthal turntable revolution (`cw` or `ccw`).
   - `spiral`: Helical zoom and elevation orbit.
   - `dive`: Fast perigee dip toward subject.
-  - `recoil`: Immediate shockwave impulse kick.
+  - `recoil`: Immediate shockwave impulse kick (default `breathe: 1.25`).
   - `spline`: Multi-waypoint Catmull-Rom spline with automatic yaw unwrapping.
 
 ### 4.4 Opt-In Contiguous Shot Chaining (`continuous: true`) & YAML Order Priority
@@ -129,7 +132,7 @@ In [`trajectoryChain.ts`](../src/core/trajectoryChain.ts), [`cameraTargetResolve
 
 ## 5. Declarative YAML Choreography Schema (`scoreParser.ts`, `scorePrimitives.ts`, `cameraCueParser.ts`)
 
-Scores are authored in human-readable YAML (see [`src/scores/demo_blueprint.yaml`](../src/scores/demo_blueprint.yaml)):
+Scores are authored in human-readable YAML (see [`src/scores/blueprints/demo_blueprint.yaml`](../src/scores/blueprints/demo_blueprint.yaml)):
 
 ```yaml
 version: "1.0"
@@ -146,22 +149,22 @@ stage:
   depth: 10                          # Stage depth in meters
   grid_step: 1                       # Major grid spacing in meters
   observer_camera:
-    target: [0, 1.1, 0]
+    target: [0, 1.0, 0]
     distance: 7.5
     pitch: 26                        # Degrees
     yaw: 38                          # Degrees
     lens: 35mm
   stage_camera:
-    target: "protagonist"            # Entity ID or [x, y, z]
+    target: "protagonist"            # Entity ID, "center", or [x, y, z]
     distance: 3.2
     pitch: 6
-    yaw: -20
+    yaw: -25
     lens: 50mm
 
 entities:
   - id: "protagonist"
     label: "Subject A (Lead)"
-    kind: "character"                # "character" | "prop" | "marker"
+    kind: "character"                # "character" (actor/person) | "prop" (set/furniture/item/object) | "marker" (spike/mark)
     position: [-0.9, 0, 0]           # Meters (Y=0 is floor)
     rotation: 90                     # Facing angle in degrees
     color: "#38bdf8"
@@ -197,7 +200,7 @@ shots:
       lens: 50mm
       show_path: true
     observer_camera:
-      target: [0, 1.1, 0]
+      target: [0, 1.0, 0]
       maneuver: "orbit"
       easing: "smooth"
       distance: 7.5
