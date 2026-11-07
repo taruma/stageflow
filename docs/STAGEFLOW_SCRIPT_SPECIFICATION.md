@@ -2,7 +2,7 @@
 
 This document is the authoritative **Single Source of Truth (SSOT)** for the formal mathematical model, coordinate transformations, optical equations, kinematic evaluators, and normalized Abstract Syntax Tree (AST) contract of **StageFlow Choreography Scores (`*.yaml`)**. It defines how the stateless runtime evaluator computes 3D spatial state $\text{Frame}_t = f(t, \text{score})$ without prescribing directorial choices.
 
-> **Companion Authoring Manual**: For declarative YAML syntax, field aliases, quickstart templates, and production cinematography recipes, see the [**StageFlow YAML Score Authoring Manual (`docs/YAML_AUTHORING_GUIDE.md`)**](./YAML_AUTHORING_GUIDE.md) (`?mode=guide`).
+> **Companion Authoring Manual**: For declarative YAML syntax, field aliases, quickstart templates, and production cinematography recipes, see the [**StageFlow YAML Score Authoring Manual**](?mode=guide) (Guide tab / `?mode=guide`).
 
 ---
 
@@ -195,7 +195,7 @@ StageFlow is a **stateless functional evaluator** (`Frame_t = f(t, score)`). Eff
 
 ## 7. Normalized AST Data Model & Clamping Contract
 
-`parseStageScore(rawYaml)` normalizes human-authored YAML into the immutable TypeScript AST (`StageScore` in [`src/core/types.ts`](../src/core/types.ts)) governed by the canonical constants in [`src/core/constants.ts`](../src/core/constants.ts).
+`parseStageScore(rawYaml)` normalizes human-authored YAML into the immutable TypeScript AST (`StageScore` in `src/core/types.ts`) governed by the canonical constants in `src/core/constants.ts`.
 
 ### 7.1 Canonical Baseline Poses & Clamping Bounds (`constants.ts`)
 
@@ -241,4 +241,4 @@ StageFlow is a **stateless functional evaluator** (`Frame_t = f(t, score)`). Eff
 | | `direction`, `hasExplicitDirection` | `'cw' \| 'ccw'` (default `'cw'`), `boolean` |
 | | `revolutions`, `orbitSpeedRad`, `waypoints` | Optional turn count, angular speed ($\text{rad/s}$), and `CameraWaypointSpec[]` |
 
-> **Declarative YAML Schema & Authoring Reference**: To author or edit `*.yaml` files using human-readable degrees, millimeter strings, key aliases, and production recipes, consult the [**StageFlow YAML Score Authoring Manual (`docs/YAML_AUTHORING_GUIDE.md`)**](./YAML_AUTHORING_GUIDE.md) (`?mode=guide`).
+> **Declarative YAML Schema & Authoring Reference**: To author or edit `*.yaml` files using human-readable degrees, millimeter strings, key aliases, and production recipes, consult the [**StageFlow YAML Score Authoring Manual**](?mode=guide) (Guide tab / `?mode=guide`).

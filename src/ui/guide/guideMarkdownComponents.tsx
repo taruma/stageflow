@@ -1,14 +1,20 @@
 /**
  * Custom ReactMarkdown component renderers for ScoreAuthoringGuideView.
  * Provides accessible typography, LaTeX styling, theme-aware code blocks,
- * and deterministic section jump targets.
+ * deterministic section jump targets, and in-app cross-specification tab navigation.
  */
 
 import type { Components } from 'react-markdown';
 import { BookOpen } from 'lucide-react';
-import { getNodeText, slugify } from './guideUtils';
+import { getNodeText, slugify, type GuideDocType } from './guideUtils';
 
-export const createGuideMarkdownComponents = (): Components => ({
+export interface GuideMarkdownOptions {
+  onSwitchDoc?: (doc?: GuideDocType, anchor?: string) => void;
+}
+
+export const createGuideMarkdownComponents = (
+  options?: GuideMarkdownOptions
+): Components => ({
   h1: ({ children }) => (
     <h1 className="text-2xl font-bold font-sans text-text-main mt-8 mb-4 pb-2 border-b border-border-main flex items-center gap-2">
       <BookOpen className="w-6 h-6 text-amber-500 inline shrink-0" />
@@ -53,6 +59,75 @@ export const createGuideMarkdownComponents = (): Components => ({
   li: ({ children }) => (
     <li className="text-sm text-text-body leading-relaxed">{children}</li>
   ),
+  a: ({ href, children }) => {
+    if (!href) return <span>{children}</span>;
+
+    // Check if it's a cross-document link to spec or guide
+    const isSpec =
+      href.includes('mode=spec') ||
+      href.includes('STAGEFLOW_SCRIPT_SPECIFICATION');
+    const isGuide =
+      href.includes('mode=guide') || href.includes('YAML_AUTHORING_GUIDE');
+
+    if (isSpec || isGuide) {
+      const targetDoc: GuideDocType = isSpec ? 'spec' : 'guide';
+      const hashMatch = href.match(/#([^?&]+)/);
+      const anchor = hashMatch ? hashMatch[1] : undefined;
+
+      return (
+        <a
+          href={href}
+          onClick={(e) => {
+            e.preventDefault();
+            options?.onSwitchDoc?.(targetDoc, anchor);
+          }}
+          className="text-amber-500 hover:text-amber-400 font-medium underline underline-offset-2 decoration-amber-500/40 hover:decoration-amber-400 transition-colors cursor-pointer"
+        >
+          {children}
+        </a>
+      );
+    }
+
+    // Anchor on the same page
+    if (href.startsWith('#')) {
+      const anchor = href.slice(1);
+      return (
+        <a
+          href={href}
+          onClick={(e) => {
+            e.preventDefault();
+            options?.onSwitchDoc?.(undefined, anchor);
+          }}
+          className="text-amber-500 hover:text-amber-400 font-medium underline underline-offset-2 decoration-amber-500/40 hover:decoration-amber-400 transition-colors cursor-pointer"
+        >
+          {children}
+        </a>
+      );
+    }
+
+    // External web link
+    const isExternal =
+      href.startsWith('http://') || href.startsWith('https://');
+    if (isExternal) {
+      return (
+        <a
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-amber-500 hover:text-amber-400 font-medium underline underline-offset-2 decoration-amber-500/40 hover:decoration-amber-400 transition-colors"
+        >
+          {children}
+        </a>
+      );
+    }
+
+    // Fallback safe render for any other local relative path (avoids browser 404)
+    return (
+      <span className="font-mono text-xs bg-surface-subtle px-1.5 py-0.5 rounded border border-border-subtle text-amber-600 dark:text-amber-400">
+        {children}
+      </span>
+    );
+  },
   table: ({ children }) => (
     <div className="w-full overflow-x-auto custom-scrollbar my-5 rounded-xl border border-border-main bg-surface shadow-2xs">
       <table className="w-full text-left border-collapse text-xs font-mono">{children}</table>

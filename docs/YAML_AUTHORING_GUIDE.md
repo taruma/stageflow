@@ -2,7 +2,7 @@
 
 This document is the authoritative **Single Source of Truth (SSOT)** for authoring, editing, and validating **StageFlow Choreography Scores** (`*.yaml`). It defines every declarative parameter, enum, alias, default value, authoring convention, and cinematography recipe supported by the StageFlow studio.
 
-> **Companion Technical Specification**: For the formal mathematical model, spherical-to-Cartesian projection matrices, sensor trigonometry, and closed-form curve equations, consult the [**StageFlow Script Technical & Mathematical Specification (`docs/STAGEFLOW_SCRIPT_SPECIFICATION.md`)**](./STAGEFLOW_SCRIPT_SPECIFICATION.md) (`?mode=spec`).
+> **Companion Technical Specification**: For the formal mathematical model, spherical-to-Cartesian projection matrices, sensor trigonometry, and closed-form curve equations, consult the [**StageFlow Script Technical & Mathematical Specification**](?mode=spec) (Spec tab / `?mode=spec`).
 
 ---
 
@@ -56,7 +56,7 @@ StageFlow operates in a right-handed, **$Y$-Up** 3D Cartesian space centered at 
 | **`roll` (Dutch angle)** | Level horizon (`0°`) | **Clockwise camera bank** (from operator POV) | **Counter-clockwise camera bank** | Degrees (`deg`)* |
 | **Entity `rotation`** | Mannequin faces `+Z` (downstage) | Faces toward `+X` (`+90°` = Stage Right) | Faces toward `-X` (`-90°` = Stage Left) | Degrees (`deg`)* |
 
-> **Note:** All angles in YAML default to **human degrees** (`deg`). If you explicitly pass a string suffixed with `"rad"` (such as `"1.57rad"`), the parser interprets it directly as radians. Degree string suffixes such as `"45deg"` and `"45°"` are also accepted. For the exact spherical-to-Cartesian forward/inverse projection equations and roll basis vectors, see [`STAGEFLOW_SCRIPT_SPECIFICATION.md §2`](./STAGEFLOW_SCRIPT_SPECIFICATION.md#2-spherical-camera-model-forward-kinematics).
+> **Note:** All angles in YAML default to **human degrees** (`deg`). If you explicitly pass a string suffixed with `"rad"` (such as `"1.57rad"`), the parser interprets it directly as radians. Degree string suffixes such as `"45deg"` and `"45°"` are also accepted. For the exact spherical-to-Cartesian forward/inverse projection equations and roll basis vectors, see [StageFlow Script Specification §2](?mode=spec#section-2).
 
 ### 1.3 Timeline & Execution Model
 
@@ -474,7 +474,7 @@ The `target_offset: [dx, dy, dz]` vector displaces the resolved look-at anchor i
 
 ### 4.3 Maneuver Catalog
 
-> For the exact closed-form trajectory equations $P(u)$, see [`STAGEFLOW_SCRIPT_SPECIFICATION.md §5.3`](./STAGEFLOW_SCRIPT_SPECIFICATION.md#5-temporal-easing-trajectory-maneuvers).
+> For the exact closed-form trajectory equations $P(u)$, see [StageFlow Script Specification §5](?mode=spec#section-5).
 
 | Maneuver | Accepted Aliases | Path Geometry | Evaluated Fields | Ignored Fields | Directorial Behavior & Defaults |
 | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -491,7 +491,7 @@ The `target_offset: [dx, dy, dz]` vector displaces the resolved look-at anchor i
 
 ### 4.4 Easing Velocity Profiles
 
-> For the closed-form mathematical definitions $u = E(\tau)$, see [`STAGEFLOW_SCRIPT_SPECIFICATION.md §5.1`](./STAGEFLOW_SCRIPT_SPECIFICATION.md#5-temporal-easing-trajectory-maneuvers).
+> For the closed-form mathematical definitions $u = E(\tau)$, see [StageFlow Script Specification §5](?mode=spec#section-5).
 
 | Easing | Accepted Aliases | Velocity Profile | Directorial Feel & Recommended Use Case |
 | :--- | :--- | :--- | :--- |
@@ -533,7 +533,7 @@ Floor Clock Azimuth Orientation (Looking down at stage floor):
 
 ### 4.6 Optics & Vertical Field of View Reference
 
-StageFlow models a standard **35mm Full-Frame Sensor** ($36.0\text{mm}$ horizontal gate width). Varying the scene `aspect_ratio` adjusts the vertical sensor gate height and vertical FOV (see [`STAGEFLOW_SCRIPT_SPECIFICATION.md §3`](./STAGEFLOW_SCRIPT_SPECIFICATION.md#3-optical-sensor-film-gate-geometry) for sensor gate projection math):
+StageFlow models a standard **35mm Full-Frame Sensor** ($36.0\text{mm}$ horizontal gate width). Varying the scene `aspect_ratio` adjusts the vertical sensor gate height and vertical FOV (see [StageFlow Script Specification §3](?mode=spec#section-3) for sensor gate projection math):
 
 #### Vertical Field of View (FOV) Reference Table
 | Focal Length | `16:9` Widescreen | `2.39:1` Scope | `4:3` Academy |
@@ -703,7 +703,7 @@ blocking:
 
 ### 6.2 The Two-Pass Kinematic Evaluator
 
-When evaluating root `blocking:` cues at timestamp $t$, the engine executes a decoupled two-pass pipeline (see [`STAGEFLOW_SCRIPT_SPECIFICATION.md §6`](./STAGEFLOW_SCRIPT_SPECIFICATION.md#6-timeline-chaining-boundary-semantics-p-0-to-p-1-to-dots-to-p-k)):
+When evaluating root `blocking:` cues at timestamp $t$, the engine executes a decoupled two-pass pipeline (see [StageFlow Script Specification §6](?mode=spec#section-6)):
 - **Pass 1 (World Positions & Visibility Chains)**: Evaluates chronological position spans and visibility toggles across all entities. During uncued intervals, entities persist their preceding terminal coordinates.
 - **Pass 2 (Facing Rotations & $C^0$ Gaze Handoffs)**: Once all world positions are known for every entity, gaze headings are solved continuously. When a cue specifying `look_at` concludes, its terminal facing yaw is sampled and forward-chained, ensuring seamless transition handoffs into subsequent holds or turns.
 - **Ground Movement Trails**: While an entity translates inside an active cue with displacement $> 0.05\text{m}$, the diorama draws a **16-segment dashed floor movement trail** representing the full physical trajectory across all active camera cuts. During holds and stationary gaps, trails clear (`[]`).
@@ -815,7 +815,7 @@ shots:
         highlighted: true
         look_at: "actor_a"
 ```
-*(Reference Blueprint: [`blueprint_02_dialogue.yaml`](../src/scores/blueprints/blueprint_02_dialogue.yaml))*
+*(Reference Blueprint: `blueprint_02_dialogue.yaml` in Score Library)*
 
 ---
 
@@ -843,7 +843,7 @@ shots:
       lens_end: 24mm
       show_path: true
 ```
-*(Reference Blueprint: [`blueprint_05_two_rooms.yaml`](../src/scores/blueprints/blueprint_05_two_rooms.yaml))*
+*(Reference Blueprint: `blueprint_05_two_rooms.yaml` in Score Library)*
 
 ---
 
@@ -876,7 +876,7 @@ shots:
         easing: "cruise"
         highlighted: true
 ```
-*(Reference Blueprint: [`blueprint_05_two_rooms.yaml`](../src/scores/blueprints/blueprint_05_two_rooms.yaml))*
+*(Reference Blueprint: `blueprint_05_two_rooms.yaml` in Score Library)*
 
 ---
 
@@ -903,7 +903,7 @@ shots:
       direction: "cw"
       lens: 35mm
 ```
-*(Reference Blueprint: [`blueprint_04_cinematography_tutorial.yaml`](../src/scores/blueprints/blueprint_04_cinematography_tutorial.yaml))*
+*(Reference Blueprint: `blueprint_04_cinematography_tutorial.yaml` in Score Library)*
 
 ---
 
@@ -939,7 +939,7 @@ shots:
           yaw: 25
           lens: 50mm
 ```
-*(Reference Blueprint: [`blueprint_02_dialogue.yaml`](../src/scores/blueprints/blueprint_02_dialogue.yaml))*
+*(Reference Blueprint: `blueprint_02_dialogue.yaml` in Score Library)*
 
 ---
 
@@ -994,7 +994,7 @@ observer_shots:
     yaw_end: 205
     lens: 35mm
 ```
-*(Reference Blueprint: [`blueprint_02_dialogue.yaml`](../src/scores/blueprints/blueprint_02_dialogue.yaml))*
+*(Reference Blueprint: `blueprint_02_dialogue.yaml` in Score Library)*
 
 ---
 
@@ -1068,7 +1068,7 @@ shots:
       yaw: 220
       lens: 35mm
 ```
-*(Reference Blueprint: [`blueprint_04_cinematography_tutorial.yaml`](../src/scores/blueprints/blueprint_04_cinematography_tutorial.yaml))*
+*(Reference Blueprint: `blueprint_04_cinematography_tutorial.yaml` in Score Library)*
 
 ---
 
@@ -1133,4 +1133,4 @@ shots:
     end: 14.0
     stage_camera: { target: "arthur", maneuver: "orbit", distance: 2.0, pitch: 4, yaw_start: 25, yaw_end: 0, lens: 85mm }
 ```
-*(Reference Blueprint: [`blueprint_05_two_rooms.yaml`](../src/scores/blueprints/blueprint_05_two_rooms.yaml))*
+*(Reference Blueprint: `blueprint_05_two_rooms.yaml` in Score Library)*

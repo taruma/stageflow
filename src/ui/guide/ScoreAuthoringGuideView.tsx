@@ -76,14 +76,21 @@ export const ScoreAuthoringGuideView: React.FC<ScoreAuthoringGuideViewProps> = (
     return result.join('\n');
   }, [currentRawDoc, filterQuery]);
 
-  const handleSwitchDoc = (nextDoc: GuideDocType) => {
-    if (nextDoc === activeDoc) return;
-    setActiveDoc(nextDoc);
-    setFilterQuery('');
-    window.scrollTo({ top: 0, behavior: 'instant' });
-    const url = new URL(window.location.href);
-    url.searchParams.set('mode', nextDoc);
-    window.history.replaceState({}, '', url.pathname + url.search);
+  const handleSwitchDoc = (nextDoc?: GuideDocType, anchor?: string) => {
+    if (nextDoc && nextDoc !== activeDoc) {
+      setActiveDoc(nextDoc);
+      setFilterQuery('');
+      const url = new URL(window.location.href);
+      url.searchParams.set('mode', nextDoc);
+      window.history.replaceState({}, '', url.pathname + url.search);
+    }
+    if (anchor) {
+      setTimeout(() => {
+        handleJumpToSection(anchor);
+      }, 50);
+    } else if (nextDoc && nextDoc !== activeDoc) {
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }
   };
 
   const handleJumpToSection = (targetId: string) => {
@@ -121,7 +128,10 @@ export const ScoreAuthoringGuideView: React.FC<ScoreAuthoringGuideViewProps> = (
     };
   }, []);
 
-  const markdownComponents = useMemo(() => createGuideMarkdownComponents(), []);
+  const markdownComponents = useMemo(
+    () => createGuideMarkdownComponents({ onSwitchDoc: handleSwitchDoc }),
+    [activeDoc]
+  );
   const currentShortcuts = GUIDE_DOC_SHORTCUTS[activeDoc];
 
   return (
