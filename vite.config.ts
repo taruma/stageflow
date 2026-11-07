@@ -9,6 +9,17 @@ export default defineConfig({
       ignored: ['**/.agents/**', '**/recordings/**', '**/_examples/**'],
     },
   },
+  optimizeDeps: {
+    include: [
+      'three',
+      '@react-three/fiber',
+      '@react-three/drei',
+      '@codemirror/state',
+      '@codemirror/view',
+      '@codemirror/lang-yaml',
+      'lucide-react',
+    ],
+  },
   build: {
     chunkSizeWarningLimit: 800,
     rollupOptions: {

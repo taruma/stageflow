@@ -9,7 +9,7 @@
 import React from 'react';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/react';
-import { BookOpen, Compass, Film } from 'lucide-react';
+import { BookOpen } from 'lucide-react';
 
 const InteractiveStudioApp = React.lazy(() =>
   import('./ui/InteractiveStudioApp').then((m) => ({
@@ -91,29 +91,6 @@ const GuideLoadingSkeleton: React.FC = () => (
   </div>
 );
 
-/** Minimalist blueprint loading screen for 3D Studio */
-const StudioLoadingScreen: React.FC = () => (
-  <div className="w-screen h-dvh bg-app flex flex-col items-center justify-center gap-4 text-text-main select-none">
-    <div className="relative flex items-center justify-center">
-      <div className="w-12 h-12 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-500 shadow-lg shadow-amber-500/10 animate-bounce">
-        <Compass className="w-6 h-6" />
-      </div>
-    </div>
-    <div className="text-center space-y-1">
-      <h1 className="text-sm font-bold font-mono tracking-widest uppercase text-text-main flex items-center gap-2">
-        <Film className="w-3.5 h-3.5 text-amber-500 inline" />
-        StageFlow
-      </h1>
-      <p className="text-[11px] font-mono text-text-muted">
-        Loading 3D choreography diorama stage...
-      </p>
-    </div>
-    <div className="w-36 h-1 bg-surface-muted rounded-full overflow-hidden">
-      <div className="w-1/2 h-full bg-amber-500 rounded-full animate-indeterminate" />
-    </div>
-  </div>
-);
-
 export const App: React.FC = () => {
   if (isHeadlessRender) {
     return (
@@ -130,7 +107,7 @@ export const App: React.FC = () => {
           <ScoreAuthoringGuideView initialDoc={isSpecMode ? 'spec' : 'guide'} />
         </React.Suspense>
       ) : (
-        <React.Suspense fallback={<StudioLoadingScreen />}>
+        <React.Suspense fallback={null}>
           <InteractiveStudioApp />
         </React.Suspense>
       )}
