@@ -3,6 +3,8 @@ import React from 'react';
 import {
   GUIDE_DOC_SHORTCUTS,
   SECTION_SHORTCUTS,
+  cleanMarkdownHeading,
+  extractGuideToc,
   getNodeText,
   slugify,
 } from '../../src/ui/guide/guideUtils';
@@ -27,6 +29,50 @@ describe('guideUtils', () => {
     expect(slugify('2. Quickstart & Minimal Score Anatomy')).toBe('2-quickstart-minimal-score-anatomy');
     expect(slugify('3. Scene Foundation (Root, Stage & Entities)')).toBe('3-scene-foundation-root-stage-entities');
     expect(slugify("7. Director's Cookbook (8 Production Recipes)")).toBe('7-director-s-cookbook-8-production-recipes');
+  });
+
+  it('cleans markdown heading text by stripping inline math and formatting', () => {
+    expect(
+      cleanMarkdownHeading('### 4.1 Default Geometry & Intrinsic Look-At Anchor ($\\vec{A}_i$)')
+    ).toBe('4.1 Default Geometry & Intrinsic Look-At Anchor');
+    expect(
+      cleanMarkdownHeading('### 5.1 Easing Functions ($u = E(\\tau)$)')
+    ).toBe('5.1 Easing Functions');
+    expect(
+      cleanMarkdownHeading('### 4.2 Entity Facing Angle (`rotation` & `look_at`)')
+    ).toBe('4.2 Entity Facing Angle (rotation & look_at)');
+  });
+
+  it('extracts hierarchical table of contents with H2 and H3 items from both guides', () => {
+    const guideToc = extractGuideToc(yamlAuthoringGuideRaw);
+    expect(guideToc.length).toBeGreaterThan(30);
+
+    const guideH2s = guideToc.filter((item) => item.level === 2);
+    expect(guideH2s.length).toBe(7);
+    guideH2s.forEach((h2, idx) => {
+      expect(h2.id).toBe(`section-${idx + 1}`);
+      expect(h2.sectionNumber).toBe(idx + 1);
+    });
+
+    const guideH3s = guideToc.filter((item) => item.level === 3);
+    expect(guideH3s.length).toBeGreaterThan(20);
+    expect(guideH3s.some((h3) => h3.id === 'section-1-1')).toBe(true);
+    expect(guideH3s.some((h3) => h3.id === 'recipe-1')).toBe(true);
+    expect(guideH3s.some((h3) => h3.id === 'recipe-8')).toBe(true);
+
+    const specToc = extractGuideToc(scriptSpecificationRaw);
+    expect(specToc.length).toBeGreaterThan(12);
+
+    const specH2s = specToc.filter((item) => item.level === 2);
+    expect(specH2s.length).toBe(7);
+    specH2s.forEach((h2, idx) => {
+      expect(h2.id).toBe(`section-${idx + 1}`);
+      expect(h2.sectionNumber).toBe(idx + 1);
+    });
+
+    const specH3s = specToc.filter((item) => item.level === 3);
+    expect(specH3s.some((h3) => h3.id === 'section-2-1')).toBe(true);
+    expect(specH3s.some((h3) => h3.id === 'section-7-1')).toBe(true);
   });
 
   it('ensures docs/YAML_AUTHORING_GUIDE.md code blocks have perfectly balanced fences', () => {

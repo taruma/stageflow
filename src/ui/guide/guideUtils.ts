@@ -13,6 +13,14 @@ export interface GuideSectionShortcut {
   id: string;
 }
 
+export interface GuideTocItem {
+  id: string;
+  title: string;
+  level: 2 | 3;
+  slug: string;
+  sectionNumber?: number;
+}
+
 export const GUIDE_DOC_SHORTCUTS: Record<GuideDocType, GuideSectionShortcut[]> = {
   guide: [
     { label: 'Intro', id: 'section-1' },
@@ -51,3 +59,50 @@ export const slugify = (text: string): string =>
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/(^-|-$)/g, '');
+
+export const cleanMarkdownHeading = (raw: string): string =>
+  raw
+    .replace(/^#+\s*/, '')
+    .replace(/\$[^$]+\$/g, '')
+    .replace(/\s*\(\s*\)/g, '')
+    .replace(/[`*]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+export const extractGuideToc = (markdown: string): GuideTocItem[] => {
+  const lines = markdown.split('\n');
+  const items: GuideTocItem[] = [];
+
+  for (const line of lines) {
+    if (line.startsWith('## ')) {
+      const raw = line.slice(3).trim();
+      const match = raw.match(/^(\d+)\./);
+      const sectionNum = match ? parseInt(match[1], 10) : undefined;
+      const id = match ? `section-${match[1]}` : slugify(raw);
+      items.push({
+        id,
+        title: cleanMarkdownHeading(raw),
+        level: 2,
+        slug: slugify(raw),
+        sectionNumber: sectionNum,
+      });
+    } else if (line.startsWith('### ')) {
+      const raw = line.slice(4).trim();
+      const numMatch = raw.match(/^(\d+\.\d+)/);
+      const recipeMatch = raw.match(/^recipe\s*(\d+)/i);
+      const id = numMatch
+        ? `section-${numMatch[1].replace('.', '-')}`
+        : recipeMatch
+          ? `recipe-${recipeMatch[1]}`
+          : slugify(raw);
+      items.push({
+        id,
+        title: cleanMarkdownHeading(raw),
+        level: 3,
+        slug: slugify(raw),
+      });
+    }
+  }
+
+  return items;
+};

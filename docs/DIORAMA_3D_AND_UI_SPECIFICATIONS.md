@@ -190,10 +190,10 @@ Adopts professional 3D viewport convention (Blender, Unreal Engine, Maya) distri
 - **Directorial Action Bar (`YamlActionBar.tsx`)**:
   - Dedicated sub-header strip housing primary buffer actions: **`[ Wrap ]`** (toggles soft line-wrapping on `.cm-scroller` via a dynamic CodeMirror `Compartment`, persisted in `localStorage` under `stageflow:ui:editor-word-wrap`), **`[ Copy ]`** (copies full YAML with visual feedback), and **`[ Fork to Edit → ]`** (when viewing bundled blueprints).
   - Redundant project-level actions (`Duplicate`, `Reset`) are omitted as they reside in the Score Library.
-- **Dedicated Score Authoring Guide View (`ScoreAuthoringGuideView.tsx`, `?mode=guide`)**:
-  - Mounted when `?mode=guide` is present in the URL, rendering `docs/YAML_AUTHORING_GUIDE.md` in a dedicated, full-window Markdown + KaTeX reading environment.
+- **Dedicated Score Authoring Guide & Spec View (`ScoreAuthoringGuideView.tsx`, `?mode=guide` / `?mode=spec`)**:
+  - Mounted when `?mode=guide` or `?mode=spec` is present in the URL, rendering `docs/YAML_AUTHORING_GUIDE.md` or `docs/STAGEFLOW_SCRIPT_SPECIFICATION.md` in a dedicated, full-window Markdown + KaTeX reading environment.
   - Skips mounting the 3D diorama canvas, video player, and transport deck entirely (zero GPU/WebGL overhead).
-  - Features StageFlow theme synchronization, an 8-chip quick-jump navigation rail (`Intro`, `Quickstart`, `Foundation`, `Cameras`, `Coverage`, `Timelines`, `Workflow`, `Cookbook`) mapped to chapter anchors, tactical search filtering, and a `[ ← Back to Studio ]` / tab-close button.
+  - Features StageFlow theme synchronization, a persistent two-tier Table of Contents sidebar (`GuideSidebarToc.tsx`) displaying H2 chapters and detailed H3 subheadings with active Scroll Spy tracking, live topic search filtering, responsive mobile slide-over drawer, in-app cross-specification tab switching, and a `[ ← Back to Studio ]` / tab-close button.
 - **Conditional Diagnostics & Alert Banner (`YamlDiagnosticsBanner.tsx`)**:
   - Renders `null` when the score is valid, giving maximum vertical space directly to the CodeMirror 6 canvas without an empty idle strip.
   - Displays exact line and column numbers on syntax errors (`Line X, Col Y`) extracted from `YAMLParseError.linePos` with a 1-click **`[ Jump ]`** button that positions the cursor and scrolls smoothly to the invalid line.

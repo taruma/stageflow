@@ -30,17 +30,33 @@ export const createGuideMarkdownComponents = (
       <h2
         id={sectionId}
         data-slug={slug}
-        className="text-lg font-bold font-sans text-text-main mt-8 mb-3 pb-1.5 border-b border-border-subtle scroll-mt-32"
+        className="text-lg font-bold font-sans text-text-main mt-8 mb-3 pb-1.5 border-b border-border-subtle scroll-mt-20"
       >
         {children}
       </h2>
     );
   },
-  h3: ({ children }) => (
-    <h3 className="text-sm font-bold font-mono text-amber-600 dark:text-amber-400 mt-6 mb-2 uppercase tracking-wide">
-      {children}
-    </h3>
-  ),
+  h3: ({ children }) => {
+    const text = getNodeText(children);
+    const slug = slugify(text);
+    const numMatch = text.match(/^(\d+\.\d+)/);
+    const recipeMatch = text.match(/^recipe\s*(\d+)/i);
+    const h3Id = numMatch
+      ? `section-${numMatch[1].replace('.', '-')}`
+      : recipeMatch
+        ? `recipe-${recipeMatch[1]}`
+        : slug;
+
+    return (
+      <h3
+        id={h3Id}
+        data-slug={slug}
+        className="text-sm font-bold font-mono text-amber-600 dark:text-amber-400 mt-6 mb-2 uppercase tracking-wide scroll-mt-20"
+      >
+        {children}
+      </h3>
+    );
+  },
   p: ({ children }) => (
     <p className="text-sm font-sans text-text-body leading-relaxed my-3">
       {children}

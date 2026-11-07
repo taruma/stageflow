@@ -188,6 +188,7 @@ stageflow/
 │   │   │   └── useYamlEditor.ts     # Compartments, external sync guard & ~150ms debouncer
 │   │   ├── guide/                   # In-app choreography score & script specification manual
 │   │   │   ├── ScoreAuthoringGuideView.tsx # Standalone Markdown + KaTeX manual view (?mode=guide / ?mode=spec)
+│   │   │   ├── GuideSidebarToc.tsx  # Two-tier H2/H3 table of contents sidebar with scroll spy
 │   │   │   ├── guideMarkdownComponents.tsx # Custom markdown element renderers (h1-h3, pre, table)
 │   │   │   └── guideUtils.ts        # Section anchor mappings, recursive text & slug extractors
 │   │   ├── library/                 # Modular score library submodules

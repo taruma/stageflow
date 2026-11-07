@@ -10,17 +10,18 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
-import { ArrowLeft, BookOpen, Compass, FileText, Search } from 'lucide-react';
+import { ArrowLeft, BookOpen, Compass, FileText, List, X } from 'lucide-react';
 import 'katex/dist/katex.min.css';
 import yamlAuthoringGuideRaw from '../../../docs/YAML_AUTHORING_GUIDE.md?raw';
 import scriptSpecificationRaw from '../../../docs/STAGEFLOW_SCRIPT_SPECIFICATION.md?raw';
 import { useAppShellTheme } from '../../hooks/useAppShellTheme';
 import { ThemeSelectorDropdown } from '../header/ThemeSelectorDropdown';
 import {
-  GUIDE_DOC_SHORTCUTS,
+  extractGuideToc,
   type GuideDocType,
 } from './guideUtils';
 import { createGuideMarkdownComponents } from './guideMarkdownComponents';
+import { GuideSidebarToc } from './GuideSidebarToc';
 
 export interface ScoreAuthoringGuideViewProps {
   initialDoc?: GuideDocType;
@@ -39,8 +40,11 @@ export const ScoreAuthoringGuideView: React.FC<ScoreAuthoringGuideViewProps> = (
     return 'guide';
   });
   const [filterQuery, setFilterQuery] = useState('');
+  const [activeId, setActiveId] = useState<string>('section-1');
+  const [isMobileDrawerOpen, setMobileDrawerOpen] = useState(false);
 
   const currentRawDoc = activeDoc === 'spec' ? scriptSpecificationRaw : yamlAuthoringGuideRaw;
+  const tocItems = useMemo(() => extractGuideToc(currentRawDoc), [currentRawDoc]);
 
   const displayedContent = useMemo(() => {
     if (!filterQuery.trim()) return currentRawDoc;
@@ -98,7 +102,10 @@ export const ScoreAuthoringGuideView: React.FC<ScoreAuthoringGuideViewProps> = (
       const el =
         document.getElementById(targetId) ||
         document.querySelector(`[data-slug="${targetId}"]`);
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        setActiveId(targetId);
+      }
     };
 
     if (filterQuery.trim()) {
@@ -128,17 +135,61 @@ export const ScoreAuthoringGuideView: React.FC<ScoreAuthoringGuideViewProps> = (
     };
   }, []);
 
+  // Scroll Spy: observe visible headings and update activeId in TOC
+  useEffect(() => {
+    let animationFrameId: number;
+
+    const handleScroll = () => {
+      animationFrameId = requestAnimationFrame(() => {
+        const scrollY = window.scrollY;
+        const threshold = scrollY + 120;
+        let currentId = tocItems[0]?.id || 'section-1';
+
+        for (const item of tocItems) {
+          const el = document.getElementById(item.id);
+          if (el) {
+            const top = el.getBoundingClientRect().top + scrollY;
+            if (top <= threshold) {
+              currentId = item.id;
+            } else {
+              break;
+            }
+          }
+        }
+
+        setActiveId(currentId);
+      });
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, [tocItems, displayedContent]);
+
   const markdownComponents = useMemo(
     () => createGuideMarkdownComponents({ onSwitchDoc: handleSwitchDoc }),
     [activeDoc]
   );
-  const currentShortcuts = GUIDE_DOC_SHORTCUTS[activeDoc];
 
   return (
     <div className="min-h-screen w-full bg-app text-text-main flex flex-col font-sans selection:bg-amber-500/20 select-text">
       {/* 1. Directorial Header Bar */}
       <header className="sticky top-0 z-30 h-14 px-4 sm:px-6 bg-surface/90 backdrop-blur-md border-b border-border-main flex items-center justify-between gap-3 select-none">
         <div className="flex items-center gap-3 min-w-0">
+          <button
+            type="button"
+            onClick={() => setMobileDrawerOpen(true)}
+            className="lg:hidden p-1.5 rounded-lg border border-border-main bg-surface hover:bg-surface-hover text-text-body flex items-center gap-1.5 text-xs font-mono cursor-pointer transition-colors shadow-2xs"
+            title="Open Table of Contents"
+          >
+            <List className="w-4 h-4 text-amber-500" />
+            <span className="hidden sm:inline">TOC</span>
+          </button>
+
           <div className="w-8 h-8 rounded-lg bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-500 shrink-0">
             {activeDoc === 'spec' ? <FileText className="w-4 h-4 text-sky-400" /> : <Compass className="w-4 h-4" />}
           </div>
@@ -202,43 +253,68 @@ export const ScoreAuthoringGuideView: React.FC<ScoreAuthoringGuideViewProps> = (
         </div>
       </header>
 
-      {/* 2. Tactical Quick Jump & Search Sticky Rail */}
-      <div className="sticky top-14 z-20 px-4 sm:px-6 py-2.5 bg-surface-subtle/95 backdrop-blur-md border-b border-border-subtle flex flex-wrap items-center justify-between gap-2 select-none">
-        <div className="relative flex-1 min-w-[220px] max-w-sm">
-          <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
-          <input
-            type="text"
-            value={filterQuery}
-            onChange={(e) => setFilterQuery(e.target.value)}
-            placeholder={`Search ${activeDoc === 'spec' ? 'spec' : 'guide'} (e.g. arc, roll, 85mm)...`}
-            className="w-full pl-8 pr-2.5 py-1 text-xs font-mono bg-surface border border-border-main rounded-md text-text-main placeholder-text-muted focus:outline-none focus:border-amber-500 transition-colors"
+      {/* 2. Responsive 2-Column Documentation Body */}
+      <div className="flex-1 flex w-full max-w-7xl mx-auto px-4 sm:px-6">
+        {/* Desktop Sticky Left Sidebar Table of Contents */}
+        <aside className="hidden lg:block w-72 shrink-0 border-r border-border-main sticky top-14 h-[calc(100vh-3.5rem)] overflow-hidden py-6 pr-4">
+          <GuideSidebarToc
+            items={tocItems}
+            activeId={activeId}
+            filterQuery={filterQuery}
+            onFilterChange={setFilterQuery}
+            onSelectSection={handleJumpToSection}
+            activeDoc={activeDoc}
           />
-        </div>
+        </aside>
 
-        <div className="flex items-center gap-1.5 overflow-x-auto py-0.5 custom-scrollbar text-[11px] font-mono">
-          {currentShortcuts.map((sec) => (
-            <button
-              key={sec.id}
-              type="button"
-              onClick={() => handleJumpToSection(sec.id)}
-              className="px-2.5 py-1 rounded-md bg-surface hover:bg-surface-hover border border-border-main text-text-muted hover:text-text-main transition-all shrink-0 cursor-pointer active:scale-95 shadow-2xs"
-            >
-              {sec.label}
-            </button>
-          ))}
-        </div>
+        {/* Main Centered Markdown Reading Canvas */}
+        <main className="flex-1 min-w-0 max-w-4xl mx-auto px-4 sm:px-8 py-8 select-text">
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm, remarkMath]}
+            rehypePlugins={[rehypeKatex]}
+            components={markdownComponents}
+          >
+            {displayedContent}
+          </ReactMarkdown>
+        </main>
       </div>
 
-      {/* 3. Main Centered Markdown Reading Canvas */}
-      <main className="flex-1 max-w-4xl w-full mx-auto px-6 py-8 select-text">
-        <ReactMarkdown
-          remarkPlugins={[remarkGfm, remarkMath]}
-          rehypePlugins={[rehypeKatex]}
-          components={markdownComponents}
-        >
-          {displayedContent}
-        </ReactMarkdown>
-      </main>
+      {/* 3. Mobile Table of Contents Slide-Over Drawer (< lg) */}
+      {isMobileDrawerOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden flex animate-in fade-in duration-200">
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity"
+            onClick={() => setMobileDrawerOpen(false)}
+          />
+          <div className="relative w-80 max-w-[85vw] bg-surface h-full shadow-2xl flex flex-col z-10 animate-in slide-in-from-left duration-200 border-r border-border-main">
+            <div className="p-3 border-b border-border-main flex items-center justify-between shrink-0">
+              <span className="text-xs font-bold font-mono uppercase tracking-wider text-text-main flex items-center gap-1.5">
+                <BookOpen className="w-3.5 h-3.5 text-amber-500" />
+                Table of Contents
+              </span>
+              <button
+                type="button"
+                onClick={() => setMobileDrawerOpen(false)}
+                className="p-1 rounded-md hover:bg-surface-subtle text-text-muted hover:text-text-main cursor-pointer"
+                title="Close drawer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-hidden p-3">
+              <GuideSidebarToc
+                items={tocItems}
+                activeId={activeId}
+                filterQuery={filterQuery}
+                onFilterChange={setFilterQuery}
+                onSelectSection={handleJumpToSection}
+                activeDoc={activeDoc}
+                onCloseMobileDrawer={() => setMobileDrawerOpen(false)}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
