@@ -167,13 +167,13 @@ export const ScoreAuthoringGuideView: React.FC<ScoreAuthoringGuideViewProps> = (
         {/* Center/Right Actions: Doc Switcher, Theme Switcher, Studio Return */}
         <div className="flex items-center gap-2 shrink-0">
           {/* Document Switcher Segmented Control */}
-          <div className="flex items-center p-0.5 rounded-lg bg-surface-muted border border-border-main text-[11px] font-mono">
+          <div className="flex items-center p-0.5 rounded-lg bg-surface-muted border border-border-main text-[11px] font-mono shadow-2xs">
             <button
               type="button"
               onClick={() => handleSwitchDoc('spec')}
-              className={`px-2.5 py-1 rounded-md transition-all cursor-pointer flex items-center gap-1 ${
+              className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer flex items-center gap-1 ${
                 activeDoc === 'spec'
-                  ? 'bg-surface text-sky-400 font-bold shadow-2xs border border-border-main'
+                  ? 'bg-surface text-sky-400 font-bold shadow-2xs'
                   : 'text-text-muted hover:text-text-main'
               }`}
               title="View StageFlow Script Technical & Mathematical Specification"
@@ -184,9 +184,9 @@ export const ScoreAuthoringGuideView: React.FC<ScoreAuthoringGuideViewProps> = (
             <button
               type="button"
               onClick={() => handleSwitchDoc('guide')}
-              className={`px-2.5 py-1 rounded-md transition-all cursor-pointer flex items-center gap-1 ${
+              className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer flex items-center gap-1 ${
                 activeDoc === 'guide'
-                  ? 'bg-surface text-amber-500 font-bold shadow-2xs border border-border-main'
+                  ? 'bg-surface text-amber-500 font-bold shadow-2xs'
                   : 'text-text-muted hover:text-text-main'
               }`}
               title="View YAML Score Authoring Manual & Recipes"

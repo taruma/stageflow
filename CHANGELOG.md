@@ -18,11 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Replaced the redundant 179-line annotated YAML template in Section 7 of `docs/STAGEFLOW_SCRIPT_SPECIFICATION.md` with the **Normalized AST Data Model & Clamping Contract** synchronized 1:1 with `src/core/constants.ts` and `src/core/types.ts`, and updated `GUIDE_DOC_SHORTCUTS.spec[6]` label in [`src/ui/guide/guideUtils.ts`](src/ui/guide/guideUtils.ts) from `"Schema"` to `"Contract"`.
   - Streamlined `docs/YAML_AUTHORING_GUIDE.md` Sections 1.2, 4.3, 4.4, and 4.6 to focus on directorial feel, accepted aliases, and lookup tables while cross-linking to `docs/STAGEFLOW_SCRIPT_SPECIFICATION.md` for formal KaTeX derivations.
   - Synchronized all baseline camera pose snippets across documentation to `DEFAULT_OBSERVER_POSE` (`[0, 1.0, 0]`, `7.5m`, `26°`, `38°`, `35mm`) and `DEFAULT_STAGE_CAMERA_POSE` (`[0, 1.2, 0]`, `3.2m`, `6°`, `-25°`, `50mm`).
-- **TOC-Targeted Topic Search & Document Integrity Preservation (`src/ui/guide/ScoreAuthoringGuideView.tsx`, `docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md`)**:
+- **TOC-Targeted Topic Search & Segmented Switcher Polish (`src/ui/guide/ScoreAuthoringGuideView.tsx`, `docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md`)**:
   - Removed legacy markdown line-grep text shredder (`displayedContent`) that previously replaced the reading canvas with fragmented line snippets during search.
   - Search input now directly filters the Table of Contents topic outline on the left sidebar in real time while keeping the central reading canvas 100% complete, intact, and readable.
   - Eliminated unnecessary search debouncing and full markdown AST / KaTeX re-compilations, enabling native 60fps typing without frame drops or re-renders.
   - Selecting any topic in the filtered Table of Contents navigates directly to the target anchor without clearing or modifying the document.
+  - Fixed border flickering on the SPEC / Guide segmented switcher by aligning with `UI_TOKENS.button` (removing inner active borders and using `transition-colors`), eliminating subpixel border animation jumps during tab switching.
 - **Documentation Viewer & Studio Granular Bundle Code-Splitting (`src/App.tsx`, `src/ui/InteractiveStudioApp.tsx`, `vite.config.ts`, `src/ui/guide/*`)**:
   - Decoupled `InteractiveStudioApp` from `src/App.tsx` into a dedicated orchestrator component, reducing `App.tsx` from 627 lines to 137 lines.
   - Implemented dynamic lazy-loading with `React.lazy()` for `InteractiveStudioApp`, `ScoreAuthoringGuideView`, and `HeadlessRecorderView`, allowing synchronous URL routing to request only the bundle chunks needed for the active mode.
