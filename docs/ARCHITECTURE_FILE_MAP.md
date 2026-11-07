@@ -1,0 +1,160 @@
+# StageFlow Architecture & Repository File Map (SSOT)
+
+This document is the authoritative file-by-file directory map and 5-layer dependency specification for **StageFlow**. Every file added, renamed, split, or removed in the repository must be synchronized here alongside its corresponding domain specification.
+
+---
+
+## 1. 5-Layer Dependency & Module Discipline
+
+Each architectural layer depends strictly on the layers below it:
+
+$$\texttt{src/core/} \longrightarrow \texttt{src/media/} \longrightarrow \texttt{src/hooks/} \longrightarrow \texttt{src/stage/ \& src/ui/}$$
+
+- **Zero Upward Imports**: `src/core/` must maintain **zero React and zero DOM/Three.js runtime dependencies**.
+- **Single-Responsibility Module Budget**: Target $\le 250$ lines per file. When a module begins serving two distinct responsibilities, split it into focused, unit-testable submodules.
+
+---
+
+## 2. Exhaustive Repository Directory Tree
+
+```text
+stageflow/
+├── .agents/                         # Workspace Skills & Customizations
+│   └── skills/
+│       ├── stageflow-score-debugger/    # Choreography Score Kinematic & Visual Debugger Skill (SKILL.md)
+│       └── stageflow-viewport-recorder/ # 60fps Viewport Video Recorder Skill (SKILL.md)
+├── AGENTS.md                        # Root governance, workflow rules & invariant router (< 24 KB)
+├── CHANGELOG.md                     # Semantic version release log & unreleased change tracking
+├── README.md                        # Quickstart overview & CLI command reference
+├── docs/                            # Detailed technical & architectural specifications (SSOT)
+│   ├── ARCHITECTURE_FILE_MAP.md     # Exhaustive repository file tree & 5-layer module index
+│   ├── STAGEFLOW_SCRIPT_SPECIFICATION.md # Engine SSOT: mathematical model, optics & AST contract
+│   ├── YAML_AUTHORING_GUIDE.md      # Authoring SSOT: quickstart, YAML schema, aliases & cookbook
+│   ├── CORE_MATH_AND_SCORE_SPECIFICATIONS.md
+│   ├── MEDIA_CLOCK_AND_SYNC_SPECIFICATIONS.md
+│   ├── DIORAMA_3D_AND_UI_SPECIFICATIONS.md
+│   └── VISUAL_DESIGN_SYSTEM.md      # SSOT for typography, theme engine, UI_TOKENS & palettes
+├── scripts/                         # CLI Automation & Offline Tooling
+│   └── record/                      # 60fps Playwright + FFmpeg Viewport Recorder
+│       ├── cli.ts                   # CLI entry point, argument parsing & usage help
+│       ├── playwrightDriver.ts      # Headless Chromium lifecycle & frame-stepping loop
+│       ├── ffmpegPipeline.ts        # FFmpeg pipe encoder (libx264, VP9, GIF, PNG sequence)
+│       ├── serverManager.ts         # Vite server detection & background startup
+│       ├── cameraPresets.ts         # Camera angle presets (isometric, top-down, front, side)
+│       └── recorderTypes.ts         # Shared CLI & bridge TypeScript interfaces
+├── public/                          # Static web assets & media files
+├── src/
+│   ├── recorder/                    # Headless Recording Bridge & Render Environment
+│   │   ├── HeadlessRecorderView.tsx # Canvas mounted on ?mode=headless-render
+│   │   └── recorderTypes.ts         # Bridge schemas & window.__STAGEFLOW_RECORDER__ interface
+│   ├── scores/                      # Choreography Scores (*.yaml)
+│   │   ├── studies/                 # Directorial Scene Studies (e.g. vector_field.yaml)
+│   │   └── blueprints/              # Factory camera-blocking presets (BP 01–05)
+│   ├── core/                        # Layer 1: Pure TypeScript Math, Optics & Stateless Frame Engine
+│   │   ├── types.ts                 # Canonical interfaces (StageScore, ShotCue, ObserverShotCue, BlockingCueSpec, StageFrame)
+│   │   ├── constants.ts             # Metric bounds, sensor constants, blueprint color palette
+│   │   ├── opticsMath.ts            # Focal length (mm) <-> Vertical FOV (deg) & Rectangular Gate math
+│   │   ├── sphericalMath.ts         # Degrees <-> Radians, Spherical <-> Cartesian, shortestAngleDiff
+│   │   ├── maneuvers.ts             # 9 easing curves & 11 3D camera trajectory maneuvers
+│   │   ├── entityEngine.ts          # Facade: evaluateEntitiesAtTime dispatcher (<50 lines)
+│   │   ├── entityBlockingEvaluator.ts # Tier 1: Decoupled root blocking: timeline kinematics
+│   │   ├── entityLegacyEvaluator.ts # Tier 2: Legacy per-shot shots[].entities kinematics
+│   │   ├── entityKinematicUtils.ts  # Shared look_at target resolution & ground trail generation
+│   │   ├── cameraTargetResolver.ts  # Target anchor resolution, 3D offsets & shot-boundary/continuous roll & offset flow
+│   │   ├── shotPoseEvaluator.ts     # Single-shot pose evaluation, Catmull-Rom splines & 3D path sampling
+│   │   ├── trajectoryChain.ts       # Forward pose chaining (P_0 -> P_k) & multi-shot timeline tracks
+│   │   ├── frameEngine.ts           # Master stateless evaluator: computeStageFrame(t, score)
+│   │   ├── scorePrimitives.ts       # Low-level vector, angle, lens & enum normalizers
+│   │   ├── cameraCueParser.ts       # Camera poses, shot cue specs, waypoints & observer shots
+│   │   ├── scoreParser.ts           # Resilient YAML/JSON parser & degree/meter normalizer
+│   │   ├── scoreYamlUtils.ts        # Pure YAML header id/title modifiers & slug generators
+│   │   ├── scoreCatalog.ts          # Bundled & custom scene score registry
+│   │   └── storage/                 # Client persistence utilities
+│   │       ├── scoreDb.ts           # IndexedDB persistence for score drafts & custom scenes (idb)
+│   │       └── localStorageUi.ts    # Synchronous localStorage helpers for UI preferences
+│   ├── media/                       # Layer 2: Universal Media Clock Drivers
+│   │   ├── mediaTypes.ts            # MediaClockDriver interface & URL source classifier
+│   │   ├── html5MediaDriver.ts      # Native <video> adapter for local MP4/WebM & dropped blobs
+│   │   ├── youtubeMediaDriver.ts    # YouTube IFrame API adapter with 60fps drift extrapolation
+│   │   └── proceduralMediaDriver.ts # 60fps virtual clock for procedural:// blueprint simulator
+│   ├── hooks/                       # Layer 3: Dual-Tier State & Bridge Hooks
+│   │   ├── useMediaClock.ts         # Transport controls, frame-stepping ([ / ]), loop-shot, hotkeys
+│   │   ├── useStageFrameLoop.ts     # 60fps ref evaluation tick + ~10Hz throttled React UI sync
+│   │   ├── useFileDropLoader.ts     # Drag-and-drop & file picker loader for .yaml and .mp4 pairs
+│   │   ├── useScorePersistence.ts   # Startup hydration, draft auto-saving & confirmed reset
+│   │   ├── useWorkspaceLayout.ts    # Split workspace presets, column percentages & storage sync
+│   │   ├── useStudioDisplaySettings.ts # 3D diorama label modes, guides & 'L'/'G' hotkeys
+│   │   ├── useToastNotifications.ts # Floating toast notification queue & auto-dismiss timers
+│   │   └── useAppShellTheme.ts      # SceneFlow theme hook (Auto/Dark/Warm/Light) & transition suppression
+│   ├── stage/                       # Layer 4: React Three Fiber 3D Blueprint Diorama
+│   │   ├── dioramaTheme.ts          # Adaptive theme clear colors, fog & metric grid line mapping
+│   │   ├── DioramaCanvas.tsx        # Root R3F <Canvas>, lighting, fog, and priority -1 frame ticker
+│   │   ├── BlueprintStageScene.tsx  # Shared lighting, metric floor grid, and mannequins
+│   │   ├── BlueprintFloorGrid.tsx   # Metric floor grid (1m / 0.25m), perimeter frame & compass labels
+│   │   ├── ObserverCameraRig.tsx    # Viewport PerspectiveCamera + OrbitControls handover & POV cuts
+│   │   ├── StageCameraRig.tsx       # 3D camera prop, rectangular gate frustum, focus plane & path line
+│   │   ├── StageCameraOffsetTether.tsx # 3D cyan anchor beacon & dashed tether line for target offsets
+│   │   ├── StageCamViewRig.tsx      # Stage Camera POV lock controller for procedural monitor
+│   │   ├── StageCamMonitorCanvas.tsx# True 3D Stage Cam monitor with optical safe-action HUD
+│   │   ├── DirectionalMannequin.tsx # Stylized character/prop proxies with facing visor & floor trails
+│   │   └── StageBillboardLabel.tsx  # Crisp 3D HTML floating identity badges
+│   ├── ui/                          # Layer 5: 2D Directorial UI Shell
+│   │   ├── tokens/                  # SceneFlow-aligned design tokens
+│   │   │   └── ui.ts                # Centralized UI_TOKENS for layout, pills, buttons & modals
+│   │   ├── header/                  # Modular 3-wing studio header submodules
+│   │   │   ├── FileMenuDropdown.tsx # Tiered File ▾ popover menu (Open, Export, New, Manage, Guide)
+│   │   │   ├── LayoutSegmentedControl.tsx # Centered segmented split workspace layout switcher
+│   │   │   ├── ActiveScoreIndicator.tsx # Interactive active score context chip with 1-click library open
+│   │   │   └── ThemeSelectorDropdown.tsx # Accessible 4-mode theme switcher (Auto, Dark, Warm, Light)
+│   │   ├── left-panel/              # Modular left column submodules
+│   │   │   └── VideoWorkspaceSubpanel.tsx # Modular directorial workspace subpanel below reference video
+│   │   ├── editor/                  # Modular CodeMirror 6 YAML Score Studio submodules
+│   │   │   ├── YamlStudioPanel.tsx  # In-flow right-column choreography score studio container
+│   │   │   ├── YamlEditorHeader.tsx # Top header with title, sync badge, Guide trigger & close
+│   │   │   ├── YamlActionBar.tsx    # Directorial action bar (Wrap toggle, Copy, Fork)
+│   │   │   ├── YamlDiagnosticsBanner.tsx # Diagnostic alert banner with line/col jump
+│   │   │   ├── YamlEditorCanvas.tsx # CodeMirror 6 DOM mounting & virtualized canvas
+│   │   │   ├── useCodeMirrorTheme.ts # Dynamic theme extension for Dark/Warm/Light/Pure Black
+│   │   │   └── useYamlEditor.ts     # Compartments, external sync guard & ~150ms debouncer
+│   │   ├── guide/                   # In-app choreography score & script specification manual
+│   │   │   ├── ScoreAuthoringGuideView.tsx # Standalone Markdown + KaTeX manual view (?mode=guide / ?mode=spec)
+│   │   │   ├── GuideSidebarToc.tsx  # Two-tier H2/H3 table of contents sidebar with scroll spy
+│   │   │   ├── guideMarkdownComponents.tsx # Custom markdown element renderers (h1-h3, pre, table)
+│   │   │   └── guideUtils.ts        # Section anchor mappings, recursive text & slug extractors
+│   │   ├── library/                 # Modular score library submodules
+│   │   │   ├── ScoreLibraryCard.tsx # Cinematic choreography score card with color tags & telemetry
+│   │   │   ├── ScoreInspectorPane.tsx # Rich master-detail choreography inspector & action bar
+│   │   │   └── ScoreStageMinimap.tsx # Pure 2D vector SVG top-down stage schematic preview
+│   │   ├── WorkspaceHeader.tsx      # SceneFlow-aligned 3-wing orchestrator header bar
+│   │   ├── ScoreLibraryModal.tsx    # Accessible 2-column master-detail score library & project hub
+│   │   ├── ResizableSplitWorkspace.tsx # Draggable 3-column studio container (30/40/30) with dual dividers
+│   │   ├── DioramaOverlayContainer.tsx # Center stage responsive HUD overlay dock
+│   │   ├── UniversalVideoViewport.tsx  # Local video, YouTube IFrame, or 60fps Stage Cam Simulator
+│   │   ├── ShotBreakdownHud.tsx     # Top-left active shot, lens, maneuver & staging note overlay
+│   │   ├── CameraTelemetryCapsule.tsx  # Live degree/meter readout with 1-click YAML snippet copy
+│   │   ├── DirectorialTransportBar.tsx # Shot-marker scrubber, shot chips, speed (0.25x-2x) & POV toggle
+│   │   ├── YamlInspectorDrawer.tsx  # Slide-out live YAML editor with read-only protection & fork-on-edit
+│   │   ├── ToastContainer.tsx       # Floating animated toast notification banners
+│   │   ├── LabelDisplayModeToggle.tsx # Floating 3-mode 3D diorama label toggle (All / Cam / Off)
+│   │   ├── StageCamViewfinderOverlay.tsx # Optical film gate, look-around mask & composition guides
+│   │   ├── ConfirmResetModal.tsx    # Accessible confirmation dialog modal for discarding drafts
+│   │   ├── StorageStatusBadge.tsx   # Visual status badge (Bundled vs. IndexedDB draft)
+│   │   └── InteractiveStudioApp.tsx # 3D choreography diorama & split workspace orchestrator
+│   ├── App.tsx                      # Code-split root mode switcher & suspense router
+│   ├── main.tsx                     # Application entry point
+│   └── index.css                    # Tailwind CSS v4 + blueprint design tokens
+└── tests/
+    └── unit/                        # Vitest deterministic unit test suites
+        ├── opticsMath.test.ts
+        ├── sphericalMath.test.ts
+        ├── entityEngine.test.ts
+        ├── frameEngine.test.ts
+        ├── scoreParser.test.ts
+        ├── scoreContract.test.ts
+        ├── scoreYamlUtils.test.ts
+        ├── guideUtils.test.ts
+        ├── guideSnippets.test.ts
+        ├── storage.test.ts
+        └── recorder.test.ts
+```
+

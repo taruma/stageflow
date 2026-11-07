@@ -42,8 +42,9 @@ It synchronizes a universal video player (**Local `.mp4`/`.webm`**, **YouTube UR
 
 StageFlow is organized into a strictly decoupled **5-Layer Architecture** (`core/` $\to$ `media/` $\to$ `hooks/` $\to$ `stage/` & `ui/`). See the living specification suite for complete details:
 
-- [**`AGENTS.md`**](AGENTS.md) — Repository governance, non-negotiable invariants, and 5-layer architecture map.
+- [**`AGENTS.md`**](AGENTS.md) — Repository governance, non-negotiable invariants, and 5-layer architecture router.
 - [**`CHANGELOG.md`**](CHANGELOG.md) — Semantic version release history, milestone checkpoints, and unreleased change tracking.
+- [**`docs/ARCHITECTURE_FILE_MAP.md`**](docs/ARCHITECTURE_FILE_MAP.md) — Exhaustive file-by-file repository tree and 5-layer module index.
 - [**`docs/STAGEFLOW_SCRIPT_SPECIFICATION.md`**](docs/STAGEFLOW_SCRIPT_SPECIFICATION.md) — Engine mathematical & kinematic SSOT (coordinate transformations, optical projections, analytical curve equations, and normalized AST contract).
 - [**`docs/YAML_AUTHORING_GUIDE.md`**](docs/YAML_AUTHORING_GUIDE.md) — Declarative YAML score authoring SSOT (quickstart, schema reference, accepted aliases, and production cinematography recipes).
 - [**`docs/CORE_MATH_AND_SCORE_SPECIFICATIONS.md`**](docs/CORE_MATH_AND_SCORE_SPECIFICATIONS.md) — Layer 1 stateless math (`Frame_t = f(t)`), metric/degree conventions, lens optics (`mm`), and YAML score schema.
