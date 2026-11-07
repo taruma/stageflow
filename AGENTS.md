@@ -26,7 +26,7 @@ This is the authoritative operating guide for AI agents working in **StageFlow**
 - Layer dependencies must flow strictly one way (`core/` $\to$ `media/` $\to$ `hooks/` $\to$ `stage/` & `ui/`). `src/core/` must have **zero React and zero DOM/Three.js runtime dependencies**.
 
 ### 2.3 Living Documentation as Single Source of Truth (SSOT)
-- **Documentation and codebase must never drift.** With **every code change**, the agent MUST proactively audit and update [`AGENTS.md`](AGENTS.md), [`README.md`](README.md), [`SPECIFICATION.md`](SPECIFICATION.md), and the domain specifications in [`docs/`](docs/) as part of completing the task.
+- **Documentation and codebase must never drift.** With **every code change**, the agent MUST proactively audit and update [`AGENTS.md`](AGENTS.md), [`README.md`](README.md), and the domain specifications in [`docs/`](docs/) as part of completing the task.
 - **Detailed `CHANGELOG.md` Tracking (`## [Unreleased]`)**: Every change must be recorded in [`CHANGELOG.md`](CHANGELOG.md) under the `## [Unreleased]` section. Bullet points must reflect granular details derived directly from pending file diffs (`git diff HEAD`).
 - **Showrunner Versioning & Release Authority**: Version numbers, release checkpoints, and Git tagging (`git tag`) are strictly decided and executed by Taruma. The agent never increments version numbers or tags releases autonomously.
 - Always cross-verify documentation claims against the **actual current state of the codebase** before and after implementation. Taruma should never have to remind the agent to update docs.
@@ -95,7 +95,6 @@ stageflow/
 │       └── stageflow-viewport-recorder/ # 60fps Viewport Video Recorder Skill (SKILL.md)
 ├── AGENTS.md                        # Root governance, workflow rules & invariant router (< 24 KB)
 ├── CHANGELOG.md                     # Semantic version release log & unreleased change tracking
-├── SPECIFICATION.md                 # Foundational product vision & system mechanics
 ├── README.md                        # Quickstart overview & CLI command reference
 ├── docs/                            # Detailed technical & architectural specifications (SSOT)
 │   ├── STAGEFLOW_SCRIPT_SPECIFICATION.md # Engine SSOT: mathematical model, optics & AST contract

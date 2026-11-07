@@ -70,13 +70,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Automatically runs contract validations across all study and blueprint scores without hardcoding project-specific shot counts or timestamps.
 
 ### Changed
-- **Domain Specification Suite Audit & Synchronization (`docs/*`):
+- **Domain Specification Suite Audit & Synchronization (`docs/*`)**:
   - [`docs/CORE_MATH_AND_SCORE_SPECIFICATIONS.md`](docs/CORE_MATH_AND_SCORE_SPECIFICATIONS.md): Documented canonical `CAMERA_LIMITS` ($d \in [0.4, 100.0]\text{m}$, $\theta \in [-85^\circ, +85^\circ]$, $f_{\text{mm}} \in [12, 200]\text{mm}$), modular entity engine submodules (`entityEngine.ts`, `entityBlockingEvaluator.ts`, `entityLegacyEvaluator.ts`, `entityKinematicUtils.ts`), character eye-level look-at anchor ratio ($0.90$), 3-tier score provenance taxonomy (`ScoreCategory = 'study' | 'blueprint' | 'custom'`), `scoreYamlUtils.ts` pure Layer 1 operations, and structured parser diagnostics (`ScoreDiagnostic[]`).
   - [`docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md`](docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md): Fixed duplicate subsection numbering across Section 2 (2.1 to 2.5) and Section 4 (4.1 to 4.14), eliminated duplicate Directorial HUD overlay descriptions, updated header right-wing controls (`ThemeSelectorDropdown`, `Library`, `Reset Layout`), documented Score Library 4-way filter tabs and 3 collapsible sections, and added Section 4.14 for Vercel Web Analytics & Speed Insights integration.
   - [`docs/MEDIA_CLOCK_AND_SYNC_SPECIFICATIONS.md`](docs/MEDIA_CLOCK_AND_SYNC_SPECIFICATIONS.md): Updated sequence diagram and text with `entityCueChanged` 60fps frame loop trigger, live free-orbit sync (`notifyFreeOrbitChange` with 80ms drag throttle, 85ms trailing flush timer, and immediate preset sync), and global studio shortcuts (`L` for labels, `G` for safe guides) with input element protection.
   - [`docs/VISUAL_DESIGN_SYSTEM.md`](docs/VISUAL_DESIGN_SYSTEM.md): Synchronized Section 7.1 with the 3-tier category color coding (Violet for Studies, Sky Blue for Blueprints, Warm Amber for Custom Projects), 4-way filter tabs (`All`, `Studies`, `Blueprints`, `Custom`), and 3 collapsible master list sections.
   - [`docs/STAGEFLOW_SCRIPT_SPECIFICATION.md`](docs/STAGEFLOW_SCRIPT_SPECIFICATION.md): Added `ScoreCategory`, `ScoreDiagnostic`, and `ParseScoreResult` to the Section 7.2 Normalized AST contract table, and noted entity kind aliases and presentation styles in Section 4.
   - [`docs/YAML_AUTHORING_GUIDE.md`](docs/YAML_AUTHORING_GUIDE.md): Updated Section 2.5 with the 3-Tier Taxonomy and highlighted *Vector Field* (`src/scores/studies/vector_field.yaml`) as the primary default scene study authored by Taruma Sakti alongside Blueprints 01–05.
+- **README Modernization & Specification Consolidation (`README.md`, `AGENTS.md`)**:
+  - Refreshed Key Capabilities in [`README.md`](README.md) to showcase the 3-column resizable studio workspace (30/40/30), CodeMirror 6 YAML Studio with Lezer syntax highlighting and 1-click diagnostic jumping, 4-corner diorama HUD with isometric 3D ViewCube SVG camera presets, 3-tier score provenance taxonomy (`study`, `blueprint`, `custom`) featuring *Vector Field*, and standalone in-app documentation & specification viewer (`?mode=guide` / `?mode=spec`).
+  - Updated [`AGENTS.md`](AGENTS.md) and [`README.md`](README.md) to remove references to the retired root `SPECIFICATION.md`.
+
+### Removed
+- **Legacy Genesis Scaffolding Brief (`SPECIFICATION.md`)**:
+  - Removed redundant root `SPECIFICATION.md` as all formal architectural models, AST contracts, optics equations, kinematics, design tokens, and authoring recipes are now comprehensively specified across the modular Single Source of Truth suite in [`docs/`](docs/).
+
 - **Slim Minimalist Character Shoulder Crossbar ([`src/stage/DirectionalMannequin.tsx`](src/stage/DirectionalMannequin.tsx))**:
   - Refined character proxy shoulder crossbar dimensions from broad boxy geometry (`[radius * 2.1, 0.12, radius * 0.95]`) to sleek minimalist proportions (`[radius * 1.4, 0.08, radius * 0.55]`) centered at `y = height - 0.40m`, reducing visual clutter and preventing geometric overlap in tight multi-actor dialogue staging.
 - **Extended Observer Zoom Out & Recalibrated Blueprint Depth Fog (`src/core/constants.ts`, `src/stage/*`, `tests/unit/*`, `docs/*`)**:

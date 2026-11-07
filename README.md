@@ -9,23 +9,32 @@ It synchronizes a universal video player (**Local `.mp4`/`.webm`**, **YouTube UR
 ## Key Capabilities
 
 1. **Stateless Functional Timeline (`Frame_t = f(t, score)`)**:
-   - Pure mathematical evaluation of camera poses, forward pose chaining ($P_0 \to P_1 \to \dots \to P_k$), and actor blocking with zero-drift scrubbing determinism.
+   - Pure mathematical evaluation of camera poses, forward pose chaining ($P_0 \to P_1 \to \dots \to P_k$), and decoupled actor blocking (`blocking:`) with zero-drift scrubbing determinism.
 2. **Hybrid Geometric + Directorial Lens Optics**:
-   - Metric coordinates ($1\text{ unit} = 1\text{m}$), human-authored degrees in YAML (`pitch`, `yaw`, `rotation`), and full-frame equivalent cinema lens focal lengths (`24mm`, `35mm`, `50mm`, `85mm`) projecting a true **Rectangular Cinematic Gate Frustum (`16:9` / `2.39:1`)** with an optical focus plane frame.
+   - Metric coordinates ($1\text{ unit} = 1\text{m}$), human degrees in YAML (`pitch`, `yaw`, `rotation`), and full-frame prime focal lengths (`24mm`, `35mm`, `50mm`, `85mm`) projecting a true **Rectangular Cinematic Gate Frustum (`16:9` / `2.39:1`)** with an optical focus plane frame.
 3. **Dual-Camera Architecture & Free-Orbit Handover**:
    - **Observer Camera**: Drives the 3D viewport during playback and automatically releases to `OrbitControls` when paused so you can freely orbit, pan, and inspect the frozen 3D setup.
-   - **Stage Camera**: Illustrative 3D camera rig inside the diorama with sight-line, rectangular gate frustum, and 3D trajectory path curve.
+   - **Stage Camera**: Illustrative 3D camera rig inside the diorama with sightline, rectangular gate frustum, and 3D trajectory path curve.
    - **Instant POV Cut**: Switch between `Scripted Observer`, `Free Orbit`, and `Stage Cam POV` with zero transition lag.
 4. **Universal Media Clock Parity**:
-   - Identical 60fps synchronization, scrubbing, frame-stepping (`[` / `]`), and slow-motion playback (`0.25x`, `0.5x`, `1x`, `2x`) across local `.mp4` files, YouTube URLs, and procedural blueprint slates.
-5. **Live YAML Score Drawer & Authoring Telemetry Capsule**:
-   - Edit YAML scores live in the slide-out drawer with instant 3D re-evaluation, or click the floating telemetry capsule to copy live camera coordinates (`target`, `distance`, `pitch`, `yaw`, `lens`) directly to the clipboard.
-6. **Dual-Tier Storage Persistence & YAML SSOT**:
+   - Identical 60fps synchronization, scrubbing, frame-stepping (`[` / `]`), and slow-motion playback (`0.25x`, `0.5x`, `1x`, `2x`) across local `.mp4` files, YouTube URLs (with 60fps drift extrapolation), and procedural blueprint slates.
+5. **3-Column Resizable Studio & Code-First YAML Editor**:
+   - Resizable 30/40/30 studio workspace (Reference Video + Directorial Subpanel, 3D Blueprint Diorama, CodeMirror 6 YAML Studio).
+   - CodeMirror 6 editor with Lezer YAML syntax highlighting, soft word wrap toggle (`[ Wrap ]`), debounced live sync (150ms), and a 1-click **`[ Jump ]`** button to exact line/column syntax diagnostics.
+6. **4-Corner Directorial HUD & 3D ViewCube Camera Presets**:
+   - Clean 4-corner diorama HUD layout leaving center stage sightlines completely unobstructed.
+   - 1-click angle snaps (**Top plan, Iso 45°, Front proscenium, Side profile, Reset**) powered by bespoke isometric 3D ViewCube SVG icons that preserve active look-at target pivots.
+7. **3-Tier Score Provenance Taxonomy & Vector Field**:
+   - 3-tier catalog organization (`study`, `blueprint`, `custom`) accessible via a 2-column master-detail Score Library dialog with 4-way filter tabs and procedural 2D SVG stage minimaps.
+   - Defaults to **Vector Field** (`vector_field.yaml`, 1,080 lines, 32 shots, decoupled continuous blocking, 6 observer moves) authored by Taruma Sakti, alongside 5 educational blueprint presets (BP 01–05).
+8. **Dual-Tier Storage Persistence & YAML SSOT**:
    - Automatically saves score drafts and custom imported scenes in browser **IndexedDB** (`idb`), while persisting UI layout preferences in **`localStorage`**. Heavy local dropped videos remain strictly in temporary session memory, and the YAML score remains the authoritative single source of truth for video playback.
-7. **Deterministic 60fps Viewport Video Recorder**:
-   - Headless CLI tool (`npm run record`) powered by Playwright and FFmpeg that steps through scores frame-by-frame ($t_i = i / 60\text{s}$) with zero dropped frames. Exports Scripted Observer or Stage Cam POV viewports in 1080p/4K MP4, WebM, animated GIF, or PNG sequence with toggleable 3D HTML labels and composition guides.
-8. **SceneFlow Visual Design Parity & Decoupled Theme Engine**:
-   - Tactile pill chrome, delicate borders, and editorial typography (`Inter`, `Libre Baskerville`, `JetBrains Mono`) aligned with sister suite app **SceneFlow** (`Screenplay-Sync`). Features an instant 4-mode app theme switcher (`Dark Obsidian Studio`, `Warm Drafting Paper`, `Light Warm Stone`, `Auto System`) with transition-freeze performance, paired with an independently configurable 3D diorama stage theme (`Dark`, `Match App`, `Warm`, `Light`) so you can retain high-contrast dark blueprint void on the stage while working in warm drafting paper UI chrome (0 extra draw calls).
+9. **Standalone In-App Documentation & Specification Viewer (`?mode=guide` / `?mode=spec`)**:
+   - Distraction-free, full-window Markdown + KaTeX manual viewer with two-tier Table of Contents sidebar (`GuideSidebarToc.tsx`), live scroll spy, real-time TOC filtering, and granular bundle code-splitting (~77% cold-payload reduction).
+10. **Deterministic 60fps Viewport Video Recorder**:
+    - Headless CLI tool (`npm run record`) powered by Playwright and FFmpeg that steps through scores frame-by-frame ($t_i = i / 60\text{s}$) with zero dropped frames. Exports Scripted Observer or Stage Cam POV viewports in 1080p/4K MP4, WebM, animated GIF, or PNG sequence with toggleable 3D HTML labels and composition guides.
+11. **SceneFlow Visual Design Parity & Decoupled Theme Engine**:
+    - Tactile pill chrome, delicate borders, and editorial typography (`Inter`, `Libre Baskerville`, `JetBrains Mono`) aligned with sister suite app **SceneFlow** (`Screenplay-Sync`). Features an instant 4-mode app theme switcher (`Dark Obsidian Studio`, `Warm Drafting Paper`, `Light Warm Stone`, `Auto System`) with transition-freeze performance, paired with an independently configurable 3D diorama stage theme (`Dark`, `Match App`, `Warm`, `Light`) so you can retain high-contrast dark blueprint void on the stage while working in warm drafting paper UI chrome (0 extra draw calls).
 
 ---
 
@@ -35,7 +44,6 @@ StageFlow is organized into a strictly decoupled **5-Layer Architecture** (`core
 
 - [**`AGENTS.md`**](AGENTS.md) — Repository governance, non-negotiable invariants, and 5-layer architecture map.
 - [**`CHANGELOG.md`**](CHANGELOG.md) — Semantic version release history, milestone checkpoints, and unreleased change tracking.
-- [**`SPECIFICATION.md`**](SPECIFICATION.md) — Product vision and core system mechanics.
 - [**`docs/STAGEFLOW_SCRIPT_SPECIFICATION.md`**](docs/STAGEFLOW_SCRIPT_SPECIFICATION.md) — Engine mathematical & kinematic SSOT (coordinate transformations, optical projections, analytical curve equations, and normalized AST contract).
 - [**`docs/YAML_AUTHORING_GUIDE.md`**](docs/YAML_AUTHORING_GUIDE.md) — Declarative YAML score authoring SSOT (quickstart, schema reference, accepted aliases, and production cinematography recipes).
 - [**`docs/CORE_MATH_AND_SCORE_SPECIFICATIONS.md`**](docs/CORE_MATH_AND_SCORE_SPECIFICATIONS.md) — Layer 1 stateless math (`Frame_t = f(t)`), metric/degree conventions, lens optics (`mm`), and YAML score schema.
