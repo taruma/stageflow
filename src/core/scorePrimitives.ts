@@ -235,10 +235,14 @@ export function resolveEntityIdentifier(
 
 export function parseBlockingCues(
   rawBlocking: unknown,
-  entities: SceneEntityDef[] = []
+  entities: SceneEntityDef[] = [],
+  scoreContinuous?: boolean,
+  missingStartBlockingCueIds?: string[]
 ): BlockingCueSpec[] | undefined {
   if (!Array.isArray(rawBlocking)) return undefined;
   const cues: BlockingCueSpec[] = [];
+  let prevBlockEndSec = 0;
+  const prevEndSecByEntity = new Map<string, number>();
 
   rawBlocking.forEach((item, idx) => {
     if (!item || typeof item !== 'object' || Array.isArray(item)) return;
@@ -251,20 +255,62 @@ export function parseBlockingCues(
 
     const rawStart = obj.start ?? obj._start;
     const rawEnd = obj.end ?? obj._end;
-    const startSec =
-      typeof rawStart === 'number' && Number.isFinite(rawStart)
-        ? Math.max(0, rawStart)
-        : 0;
-    const endSec =
-      typeof rawEnd === 'number' && Number.isFinite(rawEnd)
-        ? Math.max(startSec + 0.1, rawEnd)
-        : startSec + 5.0;
+    const rawDuration = obj.duration ?? obj.dur;
+    const hasExplicitStart =
+      typeof rawStart === 'number' && Number.isFinite(rawStart);
+
+    const rawContinuous = obj.continuous;
+    const cueContinuous =
+      typeof rawContinuous === 'boolean'
+        ? rawContinuous
+        : rawContinuous === 'true' || rawContinuous === 'yes'
+        ? true
+        : rawContinuous === 'false' || rawContinuous === 'no'
+        ? false
+        : undefined;
+    const isContinuous = cueContinuous ?? scoreContinuous;
+
+    const rawCut = obj.cut;
+    const blockCut =
+      typeof rawCut === 'boolean'
+        ? rawCut
+        : rawCut === 'true' || rawCut === 'yes'
+        ? true
+        : rawCut === 'false' || rawCut === 'no'
+        ? false
+        : undefined;
 
     if (
       obj.entities &&
       typeof obj.entities === 'object' &&
       !Array.isArray(obj.entities)
     ) {
+      let startSec: number;
+      if (hasExplicitStart) {
+        startSec = Math.max(0, rawStart);
+      } else if (isContinuous) {
+        startSec = prevBlockEndSec;
+      } else {
+        startSec = 0;
+        if (idx > 0 && missingStartBlockingCueIds) {
+          missingStartBlockingCueIds.push(baseId);
+        }
+      }
+
+      let endSec: number;
+      if (typeof rawEnd === 'number' && Number.isFinite(rawEnd)) {
+        endSec = Math.max(startSec + 0.016, rawEnd);
+      } else if (typeof rawDuration === 'number' && Number.isFinite(rawDuration)) {
+        endSec = Math.max(
+          startSec + 0.016,
+          startSec + Math.max(0.016, rawDuration)
+        );
+      } else {
+        endSec = startSec + 5.0;
+      }
+
+      prevBlockEndSec = endSec;
+
       for (const [entKey, rawOv] of Object.entries(
         obj.entities as Record<string, unknown>
       )) {
@@ -273,12 +319,35 @@ export function parseBlockingCues(
         }
         const ov = rawOv as Record<string, unknown>;
         const entityId = resolveEntityIdentifier(entKey, entities);
+        prevEndSecByEntity.set(entityId.toLowerCase(), endSec);
+
+        const rawOvCut = ov.cut ?? blockCut;
+        const isCut =
+          typeof rawOvCut === 'boolean'
+            ? rawOvCut
+            : rawOvCut === 'true' || rawOvCut === 'yes'
+            ? true
+            : rawOvCut === 'false' || rawOvCut === 'no'
+            ? false
+            : undefined;
+
+        const rawOvContinuous = ov.continuous;
+        const ovContinuous =
+          typeof rawOvContinuous === 'boolean'
+            ? rawOvContinuous
+            : rawOvContinuous === 'true' || rawOvContinuous === 'yes'
+            ? true
+            : rawOvContinuous === 'false' || rawOvContinuous === 'no'
+            ? false
+            : cueContinuous;
+
         cues.push({
           id: `${baseId}:${entityId}`,
           label,
           entityId,
           startSec,
           endSec,
+          duration: endSec - startSec,
           fromPosition: ov.from_position
             ? parseVec3(ov.from_position)
             : ov.from
@@ -297,6 +366,8 @@ export function parseBlockingCues(
             typeof (ov.note ?? ov.description) === 'string'
               ? String(ov.note ?? ov.description)
               : undefined,
+          cut: isCut,
+          continuous: ovContinuous,
         });
       }
       return;
@@ -306,12 +377,42 @@ export function parseBlockingCues(
       obj.entity ?? obj.entity_id ?? obj.entityId ?? obj.actor ?? obj.subject;
     if (typeof rawEntity === 'string' && rawEntity.trim().length > 0) {
       const entityId = resolveEntityIdentifier(rawEntity, entities);
+      const entityKey = entityId.toLowerCase();
+
+      let startSec: number;
+      if (hasExplicitStart) {
+        startSec = Math.max(0, rawStart);
+      } else if (isContinuous) {
+        startSec = prevEndSecByEntity.get(entityKey) ?? prevBlockEndSec;
+      } else {
+        startSec = 0;
+        if (idx > 0 && missingStartBlockingCueIds) {
+          missingStartBlockingCueIds.push(baseId);
+        }
+      }
+
+      let endSec: number;
+      if (typeof rawEnd === 'number' && Number.isFinite(rawEnd)) {
+        endSec = Math.max(startSec + 0.016, rawEnd);
+      } else if (typeof rawDuration === 'number' && Number.isFinite(rawDuration)) {
+        endSec = Math.max(
+          startSec + 0.016,
+          startSec + Math.max(0.016, rawDuration)
+        );
+      } else {
+        endSec = startSec + 5.0;
+      }
+
+      prevBlockEndSec = endSec;
+      prevEndSecByEntity.set(entityKey, endSec);
+
       cues.push({
         id: baseId,
         label,
         entityId,
         startSec,
         endSec,
+        duration: endSec - startSec,
         fromPosition: obj.from_position
           ? parseVec3(obj.from_position)
           : obj.from
@@ -330,6 +431,8 @@ export function parseBlockingCues(
           typeof (obj.note ?? obj.description) === 'string'
             ? String(obj.note ?? obj.description)
             : undefined,
+        cut: blockCut,
+        continuous: cueContinuous,
       });
     }
   });

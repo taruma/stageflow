@@ -316,6 +316,26 @@ export function parseStageScore(
         )) {
           if (!rawOv || typeof rawOv !== 'object') continue;
           const ov = rawOv as Record<string, unknown>;
+          const rawOvCut = ov.cut;
+          const isCut =
+            typeof rawOvCut === 'boolean'
+              ? rawOvCut
+              : rawOvCut === 'true' || rawOvCut === 'yes'
+              ? true
+              : rawOvCut === 'false' || rawOvCut === 'no'
+              ? false
+              : undefined;
+
+          const rawOvContinuous = ov.continuous;
+          const ovContinuous =
+            typeof rawOvContinuous === 'boolean'
+              ? rawOvContinuous
+              : rawOvContinuous === 'true' || rawOvContinuous === 'yes'
+              ? true
+              : rawOvContinuous === 'false' || rawOvContinuous === 'no'
+              ? false
+              : undefined;
+
           entityOverrides[entId] = {
             fromPosition: ov.from_position
               ? parseVec3(ov.from_position)
@@ -329,6 +349,8 @@ export function parseStageScore(
             highlighted: Boolean(ov.highlighted ?? ov.highlight),
             visible: ov.visible !== false,
             note: typeof ov.note === 'string' ? ov.note : undefined,
+            cut: isCut,
+            continuous: ovContinuous,
           };
         }
       }
@@ -365,7 +387,13 @@ export function parseStageScore(
     continuous,
     missingStartObserverShotIds
   );
-  const blocking = parseBlockingCues(root.blocking, entities);
+  const missingStartBlockingCueIds: string[] = [];
+  const blocking = parseBlockingCues(
+    root.blocking,
+    entities,
+    continuous,
+    missingStartBlockingCueIds
+  );
 
   const maxFilmShotEnd = Math.max(...shots.map((s) => s.endSec));
   const maxObserverShotEnd =
@@ -396,6 +424,8 @@ export function parseStageScore(
       ? `Shot "${missingStartShotIds[0]}" omits "start" (defaulted to 0.0s). Add "start:" or declare "continuous: true" at root to auto-chain.`
       : missingStartObserverShotIds.length > 0
       ? `Observer shot "${missingStartObserverShotIds[0]}" omits "start" (defaulted to 0.0s). Add "start:" or declare "continuous: true" to auto-chain.`
+      : missingStartBlockingCueIds.length > 0
+      ? `Blocking cue "${missingStartBlockingCueIds[0]}" omits "start" (defaulted to 0.0s). Add "start:" or declare "continuous: true" to auto-chain.`
       : null;
 
   return {

@@ -119,6 +119,8 @@ export interface EntityCueOverride {
   highlighted: boolean;
   visible: boolean;
   note?: string;
+  cut?: boolean;
+  continuous?: boolean;
 }
 
 /**
@@ -131,6 +133,7 @@ export interface BlockingCueSpec {
   entityId: string;
   startSec: number;
   endSec: number;
+  duration?: number;
   fromPosition?: Vec3;
   position?: Vec3;
   rotationYRad?: number;
@@ -139,6 +142,8 @@ export interface BlockingCueSpec {
   highlighted?: boolean;
   visible?: boolean;
   note?: string;
+  cut?: boolean;
+  continuous?: boolean;
 }
 
 export interface EvaluatedEntityState {

@@ -95,3 +95,5 @@ When considering merging shots into a single Catmull-Rom spline (`maneuver: "spl
 | **3D trajectory rail swaps abruptly** | Visual consequence of discrete editorial shots | Combine camera shots with `maneuver: "spline"` and stage actors in `blocking:` |
 | **Look-at snaps diagonally** | Target entity switched without `from:` | Add `from: "<previous_target>"` |
 | **Roll or `target_offset` snaps to `0` across a continuous move** | Shot is in standard cut mode (`continuous: false`) where Option A resets apply | Enable `continuous: true` at root or on the follow-up cue (`shots[k].continuous: true` or `observer_shots[k].continuous: true`) |
+| **Actor slides across floor during montage or jump cut** | Omitted `from:` causes engine to lerp movement from previous position | Declare `cut: true` on the cue to place directly at `position` without cross-stage sliding or phantom floor trails |
+| **Actor cue snaps to 0.0s when omitting start** | Omitted `start:` outside continuous mode defaults to 0.0s | Declare `continuous: true` at score root or on cue to auto-chain timestamps, or specify explicit `start:` / `duration:` |

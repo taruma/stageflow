@@ -22,6 +22,7 @@ export interface ChainedBlockingCueEntry {
   startRot: number;
   endRot: number;
   visible: boolean;
+  isCut?: boolean;
 }
 
 /**

@@ -72,7 +72,14 @@ export function evaluateLegacyEntitiesAtTime(
       const prev = runningPoses.get(def.id)!;
       const override = shot.entities[def.id];
 
-      const startPos = override?.fromPosition
+      const isCut = Boolean(override?.cut);
+      const startPos = isCut
+        ? override?.position
+          ? cloneVec3(override.position)
+          : override?.fromPosition
+          ? cloneVec3(override.fromPosition)
+          : cloneVec3(prev.position)
+        : override?.fromPosition
         ? cloneVec3(override.fromPosition)
         : cloneVec3(prev.position);
       const endPos = override?.position
@@ -106,6 +113,7 @@ export function evaluateLegacyEntitiesAtTime(
           endRot = computeLookAtYawRad(endPos, targetPt);
         }
       } else if (
+        !override?.cut &&
         Math.hypot(
           endPos.x - startSnap.position.x,
           endPos.z - startSnap.position.z
@@ -248,10 +256,12 @@ export function evaluateLegacyEntitiesAtTime(
       }
     }
 
-    const trailPoints = buildGroundTrailPoints(
-      item.startSnap.position,
-      item.endSnap.position
-    );
+    const trailPoints = override?.cut
+      ? []
+      : buildGroundTrailPoints(
+          item.startSnap.position,
+          item.endSnap.position
+        );
 
     const state: EvaluatedEntityState = {
       id: def.id,

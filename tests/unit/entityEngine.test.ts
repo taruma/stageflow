@@ -194,4 +194,104 @@ describe('Entity Engine Facade & Dispatching (entityEngine)', () => {
     const blockingRes = evaluateBlockingEntitiesAtTime(5.0, blockingScore);
     expect(blockingRes.entitiesById.get('actor')!.position.x).toBeCloseTo(3.0, 3);
   });
+
+  it('evaluates cut: true as instant placement with empty trailPoints and no cross-stage sliding', () => {
+    const cutScore: StageScore = {
+      ...baseScore,
+      blocking: [
+        // Cue 1: walk from baseline (-2, 0, 0) to (4, 0, 0) over 0s to 5s
+        {
+          id: 'cue-walk',
+          entityId: 'actor',
+          startSec: 0,
+          endSec: 5,
+          position: { x: 4, y: 0, z: 0 },
+          easing: 'linear',
+        },
+        // Cue 2: jump cut to (-10, 0, 5) with cut: true over 5s to 10s
+        {
+          id: 'cue-jump-cut',
+          entityId: 'actor',
+          startSec: 5,
+          endSec: 10,
+          cut: true,
+          position: { x: -10, y: 0, z: 5 },
+          rotationYRad: Math.PI / 2,
+          easing: 'smooth',
+        },
+      ],
+    };
+
+    // At 4.9s: actor is still near end of cue-walk (x ~ 3.88)
+    const resAt49 = evaluateBlockingEntitiesAtTime(4.9, cutScore);
+    const actorAt49 = resAt49.entitiesById.get('actor')!;
+    expect(actorAt49.position.x).toBeCloseTo(3.88, 1);
+    expect(actorAt49.trailPoints.length).toBeGreaterThan(0); // Active walk trail
+
+    // At 5.0s (exact boundary of cut): actor immediately manifests at (-10, 0, 5) without sliding
+    const resAt50 = evaluateBlockingEntitiesAtTime(5.0, cutScore);
+    const actorAt50 = resAt50.entitiesById.get('actor')!;
+    expect(actorAt50.position).toEqual({ x: -10, y: 0, z: 5 });
+    expect(actorAt50.trailPoints).toHaveLength(0); // Suppressed trail!
+    expect(actorAt50.rotationYRad).toBeCloseTo(Math.PI / 2, 4);
+
+    // At 7.5s (mid-cue of jump-cut): actor remains exactly at (-10, 0, 5)
+    const resAt75 = evaluateBlockingEntitiesAtTime(7.5, cutScore);
+    const actorAt75 = resAt75.entitiesById.get('actor')!;
+    expect(actorAt75.position).toEqual({ x: -10, y: 0, z: 5 });
+    expect(actorAt75.trailPoints).toHaveLength(0);
+  });
+
+  it('evaluates Tier 2 legacy entity cut: true without sliding and with empty trailPoints', () => {
+    const legacyCutScore: StageScore = {
+      ...baseScore,
+      shots: [
+        {
+          id: 'shot-1',
+          shotNumber: 1,
+          label: 'Shot 1',
+          description: 'Shot 1',
+          startSec: 0,
+          endSec: 5,
+          entities: {
+            actor: {
+              position: { x: 5, y: 0, z: 0 },
+              easing: 'linear',
+              highlighted: false,
+              visible: true,
+            },
+          },
+        },
+        {
+          id: 'shot-2',
+          shotNumber: 2,
+          label: 'Shot 2',
+          description: 'Shot 2 Cut',
+          startSec: 5,
+          endSec: 10,
+          entities: {
+            actor: {
+              cut: true,
+              position: { x: -20, y: 0, z: 0 },
+              easing: 'smooth',
+              highlighted: false,
+              visible: true,
+            },
+          },
+        },
+      ],
+    };
+
+    // At 5.0s: actor is immediately placed at (-20, 0, 0)
+    const resAt50 = evaluateLegacyEntitiesAtTime(5.0, legacyCutScore);
+    const actorAt50 = resAt50.entitiesById.get('actor')!;
+    expect(actorAt50.position).toEqual({ x: -20, y: 0, z: 0 });
+    expect(actorAt50.trailPoints).toHaveLength(0); // Empty trail for cut shot
+
+    // At 7.5s: actor holds at (-20, 0, 0)
+    const resAt75 = evaluateLegacyEntitiesAtTime(7.5, legacyCutScore);
+    const actorAt75 = resAt75.entitiesById.get('actor')!;
+    expect(actorAt75.position).toEqual({ x: -20, y: 0, z: 0 });
+    expect(actorAt75.trailPoints).toHaveLength(0);
+  });
 });

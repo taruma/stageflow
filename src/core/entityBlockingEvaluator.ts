@@ -50,7 +50,14 @@ export function evaluateBlockingEntitiesAtTime(
     const entries: ChainedBlockingCueEntry[] = [];
 
     for (const cue of entityCues) {
-      const startPos = cue.fromPosition
+      const isCut = Boolean(cue.cut);
+      const startPos = isCut
+        ? cue.position
+          ? cloneVec3(cue.position)
+          : cue.fromPosition
+          ? cloneVec3(cue.fromPosition)
+          : cloneVec3(prevPos)
+        : cue.fromPosition
         ? cloneVec3(cue.fromPosition)
         : cloneVec3(prevPos);
       const endPos = cue.position
@@ -65,6 +72,7 @@ export function evaluateBlockingEntitiesAtTime(
         startRot: def.rotationYRad,
         endRot: def.rotationYRad,
         visible,
+        isCut,
       });
 
       prevPos = cloneVec3(endPos);
@@ -129,6 +137,7 @@ export function evaluateBlockingEntitiesAtTime(
           endRot = computeLookAtYawRad(entry.endPos, targetPt);
         }
       } else if (
+        !entry.isCut &&
         Math.hypot(
           entry.endPos.x - entry.startPos.x,
           entry.endPos.z - entry.startPos.z
@@ -200,7 +209,9 @@ export function evaluateBlockingEntitiesAtTime(
       visible = active.visible;
       highlighted = Boolean(active.cue.highlighted ?? shotOv?.highlighted);
       note = active.cue.note ?? shotOv?.note;
-      trailPoints = buildGroundTrailPoints(active.startPos, active.endPos);
+      trailPoints = active.cue.cut
+        ? []
+        : buildGroundTrailPoints(active.startPos, active.endPos);
       cueId = active.cue.id;
     } else if (lastFinished) {
       rotY = lastFinished.endRot;

@@ -710,7 +710,7 @@ blocking:
   - id: "hero-cross"
     entity: "detective"        # Entity ID or label (alias: actor, subject, entity_id)
     start: 0.0
-    end: 9.0
+    duration: 9.0              # Duration in seconds (alias: dur; or specify end: 9.0)
     from: [-1.2, 0, 0]         # Optional starting position (defaults to previous cue end)
     position: [2.5, 0, 0.4]    # Destination position at end of cue
     rotation: 45               # Explicit destination facing angle in degrees
@@ -726,11 +726,34 @@ blocking:
 blocking:
   - id: "beat-confrontation"
     start: 9.0
-    end: 14.0
+    duration: 5.0              # Duration in seconds (or end: 14.0)
     easing: "smooth"
     entities:
       detective: { rotation: 0, look_at: "witness" }
       witness: { rotation: 180, highlighted: true }
+```
+
+#### Continuous Auto-Chaining & Instant Cuts (`continuous: true` & `cut: true`)
+Just like camera tracks, `blocking:` supports continuous timeline auto-chaining and instant jump cut placement:
+- **Timestamp Auto-Chaining**: In continuous mode (`continuous: true` at score root or on the cue), omitting `start:` automatically chains `startSec = prevEndSec` (grouped cues chain from the previous block's end; flat cues chain from that specific entity's previous cue end).
+- **Instant Cut Placement (`cut: true`)**: For montage jump cuts or instant relocations without walking, declare `cut: true`. The entity manifests immediately at `position` at `startSec` (`startPos = position`), cross-stage sliding is prevented, the floor trail is suppressed (`trailPoints = []`), and auto-facing toward the previous room is disabled.
+- **Continuous Override**: Setting `continuous: false` on a cue breaks continuity to author an independent scene setup or flashback.
+
+```yaml
+continuous: true
+
+blocking:
+  # Beat 1: Smooth walk across room
+  - id: "beat-01"
+    duration: 4.0
+    entities:
+      ruby: { position: [2, 0, 0] }
+
+  # Beat 2: Montage jump cut to kitchen (auto-chains start: 4.0s)
+  - id: "beat-02-kitchen"
+    duration: 3.5
+    entities:
+      ruby: { cut: true, position: [-5, 0, 1], rotation: 180 }
 ```
 
 ### 6.2 The Two-Pass Kinematic Evaluator

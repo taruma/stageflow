@@ -944,5 +944,129 @@ shots:
       );
       expect(centerPose.target).toEqual({ x: 0.5, y: 1.25, z: -0.5 });
     });
+
+    it('parses duration, cut flag, and auto-chains timestamps for continuous blocking cues', () => {
+      const continuousBlockingYaml = `
+version: "1.0"
+id: "continuous-blocking-test"
+title: "Continuous Blocking Test"
+continuous: true
+entities:
+  - id: "ruby"
+    kind: "character"
+    position: [0, 0, 0]
+  - id: "evan"
+    kind: "character"
+    position: [-2, 0, 0]
+shots:
+  - id: "s1"
+    start: 0
+    end: 10
+blocking:
+  # Beat 1: Explicit start + duration
+  - id: "beat-1"
+    start: 0.0
+    duration: 4.0
+    entities:
+      ruby: { position: [2, 0, 0] }
+      evan: { position: [0, 0, 0] }
+  # Beat 2: Omitted start, auto-chains to 4.0s; uses dur: 2.5s; ruby has cut: true
+  - id: "beat-2"
+    dur: 2.5
+    entities:
+      ruby: { cut: true, position: [10, 0, 0] }
+      evan: { position: [1, 0, 0] }
+  # Beat 3: Flat single entity cue, omitted start, auto-chains to 6.5s
+  - id: "beat-3-evan"
+    actor: "evan"
+    duration: 3.0
+    position: [5, 0, 0]
+`;
+      const { score, error, warning } = parseStageScore(continuousBlockingYaml);
+      expect(error).toBeNull();
+      expect(warning).toBeNull();
+      expect(score).not.toBeNull();
+
+      const blocking = score!.blocking!;
+      expect(blocking).toHaveLength(5); // 2 from beat-1, 2 from beat-2, 1 from beat-3
+
+      // Beat 1: 0.0 to 4.0
+      const b1Ruby = blocking.find((b) => b.id === 'beat-1:ruby')!;
+      expect(b1Ruby.startSec).toBe(0.0);
+      expect(b1Ruby.endSec).toBe(4.0);
+      expect(b1Ruby.duration).toBe(4.0);
+      expect(b1Ruby.cut).toBeUndefined();
+
+      // Beat 2: 4.0 to 6.5
+      const b2Ruby = blocking.find((b) => b.id === 'beat-2:ruby')!;
+      expect(b2Ruby.startSec).toBe(4.0);
+      expect(b2Ruby.endSec).toBe(6.5);
+      expect(b2Ruby.cut).toBe(true);
+
+      const b2Evan = blocking.find((b) => b.id === 'beat-2:evan')!;
+      expect(b2Evan.startSec).toBe(4.0);
+      expect(b2Evan.endSec).toBe(6.5);
+
+      // Beat 3: 6.5 to 9.5
+      const b3Evan = blocking.find((b) => b.id === 'beat-3-evan')!;
+      expect(b3Evan.startSec).toBe(6.5);
+      expect(b3Evan.endSec).toBe(9.5);
+    });
+
+    it('emits diagnostic warning when blocking cue omits start outside continuous mode', () => {
+      const unchainedBlockingYaml = `
+version: "1.0"
+id: "unchained-blocking-test"
+title: "Unchained Blocking Test"
+shots:
+  - id: "s1"
+    start: 0
+    end: 10
+entities:
+  - id: "ruby"
+    kind: "character"
+blocking:
+  - id: "b1"
+    actor: "ruby"
+    start: 0.0
+    end: 3.0
+  - id: "b2"
+    actor: "ruby"
+    end: 6.0
+`;
+      const { score, error, warning } = parseStageScore(unchainedBlockingYaml);
+      expect(error).toBeNull();
+      expect(score).not.toBeNull();
+      expect(warning).toContain('Blocking cue "b2" omits "start" (defaulted to 0.0s)');
+    });
+
+    it('parses cut flag on shot-level entity overrides', () => {
+      const shotEntityCutYaml = `
+version: "1.0"
+id: "shot-cut-test"
+title: "Shot Cut Test"
+entities:
+  - id: "ruby"
+    kind: "character"
+shots:
+  - id: "shot-1"
+    start: 0
+    end: 5
+    entities:
+      ruby:
+        position: [2, 0, 0]
+  - id: "shot-2"
+    start: 5
+    end: 10
+    entities:
+      ruby:
+        cut: true
+        position: [-10, 0, 0]
+`;
+      const { score, error } = parseStageScore(shotEntityCutYaml);
+      expect(error).toBeNull();
+      expect(score).not.toBeNull();
+      expect(score!.shots[1].entities.ruby.cut).toBe(true);
+    });
   });
 });
