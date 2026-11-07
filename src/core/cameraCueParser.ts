@@ -197,7 +197,17 @@ export function parseCameraCueSpec(
     obj.focal_length !== undefined ||
     obj.focalLengthMm !== undefined;
 
+  const cueContinuous =
+    typeof obj.continuous === 'boolean'
+      ? obj.continuous
+      : obj.continuous === 'true' || obj.continuous === 'yes'
+      ? true
+      : obj.continuous === 'false' || obj.continuous === 'no'
+      ? false
+      : undefined;
+
   return {
+    ...(cueContinuous !== undefined ? { continuous: cueContinuous } : {}),
     maneuver,
     easing,
     target: parseTargetOrVec3(obj.target),
@@ -287,23 +297,63 @@ export function parseStageCameraCueSpec(
 
 export function parseObserverShots(
   rawObserverShots: unknown,
-  defaultLensMm: number
+  defaultLensMm: number,
+  scoreContinuous?: boolean,
+  missingStartObserverShotIds?: string[]
 ): ObserverShotCue[] | undefined {
   if (!Array.isArray(rawObserverShots)) return undefined;
+  let prevShotEndSec = 0;
+
   return rawObserverShots
     .filter((item) => item && typeof item === 'object')
     .map((item, idx) => {
       const os = item as Record<string, unknown>;
-      const startSec =
-        typeof os.start === 'number' && Number.isFinite(os.start)
-          ? Math.max(0, os.start)
-          : 0;
-      const endSec =
-        typeof os.end === 'number' && Number.isFinite(os.end)
-          ? Math.max(startSec + 0.1, os.end)
-          : startSec + 5.0;
+      const rawStartCandidate = os.start ?? os._start;
+      const rawEndCandidate = os.end ?? os._end;
+      const hasExplicitStart =
+        typeof rawStartCandidate === 'number' &&
+        Number.isFinite(rawStartCandidate);
+
       const cameraSource =
         os.observer_camera ?? os.observerCamera ?? os.camera ?? os;
+      const camObj =
+        cameraSource && typeof cameraSource === 'object'
+          ? (cameraSource as Record<string, unknown>)
+          : os;
+      const rawContinuous = os.continuous ?? camObj.continuous;
+
+      const shotContinuous =
+        typeof rawContinuous === 'boolean'
+          ? rawContinuous
+          : rawContinuous === 'true' || rawContinuous === 'yes'
+          ? true
+          : rawContinuous === 'false' || rawContinuous === 'no'
+          ? false
+          : undefined;
+
+      const isContinuous = shotContinuous ?? scoreContinuous;
+
+      let startSec: number;
+      if (hasExplicitStart) {
+        startSec = Math.max(0, rawStartCandidate);
+      } else if (isContinuous) {
+        startSec = prevShotEndSec;
+      } else {
+        startSec = 0;
+        if (idx > 0 && missingStartObserverShotIds) {
+          missingStartObserverShotIds.push(
+            String(os.id ?? `obs-shot-${idx + 1}`)
+          );
+        }
+      }
+
+      const endSec =
+        typeof rawEndCandidate === 'number' && Number.isFinite(rawEndCandidate)
+          ? Math.max(startSec + 0.1, rawEndCandidate)
+          : startSec + 5.0;
+
+      prevShotEndSec = endSec;
+
       const camera =
         parseCameraCueSpec(cameraSource, defaultLensMm) ??
         parseCameraCueSpec({}, defaultLensMm)!;
@@ -313,6 +363,7 @@ export function parseObserverShots(
           typeof (os.label ?? os.name) === 'string'
             ? String(os.label ?? os.name)
             : undefined,
+        ...(shotContinuous !== undefined ? { continuous: shotContinuous } : {}),
         startSec,
         endSec,
         camera,

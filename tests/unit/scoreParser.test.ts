@@ -565,6 +565,95 @@ shots:
       expect(score!.shots[2].continuous).toBe(false);
       expect(score!.shots[2].startSec).toBe(12.0);
     });
+
+    it('auto-chains observer_shots timestamps when root continuous: true is declared', () => {
+      const yaml = `
+version: "1.0"
+id: "obs-continuous-root"
+title: "Observer Continuous Root"
+continuous: true
+shots:
+  - id: "s1"
+    end: 20.0
+observer_shots:
+  - id: "obs-1"
+    end: 8.0
+  - id: "obs-2"
+    end: 15.0
+  - id: "obs-3"
+    start: 17.0
+    end: 20.0
+`;
+      const { score, error } = parseStageScore(yaml);
+      expect(error).toBeNull();
+      expect(score!.observerShots).toHaveLength(3);
+      expect(score!.observerShots![0].startSec).toBe(0.0);
+      expect(score!.observerShots![0].endSec).toBe(8.0);
+      expect(score!.observerShots![1].startSec).toBe(8.0); // Auto-chained from obs-1.endSec
+      expect(score!.observerShots![1].endSec).toBe(15.0);
+      expect(score!.observerShots![2].startSec).toBe(17.0); // Explicit start preserved (gap)
+      expect(score!.observerShots![2].endSec).toBe(20.0);
+    });
+
+    it('supports cue-level continuous: true on observer_shots when root continuous is false', () => {
+      const yaml = `
+version: "1.0"
+id: "obs-cue-continuous"
+title: "Observer Cue Continuous"
+shots:
+  - id: "s1"
+    start: 0.0
+    end: 10.0
+  - id: "s2"
+    start: 10.0
+    end: 20.0
+observer_shots:
+  - id: "obs-1"
+    start: 0.0
+    end: 7.5
+  - id: "obs-2"
+    continuous: true
+    end: 14.0
+  - id: "obs-3"
+    continuous: false
+    start: 16.0
+    end: 20.0
+`;
+      const { score, error } = parseStageScore(yaml);
+      expect(error).toBeNull();
+      expect(score!.observerShots).toHaveLength(3);
+      expect(score!.observerShots![0].startSec).toBe(0.0);
+      expect(score!.observerShots![0].endSec).toBe(7.5);
+      expect(score!.observerShots![1].continuous).toBe(true);
+      expect(score!.observerShots![1].startSec).toBe(7.5); // Auto-chained from obs-1
+      expect(score!.observerShots![1].endSec).toBe(14.0);
+      expect(score!.observerShots![2].continuous).toBe(false);
+      expect(score!.observerShots![2].startSec).toBe(16.0);
+      expect(score!.observerShots![2].endSec).toBe(20.0);
+    });
+
+    it('emits a non-blocking diagnostic warning when continuous is false and start is omitted on observer_shot 2+', () => {
+      const yaml = `
+version: "1.0"
+id: "obs-warning-test"
+title: "Observer Warning Test"
+shots:
+  - id: "s1"
+    start: 0.0
+    end: 10.0
+observer_shots:
+  - id: "obs-1"
+    start: 0.0
+    end: 5.0
+  - id: "obs-2"
+    end: 10.0
+`;
+      const { score, error, warning } = parseStageScore(yaml);
+      expect(error).toBeNull();
+      expect(score).not.toBeNull();
+      expect(warning).toContain('Observer shot "obs-2" omits "start" (defaulted to 0.0s)');
+      expect(score!.observerShots![1].startSec).toBe(0.0);
+    });
   });
   describe('Modular Submodules — scorePrimitives & cameraCueParser Direct Unit Contracts', () => {
     it('correctly parses vector primitives and fallbacks', () => {

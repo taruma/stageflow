@@ -70,6 +70,7 @@ function extractTrackCues(
         id: os.id,
         startSec: os.startSec,
         endSec: os.endSec,
+        continuous: os.continuous ?? os.camera.continuous,
         spec: os.camera,
       }))
       .sort((a, b) => a.startSec - b.startSec);
@@ -83,7 +84,7 @@ function extractTrackCues(
         id: s.id,
         startSec: s.startSec,
         endSec: s.endSec,
-        continuous: s.continuous,
+        continuous: spec.continuous ?? s.continuous,
         spec,
       });
     }
@@ -108,7 +109,6 @@ function sampleCueTrajectoryPoints(
   prevEndPose: SphericalPose,
   baselinePose: SphericalPose,
   prevEndOffset: Vec3,
-  role: TrackRole,
   isFirst: boolean,
   samples = 32
 ): Vec3[] {
@@ -117,34 +117,33 @@ function sampleCueTrajectoryPoints(
     return [];
   }
 
-  const isContinuousStageMove =
-    role === 'stage' &&
+  const isContinuousMove =
     Boolean(cue.continuous ?? score.continuous) &&
     !isFirst;
 
   const durationSec = Math.max(0.016, cue.endSec - cue.startSec);
-  const startOffset = resolveShotStartOffset(spec, prevEndOffset, isContinuousStageMove);
-  const endOffset = resolveShotDestOffset(spec, prevEndOffset, isContinuousStageMove);
+  const startOffset = resolveShotStartOffset(spec, prevEndOffset, isContinuousMove);
+  const endOffset = resolveShotDestOffset(spec, prevEndOffset, isContinuousMove);
 
   const startDistance =
     spec.distanceStart ??
-    (isContinuousStageMove
+    (isContinuousMove
       ? prevEndPose.distance
       : spec.distance ?? prevEndPose.distance);
 
   const startPitch =
     spec.pitchStartRad ??
-    (isContinuousStageMove
+    (isContinuousMove
       ? prevEndPose.pitch
       : spec.pitchRad ?? prevEndPose.pitch);
 
   const startYaw =
     spec.yawStartRad ??
-    (isContinuousStageMove || spec.yawDeltaRad !== undefined
+    (isContinuousMove || spec.yawDeltaRad !== undefined
       ? prevEndPose.yaw
       : spec.yawRad ?? prevEndPose.yaw);
 
-  const startRoll = resolveShotStartRoll(spec, prevEndPose, baselinePose, isContinuousStageMove);
+  const startRoll = resolveShotStartRoll(spec, prevEndPose, baselinePose, isContinuousMove);
   const prevBaseTarget: Vec3 = {
     x: prevEndPose.target.x - prevEndOffset.x,
     y: prevEndPose.target.y - prevEndOffset.y,
@@ -196,7 +195,7 @@ function sampleCueTrajectoryPoints(
       baselinePose,
       startOffset,
       endOffset,
-      isContinuousStageMove
+      isContinuousMove
     );
     const cart = sphericalToCartesian(pose, score.aspectRatio);
     points.push(cart.position);
@@ -246,13 +245,11 @@ function getOrCreateCueTrackCache(
       runningPose,
       baselinePose,
       runningOffset,
-      role,
       i === 0
     );
     cueTrajectoryPoints.set(cue.id, points);
 
     const isContinuous =
-      role === 'stage' &&
       Boolean(cue.continuous ?? score.continuous) &&
       i > 0 &&
       cue.spec.maneuver !== 'cut';
@@ -426,7 +423,6 @@ export function evaluateCameraTrack(
       trackCacheData.cueEndOffsets.get(activeCue.id) ?? resolveShotDestOffset(spec);
     const activeCueIdx = cues.findIndex((c) => c.id === activeCue.id);
     const isContinuous =
-      role === 'stage' &&
       Boolean(activeCue.continuous ?? score.continuous) &&
       activeCueIdx > 0 &&
       activeCue.spec.maneuver !== 'cut';

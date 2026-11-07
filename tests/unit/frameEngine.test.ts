@@ -718,6 +718,182 @@ shots:
     expect(f5.stageCamera.transform.pose.roll).toBeCloseTo(0, 5);
   });
 
+  it('preserves observer camera roll and target offset seamlessly across observer_shots boundaries under continuous mode', () => {
+    const yaml = `
+version: "1.0"
+id: "continuous-observer-test"
+title: "Continuous Observer Camera Test"
+continuous: true
+shots:
+  - id: "s1"
+    start: 0.0
+    end: 12.0
+observer_shots:
+  - id: "obs-1"
+    end: 4.0
+    camera:
+      target: [0, 1, 0]
+      distance: 8.0
+      roll: 15
+      target_offset: [0.5, 0.2, 0.0]
+  - id: "obs-2"
+    end: 8.0
+    camera:
+      maneuver: "dolly"
+      easing: "linear"
+      distance: 6.0
+  - id: "obs-3"
+    end: 12.0
+    camera:
+      maneuver: "dolly"
+      easing: "linear"
+      distance: 4.0
+      roll: 0
+      target_offset: [0.0, 0.0, 0.0]
+`;
+    const { score } = parseStageScore(yaml);
+    expect(score).not.toBeNull();
+
+    // At t = 2.0s (in obs-1), roll is 15 deg and offset is [0.5, 0.2, 0.0]
+    const f1 = computeStageFrame(2.0, score!);
+    expect(f1.observerCamera.transform.pose.roll).toBeCloseTo(15 * (Math.PI / 180), 4);
+    expect(f1.observerCamera.targetOffset!.x).toBeCloseTo(0.5, 3);
+    expect(f1.observerCamera.targetOffset!.y).toBeCloseTo(0.2, 3);
+
+    // At t = 4.0s (exact boundary obs-1 -> obs-2), roll and offset hold seamlessly without 0 snap
+    const f2Start = computeStageFrame(4.0, score!);
+    expect(f2Start.observerCamera.shotId).toBe('obs-2');
+    expect(f2Start.observerCamera.transform.pose.roll).toBeCloseTo(15 * (Math.PI / 180), 4);
+    expect(f2Start.observerCamera.targetOffset!.x).toBeCloseTo(0.5, 3);
+    expect(f2Start.observerCamera.targetOffset!.y).toBeCloseTo(0.2, 3);
+
+    // Midpoint of obs-2 (t = 6.0s), distance glides to 7.0m, roll holds 15 deg, offset holds [0.5, 0.2, 0]
+    const f2Mid = computeStageFrame(6.0, score!);
+    expect(f2Mid.observerCamera.transform.pose.distance).toBeCloseTo(7.0, 3);
+    expect(f2Mid.observerCamera.transform.pose.roll).toBeCloseTo(15 * (Math.PI / 180), 4);
+    expect(f2Mid.observerCamera.targetOffset!.x).toBeCloseTo(0.5, 3);
+
+    // Midpoint of obs-3 (t = 10.0s, linear easing from 15 deg to 0 deg, and [0.5, 0.2] to 0):
+    // roll is halfway (7.5 deg), offset is halfway [0.25, 0.1, 0.0]
+    const f3Mid = computeStageFrame(10.0, score!);
+    expect(f3Mid.observerCamera.transform.pose.roll).toBeCloseTo(7.5 * (Math.PI / 180), 3);
+    expect(f3Mid.observerCamera.targetOffset!.x).toBeCloseTo(0.25, 3);
+    expect(f3Mid.observerCamera.targetOffset!.y).toBeCloseTo(0.1, 3);
+
+    // At t = 12.0s, roll settles to 0 deg and offset settles to [0, 0, 0]
+    const f3End = computeStageFrame(12.0, score!);
+    expect(f3End.observerCamera.transform.pose.roll).toBeCloseTo(0, 5);
+    expect(f3End.observerCamera.targetOffset!.x).toBeCloseTo(0.0, 4);
+    expect(f3End.observerCamera.targetOffset!.y).toBeCloseTo(0.0, 4);
+  });
+
+  it('implements Option A observer cue-boundary resets when continuous: false or on cut', () => {
+    const yaml = `
+version: "1.0"
+id: "obs-cuts-test"
+title: "Observer Cuts Test"
+shots:
+  - id: "s1"
+    start: 0.0
+    end: 8.0
+observer_shots:
+  - id: "obs-1"
+    start: 0.0
+    end: 4.0
+    camera:
+      target: [0, 1, 0]
+      distance: 8.0
+      roll: 20
+      target_offset: [0.8, 0.4, 0.0]
+  - id: "obs-2"
+    start: 4.0
+    end: 8.0
+    camera:
+      maneuver: "cut"
+      distance: 5.0
+`;
+    const { score } = parseStageScore(yaml);
+    expect(score).not.toBeNull();
+
+    // At t = 2.0s (in obs-1), roll is 20 deg and offset is [0.8, 0.4, 0.0]
+    const f1 = computeStageFrame(2.0, score!);
+    expect(f1.observerCamera.transform.pose.roll).toBeCloseTo(20 * (Math.PI / 180), 4);
+    expect(f1.observerCamera.targetOffset!.x).toBeCloseTo(0.8, 3);
+
+    // At t = 4.0s (cut to obs-2 which omits roll/offset and is not continuous):
+    // roll resets to 0 deg and offset resets to [0, 0, 0]
+    const f2 = computeStageFrame(4.0, score!);
+    expect(f2.observerCamera.shotId).toBe('obs-2');
+    expect(f2.observerCamera.transform.pose.roll).toBeCloseTo(0, 5);
+    expect(f2.observerCamera.targetOffset!.x).toBeCloseTo(0, 5);
+    expect(f2.observerCamera.targetOffset!.y).toBeCloseTo(0, 5);
+  });
+
+  it('inherits shot-level continuous: true for Tier 2 shots[].observer_camera cues and supports per-camera continuous overrides', () => {
+    const yaml = `
+version: "1.0"
+id: "tier2-obs-continuous-test"
+title: "Tier 2 Observer Continuous Test"
+shots:
+  - id: "s1"
+    start: 0.0
+    end: 4.0
+    stage_camera:
+      target: [0, 1, 0]
+      distance: 4.0
+      roll: 18
+    observer_camera:
+      target: [0, 1, 0]
+      distance: 8.0
+      roll: 14
+      target_offset: [0.4, 0.0, 0.0]
+  - id: "s2"
+    continuous: true
+    end: 8.0
+    stage_camera:
+      maneuver: "dolly"
+      distance: 3.0
+    observer_camera:
+      maneuver: "dolly"
+      easing: "linear"
+      distance: 5.0
+  - id: "s3"
+    start: 8.0
+    end: 12.0
+    stage_camera:
+      target: [0, 1, 0]
+      distance: 2.0
+    observer_camera:
+      continuous: true
+      maneuver: "dolly"
+      easing: "linear"
+      distance: 4.0
+`;
+    const { score } = parseStageScore(yaml);
+    expect(score).not.toBeNull();
+
+    // At t = 2.0s, Tier 2 observer has roll 14 deg
+    const f1 = computeStageFrame(2.0, score!);
+    expect(f1.observerCamera.transform.pose.roll).toBeCloseTo(14 * (Math.PI / 180), 4);
+    expect(f1.observerCamera.targetOffset!.x).toBeCloseTo(0.4, 3);
+
+    // At t = 4.0s, Shot 2 is continuous: true, so both stage and Tier 2 observer preserve roll and offset
+    const f2 = computeStageFrame(4.0, score!);
+    expect(f2.observerCamera.shotId).toBe('s2');
+    expect(f2.stageCamera.transform.pose.roll).toBeCloseTo(18 * (Math.PI / 180), 4);
+    expect(f2.observerCamera.transform.pose.roll).toBeCloseTo(14 * (Math.PI / 180), 4);
+    expect(f2.observerCamera.targetOffset!.x).toBeCloseTo(0.4, 3);
+
+    // At t = 8.0s, Shot 3 is a cut (continuous omitted), so stage_camera resets roll to 0 deg,
+    // while observer_camera has explicit continuous: true and preserves 14 deg roll and 0.4 offset!
+    const f3 = computeStageFrame(8.0, score!);
+    expect(f3.stageCamera.shotId).toBe('s3');
+    expect(f3.stageCamera.transform.pose.roll).toBeCloseTo(0, 5);
+    expect(f3.observerCamera.shotId).toBe('s3');
+    expect(f3.observerCamera.transform.pose.roll).toBeCloseTo(14 * (Math.PI / 180), 4);
+    expect(f3.observerCamera.targetOffset!.x).toBeCloseTo(0.4, 3);
+  });
+
   it('validates Blueprint 03 30m ball-pass choreography, parabolic arc, Ruby orbit, straight pass and camera roll tracking', () => {
     const bp3Item = INITIAL_CATALOG_ITEMS.find(
       (item) => item.id === 'blueprint-03-ball-pass'

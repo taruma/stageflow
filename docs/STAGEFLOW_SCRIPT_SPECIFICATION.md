@@ -171,10 +171,10 @@ StageFlow is a **stateless functional evaluator** (`Frame_t = f(t, score)`). Eff
    - **Tier 3 (Static `entities`)**: Holds baseline position and rotation.
 2. **Camera Spatial Chaining (`continuous: false` vs. `continuous: true`)**:
    - **Standard Mode (`continuous: false`, default)**: Each shot explicitly declares `start` and `end`. If a shot specifies single-value `distance`, `pitch`, or `yaw` without `*_start`, the camera starts and ends the shot at that value (unless `*_end` is also provided). Omitting a parameter inherits the previous shot's terminal value. Dutch angle (`roll`) and `target_offset` reset to neutral baselines ($0^\circ$ and $\vec{0}$) at shot boundaries when omitted (Option A).
-   - **Continuous Mode (`continuous: true` at root or `shots[k].continuous: true`)**:
-     - **Timeline**: If `shots[0]` omits `start`, $t_{\text{start}, 0} = 0.0$. If `shots[k]` ($k \ge 1$) omits `start`, $t_{\text{start}, k} = t_{\text{end}, k-1}$. Explicit `start` values are always honored. Shot-level `continuous: false` overrides root `continuous: true` to author an independent cut.
-     - **Pose Flow**: For any moving maneuver (`maneuver !== "cut"`) on continuous `shots[k]` ($k \ge 1$), omitting `distance_start`, `pitch_start`, or `yaw_start` automatically binds the shot's starting pose $P_0$ to the previous shot's terminal pose $P_{\text{end}, k-1}$, interpolating smoothly to the newly authored destination.
-     - **Unbroken Roll & Target Offset Continuity**: In continuous mode, `roll` and `target_offset` preserve across shot boundaries without snapping to zero. If omitted, they persist from $P_{\text{end}, k-1}$; if specified, they smoothly ease from the preceding terminal state to the newly authored destination.
+   - **Continuous Mode (`continuous: true` at root, `shots[k].continuous: true`, or `observer_shots[k].continuous: true`)**:
+     - **Timeline**: If `shots[0]` or `observer_shots[0]` omits `start`, $t_{\text{start}, 0} = 0.0$. If cue $k \ge 1$ omits `start`, $t_{\text{start}, k} = t_{\text{end}, k-1}$. Explicit `start` values are always honored. Cue-level `continuous: false` overrides root `continuous: true` to author an independent cut.
+     - **Pose Flow**: For any moving maneuver (`maneuver !== "cut"`) on continuous cue $k \ge 1$, omitting `distance_start`, `pitch_start`, or `yaw_start` automatically binds the cue's starting pose $P_0$ to the previous cue's terminal pose $P_{\text{end}, k-1}$, interpolating smoothly to the newly authored destination.
+     - **Unbroken Roll & Target Offset Continuity**: In continuous mode, `roll` and `target_offset` preserve across cue boundaries without snapping to zero. If omitted, they persist from $P_{\text{end}, k-1}$; if specified, they smoothly ease from the preceding terminal state to the newly authored destination.
 3. **Discrete Prime Lens Mounting**:
    - Specifying `lens: 50mm` mounts that focal length immediately at $t_{\text{start}}$ and holds it constant ($f_0 = f_1 = 50\text{ mm}$).
    - Omitting `lens`, `lens_start`, and `lens_end` preserves the previous shot's terminal focal length.
@@ -184,11 +184,11 @@ StageFlow is a **stateless functional evaluator** (`Frame_t = f(t, score)`). Eff
    - Specifying both `from` and `target` interpolates the look-at anchor from $\vec{T}_{\text{from}}(t)$ to $\vec{T}_{\text{target}}(t)$.
 5. **Shot-Boundary Reset vs. Continuous Flow of `roll` and `target_offset`**:
    - **Standard Cuts (`continuous: false`)**: Unlike $d, \theta, \psi$, both `roll` and `target_offset` reset to neutral baselines ($0\text{ rad}$ and $[0, 0, 0]$) at shot boundaries whenever omitted (Option A). To persist or animate them across a standard cut, specify `roll`, `roll_start`/`roll_end`, `roll_delta`, `target_offset`, or `target_offset_start`/`target_offset_end`.
-   - **Continuous Mode (`continuous: true` at root or `shots[k].continuous: true`)**: On moving maneuvers ($k \ge 1$), both `roll` and `target_offset` preserve across shot boundaries—persisting from $P_{\text{end}, k-1}$ when omitted and smoothly interpolating from the preceding terminal value when specified.
-6. **Observer Camera Resolution Hierarchy**:
-   - **Tier 1**: Root `observerShots` (decoupled timeline; takes complete precedence if non-empty, holding $P_{\text{end}}$ across uncued gaps).
-   - **Tier 2**: Per-shot `shots[].observerCamera`.
-   - **Tier 3**: Static fallback `stage.defaultObserverPose`.
+   - **Continuous Mode (`continuous: true` at root or per-shot/cue `continuous: true`)**: On moving maneuvers ($k \ge 1$), both `roll` and `target_offset` preserve across cue boundaries—persisting from $P_{\text{end}, k-1}$ when omitted and smoothly interpolating from the preceding terminal value when specified.
+6. **Observer Camera Resolution Hierarchy & Continuity**:
+   - **Tier 1 (Root `observer_shots`)**: Decoupled timeline; takes complete precedence if non-empty, holding $P_{\text{end}}$ across uncued gaps. When `continuous: true` is declared (at root or on the cue), cues auto-chain timestamps ($t_{\text{start}, k} = t_{\text{end}, k-1}$) and preserve Dutch roll and framing offsets without snapping.
+   - **Tier 2 (Per-Shot `shots[].observerCamera`)**: Inherits the parent film shot's `continuous` status (or overrides via `observer_camera.continuous`).
+   - **Tier 3 (Static Fallback)**: `stage.defaultObserverPose`.
 7. **Overlapping Cues Priority**:
    - If two shots or blocking cues overlap temporally, the entry declared **later in YAML array order** takes precedence.
 
@@ -230,6 +230,9 @@ StageFlow is a **stateless functional evaluator** (`Frame_t = f(t, score)`). Eff
 | | `continuous` | `boolean \| undefined` (shot-level contiguous timeline & pose-flow override) |
 | | `startSec`, `endSec` | $t_{\text{start}}, t_{\text{end}} \ge 0.0\text{ s}$ shot timing bounds |
 | | `stageCamera`, `observerCamera`, `entities` | Optional `StageCameraCueSpec`, `CameraCueSpec`, and per-shot `EntityCueOverride` map |
+| **`ObserverShotCue`** | `id`, `label` | `string` identifier and optional display label |
+| | `continuous` | `boolean \| undefined` (cue-level contiguous timeline & pose-flow override) |
+| | `startSec`, `endSec`, `camera` | $t_{\text{start}}, t_{\text{end}} \ge 0.0\text{ s}$ timing bounds; `CameraCueSpec` |
 | **`SphericalPose`** | `target` | `Vec3` $\{x, y, z\} \in \mathbb{R}^3\text{ m}$ |
 | | `distance` | `number` $d \in [0.4, 100.0]\text{ m}$ |
 | | `pitch`, `yaw`, `roll` | `number` angles in **radians**: $\theta \in [-1.4835, +1.4835]$, $\psi \in \mathbb{R}$, $\gamma \in \mathbb{R}$ |
@@ -238,7 +241,7 @@ StageFlow is a **stateless functional evaluator** (`Frame_t = f(t, score)`). Eff
 | | `kind`, `shape`, `style` | `EntityKind`, `EntityShape \| undefined`, `EntityStyle` |
 | | `position`, `rotationYRad` | `Vec3` floor position in $\text{m}$; facing yaw $\psi_{\text{entity}} \in \mathbb{R}\text{ rad}$ |
 | | `height`, `radius` | `number` $h_i > 0\text{ m}$, $r_i > 0\text{ m}$ |
-| **`CameraCueSpec`** | `maneuver`, `easing` | `CameraManeuver` (default `'dolly'`), `CameraEasing` (default `'smooth'`) |
+| **`CameraCueSpec`** | `continuous`, `maneuver`, `easing` | Optional `boolean` continuity override; `CameraManeuver` (default `'dolly'`), `CameraEasing` (default `'smooth'`) |
 | | `target`, `from` | `string \| Vec3 \| undefined` anchor identifiers or world coordinates |
 | | `targetOffset*` | `Vec3 \| undefined` (`targetOffset`, `targetOffsetStart`, `targetOffsetEnd`) in $\text{m}$ |
 | | `distance*`, `pitch*Rad`, `yaw*Rad`, `roll*Rad`, `focalLength*Mm` | Optional scalar/radian/mm endpoints and deltas (`yawDeltaRad`, `rollDeltaRad`) |

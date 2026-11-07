@@ -94,4 +94,4 @@ When considering merging shots into a single Catmull-Rom spline (`maneuver: "spl
 | **Camera jerks across boundary** | Mismatched easing derivatives or durations | Harmonize easing curves (`smooth` into `smooth` or matched $\frac{du}{dt}$) |
 | **3D trajectory rail swaps abruptly** | Visual consequence of discrete editorial shots | Combine camera shots with `maneuver: "spline"` and stage actors in `blocking:` |
 | **Look-at snaps diagonally** | Target entity switched without `from:` | Add `from: "<previous_target>"` |
-| **Roll or `target_offset` snaps to `0` across a continuous move** | Shot is in standard cut mode (`continuous: false`) where Option A resets apply | Enable `continuous: true` at root or on the follow-up shot (`shots[k].continuous: true`) |
+| **Roll or `target_offset` snaps to `0` across a continuous move** | Shot is in standard cut mode (`continuous: false`) where Option A resets apply | Enable `continuous: true` at root or on the follow-up cue (`shots[k].continuous: true` or `observer_shots[k].continuous: true`) |

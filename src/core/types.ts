@@ -165,6 +165,7 @@ export interface CameraWaypointSpec {
 }
 
 export interface CameraCueSpec {
+  continuous?: boolean;
   maneuver: CameraManeuver;
   easing: CameraEasing;
   target?: string | Vec3;
@@ -224,6 +225,7 @@ export interface ShotCue {
 export interface ObserverShotCue {
   id: string;
   label?: string;
+  continuous?: boolean; // When true, auto-chains start time and camera kinematics from preceding observer shot
   startSec: number;
   endSec: number;
   camera: CameraCueSpec;

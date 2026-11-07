@@ -267,6 +267,14 @@ export function parseStageScore(
         typeof rawStartCandidate === 'number' &&
         Number.isFinite(rawStartCandidate);
 
+      const stageCamera = parseStageCameraCueSpec(
+        sh.stage_camera ?? sh.stageCamera
+      );
+      const observerCamera = parseCameraCueSpec(
+        sh.observer_camera ?? sh.observerCamera,
+        defaultObserverPose.focalLengthMm
+      );
+
       const shotContinuous =
         typeof sh.continuous === 'boolean'
           ? sh.continuous
@@ -276,7 +284,11 @@ export function parseStageScore(
           ? false
           : undefined;
 
-      const isContinuous = shotContinuous ?? continuous;
+      const isContinuous =
+        shotContinuous ??
+        stageCamera?.continuous ??
+        observerCamera?.continuous ??
+        continuous;
 
       let startSec: number;
       if (hasExplicitStart) {
@@ -332,13 +344,8 @@ export function parseStageScore(
         ...(shotContinuous !== undefined ? { continuous: shotContinuous } : {}),
         startSec,
         endSec,
-        stageCamera: parseStageCameraCueSpec(
-          sh.stage_camera ?? sh.stageCamera
-        ),
-        observerCamera: parseCameraCueSpec(
-          sh.observer_camera ?? sh.observerCamera,
-          defaultObserverPose.focalLengthMm
-        ),
+        stageCamera,
+        observerCamera,
         entities: entityOverrides,
       };
     });
@@ -351,9 +358,12 @@ export function parseStageScore(
   }
 
   // Parse optional decoupled root-level observer_shots and blocking
+  const missingStartObserverShotIds: string[] = [];
   const observerShots = parseObserverShots(
     root.observer_shots ?? root.observerShots,
-    defaultObserverPose.focalLengthMm
+    defaultObserverPose.focalLengthMm,
+    continuous,
+    missingStartObserverShotIds
   );
   const blocking = parseBlockingCues(root.blocking, entities);
 
@@ -384,6 +394,8 @@ export function parseStageScore(
   const warning =
     missingStartShotIds.length > 0
       ? `Shot "${missingStartShotIds[0]}" omits "start" (defaulted to 0.0s). Add "start:" or declare "continuous: true" at root to auto-chain.`
+      : missingStartObserverShotIds.length > 0
+      ? `Observer shot "${missingStartObserverShotIds[0]}" omits "start" (defaulted to 0.0s). Add "start:" or declare "continuous: true" to auto-chain.`
       : null;
 
   return {

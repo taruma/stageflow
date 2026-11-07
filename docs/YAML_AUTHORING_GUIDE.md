@@ -795,6 +795,31 @@ observer_shots:
     lens: 35mm
 ```
 
+#### Continuous Multi-Beat Diorama Flights (`continuous: true`)
+Just like film coverage shots, `observer_shots:` supports continuous timeline auto-chaining and physical rig continuity (camera fields may be written directly at the cue level or nested under `camera:` / `observer_camera:`):
+- **Timestamp Auto-Chaining**: When `continuous: true` is active (at root or on the cue), omitting `start:` on cue $k \ge 1$ automatically chains from `prevObserverShot.endSec`.
+- **Rig Continuity**: Dutch roll (`roll`) and framing offsets (`target_offset`) smoothly persist and glide across continuous observer cues rather than snapping to zero.
+- **Intentional Gaps**: Specifying explicit `start:` preserves deliberate stationary hold periods where the diorama camera stays parked until the next move begins.
+
+```yaml
+observer_shots:
+  - id: "obs-01-turntable"
+    start: 0.0
+    end: 10.0
+    target: "center"
+    maneuver: "orbit"
+    distance: 10.0
+    pitch: 25
+
+  - id: "obs-02-dolly-in"
+    continuous: true # Auto-chains start: 10.0s and smoothly glides from 10m to 5.5m!
+    end: 18.0
+    target: "hero"
+    maneuver: "dolly"
+    distance: 5.5
+    pitch: 18
+```
+
 > **Note:** During time gaps between observer shots, the viewport camera holds the terminal resting pose ($P_{\text{end}}$) of the last completed observer cue and automatically forward-chains into subsequent cues.
 
 ---
