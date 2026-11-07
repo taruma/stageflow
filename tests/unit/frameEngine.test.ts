@@ -2038,6 +2038,53 @@ shots:
       expect(fTwoShot.entitiesById.get('samira')!.position.x).toBeCloseTo(-1.4, 2);
     });
 
+    it('evaluates Blueprint 06 (Optics, Rack Focus & DoF Masterclass) across all 8 shots and optical transitions', () => {
+      const bp06 = INITIAL_CATALOG_ITEMS.find(
+        (item) => item.id === 'blueprint-06-optics-dof'
+      )?.score;
+      expect(bp06).toBeDefined();
+      if (!bp06) return;
+
+      expect(bp06.durationSec).toBe(32.0);
+      expect(bp06.shots).toHaveLength(8);
+      expect(bp06.observerShots).toHaveLength(4);
+
+      // Shot 01 (t = 2.0s): Off-axis focus locked to Bob (f/2.0, 85mm)
+      const f1 = computeStageFrame(2.0, bp06);
+      expect(f1.activeShot?.id).toBe('shot-01-off-axis-focus');
+      expect(f1.stageCamera.dof.apertureFStop).toBe(2.0);
+      expect(f1.stageCamera.transform.pose.focalLengthMm).toBe(85);
+      expect(f1.stageCamera.dof.focusTargetPoint).toBeDefined();
+
+      // Shot 02 (t = 4.0s vs t = 8.0s): Rack focus transition from Alice to Bob
+      const f2Start = computeStageFrame(4.0, bp06);
+      const f2End = computeStageFrame(7.99, bp06);
+      expect(f2Start.activeShot?.id).toBe('shot-02-rack-focus-ab');
+      expect(f2Start.stageCamera.dof.apertureFStop).toBe(1.8);
+      // Focus distance changes from Alice to Bob across the 4s rack
+      expect(f2Start.stageCamera.dof.focusDistanceM).not.toBeCloseTo(
+        f2End.stageCamera.dof.focusDistanceM,
+        1
+      );
+
+      // Shot 06 (t = 20.0s vs 23.99s): Iris aperture ramp from f/1.4 to f/11
+      const f6Start = computeStageFrame(20.0, bp06);
+      const f6End = computeStageFrame(23.99, bp06);
+      expect(f6Start.activeShot?.id).toBe('shot-06-aperture-ramp');
+      expect(f6Start.stageCamera.dof.apertureFStop).toBeCloseTo(1.4, 1);
+      expect(f6End.stageCamera.dof.apertureFStop).toBeCloseTo(11.0, 1);
+      // As aperture stops down from f/1.4 to f/11, DoF band expands dramatically
+      expect(f6End.stageCamera.dof.depthOfFieldM).toBeGreaterThan(
+        f6Start.stageCamera.dof.depthOfFieldM * 5
+      );
+
+      // Shot 08 (t = 30.0s): Deep focus master at f/16
+      const f8 = computeStageFrame(30.0, bp06);
+      expect(f8.activeShot?.id).toBe('shot-08-deep-focus-master');
+      expect(f8.stageCamera.dof.apertureFStop).toBe(16.0);
+      expect(f8.stageCamera.dof.focusDistanceM).toBeCloseTo(3.5, 2);
+    });
+
     it('evaluates static focus, dynamic rack focus between moving actors, and thin-lens DoF limits cleanly', () => {
       const rackFocusYaml = `
 version: "1.0"

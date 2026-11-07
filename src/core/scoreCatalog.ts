@@ -7,6 +7,7 @@ import blueprint02Raw from '../scores/blueprints/blueprint_02_dialogue.yaml?raw'
 import blueprint03Raw from '../scores/blueprints/blueprint_03_ball_pass.yaml?raw';
 import blueprint04Raw from '../scores/blueprints/blueprint_04_cinematography_tutorial.yaml?raw';
 import blueprint05Raw from '../scores/blueprints/blueprint_05_two_rooms.yaml?raw';
+import blueprint06Raw from '../scores/blueprints/blueprint_06_optics_dof.yaml?raw';
 import vectorFieldRaw from '../scores/studies/vector_field.yaml?raw';
 import type { ScoreCategory, StageScore } from './types';
 import { parseStageScore } from './scoreParser';
@@ -69,6 +70,16 @@ if (!parsed05.score) {
   );
 }
 
+const parsed06 = parseStageScore(
+  blueprint06Raw,
+  'blueprint-06-optics-dof'
+);
+if (!parsed06.score) {
+  throw new Error(
+    `Failed to parse bundled blueprint_06_optics_dof.yaml: ${parsed06.error}`
+  );
+}
+
 export const INITIAL_CATALOG_ITEMS: ScoreCatalogItem[] = [
   {
     id: parsedVectorField.score.id,
@@ -122,6 +133,15 @@ export const INITIAL_CATALOG_ITEMS: ScoreCatalogItem[] = [
     category: 'blueprint',
     rawYaml: blueprint05Raw,
     score: parsed05.score,
+    isCustom: false,
+  },
+  {
+    id: parsed06.score.id,
+    title: parsed06.score.title,
+    subtitle: parsed06.score.subtitle,
+    category: 'blueprint',
+    rawYaml: blueprint06Raw,
+    score: parsed06.score,
     isCustom: false,
   },
 ];

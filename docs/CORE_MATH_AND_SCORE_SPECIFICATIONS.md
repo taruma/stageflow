@@ -268,7 +268,7 @@ observer_shots:
 ### 6.1 Three-Tier Score Taxonomy & Catalog Registry (`scoreCatalog.ts`)
 StageFlow categorizes scores into a clean 3-tier provenance taxonomy (`ScoreCategory = 'study' | 'blueprint' | 'custom'` in [`src/core/types.ts`](../src/core/types.ts)):
 1. **Directorial Scene Studies (`'study'`)**: Authentic auteur scene studies authored by Taruma Sakti in [`src/scores/studies/`](../src/scores/studies/). The primary default scene loaded on application launch is **Vector Field** ([`vector_field.yaml`](../src/scores/studies/vector_field.yaml), 1,080 lines, 32 shots, decoupled blocking, 6 observer moves).
-2. **Bundled Blueprints (`'blueprint'`)**: Synthetic educational camera-blocking presets and testbeds in [`src/scores/blueprints/`](../src/scores/blueprints/) (BP 01–BP 05).
+2. **Bundled Blueprints (`'blueprint'`)**: Synthetic educational camera-blocking presets and testbeds in [`src/scores/blueprints/`](../src/scores/blueprints/) (BP 01–BP 06).
 3. **Custom Projects (`'custom'`)**: User-authored or imported projects persisted in browser IndexedDB.
 
 ### 6.2 Score Draft Persistence (`src/core/storage/scoreDb.ts`)

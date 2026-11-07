@@ -49,7 +49,7 @@ stageflow/
 │   │   └── recorderTypes.ts         # Bridge schemas & window.__STAGEFLOW_RECORDER__ interface
 │   ├── scores/                      # Choreography Scores (*.yaml)
 │   │   ├── studies/                 # Directorial Scene Studies (e.g. vector_field.yaml)
-│   │   └── blueprints/              # Factory camera-blocking presets (BP 01–05)
+│   │   └── blueprints/              # Factory camera-blocking presets (BP 01–06)
 │   ├── core/                        # Layer 1: Pure TypeScript Math, Optics & Stateless Frame Engine
 │   │   ├── types.ts                 # Canonical interfaces (StageScore, ShotCue, ObserverShotCue, BlockingCueSpec, StageFrame)
 │   │   ├── constants.ts             # Metric bounds, sensor constants, blueprint color palette

@@ -228,8 +228,8 @@ describe('Universal Choreography Score Contract Tests', () => {
   });
 
   describe('Factory Blueprints (Educational Presets & Testbeds)', () => {
-    it('contains all 5 bundled blueprints', () => {
-      expect(blueprintItems.length).toBe(5);
+    it('contains all 6 bundled blueprints', () => {
+      expect(blueprintItems.length).toBe(6);
     });
 
     for (const item of blueprintItems) {

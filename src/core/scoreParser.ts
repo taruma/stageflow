@@ -280,7 +280,9 @@ export function parseStageScore(
 
       const stageCamera = applyFlatShotCameraOverrides(
         sh,
-        parseStageCameraCueSpec(sh.stage_camera ?? sh.stageCamera)
+        parseStageCameraCueSpec(
+          sh.stage_camera ?? sh.stageCamera ?? sh.camera
+        )
       );
       const observerCamera = parseCameraCueSpec(
         sh.observer_camera ?? sh.observerCamera,

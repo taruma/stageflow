@@ -1,0 +1,326 @@
+# ==============================================================================
+# STAGEFLOW BLUEPRINT 06 — OPTICS, RACK FOCUS & DEPTH OF FIELD MASTERCLASS
+# ==============================================================================
+# A comprehensive pedagogical showcase demonstrating StageFlow's optical focus,
+# rack focus transitions, iris aperture stops, and Gaussian thin-lens depth of field.
+#
+# Key Features Showcased:
+#   1. Global Root Optics Configuration (dof: medium, aperture: f/5.6, dof_blur: true)
+#   2. Off-Axis Entity Focus Locking (Focus on Alice, Bob blurred in foreground)
+#   3. Subject-to-Subject Cinematic Rack Focus (Alice -> Bob rack focus transition)
+#   4. Explicit Metric Distance Focus Pull (1.8m foreground macro -> 6.5m background)
+#   5. Dynamic Follow-Focus Tracking (Camera tracks and pulls focus on moving Claire)
+#   6. Iris Aperture Ramping (Wide-open f/1.4 razor DoF -> Stopped-down f/11 deep staging)
+#   7. Multi-Waypoint Catmull-Rom Trajectory with Coordinated Waypoint Focus
+#   8. Flat Polymorphic Syntax (Direct cue-level focus & aperture keys)
+#   9. Deep Focus Master Scene (f/16 hyperfocal composition where all 3 actors are sharp)
+#
+# Viewport Decoupling:
+#   - 8 Scripted Physical Film Camera Shots (stage_camera)
+#   - 4 Decoupled Scripted Observer Diorama Angles (observer_shots)
+#   - 2 Decoupled Blocking Cues (Claire walk & retreat)
+#
+# Units:
+#   - Spatial Coordinates & Distances: Metric Meters (1 unit = 1m)
+#   - Angles (pitch, yaw, roll, rotation): Human Degrees (deg)
+#   - Optics (lens): Full-Frame Equivalent Focal Length in Millimeters (mm)
+#   - Aperture: Canonical F-Stops (e.g., "f/1.4", "f/2.8", "f/5.6", "f/11")
+#   - Depth of Field: "shallow" (f/1.8), "medium" (f/5.6), "deep" (f/16)
+
+version: "1.0"
+id: "blueprint-06-optics-dof"
+title: "Blueprint 06: Optics, Rack Focus & DoF Masterclass"
+subtitle: "8 Film Shots · 4 Observer Orbits · Subject Racks · Iris Ramps · Follow Focus"
+video: "procedural://optics-dof"
+aspect_ratio: "16:9"
+duration: 32.0
+
+optics:
+  dof_blur: true
+  dof: "medium"
+  aperture: "f/5.6"
+
+stage:
+  width: 14
+  depth: 14
+  grid_step: 1
+  observer_camera:
+    target: [0, 1.2, 0]
+    distance: 12.0
+    pitch: 28
+    yaw: 42
+    lens: 35mm
+  stage_camera:
+    target: [0, 1.2, 0]
+    distance: 5.0
+    pitch: 8
+    yaw: 0
+    lens: 50mm
+    dof: "medium"
+    aperture: "f/2.8"
+    focus: "alice"
+
+entities:
+  - id: "alice"
+    label: "Alice (Foreground Right)"
+    kind: "character"
+    position: [1.2, 0, -0.8]
+    height: 1.72
+    color: "#38bdf8"
+    rotation: 195
+
+  - id: "bob"
+    label: "Bob (Midground Left)"
+    kind: "character"
+    position: [-1.4, 0, 1.8]
+    height: 1.80
+    color: "#f472b6"
+    rotation: 15
+
+  - id: "claire"
+    label: "Claire (Background Center)"
+    kind: "character"
+    position: [0.0, 0, 4.5]
+    height: 1.68
+    color: "#a78bfa"
+    rotation: 180
+
+blocking:
+  - id: "block-01-claire-approach"
+    name: "Claire Walks Forward into Midground"
+    entity: "claire"
+    start: 12.0
+    end: 16.0
+    from: [0.0, 0, 4.5]
+    position: [0.2, 0, 0.5]
+    easing: "smooth"
+
+  - id: "block-02-claire-retreat"
+    name: "Claire Steps Lateral to Left Floor"
+    entity: "claire"
+    start: 16.0
+    end: 20.0
+    from: [0.2, 0, 0.5]
+    position: [-1.2, 0, 0.0]
+    easing: "smooth"
+
+shots:
+  # --------------------------------------------------------------------------
+  # SHOT 1 (0.0s - 4.0s): Off-Axis Subject Focus Locking
+  # --------------------------------------------------------------------------
+  # 85mm portrait telephoto on Bob at midground. Alice is in the soft foreground.
+  - id: "shot-01-off-axis-focus"
+    name: "01. Off-Axis Subject Focus Lock"
+    start: 0.0
+    end: 4.0
+    stage_camera:
+      lens: 85mm
+      target: [0, 1.25, 0.5]
+      distance: 5.5
+      pitch: 6
+      yaw: 15
+      dof: "shallow"
+      aperture: "f/2.0"
+      focus: "bob"
+
+  # --------------------------------------------------------------------------
+  # SHOT 2 (4.0s - 8.0s): Subject-to-Subject Cinematic Rack Focus
+  # --------------------------------------------------------------------------
+  # Camera holds framing while the 1st AC pulls focus across the conversation
+  # axis from Alice (foreground, 1.2m away) to Bob (midground, 3.8m away).
+  - id: "shot-02-rack-focus-ab"
+    name: "02. Cinematic Rack Focus (Alice -> Bob)"
+    start: 4.0
+    end: 8.0
+    stage_camera:
+      lens: 50mm
+      target: [0, 1.25, 0.5]
+      distance: 4.2
+      pitch: 10
+      yaw: 25
+      dof: "shallow"
+      aperture: "f/1.8"
+      focus_start: "alice"
+      focus_end: "bob"
+      easing: "smooth"
+
+  # --------------------------------------------------------------------------
+  # SHOT 3 (8.0s - 12.0s): Metric Distance Focus Pull (1.8m -> 6.5m)
+  # --------------------------------------------------------------------------
+  # Explicit numerical focus distance pulling from a tight foreground plane
+  # out to the deep stage wall behind Claire, demonstrating metric parsing ("1.8m" -> 6.5).
+  - id: "shot-03-metric-focus-pull"
+    name: "03. Metric Distance Focus Pull (1.8m -> 6.5m)"
+    start: 8.0
+    end: 12.0
+    stage_camera:
+      lens: 35mm
+      target: [0, 1.2, 1.5]
+      distance: 6.0
+      pitch: 12
+      yaw: -10
+      dof: "medium"
+      aperture: "f/2.8"
+      focus_distance_start: "1.8m"
+      focus_distance_end: 6.5
+      easing: "smooth"
+
+  # --------------------------------------------------------------------------
+  # SHOT 4 (12.0s - 16.0s): Dynamic Follow-Focus on Moving Actor
+  # --------------------------------------------------------------------------
+  # Claire walks forward from the deep background (Z = 4.5m) to the front stage (Z = 0.5m).
+  # The Stage Camera dynamically tracks Claire, locking focal plane onto her head proxy.
+  - id: "shot-04-dynamic-follow-focus"
+    name: "04. Dynamic Follow-Focus Tracking"
+    start: 12.0
+    end: 16.0
+    stage_camera:
+      lens: 50mm
+      target: "claire"
+      distance: 3.8
+      pitch: 8
+      yaw: 170
+      dof: "shallow"
+      aperture: "f/2.0"
+      focus: "claire"
+
+  # --------------------------------------------------------------------------
+  # SHOT 5 (16.0s - 20.0s): Continuous Follow-Focus Reverse Dolly
+  # --------------------------------------------------------------------------
+  # Claire continues moving laterally while the camera dollies back with continuous
+  # kinematic motion, keeping Claire pinned in sharp focus throughout the traverse.
+  - id: "shot-05-follow-focus-dolly"
+    name: "05. Dolly Retreat with Continuous Follow-Focus"
+    start: 16.0
+    end: 20.0
+    stage_camera:
+      continuous: true
+      lens: 50mm
+      target: "claire"
+      distance_start: 3.8
+      distance_end: 5.2
+      pitch: 8
+      yaw: 160
+      dof: "medium"
+      aperture: "f/2.8"
+      focus: "claire"
+      easing: "smooth"
+
+  # --------------------------------------------------------------------------
+  # SHOT 6 (20.0s - 24.0s): Dynamic Iris Aperture Ramping (f/1.4 -> f/11)
+  # --------------------------------------------------------------------------
+  # Fixed camera on Alice. The lens iris pulls from wide-open f/1.4 (hyper-shallow
+  # bokeh, background completely blurred) down to f/11 (DoF expands dramatically,
+  # bringing Bob and Claire in the background into legible focus).
+  - id: "shot-06-aperture-ramp"
+    name: "06. Iris Aperture Ramp (f/1.4 -> f/11)"
+    start: 20.0
+    end: 24.0
+    stage_camera:
+      lens: 50mm
+      target: "alice"
+      distance: 2.8
+      pitch: 5
+      yaw: 30
+      focus: "alice"
+      aperture_start: "f/1.4"
+      aperture_end: "f/11"
+      easing: "smooth"
+
+  # --------------------------------------------------------------------------
+  # SHOT 7 (24.0s - 28.0s): Spline Waypoint Focus Arc & Flat Syntax
+  # --------------------------------------------------------------------------
+  # Demonstrates flat polymorphic cue syntax (no nested camera block) combined
+  # with a multi-waypoint Catmull-Rom sweeping arc and waypoint-coordinated focus.
+  - id: "shot-07-spline-arc-focus"
+    name: "07. Waypoint Spline Arc with Coordinated Focus"
+    start: 24.0
+    end: 28.0
+    maneuver: "spline"
+    lens: 35mm
+    target: [0, 1.2, 0.5]
+    distance: 5.0
+    pitch: 12
+    yaw: -40
+    dof: "shallow"
+    aperture: "f/2.0"
+    focus: "alice"
+    waypoints:
+      - distance: 5.0
+        pitch: 12
+        yaw: -40
+        focus: "alice"
+      - distance: 4.2
+        pitch: 8
+        yaw: 0
+        focus: "bob"
+      - distance: 5.0
+        pitch: 12
+        yaw: 40
+        focus: "claire"
+    easing: "smooth"
+
+  # --------------------------------------------------------------------------
+  # SHOT 8 (28.0s - 32.0s): Deep Focus Master Staging (f/16)
+  # --------------------------------------------------------------------------
+  # Gregg Toland / Citizen Kane inspired deep staging master shot. Stopped down to
+  # f/16 on a 28mm wide lens: Alice (foreground), Bob (midground), and Claire
+  # (background) all remain simultaneously tack-sharp.
+  - id: "shot-08-deep-focus-master"
+    name: "08. Deep Focus Master Scene (f/16 Hyperfocal)"
+    start: 28.0
+    end: 32.0
+    stage_camera:
+      lens: 28mm
+      target: [0, 1.1, 0.8]
+      distance: 6.8
+      pitch: 16
+      yaw: 15
+      dof: "deep"
+      aperture: "f/16"
+      focus_distance: 3.5
+
+observer_shots:
+  - id: "obs-shot-01-overview"
+    name: "Observer 01: Three-Quarter Diorama Establishing"
+    start: 0.0
+    end: 8.0
+    camera:
+      target: [0, 1.2, 0.5]
+      distance: 11.5
+      pitch: 28
+      yaw: 45
+      lens: 35mm
+
+  - id: "obs-shot-02-profile"
+    name: "Observer 02: Low Stage Cam Rig Profile View"
+    start: 8.0
+    end: 16.0
+    camera:
+      target: [0, 1.2, 1.0]
+      distance: 9.0
+      pitch: 14
+      yaw: -60
+      lens: 50mm
+
+  - id: "obs-shot-03-overhead"
+    name: "Observer 03: High Angle Frustum & Focus Plane Tracker"
+    start: 16.0
+    end: 24.0
+    camera:
+      target: [0, 0.8, 0.5]
+      distance: 13.0
+      pitch: 65
+      yaw: 20
+      lens: 35mm
+
+  - id: "obs-shot-04-resolve"
+    name: "Observer 04: Wide Master Blueprint Orbit"
+    start: 24.0
+    end: 32.0
+    camera:
+      target: [0, 1.0, 0.5]
+      distance: 12.0
+      pitch: 32
+      yaw: -30
+      lens: 35mm

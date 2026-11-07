@@ -260,6 +260,7 @@ StageFlow organizes choreography scores into a clean 3-tier taxonomy (`study`, `
   3. **`blueprint_03_ball_pass.yaml` (Blueprint 03: The Long Distance Pass)**: 30-meter 3-actor sequence with parabolic projectile kinetics, dynamic character gaze tracking, and Dutch angles from $-18^\circ$ to $+22^\circ$.
   4. **`blueprint_04_cinematography_tutorial.yaml` (Blueprint 04: Cinematography Masterclass)**: 16-shot tutorial sequence teaching framing sizes (EWS to ECU), rule-of-thirds `target_offset`, continuous oners, and barrel rolls.
   5. **`blueprint_05_two_rooms.yaml` (Blueprint 05: Two Rooms)**: 17-shot sequence in `2.39:1` anamorphic scope demonstrating multi-actor decoupled blocking (`blocking:`) across two physical rooms with carried item prop tracking.
+  6. **`blueprint_06_optics_dof.yaml` (Blueprint 06: Optics, Rack Focus & DoF Masterclass)**: 8-shot pedagogical sequence demonstrating off-axis subject focus, cinematic rack focus, numerical metric distance pulls, dynamic follow-focus tracking on moving actors, iris aperture ramping ($f/1.4 \to f/11$), waypoint spline focus, and Citizen Kane style deep staging ($f/16$).
 
 ### 2.6 The 8 Most Common Authoring Mistakes
 
