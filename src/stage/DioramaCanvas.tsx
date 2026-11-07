@@ -18,6 +18,7 @@ import type {
 import { BlueprintStageScene } from './BlueprintStageScene';
 import { ObserverCameraRig } from './ObserverCameraRig';
 import { StageCameraRig } from './StageCameraRig';
+import { StageCamDofEffect } from './StageCamDofEffect';
 import { getDioramaThemeColors } from './dioramaTheme';
 import type { CameraPresetType } from './cameraPresets';
 
@@ -31,6 +32,7 @@ export interface DioramaCanvasProps {
   evaluateTick60fps: () => StageFrame;
   onFreeOrbitPoseChange: (pose: SphericalPose, immediate?: boolean) => void;
   labelMode?: LabelDisplayMode;
+  dofBlurEnabled?: boolean;
   themeCategory?: AppThemeCategory;
   cameraPresetActionRef?: React.RefObject<{
     type: CameraPresetType;
@@ -56,6 +58,7 @@ export const DioramaCanvas: React.FC<DioramaCanvasProps> = ({
   evaluateTick60fps,
   onFreeOrbitPoseChange,
   labelMode = 'all',
+  dofBlurEnabled = false,
   themeCategory = 'dark',
   cameraPresetActionRef,
 }) => {
@@ -111,6 +114,11 @@ export const DioramaCanvas: React.FC<DioramaCanvasProps> = ({
           uiFrame={uiFrame}
           labelMode={labelMode}
         />
+
+        {/* 4. Opt-In Single-Pass Thin-Lens DoF Blur Effect (Stage Cam POV Only) */}
+        {dofBlurEnabled && cameraMode === 'stage-pov' && (
+          <StageCamDofEffect frameRef={frameRef} uiFrame={uiFrame} />
+        )}
       </Canvas>
     </div>
   );

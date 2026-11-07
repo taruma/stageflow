@@ -37,6 +37,24 @@ export const CAMERA_LIMITS = {
 } as const;
 
 /**
+ * Standard 35mm full-frame permissible Circle of Confusion (CoC) diameter in millimeters (0.030mm)
+ * and meters (3.0e-5m), plus canonical f-stop mappings for semantic DoF presets.
+ */
+export const OPTICS_DOF_DEFAULTS = {
+  COC_MM: 0.03,
+  COC_M: 0.00003,
+  PRESET_F_STOPS: {
+    shallow: 2.8,
+    medium: 5.6,
+    deep: Infinity,
+  },
+  MIN_F_STOP: 0.7,
+  MAX_F_STOP: 64.0,
+  MAX_VISUAL_FAR_EXTENSION_M: 6.0,
+  MAX_BLUR_FRACTION: 0.022,
+} as const;
+
+/**
  * Default Observer Camera pose (elevated 3/4 architectural overview in meters).
  */
 export const DEFAULT_OBSERVER_POSE: SphericalPose = {
@@ -82,6 +100,7 @@ export const BLUEPRINT_PALETTE = {
   gridMinor: '#0f172a',
   stageCamera: '#f59e0b',
   frustumDefault: '#f59e0b',
+  focusTether: '#10b981',
   observerAccent: '#38bdf8',
   characterPrimary: '#38bdf8',
   characterSecondary: '#a78bfa',

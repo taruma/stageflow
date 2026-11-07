@@ -117,6 +117,13 @@ export const InteractiveStudioApp: React.FC = () => {
   >(undefined);
   const [videoOverrideUrl, setVideoOverrideUrl] = useState<string | null>(null);
 
+  // Sync YAML score `optics.dof_blur` preference when a score explicitly opts in
+  useEffect(() => {
+    if (activeScore.optics?.dofBlur === true) {
+      display.setDofBlurEnabled(true);
+    }
+  }, [activeScore.optics?.dofBlur, display.setDofBlurEnabled]);
+
   const handleExportScore = useCallback(
     (item: ScoreCatalogItem) => {
       downloadYamlBlob(`${item.id}.yaml`, item.rawYaml);
@@ -415,6 +422,8 @@ export const InteractiveStudioApp: React.FC = () => {
             isPlaying={mediaClock.isPlaying}
             labelMode={display.labelMode}
             showGuides={display.showGuides}
+            dofBlurEnabled={display.dofBlurEnabled}
+            onToggleDofBlur={display.handleToggleDofBlur}
             themeCategory={theme.effectiveDioramaCategory}
             onApplyVideoUrlOverride={(url) => {
               setVideoOverrideUrl(url);
@@ -442,6 +451,8 @@ export const InteractiveStudioApp: React.FC = () => {
                   labelMode={display.labelMode}
                   isPlaying={mediaClock.isPlaying}
                   showGuides={display.showGuides}
+                  dofBlurEnabled={display.dofBlurEnabled}
+                  onToggleDofBlur={display.handleToggleDofBlur}
                   themeCategory={theme.effectiveDioramaCategory}
                 />
               ) : undefined
@@ -464,6 +475,7 @@ export const InteractiveStudioApp: React.FC = () => {
               evaluateTick60fps={stageLoop.evaluateTick60fps}
               onFreeOrbitPoseChange={stageLoop.notifyFreeOrbitChange}
               labelMode={display.labelMode}
+              dofBlurEnabled={display.dofBlurEnabled}
               themeCategory={theme.effectiveDioramaCategory}
               cameraPresetActionRef={cameraPresetActionRef}
             />
@@ -477,11 +489,13 @@ export const InteractiveStudioApp: React.FC = () => {
               isPlaying={mediaClock.isPlaying}
               labelMode={display.labelMode}
               showGuides={display.showGuides}
+              dofBlurEnabled={display.dofBlurEnabled}
               isNarrow={isNarrowDiorama}
               onSetCameraMode={stageLoop.setCameraMode}
               onSelectPreset={handleSelectCameraPreset}
               onSelectLabelMode={display.handleSelectLabelMode}
               onToggleGuides={display.handleToggleGuides}
+              onToggleDofBlur={display.handleToggleDofBlur}
             />
           </div>
         }

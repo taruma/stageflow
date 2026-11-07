@@ -9,13 +9,19 @@ import type {
   BlockingCueSpec,
   CameraEasing,
   CameraManeuver,
+  DofPreset,
   EntityKind,
   EntityShape,
   EntityStyle,
   SceneEntityDef,
   Vec3,
 } from './types';
-import { clampFocalLengthMm } from './opticsMath';
+import { CAMERA_LIMITS } from './constants';
+import {
+  clampApertureFStop,
+  clampFocalLengthMm,
+  presetToApertureFStop,
+} from './opticsMath';
 import { degToRad } from './sphericalMath';
 
 export function parseVec3(
@@ -62,6 +68,122 @@ export function parseTargetOrVec3(raw: unknown): string | Vec3 | undefined {
   }
   if (Array.isArray(raw) || (raw && typeof raw === 'object')) {
     return parseVec3(raw);
+  }
+  return undefined;
+}
+
+/**
+ * Parses a metric distance value such as `3.5`, `"3.5m"`, `"3.5 m"`, `"3.5meters"`
+ * into a finite clamped distance in meters [0.4m, 100.0m].
+ */
+export function parseMetricDistanceM(raw: unknown): number | undefined {
+  if (typeof raw === 'number' && Number.isFinite(raw) && raw > 0) {
+    return Math.max(
+      CAMERA_LIMITS.MIN_DISTANCE_M,
+      Math.min(CAMERA_LIMITS.MAX_DISTANCE_M, raw)
+    );
+  }
+  if (typeof raw === 'string') {
+    const trimmed = raw.trim();
+    if (/^[+-]?\d+(\.\d+)?\s*(m|meters?)?$/i.test(trimmed)) {
+      const val = parseFloat(trimmed);
+      if (Number.isFinite(val) && val > 0) {
+        return Math.max(
+          CAMERA_LIMITS.MIN_DISTANCE_M,
+          Math.min(CAMERA_LIMITS.MAX_DISTANCE_M, val)
+        );
+      }
+    }
+  }
+  return undefined;
+}
+
+/**
+ * Polymorphically parses a `focus:` / `focus_start:` / `focus_end:` value:
+ * - Numeric or metric string (`3.5`, `"3.5m"`) -> `{ distanceM: 3.5 }`
+ * - Entity ID/label (`"alice"`) or 3D tuple (`[0, 1.5, -2]`) -> `{ target: ... }`
+ */
+export function parseFocusTargetOrDistance(raw: unknown): {
+  target?: string | Vec3;
+  distanceM?: number;
+} {
+  if (raw === undefined || raw === null) {
+    return {};
+  }
+  if (typeof raw === 'number' && Number.isFinite(raw) && raw > 0) {
+    return { distanceM: parseMetricDistanceM(raw) };
+  }
+  if (typeof raw === 'string') {
+    const trimmed = raw.trim();
+    if (/^[+-]?\d+(\.\d+)?\s*(m|meters?)?$/i.test(trimmed)) {
+      return { distanceM: parseMetricDistanceM(trimmed) };
+    }
+    if (trimmed.length > 0) {
+      return { target: trimmed };
+    }
+    return {};
+  }
+  if (Array.isArray(raw) || (raw && typeof raw === 'object')) {
+    return { target: parseVec3(raw) };
+  }
+  return {};
+}
+
+/**
+ * Normalizes a semantic Depth of Field preset ('shallow' | 'medium' | 'deep').
+ */
+export function parseDofPreset(raw: unknown): DofPreset | undefined {
+  if (raw === false) return 'deep';
+  if (typeof raw !== 'string') return undefined;
+  const norm = raw.trim().toLowerCase();
+  if (
+    norm === 'shallow' ||
+    norm === 'narrow' ||
+    norm === 'thin' ||
+    norm === 'bokeh' ||
+    norm === 'portrait'
+  ) {
+    return 'shallow';
+  }
+  if (norm === 'medium' || norm === 'normal' || norm === 'moderate') {
+    return 'medium';
+  }
+  if (
+    norm === 'deep' ||
+    norm === 'infinite' ||
+    norm === 'infinity' ||
+    norm === 'off' ||
+    norm === 'none' ||
+    norm === 'crisp' ||
+    norm === 'false'
+  ) {
+    return 'deep';
+  }
+  return undefined;
+}
+
+/**
+ * Parses a lens aperture value such as `2.8`, `"f/2.8"`, `"f2.8"`, `"F/1.4"`, `"T2.0"`,
+ * or a semantic DoF preset (`"shallow"`, `"medium"`, `"deep"`) into an effective f-stop N.
+ */
+export function parseApertureFStop(raw: unknown): number | undefined {
+  if (typeof raw === 'number' && Number.isFinite(raw) && raw > 0) {
+    return clampApertureFStop(raw);
+  }
+  if (typeof raw === 'string') {
+    const preset = parseDofPreset(raw);
+    if (preset !== undefined) {
+      return presetToApertureFStop(preset);
+    }
+    const cleaned = raw
+      .trim()
+      .toLowerCase()
+      .replace(/^[ft]\s*\/?\s*/, '')
+      .trim();
+    const num = parseFloat(cleaned);
+    if (Number.isFinite(num) && num > 0) {
+      return clampApertureFStop(num);
+    }
   }
   return undefined;
 }

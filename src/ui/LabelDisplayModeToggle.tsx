@@ -7,7 +7,7 @@
  */
 
 import React from 'react';
-import { EyeOff, Grid3X3, Tag, Video } from 'lucide-react';
+import { Aperture, EyeOff, Grid3X3, Tag, Video } from 'lucide-react';
 import type { CameraViewMode, LabelDisplayMode } from '../core/types';
 
 export interface LabelDisplayModeToggleProps {
@@ -15,6 +15,8 @@ export interface LabelDisplayModeToggleProps {
   onSelectLabelMode: (mode: LabelDisplayMode) => void;
   showGuides?: boolean;
   onToggleGuides?: () => void;
+  dofBlurEnabled?: boolean;
+  onToggleDofBlur?: () => void;
   cameraMode?: CameraViewMode;
   className?: string;
 }
@@ -50,6 +52,8 @@ export const LabelDisplayModeToggle: React.FC<LabelDisplayModeToggleProps> = ({
   onSelectLabelMode,
   showGuides = true,
   onToggleGuides,
+  dofBlurEnabled = false,
+  onToggleDofBlur,
   cameraMode,
   className = '',
 }) => {
@@ -100,6 +104,27 @@ export const LabelDisplayModeToggle: React.FC<LabelDisplayModeToggleProps> = ({
           >
             <Grid3X3 className="w-3 h-3" />
             <span className="hidden sm:inline">Guides</span>
+          </button>
+        </div>
+      )}
+
+      {/* 3. Optical Depth of Field Blur Toggle (Contextual: Stage Cam POV Only) */}
+      {onToggleDofBlur && isStagePov && (
+        <div className="flex items-center p-0.5 rounded-xl bg-surface border border-border-main shadow-xs">
+          <button
+            type="button"
+            onClick={onToggleDofBlur}
+            title={`Toggle Optical Depth of Field Blur Simulation [Hotkey: B] — Currently ${
+              dofBlurEnabled ? 'ON' : 'OFF'
+            }`}
+            className={`px-2 py-0.5 rounded-lg text-[10px] font-mono flex items-center gap-1 transition-colors duration-100 cursor-pointer focus:outline-none ${
+              dofBlurEnabled
+                ? 'bg-emerald-500 text-white font-semibold shadow-2xs'
+                : 'text-text-muted hover:text-text-main'
+            }`}
+          >
+            <Aperture className="w-3 h-3" />
+            <span className="hidden sm:inline">Blur</span>
           </button>
         </div>
       )}

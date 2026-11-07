@@ -5,6 +5,7 @@
 
 import type { SphericalPose, StageFrame, StageScore } from './types';
 import { BLUEPRINT_PALETTE } from './constants';
+import { evaluateStageCameraDof } from './dofEvaluator';
 import { evaluateEntitiesAtTime } from './entityEngine';
 import { evaluateCameraTrack } from './trajectoryChain';
 
@@ -61,6 +62,13 @@ export function computeStageFrame(
     activeStageSpec?.frustumDepth && activeStageSpec.frustumDepth > 0
       ? activeStageSpec.frustumDepth
       : stageTrack.transform.pose.distance;
+  const dof = evaluateStageCameraDof(
+    score,
+    activeShot,
+    shotProgress,
+    stageTrack,
+    entitiesById
+  );
 
   // 3. Evaluate Viewport Observer Camera Track
   const observerTrack = evaluateCameraTrack(
@@ -84,6 +92,7 @@ export function computeStageFrame(
       frustumColor:
         activeStageSpec?.frustumColor ?? BLUEPRINT_PALETTE.frustumDefault,
       showPath: activeStageSpec?.showPath ?? true,
+      dof,
     },
     entitiesById,
     entitiesList,

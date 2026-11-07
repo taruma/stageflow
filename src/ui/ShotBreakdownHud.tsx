@@ -26,6 +26,7 @@ export const ShotBreakdownHud: React.FC<ShotBreakdownHudProps> = ({
 
   const shot = frame.activeShot;
   const stageCam = frame.stageCamera;
+  const dof = stageCam.dof;
   const lensMm = Math.round(stageCam.transform.pose.focalLengthMm);
   const aspectLabel =
     Math.abs(score.aspectRatio - 16 / 9) < 0.05
@@ -98,6 +99,22 @@ export const ShotBreakdownHud: React.FC<ShotBreakdownHudProps> = ({
             {/* Line 2: Compact Telemetry & Status String */}
             <div className="flex items-center gap-1.5 text-[10px] font-mono text-text-muted truncate">
               <span className="text-text-main font-semibold shrink-0">{lensMm}mm</span>
+              {dof.enabled && (
+                <>
+                  <span className="text-text-faint opacity-50">·</span>
+                  <span className="text-emerald-500 font-semibold shrink-0">
+                    f/{dof.apertureFStop}
+                  </span>
+                </>
+              )}
+              {dof.hasExplicitFocus && (
+                <>
+                  <span className="text-text-faint opacity-50">·</span>
+                  <span className="text-emerald-500 font-semibold shrink-0">
+                    F {dof.focusDistanceM.toFixed(1)}m
+                  </span>
+                </>
+              )}
               <span className="text-text-faint opacity-50">·</span>
               <span className="uppercase text-amber-500 font-semibold shrink-0">
                 {stageCam.maneuver}
@@ -149,8 +166,17 @@ export const ShotBreakdownHud: React.FC<ShotBreakdownHudProps> = ({
             <div className="flex items-center gap-2 text-[10px] font-mono text-text-muted pt-0.5 flex-wrap">
               <span className="flex items-center gap-1 text-text-main font-semibold">
                 <Aperture className="w-3 h-3 text-sky-500" />
-                {lensMm}mm Prime · {aspectLabel} Gate
+                {lensMm}mm Prime
+                {dof.enabled ? ` · f/${dof.apertureFStop}` : ''} · {aspectLabel} Gate
               </span>
+              {(dof.hasExplicitFocus || dof.enabled) && (
+                <>
+                  <span className="text-border-main">|</span>
+                  <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
+                    Focus {dof.focusDistanceM.toFixed(2)}m
+                  </span>
+                </>
+              )}
               <span className="text-border-main">|</span>
               <span className="flex items-center gap-1 text-amber-600 dark:text-amber-300 uppercase font-semibold">
                 <Compass className="w-3 h-3 text-amber-500" />

@@ -87,6 +87,14 @@ StageFlow models camera framing using standard **35mm Full-Frame Sensor Gate Wid
    At distance $D$ (in meters) from the lens nodal point, the projected rectangular focus gate has dimensions:
    $$W_{\text{gate}} = D \cdot \frac{W_{\text{sensor}}}{f_{\text{mm}}}, \quad H_{\text{gate}} = D \cdot \frac{H_{\text{sensor}}}{f_{\text{mm}}}$$
    This guarantees that $\frac{W_{\text{gate}}}{H_{\text{gate}}} \equiv \text{aspectRatio}$ at every focal length and target distance.
+4. **Orthogonal Focus Plane Projection (`computeProjectedFocusDistanceM`)**:
+   When `focus:` (or `focus_start` / `focus_end`) targets an entity or 3D coordinate $\vec{P}_{\text{focus}}$, the focus plane distance $d_{\text{focus}}$ is computed by orthogonally projecting $(\vec{P}_{\text{focus}} - \vec{E})$ onto the camera's unit forward sightline vector $\hat{F} = \frac{\vec{T} - \vec{E}}{\|\vec{T} - \vec{E}\|}$:
+   $$d_{\text{focus}} = \max\!\left(0.4\text{m},\; (\vec{P}_{\text{focus}} - \vec{E}) \cdot \hat{F}\right)$$
+   This eliminates the off-axis cosine overshoot ($r / \cos\alpha$) of Euclidean radial distance when focusing on subjects framed on the left or right thirds.
+5. **Gaussian Thin-Lens Depth of Field & Hyperfocal Math (`computeDepthOfFieldLimits`, `dofEvaluator.ts`)**:
+   Using standard 35mm full-frame Circle of Confusion $c = 0.03\text{mm}$ ($3.0 \times 10^{-5}\text{m}$), focal length $f = f_{\text{mm}} / 1000\text{m}$, and aperture $f$-stop $N \in [0.7, 64.0]$ (mapped from semantic presets `shallow` $\to f/2.8$, `medium` $\to f/5.6$, `deep` $\to \infty$ or numeric `aperture: 2.8` / `"f/2.8"`):
+   $$H = \frac{f^2}{N \cdot c} + f, \qquad D_{\text{near}} = \frac{(H - f) \cdot d_{\text{focus}}}{H + d_{\text{focus}} - 2f}, \qquad D_{\text{far}} = \begin{cases} \frac{(H - f) \cdot d_{\text{focus}}}{H - d_{\text{focus}}} & d_{\text{focus}} < H \\ \infty & d_{\text{focus}} \ge H \end{cases}$$
+   Rack focus (`focus_start` $\to$ `focus_end` or `focus_distance_start` $\to$ `focus_distance_end`) and aperture ramps (`aperture_start` $\to$ `aperture_end`) interpolate smoothly across the shot using the cue's easing curve $u = E(\tau)$, dynamically tracking moving actors on every frame. When omitted, `focusDistanceM` defaults to `pose.distance` and `dof.enabled` is `false`.
 
 ---
 

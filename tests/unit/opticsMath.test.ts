@@ -1,11 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import {
+  apertureFStopToPreset,
+  clampApertureFStop,
   computeAdaptiveDioramaFovDeg,
   computeContainedGateDimensionsPx,
+  computeDepthOfFieldLimits,
   computeFrustumGateDimensions,
+  computeNormalizedBlurCircleFraction,
+  computeProjectedFocusDistanceM,
   computeViewfinderCanvasFovDeg,
   focalLengthToVerticalFovDeg,
   parseAspectRatio,
+  presetToApertureFStop,
   verticalFovDegToFocalLengthMm,
 } from '../../src/core/opticsMath';
 
@@ -93,5 +99,63 @@ describe('opticsMath — Directorial Lens & Frustum Gate Calculations', () => {
     const splitActualHorizTan = splitAspect * Math.tan(splitHalfHRad);
 
     expect(splitActualHorizTan).toBeCloseTo(expectedHalfHorizTan, 5);
+  });
+
+  it('computes orthogonal focus plane projection distance and prevents off-axis cosine overshoot', () => {
+    const camPos = { x: 0, y: 1.5, z: 5 };
+    const camTarget = { x: 0, y: 1.5, z: 0 }; // forward is (0, 0, -1)
+
+    // Subject directly on optical axis at z = 2 (3m away)
+    expect(
+      computeProjectedFocusDistanceM(camPos, camTarget, { x: 0, y: 1.5, z: 2 })
+    ).toBeCloseTo(3.0, 5);
+
+    // Off-axis subject at [2.0, 1.5, 2.0]: Euclidean distance is sqrt(4+9) = 3.605m,
+    // but orthogonal depth along optical axis is strictly 3.0m
+    expect(
+      computeProjectedFocusDistanceM(camPos, camTarget, { x: 2.0, y: 1.5, z: 2.0 })
+    ).toBeCloseTo(3.0, 5);
+
+    // Subject behind camera clamps to MIN_FOCUS_DISTANCE_M (0.4m)
+    expect(
+      computeProjectedFocusDistanceM(camPos, camTarget, { x: 0, y: 1.5, z: 10 })
+    ).toBeCloseTo(0.4, 5);
+  });
+
+  it('computes thin-lens hyperfocal distance, near/far DoF limits, and blur circle fractions', () => {
+    // 50mm lens, focus at 3.0m, shallow DoF (f/2.8), CoC = 0.03mm
+    const shallow50 = computeDepthOfFieldLimits(50, 3.0, 2.8);
+    expect(shallow50.hyperfocalDistanceM).toBeCloseTo(29.812, 2);
+    expect(shallow50.nearLimitM).toBeCloseTo(2.73, 2);
+    expect(shallow50.farLimitM).toBeCloseTo(3.33, 2);
+    expect(shallow50.depthOfFieldM).toBeCloseTo(0.60, 2);
+
+    // 50mm lens, focus at 3.0m, medium DoF (f/5.6)
+    const medium50 = computeDepthOfFieldLimits(50, 3.0, 5.6);
+    expect(medium50.nearLimitM).toBeCloseTo(2.504, 2);
+    expect(medium50.farLimitM).toBeCloseTo(3.742, 2);
+    expect(medium50.depthOfFieldM).toBeCloseTo(1.238, 2);
+
+    // Hyperfocal infinity case: 24mm lens at f/16 focused at 15m (d >= H)
+    const deep24 = computeDepthOfFieldLimits(24, 15.0, 16.0);
+    expect(deep24.farLimitM).toBe(Number.POSITIVE_INFINITY);
+    expect(deep24.depthOfFieldM).toBe(Number.POSITIVE_INFINITY);
+
+    // Blur circle at exact focus plane is 0, and increases monotonically away from focus
+    expect(computeNormalizedBlurCircleFraction(3.0, 50, 3.0, 2.8)).toBeCloseTo(0, 6);
+    const blurAt4m = computeNormalizedBlurCircleFraction(4.0, 50, 3.0, 2.8);
+    const blurAt8m = computeNormalizedBlurCircleFraction(8.0, 50, 3.0, 2.8);
+    expect(blurAt4m).toBeGreaterThan(0);
+    expect(blurAt8m).toBeGreaterThan(blurAt4m);
+
+    // Preset mappings and clamping
+    expect(presetToApertureFStop('shallow')).toBe(2.8);
+    expect(presetToApertureFStop('medium')).toBe(5.6);
+    expect(presetToApertureFStop('deep')).toBe(Number.POSITIVE_INFINITY);
+    expect(apertureFStopToPreset(2.8)).toBe('shallow');
+    expect(apertureFStopToPreset(5.6)).toBe('medium');
+    expect(apertureFStopToPreset(16)).toBe('deep');
+    expect(clampApertureFStop(0.2)).toBe(0.7);
+    expect(clampApertureFStop(128)).toBe(64.0);
   });
 });

@@ -158,6 +158,27 @@ export interface EvaluatedEntityState {
   trailPoints: Vec3[]; // Sampled ground trail when moving during active cue/shot
 }
 
+export type DofPreset = 'shallow' | 'medium' | 'deep';
+
+export interface ScoreOpticsConfig {
+  dofBlur: boolean;              // Opt-in bokeh blur in Stage Cam POV (default: false)
+  defaultDof?: DofPreset;        // Optional score-wide default DoF preset
+  defaultApertureFStop?: number; // Optional score-wide default f-stop
+}
+
+export interface EvaluatedDofState {
+  enabled: boolean;            // True when apertureFStop is finite (dof !== 'deep')
+  preset: DofPreset;           // 'shallow' | 'medium' | 'deep'
+  apertureFStop: number;       // Effective f-number N (e.g. 2.8, 5.6, or Infinity)
+  focusDistanceM: number;      // Orthogonal optical-axis focus depth d_focus in meters
+  hyperfocalDistanceM: number; // H in meters (Infinity when disabled)
+  nearLimitM: number;          // D_near in meters (0 when disabled)
+  farLimitM: number;           // D_far in meters (Infinity when disabled or d >= H)
+  depthOfFieldM: number;       // D_far - D_near in meters (Infinity when farLimitM is Infinity)
+  focusTargetPoint?: Vec3;     // Resolved 3D focus point when targeting an entity/coord
+  hasExplicitFocus: boolean;   // True when focus or focus_distance was explicitly authored
+}
+
 export interface CameraWaypointSpec {
   target?: string | Vec3;
   targetOffset?: Vec3;
@@ -166,6 +187,10 @@ export interface CameraWaypointSpec {
   yawRad?: number;
   rollRad?: number;
   focalLengthMm?: number;
+  focus?: string | Vec3;
+  focusDistanceM?: number;
+  dof?: DofPreset;
+  apertureFStop?: number;
   at?: number;
 }
 
@@ -195,6 +220,16 @@ export interface CameraCueSpec {
   focalLengthMm?: number;
   focalLengthStartMm?: number;
   focalLengthEndMm?: number;
+  focus?: string | Vec3;
+  focusStart?: string | Vec3;
+  focusEnd?: string | Vec3;
+  focusDistanceM?: number;
+  focusDistanceStartM?: number;
+  focusDistanceEndM?: number;
+  dof?: DofPreset;
+  apertureFStop?: number;
+  apertureStartFStop?: number;
+  apertureEndFStop?: number;
   breathe: number;
   direction: 'cw' | 'ccw';
   hasExplicitDirection?: boolean;
@@ -257,6 +292,7 @@ export interface StageScore {
   shots: ShotCue[];
   observerShots?: ObserverShotCue[];
   blocking?: BlockingCueSpec[];
+  optics?: ScoreOpticsConfig;
 }
 
 export interface EvaluatedCameraTrack {
@@ -281,6 +317,7 @@ export interface StageFrame {
     frustumDepth: number;
     frustumColor: string;
     showPath: boolean;
+    dof: EvaluatedDofState;
   };
   entitiesById: Map<string, EvaluatedEntityState>;
   entitiesList: EvaluatedEntityState[];

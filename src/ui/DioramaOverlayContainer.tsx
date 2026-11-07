@@ -31,11 +31,13 @@ export interface DioramaOverlayContainerProps {
   isPlaying: boolean;
   labelMode: LabelDisplayMode;
   showGuides: boolean;
+  dofBlurEnabled?: boolean;
   isNarrow: boolean;
   onSetCameraMode: (mode: CameraViewMode) => void;
   onSelectPreset: (preset: CameraPresetType) => void;
   onSelectLabelMode: (mode: LabelDisplayMode) => void;
   onToggleGuides: () => void;
+  onToggleDofBlur?: () => void;
 }
 
 export const DioramaOverlayContainer: React.FC<DioramaOverlayContainerProps> = ({
@@ -46,11 +48,13 @@ export const DioramaOverlayContainer: React.FC<DioramaOverlayContainerProps> = (
   isPlaying,
   labelMode,
   showGuides,
+  dofBlurEnabled = false,
   isNarrow,
   onSetCameraMode,
   onSelectPreset,
   onSelectLabelMode,
   onToggleGuides,
+  onToggleDofBlur,
 }) => {
   return (
     <>
@@ -75,6 +79,8 @@ export const DioramaOverlayContainer: React.FC<DioramaOverlayContainerProps> = (
           onSelectLabelMode={onSelectLabelMode}
           showGuides={showGuides}
           onToggleGuides={onToggleGuides}
+          dofBlurEnabled={dofBlurEnabled}
+          onToggleDofBlur={onToggleDofBlur}
         />
       ) : (
         <>
@@ -86,13 +92,15 @@ export const DioramaOverlayContainer: React.FC<DioramaOverlayContainerProps> = (
             isPlaying={isPlaying}
           />
 
-          {/* 2. TOP-RIGHT: 3D Stage Labels & Viewfinder Guides */}
+          {/* 2. TOP-RIGHT: 3D Stage Labels, Viewfinder Guides & Optical DoF Blur */}
           <div className="absolute top-3 right-3 z-10 flex items-center gap-2 pointer-events-auto select-none">
             <LabelDisplayModeToggle
               labelMode={labelMode}
               onSelectLabelMode={onSelectLabelMode}
               showGuides={showGuides}
               onToggleGuides={onToggleGuides}
+              dofBlurEnabled={dofBlurEnabled}
+              onToggleDofBlur={onToggleDofBlur}
               cameraMode={cameraMode}
             />
           </div>

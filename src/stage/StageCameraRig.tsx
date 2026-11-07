@@ -20,6 +20,10 @@ import * as THREE from 'three';
 import type { CameraViewMode, LabelDisplayMode, StageFrame } from '../core/types';
 import { computeFrustumGateDimensions } from '../core/opticsMath';
 import { StageBillboardLabel } from './StageBillboardLabel';
+import {
+  StageCameraDofBrackets,
+  StageCameraFocusTether,
+} from './StageCameraFocusRig';
 import { StageCameraOffsetTether } from './StageCameraOffsetTether';
 
 /**
@@ -33,24 +37,24 @@ const UNIT_FRUSTUM = {
     [[0, 0, 0], [1, -1, 1]],
     [[0, 0, 0], [-1, -1, 1]],
   ] as Array<Array<[number, number, number]>>,
-  gateFrame: [
-    [-1, 1, 1],
-    [1, 1, 1],
-    [1, -1, 1],
-    [-1, -1, 1],
-    [-1, 1, 1],
-  ] as Array<[number, number, number]>,
   sightLine: [
     [0, 0, 0],
     [0, 0, 1],
   ] as Array<[number, number, number]>,
+  gateFrame: [
+    [-1, 1, 0],
+    [1, 1, 0],
+    [1, -1, 0],
+    [-1, -1, 0],
+    [-1, 1, 0],
+  ] as Array<[number, number, number]>,
   ruleOfThirdsH1: [
-    [-1, 1 / 3, 1],
-    [1, 1 / 3, 1],
+    [-1, 1 / 3, 0],
+    [1, 1 / 3, 0],
   ] as Array<[number, number, number]>,
   ruleOfThirdsH2: [
-    [-1, -1 / 3, 1],
-    [1, -1 / 3, 1],
+    [-1, -1 / 3, 0],
+    [1, -1 / 3, 0],
   ] as Array<[number, number, number]>,
 };
 
@@ -71,11 +75,53 @@ export const StageCameraRig: React.FC<StageCameraRigProps> = ({
   const rollGroupRef = useRef<THREE.Group | null>(null);
   const trajectoryGroupRef = useRef<THREE.Group | null>(null);
   const frustumGroupRef = useRef<THREE.Group | null>(null);
+  const focusPlaneGroupRef = useRef<THREE.Group | null>(null);
   const targetRingRef = useRef<THREE.Mesh | null>(null);
 
   const stageCam = uiFrame.stageCamera;
   const pose = stageCam.transform.pose;
   const color = stageCam.frustumColor || '#f59e0b';
+
+  const syncFrustumAndFocus = (liveCam: StageFrame['stageCamera']) => {
+    const dof = liveCam.dof;
+    const focusDepth =
+      dof && (dof.hasExplicitFocus || dof.enabled)
+        ? dof.focusDistanceM
+        : liveCam.frustumDepth;
+    const coneDepth = Math.max(liveCam.frustumDepth, focusDepth);
+
+    const coneGate = computeFrustumGateDimensions(
+      liveCam.transform.pose.focalLengthMm,
+      coneDepth,
+      liveCam.transform.aspectRatio
+    );
+    const focusGate = computeFrustumGateDimensions(
+      liveCam.transform.pose.focalLengthMm,
+      focusDepth,
+      liveCam.transform.aspectRatio
+    );
+
+    if (frustumGroupRef.current) {
+      frustumGroupRef.current.scale.set(
+        coneGate.halfWidth,
+        coneGate.halfHeight,
+        coneDepth
+      );
+    }
+
+    if (focusPlaneGroupRef.current) {
+      focusPlaneGroupRef.current.position.set(0, 0, focusDepth);
+      focusPlaneGroupRef.current.scale.set(
+        focusGate.halfWidth,
+        focusGate.halfHeight,
+        1
+      );
+    }
+
+    if (targetRingRef.current) {
+      targetRingRef.current.position.set(0, 0, focusDepth);
+    }
+  };
 
   // 3D trajectory path points in world space
   const trajectoryLinePoints = useMemo<Array<[number, number, number]>>(() => {
@@ -116,24 +162,7 @@ export const StageCameraRig: React.FC<StageCameraRigProps> = ({
     const liveCam = isShotDesynced
       ? stageCam
       : liveFrame?.stageCamera ?? stageCam;
-    const liveDepth = liveCam.frustumDepth;
-    const liveGate = computeFrustumGateDimensions(
-      liveCam.transform.pose.focalLengthMm,
-      liveDepth,
-      liveCam.transform.aspectRatio
-    );
-
-    if (frustumGroupRef.current) {
-      frustumGroupRef.current.scale.set(
-        liveGate.halfWidth,
-        liveGate.halfHeight,
-        liveDepth
-      );
-    }
-
-    if (targetRingRef.current) {
-      targetRingRef.current.position.set(0, 0, liveDepth);
-    }
+    syncFrustumAndFocus(liveCam);
   }, [frameRef, stageCam]);
 
   // Update 3D position, orientation, and frustum scale imperatively at 60fps/144fps
@@ -167,26 +196,9 @@ export const StageCameraRig: React.FC<StageCameraRigProps> = ({
       rollGroupRef.current.rotation.z = -transform.pose.roll;
     }
 
-    // Update Frustum Pyramid scale and Focus Target Ring position at native 60fps/144fps
+    // Update Frustum Pyramid scale and Focus Plane position at native 60fps/144fps
     const liveCam = isShotDesynced ? stageCam : liveFrame.stageCamera;
-    const liveDepth = liveCam.frustumDepth;
-    const liveGate = computeFrustumGateDimensions(
-      liveCam.transform.pose.focalLengthMm,
-      liveDepth,
-      liveCam.transform.aspectRatio
-    );
-
-    if (frustumGroupRef.current) {
-      frustumGroupRef.current.scale.set(
-        liveGate.halfWidth,
-        liveGate.halfHeight,
-        liveDepth
-      );
-    }
-
-    if (targetRingRef.current) {
-      targetRingRef.current.position.set(0, 0, liveDepth);
-    }
+    syncFrustumAndFocus(liveCam);
 
     // Suppress trajectory path ghosting during the 1-frame async transition between shots
     if (trajectoryGroupRef.current) {
@@ -236,6 +248,13 @@ export const StageCameraRig: React.FC<StageCameraRigProps> = ({
         color="#06b6d4"
       />
 
+      {/* 2b. World-Space 3D Focus Target Tether (when focusing on off-axis entity) */}
+      <StageCameraFocusTether
+        frameRef={frameRef}
+        uiFrame={uiFrame}
+        visible={isBodyVisible}
+      />
+
       {/* 3. 60fps/144fps Animated Stage Camera Rig Group */}
       <group ref={rigGroupRef}>
         {/* Floating Camera Lens & Maneuver Badge stays upright in unrolled parent group */}
@@ -243,7 +262,13 @@ export const StageCameraRig: React.FC<StageCameraRigProps> = ({
           <StageBillboardLabel
             position={[0, 0.36, -0.1]}
             label="STAGE CAM"
-            sublabel={`${Math.round(pose.focalLengthMm)}mm · ${stageCam.maneuver.toUpperCase()}`}
+            sublabel={
+              stageCam.dof?.enabled
+                ? `${Math.round(pose.focalLengthMm)}mm · f/${stageCam.dof.apertureFStop
+                    .toFixed(1)
+                    .replace(/\.0$/, '')} · ${stageCam.maneuver.toUpperCase()}`
+                : `${Math.round(pose.focalLengthMm)}mm · ${stageCam.maneuver.toUpperCase()}`
+            }
             accentColor={color}
             highlighted
             ghosted={false}
@@ -288,7 +313,7 @@ export const StageCameraRig: React.FC<StageCameraRigProps> = ({
           {/* 3. Rectangular Cinematic Gate Frustum & Sight-Line (Scaled at 60fps/144fps in useFrame) */}
           {isBodyVisible && (
             <group>
-              {/* Normalized Unit Frustum Pyramid Group */}
+              {/* Normalized Unit Frustum Pyramid Rays */}
               <group ref={frustumGroupRef}>
                 {/* Central Optical Axis Sight-Line */}
                 <Line
@@ -314,8 +339,11 @@ export const StageCameraRig: React.FC<StageCameraRigProps> = ({
                     opacity={0.55}
                   />
                 ))}
+              </group>
 
-                {/* Rectangular Film Gate Frame at depth Z = 1 */}
+              {/* Sliding Rectangular Focus Plane Frame at z = focusDepth */}
+              <group ref={focusPlaneGroupRef}>
+                {/* Rectangular Film Gate Frame */}
                 <Line
                   points={UNIT_FRUSTUM.gateFrame}
                   color={color}
@@ -341,7 +369,7 @@ export const StageCameraRig: React.FC<StageCameraRigProps> = ({
                 />
 
                 {/* Translucent Focus Plane Glass Fill */}
-                <mesh position={[0, 0, 1]}>
+                <mesh position={[0, 0, 0]}>
                   <planeGeometry args={[2, 2]} />
                   <meshBasicMaterial
                     color={color}
@@ -352,6 +380,9 @@ export const StageCameraRig: React.FC<StageCameraRigProps> = ({
                   />
                 </mesh>
               </group>
+
+              {/* Near & Far Depth-of-Field Sharpness Limit Brackets */}
+              <StageCameraDofBrackets frameRef={frameRef} uiFrame={uiFrame} />
 
               {/* Focus Target Center Crosshair Ring (kept at 1:1 circular aspect ratio) */}
               <mesh

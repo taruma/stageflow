@@ -174,6 +174,15 @@ export function validateScoreContract(score: StageScore): void {
     expect(frame.stageCamera.transform.fovDeg).toBeGreaterThan(10);
     expect(frame.stageCamera.transform.fovDeg).toBeLessThan(140);
 
+    // Stage Camera DoF & Focus Distance invariants
+    expect(frame.stageCamera.dof.focusDistanceM).toBeGreaterThanOrEqual(0.4);
+    expect(frame.stageCamera.dof.nearLimitM).toBeLessThanOrEqual(
+      frame.stageCamera.dof.focusDistanceM
+    );
+    expect(frame.stageCamera.dof.farLimitM).toBeGreaterThanOrEqual(
+      frame.stageCamera.dof.focusDistanceM
+    );
+
     // Observer Camera transform must be fully finite
     expect(Number.isFinite(frame.observerCamera.transform.position.x)).toBe(true);
     expect(Number.isFinite(frame.observerCamera.transform.position.y)).toBe(true);

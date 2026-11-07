@@ -41,6 +41,8 @@ export interface CompactDioramaHeaderProps {
   onSelectLabelMode: (mode: LabelDisplayMode) => void;
   showGuides: boolean;
   onToggleGuides: () => void;
+  dofBlurEnabled?: boolean;
+  onToggleDofBlur?: () => void;
   className?: string;
 }
 
@@ -54,6 +56,8 @@ export const CompactDioramaHeader: React.FC<CompactDioramaHeaderProps> = ({
   onSelectLabelMode,
   showGuides,
   onToggleGuides,
+  dofBlurEnabled = false,
+  onToggleDofBlur,
   className = '',
 }) => {
   const [isShotInfoOpen, setIsShotInfoOpen] = useState(false);
@@ -282,7 +286,7 @@ export const CompactDioramaHeader: React.FC<CompactDioramaHeaderProps> = ({
               </div>
             </div>
 
-            {/* Optical Guides Toggle (in Stage POV) */}
+            {/* Optical Guides & DoF Blur Toggles (in Stage POV) */}
             {cameraMode === 'stage-pov' && (
               <>
                 <div className="w-full h-[1px] bg-border-subtle" />
@@ -303,6 +307,25 @@ export const CompactDioramaHeader: React.FC<CompactDioramaHeaderProps> = ({
                     {showGuides ? 'ON' : 'OFF'}
                   </span>
                 </button>
+                {onToggleDofBlur && (
+                  <button
+                    type="button"
+                    onClick={onToggleDofBlur}
+                    className={`px-2 py-1 rounded-lg flex items-center justify-between text-left transition-colors cursor-pointer font-mono ${
+                      dofBlurEnabled
+                        ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-300 font-semibold'
+                        : 'text-text-muted hover:text-text-main hover:bg-surface-subtle'
+                    }`}
+                  >
+                    <span className="flex items-center gap-1.5">
+                      <Aperture className="w-3 h-3 text-emerald-500" />
+                      <span>Optical DoF Blur</span>
+                    </span>
+                    <span className="text-[9px] font-bold">
+                      {dofBlurEnabled ? 'ON' : 'OFF'}
+                    </span>
+                  </button>
+                )}
               </>
             )}
           </div>

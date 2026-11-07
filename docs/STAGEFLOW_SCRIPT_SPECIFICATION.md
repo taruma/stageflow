@@ -83,6 +83,18 @@ StageFlow models a standard 35mm full-frame sensor with horizontal gate width $W
    At radial distance $D$ from the camera eye $\vec{E}$, the rectangular field of view covers a physical plane of width $W_{\text{gate}}$ and height $H_{\text{gate}}$:
    $$W_{\text{gate}}(D) = D \cdot \frac{36.0}{f_{\text{mm}}}, \qquad H_{\text{gate}}(D) = D \cdot \frac{H_{\text{sensor}}}{f_{\text{mm}}} = \frac{W_{\text{gate}}(D)}{\text{AR}}$$
 
+4. **Orthogonal Focus Plane Distance & Rack Focus ($d_{\text{focus}}(t)$)**:
+   Given camera eye $\vec{E}(t)$, look-at target $\vec{T}(t)$, unit optical axis $\hat{F}(t) = \frac{\vec{T}(t) - \vec{E}(t)}{\|\vec{T}(t) - \vec{E}(t)\|}$, and focus target point $\vec{P}_{\text{focus}}(t)$, the orthogonal focus plane distance is:
+   $$d_{\text{focus}}(t) = \operatorname{clamp}\!\left((\vec{P}_{\text{focus}}(t) - \vec{E}(t)) \cdot \hat{F}(t),\; 0.4,\; 100.0\right)$$
+   During a rack focus from start focus anchor $d_{\text{start}}(t)$ to end focus anchor $d_{\text{end}}(t)$ with eased progress $u = E(\tau)$:
+   $$d_{\text{focus}}(t) = (1 - u)\,d_{\text{start}}(t) + u\,d_{\text{end}}(t)$$
+
+5. **Gaussian Thin-Lens Depth of Field ($H, D_{\text{near}}, D_{\text{far}}$)**:
+   With focal length $f = f_{\text{mm}} / 1000\text{ m}$, Circle of Confusion $c = 3.0 \times 10^{-5}\text{ m}$ ($0.03\text{ mm}$), and aperture $f$-stop $N \in [0.7, 64.0]$ (`"shallow"` $= 2.8$, `"medium"` $= 5.6$, `"deep"` $= \infty$):
+   $$H = \frac{f^2}{N \cdot c} + f, \qquad D_{\text{near}} = \frac{(H - f)\,d_{\text{focus}}}{H + d_{\text{focus}} - 2f}, \qquad D_{\text{far}} = \begin{cases} \frac{(H - f)\,d_{\text{focus}}}{H - d_{\text{focus}}} & d_{\text{focus}} < H \\ \infty & d_{\text{focus}} \ge H \end{cases}$$
+   For a fragment at view-space depth $z > 0$, the physical Circle of Confusion blur radius normalized by sensor height $H_{\text{sensor}}$ is:
+   $$\beta(z) = \min\!\left(0.035,\; \frac{f_{\text{mm}}^2}{N \cdot H_{\text{sensor}} \cdot (1000\,d_{\text{focus}} - f_{\text{mm}})} \cdot \frac{|z - d_{\text{focus}}|}{z}\right)$$
+
 ---
 
 ## 4. Entities, Anchors & Orientation
@@ -213,6 +225,8 @@ StageFlow is a **stateless functional evaluator** (`Frame_t = f(t, score)`). Eff
 | **`CAMERA_LIMITS.MAX_FOCAL_LENGTH_MM`** | $f_{\max}$ | $200\text{ mm}$ | Clamped to $[12,\; 200]\text{ mm}$ |
 | **`DEFAULT_OBSERVER_POSE`** | $P_{\text{obs}, 0}$ | $\vec{T} = (0, 1.0, 0)\text{ m}$<br>$d = 7.5\text{ m},\; \theta = 26^\circ,\; \psi = 38^\circ$<br>$\gamma = 0^\circ,\; f = 35\text{ mm}$ | Baseline viewport observer camera pose |
 | **`DEFAULT_STAGE_CAMERA_POSE`** | $P_{\text{stage}, 0}$ | $\vec{T} = (0, 1.2, 0)\text{ m}$<br>$d = 3.2\text{ m},\; \theta = 6^\circ,\; \psi = -25^\circ$<br>$\gamma = 0^\circ,\; f = 50\text{ mm}$ | Baseline 3D illustrative stage camera pose |
+| **`OPTICS_DOF_DEFAULTS.COC_MM`** | $c$ | $0.03\text{ mm}$ | Standard 35mm full-frame Circle of Confusion diameter |
+| **`OPTICS_DOF_DEFAULTS.MIN_F_STOP` / `MAX_F_STOP`** | $[N_{\min}, N_{\max}]$ | $[0.7,\; 64.0]$ | Clamped lens aperture $f$-stop range (`shallow: 2.8`, `medium: 5.6`, `deep: Infinity`) |
 
 ### 7.2 Normalized AST Interface Contract (`types.ts`)
 
@@ -227,6 +241,7 @@ StageFlow is a **stateless functional evaluator** (`Frame_t = f(t, score)`). Eff
 | | `shots` | `ShotCue[]` (non-empty array of film coverage shots, $\text{length} \ge 1$) |
 | | `observerShots` | `ObserverShotCue[] \| undefined` (optional Tier 1 decoupled observer timeline) |
 | | `blocking` | `BlockingCueSpec[] \| undefined` (optional Tier 1 decoupled entity blocking timeline) |
+| | `optics` | `ScoreOpticsConfig \| undefined` (`{ dofBlur: boolean, defaultDof?: DofPreset, defaultApertureFStop?: number }`) |
 | **`ShotCue`** | `id`, `shotNumber`, `label`, `description` | `string` identifiers and notes; `number` shot index |
 | | `continuous` | `boolean \| undefined` (shot-level contiguous timeline & pose-flow override) |
 | | `startSec`, `endSec` | $t_{\text{start}}, t_{\text{end}} \ge 0.0\text{ s}$ shot timing bounds |
@@ -255,9 +270,16 @@ StageFlow is a **stateless functional evaluator** (`Frame_t = f(t, score)`). Eff
 | | `target`, `from` | `string \| Vec3 \| undefined` anchor identifiers or world coordinates |
 | | `targetOffset*` | `Vec3 \| undefined` (`targetOffset`, `targetOffsetStart`, `targetOffsetEnd`) in $\text{m}$ |
 | | `distance*`, `pitch*Rad`, `yaw*Rad`, `roll*Rad`, `focalLength*Mm` | Optional scalar/radian/mm endpoints and deltas (`yawDeltaRad`, `rollDeltaRad`) |
+| | `focus`, `focusStart`, `focusEnd` | `string \| Vec3 \| undefined` focus target identifiers or 3D coordinates |
+| | `focusDistanceM`, `focusDistanceStartM`, `focusDistanceEndM` | `number \| undefined` explicit metric focus distances $d_{\text{focus}} \in [0.4, 100.0]\text{ m}$ |
+| | `dof`, `apertureFStop`, `apertureStartFStop`, `apertureEndFStop` | `DofPreset \| undefined` (`'shallow' \| 'medium' \| 'deep'`); aperture $N \in [0.7, 64.0]$ |
 | | `breathe` | `number` ($1.12$ for `arc`/`swoop`, $1.25$ for `recoil`, $1.0$ otherwise) |
 | | `direction`, `hasExplicitDirection` | `'cw' \| 'ccw'` (default `'cw'`), `boolean` |
 | | `revolutions`, `orbitSpeedRad`, `waypoints` | Optional turn count, angular speed ($\text{rad/s}$), and `CameraWaypointSpec[]` |
+| **`EvaluatedDofState`** | `enabled`, `preset`, `apertureFStop` | `boolean`; `DofPreset`; effective $f$-stop $N \in [0.7, 64.0] \cup \{\infty\}$ |
+| | `focusDistanceM`, `nearLimitM`, `farLimitM` | `number` focus plane depth and thin-lens near/far sharp boundaries in $\text{m}$ |
+| | `hyperfocalDistanceM`, `depthOfFieldM` | `number` hyperfocal distance $H$ and total sharp zone width $\Delta_{\text{DoF}}$ in $\text{m}$ |
+| | `focusTargetPoint`, `hasExplicitFocus` | `Vec3 \| undefined` resolved 3D focus point; `boolean` explicit focus flag |
 | **`ScoreCategory`** | provenance | `'study' \| 'blueprint' \| 'custom'` (catalog taxonomy) |
 | **`ScoreDiagnostic`** | `line`, `column`, `message`, `severity` | Syntax and schema diagnostic metadata (`severity: 'error' \| 'warning'`) |
 | **`ParseScoreResult`** | `score`, `error`, `warning`, `diagnostics` | Compile result of `parseStageScore(rawYaml)` |

@@ -10,6 +10,7 @@ import type {
   ParseScoreResult,
   SceneEntityDef,
   ScoreDiagnostic,
+  ScoreOpticsConfig,
   ShotCue,
 } from './types';
 import {
@@ -26,14 +27,19 @@ import {
   normalizeEntityShape,
   normalizeEntityStyle,
   parseAngleToRad,
+  parseApertureFStop,
   parseBlockingCues,
+  parseDofPreset,
+  parseFocusTargetOrDistance,
   parseLensFocalLengthMm,
+  parseMetricDistanceM,
   parseOptionalVec3,
   parseTargetOrVec3,
   parseVec3,
   resolveEntityIdentifier,
 } from './scorePrimitives';
 import {
+  applyFlatShotCameraOverrides,
   parseBaseSphericalPose,
   parseCameraCueSpec,
   parseObserverShots,
@@ -49,8 +55,12 @@ export {
   normalizeEntityShape,
   normalizeEntityStyle,
   parseAngleToRad,
+  parseApertureFStop,
   parseBlockingCues,
+  parseDofPreset,
+  parseFocusTargetOrDistance,
   parseLensFocalLengthMm,
+  parseMetricDistanceM,
   parseOptionalVec3,
   parseTargetOrVec3,
   parseVec3,
@@ -59,6 +69,7 @@ export {
 
 // Re-export camera cue parsing helpers for downstream usage and tests
 export {
+  applyFlatShotCameraOverrides,
   parseBaseSphericalPose,
   parseCameraCueSpec,
   parseObserverShots,
@@ -267,8 +278,9 @@ export function parseStageScore(
         typeof rawStartCandidate === 'number' &&
         Number.isFinite(rawStartCandidate);
 
-      const stageCamera = parseStageCameraCueSpec(
-        sh.stage_camera ?? sh.stageCamera
+      const stageCamera = applyFlatShotCameraOverrides(
+        sh,
+        parseStageCameraCueSpec(sh.stage_camera ?? sh.stageCamera)
       );
       const observerCamera = parseCameraCueSpec(
         sh.observer_camera ?? sh.observerCamera,
@@ -419,6 +431,45 @@ export function parseStageScore(
       ? root.offset
       : 0;
 
+  // Parse optional optics configuration block (or root-level dof_blur / dof / aperture)
+  const rawOptics =
+    root.optics && typeof root.optics === 'object'
+      ? (root.optics as Record<string, unknown>)
+      : undefined;
+  const rawDofBlur =
+    rawOptics?.dof_blur ??
+    rawOptics?.dofBlur ??
+    rawOptics?.blur ??
+    root.dof_blur ??
+    root.dofBlur;
+  const dofBlur =
+    rawDofBlur === true || rawDofBlur === 'true' || rawDofBlur === 'yes';
+  const defaultDof = parseDofPreset(
+    rawOptics?.dof ??
+      rawOptics?.depth_of_field ??
+      rawOptics?.depthOfField ??
+      root.dof
+  );
+  const defaultApertureFStop = parseApertureFStop(
+    rawOptics?.aperture ??
+      rawOptics?.f_stop ??
+      rawOptics?.fStop ??
+      root.aperture
+  );
+  const optics: ScoreOpticsConfig | undefined =
+    rawOptics !== undefined ||
+    rawDofBlur !== undefined ||
+    defaultDof !== undefined ||
+    defaultApertureFStop !== undefined
+      ? {
+          dofBlur,
+          ...(defaultDof !== undefined ? { defaultDof } : {}),
+          ...(defaultApertureFStop !== undefined
+            ? { defaultApertureFStop }
+            : {}),
+        }
+      : undefined;
+
   const warning =
     missingStartShotIds.length > 0
       ? `Shot "${missingStartShotIds[0]}" omits "start" (defaulted to 0.0s). Add "start:" or declare "continuous: true" at root to auto-chain.`
@@ -450,6 +501,7 @@ export function parseStageScore(
       shots,
       observerShots,
       blocking,
+      ...(optics ? { optics } : {}),
     },
     error: null,
     warning,

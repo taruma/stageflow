@@ -52,7 +52,12 @@ Visualizes the physical camera filming the shot inside the 3D diorama:
 - **Camera Chassis & Lens Barrel**: Positioned at `stageCamera.transform.position` and oriented via `lookAt(target)`. Automatically hidden when `cameraMode === 'stage-pov'` so the 3D chassis does not occlude the viewport lens. The chassis, lens barrel, and frustum pyramid bank around the optical sightline inside a dedicated rolled group (`rotation.z = -pose.roll`), while the floating monospace label badge (`STAGE CAM`) remains upright in unrolled space.
 - **Rectangular Cinematic Gate Frustum**:
   - Projects 4 corner pyramid rays from the lens nodal point `(0, 0, 0)` to the 4 corners of the rectangular focus gate at `frustumDepth`, sized via `computeFrustumGateDimensions(focalLengthMm, frustumDepth, aspectRatio)`.
-  - Renders a luminous **Focus Plane Frame** with subtle rule-of-thirds horizon guides, translucent glass fill, and a target center crosshair ring right at the subject's focus plane.
+  - Renders a luminous **Focus Plane Frame** with subtle rule-of-thirds horizon guides, translucent glass fill, and a target center crosshair ring that slides dynamically along the optical axis to `stageCamera.dof.focusDistanceM`.
+- **3D Depth-of-Field Brackets & Off-Axis Focus Tether (`StageCameraFocusRig.tsx`)**:
+  - **Near & Far DoF Limit Brackets (`StageCameraDofBrackets`)**: When `stageCamera.dof.enabled` is true (`shallow` / `medium` or explicit `aperture`), renders translucent rectangular boundary frames at $z = D_{\text{near}}$ and $z = \min(D_{\text{far}}, 1.8 \cdot \text{frustumDepth})$ connected along the 4 frustum edges, visualizing the exact in-focus depth zone as it expands with wider lenses (`24mm`) or contracts with telephoto lenses (`85mm`).
+  - **Off-Axis Focus Target Tether (`StageCameraFocusTether`)**: When `focus:` targets an entity or 3D point displaced from the camera's look-at `target` ($\ge 0.05\text{m}$), renders an emerald (`#10b981`) beacon and dashed tether line from the focus plane center to the focused subject.
+- **Opt-In Single-Pass Stage Cam DoF Blur (`StageCamDofEffect.tsx`)**:
+  - When enabled in `Stage Cam POV` or the `StageCamMonitorCanvas` (via the **`[ Blur ]`** button, hotkey **`B`**, or score `optics: { dof_blur: true }`), renders the scene into a single-pass WebGL2 `WebGLRenderTarget` with a hardware `THREE.DepthTexture` (`UnsignedInt248Type`) and applies a 24-tap golden-angle spiral Vogel disk bokeh shader driven by the exact Gaussian thin-lens Circle of Confusion equation $\beta(z)$. Defaults to crisp rendering (`false`) for mobile/tablet GPU safety.
 - **3D Trajectory Path Curve**:
   - When moving (`maneuver !== 'cut'` and `showPath === true`), renders a dashed 3D curve along `stageCamera.trajectoryPoints` with start (sphere) and end (octahedron) waypoint beacons. Automatically hidden when `cameraMode === 'stage-pov'` so the physical track and waypoint beacons do not occlude the camera lens during forward/dolly moves. Trajectory coordinates are referentially stable across frames of the active shot via pure `WeakMap` score caching, preventing 10Hz React memoization jitter and maintaining a stationary, physically accurate track in world space.
 - **3D Target Offset Tether & Anchor Beacon (`StageCameraOffsetTether.tsx`)**:
@@ -233,16 +238,17 @@ Adopts professional 3D viewport convention (Blender, Unreal Engine, Maya) distri
 - **Transient Toast Feedback (`ToastContainer.tsx`)**: Lightweight 3-second floating feedback banners confirming file drops, auto-forks, project deletions, and exports.
 - **Legacy Draft Auto-Migration**: On startup hydration, any legacy drafts in IndexedDB that modified bundled presets are automatically migrated into standalone Custom Projects with zero data loss.
 
-### 4.10 Viewport Label & Composition Guides Controls (`LabelDisplayModeToggle.tsx`)
+### 4.10 Viewport Label, Composition Guides & Optical DoF Blur Controls (`LabelDisplayModeToggle.tsx`)
 - Floating top-right glassmorphic pill overlay mounted on the 3D diorama canvas.
-- Conditioned so the `Guides` toggle button appears strictly when in `Stage Cam POV` (`cameraMode === 'stage-pov'`), keeping the 3D Observer view chrome uncluttered.
+- Conditioned so the `Guides` and `Blur` toggle buttons appear strictly when in `Stage Cam POV` (`cameraMode === 'stage-pov'`), keeping the 3D Observer view chrome uncluttered.
 - Supports 3 distinct directorial visibility modes (`LabelDisplayMode`):
   - **`All`**: Displays both actor/prop mannequins and Stage Camera labels with playback auto-ghosting.
   - **`Cam` (`camera-only`)**: Hides actor/prop labels, keeping only the illustrative Stage Camera lens & maneuver badge.
   - **`Off`**: Hides all 3D labels (including floor cardinal orientation tags) for an unobstructed geometric diorama.
 - **Global Hotkey `L`**: Cycles through `'all' -> 'camera-only' -> 'off' -> 'all'` at any time (ignored while typing in text inputs or code editors).
 - **Composition Guides Toggle (`[ Guides ]` / Hotkey `G`)**: Toggles the 90% safe-action boundary, rule-of-thirds grid, and center reticle across both the right Viewfinder and the left Procedural Monitor.
-- **Synchronous Persistence**: Preferences are remembered across reloads via `localStorage` (`stageflow:ui:label-mode`, `stageflow:ui:viewfinder-guides`).
+- **Optical DoF Blur Toggle (`[ Blur ]` / Hotkey `B`)**: Toggles real-time thin-lens Depth-of-Field bokeh simulation across both the Stage Cam POV viewfinder and the Procedural Stage Cam Monitor (`stageflow:ui:dof-blur`).
+- **Synchronous Persistence**: Preferences are remembered across reloads via `localStorage` (`stageflow:ui:label-mode`, `stageflow:ui:viewfinder-guides`, `stageflow:ui:dof-blur`).
 
 ### 4.11 Director's Optical Viewfinder Overlay (`StageCamViewfinderOverlay.tsx`)
 - Engages automatically whenever the 3D diorama switches to **`Stage Cam POV`** (`cameraMode === 'stage-pov'`).

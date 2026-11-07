@@ -25,6 +25,7 @@ const STORAGE_KEYS = {
   VIDEO_HEIGHT_PCT: 'stageflow:ui:video-height-pct',
   SUBPANEL_COLLAPSED: 'stageflow:ui:subpanel-collapsed',
   EDITOR_WORD_WRAP: 'stageflow:ui:editor-word-wrap',
+  DOF_BLUR: 'stageflow:ui:dof-blur',
 } as const;
 
 export function loadStoredSplitPreset(): SplitPreset | null {
@@ -309,5 +310,25 @@ export function saveStoredEditorWordWrap(wrap: boolean): void {
     // Ignore storage quota or access errors
   }
 }
+
+export function loadStoredDofBlur(): boolean | null {
+  try {
+    const val = localStorage.getItem(STORAGE_KEYS.DOF_BLUR);
+    if (val === 'true') return true;
+    if (val === 'false') return false;
+  } catch {
+    // Ignore localStorage access restrictions
+  }
+  return null;
+}
+
+export function saveStoredDofBlur(enabled: boolean): void {
+  try {
+    localStorage.setItem(STORAGE_KEYS.DOF_BLUR, String(enabled));
+  } catch {
+    // Ignore storage quota or access errors
+  }
+}
+
 
 

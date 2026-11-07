@@ -53,9 +53,10 @@ stageflow/
 │   ├── core/                        # Layer 1: Pure TypeScript Math, Optics & Stateless Frame Engine
 │   │   ├── types.ts                 # Canonical interfaces (StageScore, ShotCue, ObserverShotCue, BlockingCueSpec, StageFrame)
 │   │   ├── constants.ts             # Metric bounds, sensor constants, blueprint color palette
-│   │   ├── opticsMath.ts            # Focal length (mm) <-> Vertical FOV (deg) & Rectangular Gate math
+│   │   ├── opticsMath.ts            # Focal length (mm) <-> Vertical FOV (deg), Rectangular Gate & Thin-Lens DoF math
 │   │   ├── sphericalMath.ts         # Degrees <-> Radians, Spherical <-> Cartesian, shortestAngleDiff
 │   │   ├── maneuvers.ts             # 9 easing curves & 11 3D camera trajectory maneuvers
+│   │   ├── dofEvaluator.ts          # Stateless focus distance, rack-focus interpolation & thin-lens DoF evaluator
 │   │   ├── entityEngine.ts          # Facade: evaluateEntitiesAtTime dispatcher (<50 lines)
 │   │   ├── entityBlockingEvaluator.ts # Tier 1: Decoupled root blocking: timeline kinematics
 │   │   ├── entityLegacyEvaluator.ts # Tier 2: Legacy per-shot shots[].entities kinematics
@@ -64,7 +65,7 @@ stageflow/
 │   │   ├── shotPoseEvaluator.ts     # Single-shot pose evaluation, Catmull-Rom splines & 3D path sampling
 │   │   ├── trajectoryChain.ts       # Forward pose chaining (P_0 -> P_k) & multi-shot timeline tracks
 │   │   ├── frameEngine.ts           # Master stateless evaluator: computeStageFrame(t, score)
-│   │   ├── scorePrimitives.ts       # Low-level vector, angle, lens & enum normalizers
+│   │   ├── scorePrimitives.ts       # Low-level vector, angle, lens, focus/DoF & enum normalizers
 │   │   ├── cameraCueParser.ts       # Camera poses, shot cue specs, waypoints & observer shots
 │   │   ├── scoreParser.ts           # Resilient YAML/JSON parser & degree/meter normalizer
 │   │   ├── scoreYamlUtils.ts        # Pure YAML header id/title modifiers & slug generators
@@ -83,7 +84,7 @@ stageflow/
 │   │   ├── useFileDropLoader.ts     # Drag-and-drop & file picker loader for .yaml and .mp4 pairs
 │   │   ├── useScorePersistence.ts   # Startup hydration, draft auto-saving & confirmed reset
 │   │   ├── useWorkspaceLayout.ts    # Split workspace presets, column percentages & storage sync
-│   │   ├── useStudioDisplaySettings.ts # 3D diorama label modes, guides & 'L'/'G' hotkeys
+│   │   ├── useStudioDisplaySettings.ts # 3D diorama label modes, guides, DoF blur & 'L'/'G'/'B' hotkeys
 │   │   ├── useToastNotifications.ts # Floating toast notification queue & auto-dismiss timers
 │   │   └── useAppShellTheme.ts      # SceneFlow theme hook (Auto/Dark/Warm/Light) & transition suppression
 │   ├── stage/                       # Layer 4: React Three Fiber 3D Blueprint Diorama
@@ -92,10 +93,12 @@ stageflow/
 │   │   ├── BlueprintStageScene.tsx  # Shared lighting, metric floor grid, and mannequins
 │   │   ├── BlueprintFloorGrid.tsx   # Metric floor grid (1m / 0.25m), perimeter frame & compass labels
 │   │   ├── ObserverCameraRig.tsx    # Viewport PerspectiveCamera + OrbitControls handover & POV cuts
-│   │   ├── StageCameraRig.tsx       # 3D camera prop, rectangular gate frustum, focus plane & path line
+│   │   ├── StageCameraRig.tsx       # 3D camera prop, rectangular gate frustum, sliding focus plane & path line
+│   │   ├── StageCameraFocusRig.tsx  # 3D Near/Far DoF limit brackets & emerald off-axis focus tether
 │   │   ├── StageCameraOffsetTether.tsx # 3D cyan anchor beacon & dashed tether line for target offsets
 │   │   ├── StageCamViewRig.tsx      # Stage Camera POV lock controller for procedural monitor
-│   │   ├── StageCamMonitorCanvas.tsx# True 3D Stage Cam monitor with optical safe-action HUD
+│   │   ├── StageCamDofEffect.tsx    # Opt-in single-pass WebGL2 thin-lens Depth-of-Field blur effect
+│   │   ├── StageCamMonitorCanvas.tsx# True 3D Stage Cam monitor with optical safe-action HUD & DoF blur toggle
 │   │   ├── DirectionalMannequin.tsx # Stylized character/prop proxies with facing visor & floor trails
 │   │   └── StageBillboardLabel.tsx  # Crisp 3D HTML floating identity badges
 │   ├── ui/                          # Layer 5: 2D Directorial UI Shell

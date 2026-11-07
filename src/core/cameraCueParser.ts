@@ -17,7 +17,11 @@ import {
   normalizeCameraEasing,
   normalizeCameraManeuver,
   parseAngleToRad,
+  parseApertureFStop,
+  parseDofPreset,
+  parseFocusTargetOrDistance,
   parseLensFocalLengthMm,
+  parseMetricDistanceM,
   parseOptionalVec3,
   parseTargetOrVec3,
   parseVec3,
@@ -168,6 +172,16 @@ export function parseCameraCueSpec(
       .filter((w) => w && typeof w === 'object')
       .map((w) => {
         const wp = w as Record<string, unknown>;
+        const wpFocus = parseFocusTargetOrDistance(
+          wp.focus ?? wp.focus_target ?? wp.focusTarget
+        );
+        const wpFocusDistanceM =
+          parseMetricDistanceM(
+            wp.focus_distance ?? wp.focusDistance ?? wp.focus_dist
+          ) ?? wpFocus.distanceM;
+        const wpDofRaw = wp.dof ?? wp.depth_of_field ?? wp.depthOfField;
+        const wpApertureRaw =
+          wp.aperture ?? wp.f_stop ?? wp.fStop ?? wp.t_stop ?? wpDofRaw;
         return {
           target: parseTargetOrVec3(wp.target),
           targetOffset: parseOptionalVec3(
@@ -184,6 +198,16 @@ export function parseCameraCueSpec(
             wp.lens !== undefined || wp.focal_length !== undefined
               ? parseLensFocalLengthMm(wp.lens ?? wp.focal_length, defaultLensMm)
               : undefined,
+          ...(wpFocus.target !== undefined ? { focus: wpFocus.target } : {}),
+          ...(wpFocusDistanceM !== undefined
+            ? { focusDistanceM: wpFocusDistanceM }
+            : {}),
+          ...(parseDofPreset(wpDofRaw) !== undefined
+            ? { dof: parseDofPreset(wpDofRaw) }
+            : {}),
+          ...(parseApertureFStop(wpApertureRaw) !== undefined
+            ? { apertureFStop: parseApertureFStop(wpApertureRaw) }
+            : {}),
           at:
             typeof wp.at === 'number' && Number.isFinite(wp.at)
               ? wp.at
@@ -191,6 +215,41 @@ export function parseCameraCueSpec(
         };
       });
   }
+
+  const parsedFocus = parseFocusTargetOrDistance(
+    obj.focus ?? obj.focus_target ?? obj.focusTarget
+  );
+  const parsedFocusStart = parseFocusTargetOrDistance(
+    obj.focus_start ?? obj.focusStart
+  );
+  const parsedFocusEnd = parseFocusTargetOrDistance(
+    obj.focus_end ?? obj.focusEnd
+  );
+
+  const focusDistanceM =
+    parseMetricDistanceM(
+      obj.focus_distance ?? obj.focusDistance ?? obj.focus_dist
+    ) ?? parsedFocus.distanceM;
+  const focusDistanceStartM =
+    parseMetricDistanceM(
+      obj.focus_distance_start ?? obj.focusDistanceStart
+    ) ?? parsedFocusStart.distanceM;
+  const focusDistanceEndM =
+    parseMetricDistanceM(
+      obj.focus_distance_end ?? obj.focusDistanceEnd
+    ) ?? parsedFocusEnd.distanceM;
+
+  const rawDof = obj.dof ?? obj.depth_of_field ?? obj.depthOfField;
+  const rawAperture =
+    obj.aperture ?? obj.f_stop ?? obj.fStop ?? obj.t_stop ?? rawDof;
+  const dof = parseDofPreset(rawDof) ?? parseDofPreset(rawAperture);
+  const apertureFStop = parseApertureFStop(rawAperture);
+  const apertureStartFStop = parseApertureFStop(
+    obj.aperture_start ?? obj.apertureStart ?? obj.f_stop_start ?? obj.dof_start
+  );
+  const apertureEndFStop = parseApertureFStop(
+    obj.aperture_end ?? obj.apertureEnd ?? obj.f_stop_end ?? obj.dof_end
+  );
 
   const hasLens =
     obj.lens !== undefined ||
@@ -253,6 +312,20 @@ export function parseCameraCueSpec(
       obj.lens_end !== undefined
         ? parseLensFocalLengthMm(obj.lens_end, defaultLensMm)
         : undefined,
+    ...(parsedFocus.target !== undefined ? { focus: parsedFocus.target } : {}),
+    ...(parsedFocusStart.target !== undefined
+      ? { focusStart: parsedFocusStart.target }
+      : {}),
+    ...(parsedFocusEnd.target !== undefined
+      ? { focusEnd: parsedFocusEnd.target }
+      : {}),
+    ...(focusDistanceM !== undefined ? { focusDistanceM } : {}),
+    ...(focusDistanceStartM !== undefined ? { focusDistanceStartM } : {}),
+    ...(focusDistanceEndM !== undefined ? { focusDistanceEndM } : {}),
+    ...(dof !== undefined ? { dof } : {}),
+    ...(apertureFStop !== undefined ? { apertureFStop } : {}),
+    ...(apertureStartFStop !== undefined ? { apertureStartFStop } : {}),
+    ...(apertureEndFStop !== undefined ? { apertureEndFStop } : {}),
     breathe,
     direction,
     hasExplicitDirection,
@@ -263,6 +336,72 @@ export function parseCameraCueSpec(
     orbitSpeedRad: parseAngleToRad(obj.orbit_speed ?? obj.orbitSpeed),
     waypoints,
     trackTarget: obj.track !== false,
+  };
+}
+
+/**
+ * Supports Declarative DSL Polymorphism (Rule 2.6):
+ * Allows authors to specify focus/DoF properties flat at the shot cue root (`shots[k]`)
+ * or nested inside `shots[k].stage_camera`, with nested `stage_camera` taking precedence.
+ */
+export function applyFlatShotCameraOverrides(
+  shotObj: Record<string, unknown>,
+  stageCam: StageCameraCueSpec | undefined
+): StageCameraCueSpec | undefined {
+  const hasFlatOpticalField =
+    shotObj.focus !== undefined ||
+    shotObj.focus_target !== undefined ||
+    shotObj.focusTarget !== undefined ||
+    shotObj.focus_start !== undefined ||
+    shotObj.focusStart !== undefined ||
+    shotObj.focus_end !== undefined ||
+    shotObj.focusEnd !== undefined ||
+    shotObj.focus_distance !== undefined ||
+    shotObj.focusDistance !== undefined ||
+    shotObj.focus_dist !== undefined ||
+    shotObj.focus_distance_start !== undefined ||
+    shotObj.focusDistanceStart !== undefined ||
+    shotObj.focus_distance_end !== undefined ||
+    shotObj.focusDistanceEnd !== undefined ||
+    shotObj.dof !== undefined ||
+    shotObj.depth_of_field !== undefined ||
+    shotObj.depthOfField !== undefined ||
+    shotObj.aperture !== undefined ||
+    shotObj.f_stop !== undefined ||
+    shotObj.fStop !== undefined ||
+    shotObj.t_stop !== undefined ||
+    shotObj.aperture_start !== undefined ||
+    shotObj.apertureStart !== undefined ||
+    shotObj.aperture_end !== undefined ||
+    shotObj.apertureEnd !== undefined;
+
+  if (!hasFlatOpticalField) {
+    return stageCam;
+  }
+
+  const flatSpec = parseStageCameraCueSpec(shotObj);
+  if (!flatSpec) {
+    return stageCam;
+  }
+
+  if (!stageCam) {
+    return flatSpec;
+  }
+
+  return {
+    ...stageCam,
+    focus: stageCam.focus ?? flatSpec.focus,
+    focusStart: stageCam.focusStart ?? flatSpec.focusStart,
+    focusEnd: stageCam.focusEnd ?? flatSpec.focusEnd,
+    focusDistanceM: stageCam.focusDistanceM ?? flatSpec.focusDistanceM,
+    focusDistanceStartM:
+      stageCam.focusDistanceStartM ?? flatSpec.focusDistanceStartM,
+    focusDistanceEndM: stageCam.focusDistanceEndM ?? flatSpec.focusDistanceEndM,
+    dof: stageCam.dof ?? flatSpec.dof,
+    apertureFStop: stageCam.apertureFStop ?? flatSpec.apertureFStop,
+    apertureStartFStop:
+      stageCam.apertureStartFStop ?? flatSpec.apertureStartFStop,
+    apertureEndFStop: stageCam.apertureEndFStop ?? flatSpec.apertureEndFStop,
   };
 }
 

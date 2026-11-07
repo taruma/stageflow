@@ -10,8 +10,8 @@ It synchronizes a universal video player (**Local `.mp4`/`.webm`**, **YouTube UR
 
 1. **Stateless Functional Timeline (`Frame_t = f(t, score)`)**:
    - Pure mathematical evaluation of camera poses, forward pose chaining ($P_0 \to P_1 \to \dots \to P_k$), and decoupled actor blocking (`blocking:`) with zero-drift scrubbing determinism.
-2. **Hybrid Geometric + Directorial Lens Optics**:
-   - Metric coordinates ($1\text{ unit} = 1\text{m}$), human degrees in YAML (`pitch`, `yaw`, `rotation`), and full-frame prime focal lengths (`24mm`, `35mm`, `50mm`, `85mm`) projecting a true **Rectangular Cinematic Gate Frustum (`16:9` / `2.39:1`)** with an optical focus plane frame.
+2. **Hybrid Geometric + Directorial Lens Optics & Thin-Lens Depth of Field**:
+   - Metric coordinates ($1\text{ unit} = 1\text{m}$), human degrees in YAML (`pitch`, `yaw`, `rotation`), and full-frame prime focal lengths (`24mm`, `35mm`, `50mm`, `85mm`) projecting a true **Rectangular Cinematic Gate Frustum (`16:9` / `2.39:1`)** with a sliding Focus Plane Frame, subject-driven Rack Focus (`focus_start` $\to$ `focus_end`), 3D Near/Far DoF brackets (`dof: shallow | medium | deep`), emerald off-axis focus tether, and opt-in real-time Stage Cam bokeh simulation (`[ Blur ]` / hotkey `B`).
 3. **Dual-Camera Architecture & Free-Orbit Handover**:
    - **Observer Camera**: Drives the 3D viewport during playback and automatically releases to `OrbitControls` when paused so you can freely orbit, pan, and inspect the frozen 3D setup.
    - **Stage Camera**: Illustrative 3D camera rig inside the diorama with sightline, rectangular gate frustum, and 3D trajectory path curve.

@@ -56,6 +56,7 @@ export const StageCamViewfinderOverlay: React.FC<
   }, [score.aspectRatio]);
 
   const lensMm = Math.round(frame.stageCamera.transform.pose.focalLengthMm);
+  const dof = frame.stageCamera.dof;
   const aspectLabel =
     Math.abs(score.aspectRatio - 16 / 9) < 0.05
       ? '16:9'
@@ -94,6 +95,20 @@ export const StageCamViewfinderOverlay: React.FC<
             <span>{aspectLabel}</span>
             <span className="text-slate-500">·</span>
             <span className="text-slate-200">{lensMm}mm</span>
+            {dof.enabled && (
+              <>
+                <span className="text-slate-500">·</span>
+                <span className="text-emerald-300">f/{dof.apertureFStop}</span>
+              </>
+            )}
+            {(dof.hasExplicitFocus || dof.enabled) && (
+              <>
+                <span className="text-slate-500">·</span>
+                <span className="text-emerald-300">
+                  F {dof.focusDistanceM.toFixed(1)}m
+                </span>
+              </>
+            )}
           </div>
 
           {/* Toggleable Composition Guides */}

@@ -22,6 +22,8 @@ export interface UniversalVideoViewportProps {
   isPlaying: boolean;
   labelMode?: LabelDisplayMode;
   showGuides?: boolean;
+  dofBlurEnabled?: boolean;
+  onToggleDofBlur?: () => void;
   themeCategory?: AppThemeCategory;
   onApplyVideoUrlOverride?: (url: string) => void;
 }
@@ -36,6 +38,8 @@ export const UniversalVideoViewport: React.FC<UniversalVideoViewportProps> = ({
   isPlaying,
   labelMode,
   showGuides = true,
+  dofBlurEnabled = false,
+  onToggleDofBlur,
   themeCategory = 'dark',
 }) => {
   return (
@@ -75,6 +79,8 @@ export const UniversalVideoViewport: React.FC<UniversalVideoViewportProps> = ({
             labelMode={labelMode}
             isPlaying={isPlaying}
             showGuides={showGuides}
+            dofBlurEnabled={dofBlurEnabled}
+            onToggleDofBlur={onToggleDofBlur}
             themeCategory={themeCategory}
           />
         )}

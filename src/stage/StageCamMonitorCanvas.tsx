@@ -16,6 +16,7 @@ import type {
 import { radToDeg } from '../core/sphericalMath';
 import { BlueprintStageScene } from './BlueprintStageScene';
 import { StageCamViewRig } from './StageCamViewRig';
+import { StageCamDofEffect } from './StageCamDofEffect';
 import { getDioramaThemeColors } from './dioramaTheme';
 
 export interface StageCamMonitorCanvasProps {
@@ -25,6 +26,8 @@ export interface StageCamMonitorCanvasProps {
   labelMode?: LabelDisplayMode;
   isPlaying?: boolean;
   showGuides?: boolean;
+  dofBlurEnabled?: boolean;
+  onToggleDofBlur?: () => void;
   themeCategory?: AppThemeCategory;
 }
 
@@ -35,9 +38,12 @@ export const StageCamMonitorCanvas: React.FC<StageCamMonitorCanvasProps> = ({
   labelMode = 'all',
   isPlaying = false,
   showGuides = true,
+  dofBlurEnabled = false,
+  onToggleDofBlur,
   themeCategory = 'dark',
 }) => {
   const pose = uiFrame.stageCamera.transform.pose;
+  const dof = uiFrame.stageCamera.dof;
   const yawDeg = radToDeg(pose.yaw);
   const rollDeg = radToDeg(pose.roll);
   const themeColors = useMemo(
@@ -73,6 +79,11 @@ export const StageCamMonitorCanvas: React.FC<StageCamMonitorCanvasProps> = ({
 
         {/* 60fps Stage Camera View Controller (Gated to cut atomically with UI state) */}
         <StageCamViewRig frameRef={frameRef} uiFrame={uiFrame} />
+
+        {/* Opt-In Single-Pass Thin-Lens Depth of Field Blur Effect */}
+        {dofBlurEnabled && (
+          <StageCamDofEffect frameRef={frameRef} uiFrame={uiFrame} />
+        )}
       </Canvas>
 
       {/* 2. Optical Director's Monitor HUD Overlay */}
@@ -85,25 +96,45 @@ export const StageCamMonitorCanvas: React.FC<StageCamMonitorCanvasProps> = ({
             <span className="text-text-muted">|</span>
             <span className="text-text-body font-semibold">
               {Math.round(pose.focalLengthMm)}mm Full-Frame
+              {dof.enabled ? ` · f/${dof.apertureFStop}` : ''}
             </span>
           </div>
 
-          <div className="flex items-center gap-2 bg-surface/80 border border-border-main px-2 py-0.5 rounded-md shadow-xs">
-            <span className="text-text-muted">FOV</span>
-            <span className="text-text-main font-semibold">
-              {uiFrame.stageCamera.transform.fovDeg.toFixed(1)}°
-            </span>
-            <span className="text-border-main">·</span>
-            <span className="text-text-muted">ROLL</span>
-            <span
-              className={`font-semibold ${
-                Math.abs(rollDeg) >= 0.05
-                  ? 'text-violet-500'
-                  : 'text-text-main'
-              }`}
-            >
-              {rollDeg.toFixed(1)}°
-            </span>
+          <div className="flex items-center gap-1.5">
+            {onToggleDofBlur && (
+              <button
+                type="button"
+                onClick={onToggleDofBlur}
+                title={`Toggle Optical DoF Blur Simulation [Hotkey: B] — Currently ${
+                  dofBlurEnabled ? 'ON' : 'OFF'
+                }`}
+                className={`pointer-events-auto px-2 py-0.5 rounded-md border text-[10px] font-mono transition-colors cursor-pointer ${
+                  dofBlurEnabled
+                    ? 'bg-emerald-500 text-white border-emerald-500 font-semibold shadow-2xs'
+                    : 'bg-surface/80 border-border-main text-text-muted hover:text-text-main'
+                }`}
+              >
+                BLUR {dofBlurEnabled ? 'ON' : 'OFF'}
+              </button>
+            )}
+
+            <div className="flex items-center gap-2 bg-surface/80 border border-border-main px-2 py-0.5 rounded-md shadow-xs">
+              <span className="text-text-muted">FOV</span>
+              <span className="text-text-main font-semibold">
+                {uiFrame.stageCamera.transform.fovDeg.toFixed(1)}°
+              </span>
+              <span className="text-border-main">·</span>
+              <span className="text-text-muted">ROLL</span>
+              <span
+                className={`font-semibold ${
+                  Math.abs(rollDeg) >= 0.05
+                    ? 'text-violet-500'
+                    : 'text-text-main'
+                }`}
+              >
+                {rollDeg.toFixed(1)}°
+              </span>
+            </div>
           </div>
         </div>
 
@@ -145,6 +176,17 @@ export const StageCamMonitorCanvas: React.FC<StageCamMonitorCanvasProps> = ({
             <span>
               DIST: <strong className="text-text-main">{pose.distance.toFixed(2)}m</strong>
             </span>
+            {(dof.hasExplicitFocus || dof.enabled) && (
+              <>
+                <span className="text-border-main">·</span>
+                <span>
+                  FOCUS:{' '}
+                  <strong className="text-emerald-500">
+                    {dof.focusDistanceM.toFixed(2)}m
+                  </strong>
+                </span>
+              </>
+            )}
           </div>
         </div>
       </div>

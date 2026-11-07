@@ -2037,5 +2037,107 @@ shots:
       });
       expect(fTwoShot.entitiesById.get('samira')!.position.x).toBeCloseTo(-1.4, 2);
     });
+
+    it('evaluates static focus, dynamic rack focus between moving actors, and thin-lens DoF limits cleanly', () => {
+      const rackFocusYaml = `
+version: "1.0"
+id: "rack-focus-engine-test"
+title: "Rack Focus & DoF Evaluation Test"
+duration: 12.0
+entities:
+  - id: "alice"
+    kind: "character"
+    position: [-1.5, 0, 2.0]
+  - id: "bob"
+    kind: "character"
+    position: [1.5, 0, -2.0]
+shots:
+  - id: "shot-1-default"
+    shot: 1
+    start: 0.0
+    end: 4.0
+    stage_camera:
+      target: [0, 1.575, 0]
+      distance: 5.0
+      pitch: 0
+      yaw: 0
+      lens: 50mm
+  - id: "shot-2-rack"
+    shot: 2
+    start: 4.0
+    end: 8.0
+    stage_camera:
+      target: [0, 1.575, 0]
+      distance: 5.0
+      pitch: 0
+      yaw: 0
+      lens: 50mm
+      easing: "linear"
+      focus_start: "alice"
+      focus_end: "bob"
+      dof: "shallow"
+  - id: "shot-3-spline-focus"
+    shot: 3
+    start: 8.0
+    end: 12.0
+    stage_camera:
+      maneuver: "spline"
+      easing: "linear"
+      lens: 50mm
+      dof: "medium"
+      waypoints:
+        - target: [0, 1.575, 0]
+          distance: 5.0
+          pitch: 0
+          yaw: 0
+          focus: 2.0
+        - target: [0, 1.575, 0]
+          distance: 5.0
+          pitch: 0
+          yaw: 0
+          focus: 6.0
+`;
+      const { score, error } = parseStageScore(rackFocusYaml);
+      expect(error).toBeNull();
+      expect(score).not.toBeNull();
+
+      // Shot 1 (t = 2.0s): Omitted focus/DoF -> backward-compatible defaults
+      const f1 = computeStageFrame(2.0, score!);
+      expect(f1.stageCamera.dof.enabled).toBe(false);
+      expect(f1.stageCamera.dof.hasExplicitFocus).toBe(false);
+      expect(f1.stageCamera.dof.focusDistanceM).toBeCloseTo(5.0, 4);
+
+      // Shot 2 (t = 4.0s): Camera at [0, 1.575, 5], looking along -Z toward [0, 1.575, 0].
+      // Alice is at z = 2.0 -> orthogonal distance along -Z is 5.0 - 2.0 = 3.0m.
+      // Bob is at z = -2.0 -> orthogonal distance along -Z is 5.0 - (-2.0) = 7.0m.
+      const fRackStart = computeStageFrame(4.0, score!);
+      expect(fRackStart.stageCamera.dof.enabled).toBe(true);
+      expect(fRackStart.stageCamera.dof.preset).toBe('shallow');
+      expect(fRackStart.stageCamera.dof.apertureFStop).toBeCloseTo(2.8, 4);
+      expect(fRackStart.stageCamera.dof.focusDistanceM).toBeCloseTo(3.0, 3);
+      expect(fRackStart.stageCamera.dof.focusTargetPoint!.x).toBeCloseTo(-1.5, 3);
+      expect(fRackStart.stageCamera.dof.focusTargetPoint!.z).toBeCloseTo(2.0, 3);
+      expect(fRackStart.stageCamera.dof.nearLimitM).toBeCloseTo(2.73, 2);
+      expect(fRackStart.stageCamera.dof.farLimitM).toBeCloseTo(3.33, 2);
+
+      // Midpoint of Rack Focus (t = 6.0s, linear easing): focus plane is halfway at 5.0m
+      const fRackMid = computeStageFrame(6.0, score!);
+      expect(fRackMid.stageCamera.dof.focusDistanceM).toBeCloseTo(5.0, 3);
+      expect(fRackMid.stageCamera.dof.focusTargetPoint!.x).toBeCloseTo(0.0, 3);
+      expect(fRackMid.stageCamera.dof.focusTargetPoint!.z).toBeCloseTo(0.0, 3);
+
+      // End of Rack Focus (t = 7.999s): focus plane arrives at Bob (7.0m)
+      const fRackEnd = computeStageFrame(7.999, score!);
+      expect(fRackEnd.stageCamera.dof.focusDistanceM).toBeCloseTo(7.0, 2);
+      expect(fRackEnd.stageCamera.dof.focusTargetPoint!.x).toBeCloseTo(1.5, 2);
+      expect(fRackEnd.stageCamera.dof.focusTargetPoint!.z).toBeCloseTo(-2.0, 2);
+
+      // Shot 3 (t = 10.0s, midpoint of spline waypoints with focus: 2.0 -> 6.0): focus is 4.0m
+      const fSplineMid = computeStageFrame(10.0, score!);
+      expect(fSplineMid.stageCamera.dof.enabled).toBe(true);
+      expect(fSplineMid.stageCamera.dof.preset).toBe('medium');
+      expect(fSplineMid.stageCamera.dof.apertureFStop).toBeCloseTo(5.6, 4);
+      expect(fSplineMid.stageCamera.dof.focusDistanceM).toBeCloseTo(4.0, 3);
+    });
   });
 });

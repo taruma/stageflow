@@ -1082,5 +1082,96 @@ shots:
       expect(score).not.toBeNull();
       expect(score!.shots[1].entities.ruby.cut).toBe(true);
     });
+
+    it('parses root optics config, cue-level focus/DoF, rack focus, waypoint focus, and flat shot camera overrides (Rule 2.6)', () => {
+      const dofYaml = `
+version: "1.0"
+id: "dof-parse-test"
+title: "DoF & Focus Parsing Test"
+optics:
+  dof_blur: true
+  dof: "medium"
+  aperture: "f/4.0"
+entities:
+  - id: "alice"
+    kind: "character"
+    position: [-2, 0, 1]
+  - id: "bob"
+    kind: "character"
+    position: [2, 0, -2]
+shots:
+  - id: "shot-1-nested"
+    start: 0
+    end: 4
+    stage_camera:
+      target: "center"
+      focus: "alice"
+      dof: "shallow"
+      aperture: "f/2.0"
+  - id: "shot-2-rack"
+    start: 4
+    end: 8
+    stage_camera:
+      target: "center"
+      focus_start: "alice"
+      focus_end: "bob"
+      aperture_start: 2.0
+      aperture_end: 8.0
+  - id: "shot-3-flat-polymorphic"
+    start: 8
+    end: 12
+    focus: "4.5m"
+    dof: "shallow"
+    stage_camera:
+      target: "alice"
+  - id: "shot-4-spline-waypoints"
+    start: 12
+    end: 16
+    stage_camera:
+      maneuver: "spline"
+      waypoints:
+        - target: "alice"
+          focus: "alice"
+          dof: "shallow"
+        - target: "bob"
+          focus: "bob"
+          aperture: 5.6
+`;
+      const { score, error } = parseStageScore(dofYaml);
+      expect(error).toBeNull();
+      expect(score).not.toBeNull();
+
+      // Root optics config
+      expect(score!.optics).toBeDefined();
+      expect(score!.optics!.dofBlur).toBe(true);
+      expect(score!.optics!.defaultDof).toBe('medium');
+      expect(score!.optics!.defaultApertureFStop).toBe(4.0);
+
+      // Shot 1 nested focus & DoF
+      const s1Cam = score!.shots[0].stageCamera!;
+      expect(s1Cam.focus).toBe('alice');
+      expect(s1Cam.dof).toBe('shallow');
+      expect(s1Cam.apertureFStop).toBe(2.0);
+
+      // Shot 2 rack focus & aperture ramp
+      const s2Cam = score!.shots[1].stageCamera!;
+      expect(s2Cam.focusStart).toBe('alice');
+      expect(s2Cam.focusEnd).toBe('bob');
+      expect(s2Cam.apertureStartFStop).toBe(2.0);
+      expect(s2Cam.apertureEndFStop).toBe(8.0);
+
+      // Shot 3 flat polymorphic properties merged onto stageCamera
+      const s3Cam = score!.shots[2].stageCamera!;
+      expect(s3Cam.focusDistanceM).toBeCloseTo(4.5, 4);
+      expect(s3Cam.dof).toBe('shallow');
+
+      // Shot 4 spline waypoints with focus & dof/aperture
+      const s4Wps = score!.shots[3].stageCamera!.waypoints!;
+      expect(s4Wps).toHaveLength(2);
+      expect(s4Wps[0].focus).toBe('alice');
+      expect(s4Wps[0].dof).toBe('shallow');
+      expect(s4Wps[1].focus).toBe('bob');
+      expect(s4Wps[1].apertureFStop).toBe(5.6);
+    });
   });
 });

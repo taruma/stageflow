@@ -296,6 +296,7 @@ This chapter defines scene-level metadata, video source binding, stage metric di
 | **`shots`** | `array` | `[]` | `score` | Mandatory array of film coverage shots. |
 | **`blocking`** | `array` | `undefined` | — | Optional decoupled actor/prop movement timeline. |
 | **`observer_shots`** | `array` | `undefined` | `observerShots` | Optional decoupled diorama viewport movement timeline. |
+| **`optics`** | `object` | `undefined` | — | Optional scene-wide optical defaults (`dof_blur: true`, `dof: "shallow"`, `aperture: "f/2.8"`). |
 
 ### 3.2 Video Binding & Formats
 
@@ -462,6 +463,16 @@ StageFlow uses a unified spherical camera model across both the Illustrative Sta
 | **`frustum_depth`**| `number` | `m` | Stage only | `cone_length` | Depth of 3D gate frustum. `0` or omitted auto-matches distance to target. |
 | **`frustum_color`**| `string` | hex | Stage only | — | Hex color token for frustum lines and focus frame (default: `"#f59e0b"`). |
 | **`show_path`** | `boolean` | — | Stage only | `showPath` | Renders 3D dashed trajectory ribbon in diorama (default: `true`). |
+| **`focus`** | `string \| number \| array` | `m` | Stage only | `focus_target`, `focusTarget` | Subject entity ID/label, 3D coordinate `[x,y,z]`, or manual metric focus distance (`3.5` or `"3.5m"`). |
+| **`focus_start`** | `string \| number \| array` | `m` | Stage only | `focusStart` | Starting focus target or metric distance for a rack focus pull. |
+| **`focus_end`** | `string \| number \| array` | `m` | Stage only | `focusEnd` | Ending focus target or metric distance for a rack focus pull. |
+| **`focus_distance`** | `number \| string` | `m` | Stage only | `focusDistance`, `focus_dist` | Explicit manual focus distance in meters (`0.4m` to `100.0m`). |
+| **`focus_distance_start`** | `number \| string` | `m` | Stage only | `focusDistanceStart` | Starting manual focus distance in meters for a rack focus pull. |
+| **`focus_distance_end`** | `number \| string` | `m` | Stage only | `focusDistanceEnd` | Ending manual focus distance in meters for a rack focus pull. |
+| **`dof`** | `"shallow" \| "medium" \| "deep"` | — | Stage only | `depth_of_field`, `depthOfField` | Semantic Depth-of-Field preset (`shallow` = $f/2.8$, `medium` = $f/5.6$, `deep` = $\infty$). |
+| **`aperture`** | `number \| string` | $f$-stop | Stage only | `f_stop`, `fStop` | Numeric or string lens aperture $f$-stop (e.g. `2.8` or `"f/2.8"`, clamped to $[0.7, 64.0]$). |
+| **`aperture_start`** | `number \| string` | $f$-stop | Stage only | `apertureStart`, `f_stop_start` | Starting lens aperture $f$-stop for an iris ramp. |
+| **`aperture_end`** | `number \| string` | $f$-stop | Stage only | `apertureEnd`, `f_stop_end` | Ending lens aperture $f$-stop for an iris ramp. |
 
 ### 4.2 Aiming & Anchors (`target`, `from`, `target_offset`)
 
@@ -551,6 +562,16 @@ StageFlow models a standard **35mm Full-Frame Sensor** ($36.0\text{mm}$ horizont
 | **`105mm`** | `11.0°` | `8.2°` | `14.7°` |
 | **`135mm`** | `8.6°` | `6.4°` | `11.4°` |
 | **`200mm`** | `5.8°` | `4.3°` | `7.7°` |
+
+#### Focus Distance, Rack Focus & Depth of Field (`focus`, `dof`, `aperture`)
+While `target:` controls where the camera **points** its composition, `focus:` controls where the lens is **focused** along the optical axis:
+- **Subject-Driven Focus (`focus: "actor_a"`)**: Projects the subject's 3D position orthogonally onto the camera's forward sightline ($d_{\text{focus}} = (\vec{P}_{\text{focus}} - \vec{E}) \cdot \hat{F}$), eliminating off-axis cosine overshoot when an actor is framed on the left or right thirds.
+- **Rack Focus (`focus_start` $\to$ `focus_end`)**: Smoothly pulls the focus plane from a foreground subject (`focus_start: "actor_a"`) to a background subject (`focus_end: "actor_b"`) across the shot using the shot's `easing` profile.
+- **Depth of Field (`dof` & `aperture`)**:
+  - `dof: "shallow"` ($f/2.8$): Isolates a single actor (`~0.60m` sharp zone at `50mm` / `3.0m`) and renders Near & Far DoF limit brackets in the 3D diorama.
+  - `dof: "medium"` ($f/5.6$): Covers a standard two-shot conversation (`~1.24m` sharp zone at `50mm` / `3.0m`).
+  - `dof: "deep"` ($\infty$, default): Everything from foreground to background is crisp.
+  - Opt-in Stage Cam viewfinder bokeh blur can be toggled live via **`[ Blur ]`** (hotkey **`B`**) or enabled in the YAML root via `optics: { dof_blur: true }`.
 
 ### 4.7 Catmull-Rom Multi-Waypoint Spline (`maneuver: "spline"`)
 
