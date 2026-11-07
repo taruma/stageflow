@@ -55,6 +55,11 @@ Types: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`.
   3. Cold start with custom/IndexedDB scene pointer
   4. Cold start with active draft edits
 
+### 2.6 Declarative DSL Polymorphism (Flat vs. Nested vs. Scoped Overrides)
+- **Never assume a single syntax shape for declarative DSLs (YAML/JSON).** In human-authored DSLs, directors author properties either flat at the cue root (`- id: cue-1, continuous: true, target: hero`) or nested inside specialized sub-blocks (`- id: cue-1, camera: { continuous: true, target: hero }`).
+- **Support both flat and nested authoring**: When introducing or modifying any cue-level property, always parse both the cue root and the nested spec block.
+- **Enable scoped hierarchy overrides**: Scoped child blocks (e.g. `shots[k].observer_camera` or `shots[k].stage_camera`) must always be able to explicitly override parent shot or track-level flags.
+
 ---
 
 ## 3. Mandatory Pre-Flight Domain Specification Lookup Gate
@@ -123,8 +128,12 @@ Every change—whether in core math, media drivers, 3D stage components, or UI�
 ### Pre-Delivery Audit Checklist
 Before reporting completion of any task:
 1. **Self-Audit Chaining & Edge Cases**: For forward-chaining or state-persistence changes (`trajectoryChain.ts`, `entity*Evaluator.ts`, `scoreParser.ts`), verify both explicit-value and omitted-field fallback branches so composite states (e.g. `baseTarget + offset`) never double-accumulate, and assert final 3D world-space transforms in unit tests.
-2. Run `npm test`, `npm run build`, and `npm run lint`.
-3. Verify that no monolithic files were introduced and layer boundaries remain pure.
-4. Run `rg` across [`AGENTS.md`](AGENTS.md), [`README.md`](README.md), [`docs/*.md`](docs/) (including [`docs/ARCHITECTURE_FILE_MAP.md`](docs/ARCHITECTURE_FILE_MAP.md)), and [`.agents/skills/`](.agents/skills/) for all modified fields, invariants, or file paths, and synchronize every reference.
-5. Record granular change bullets in [`CHANGELOG.md`](CHANGELOG.md) under `## [Unreleased]` based directly on pending diffs (`git diff HEAD`).
-6. Run `git status` and `git diff HEAD` and provide a ready-to-copy Conventional Commit message.
+2. **DSL Polymorphism Audit**: Verify that newly introduced or modified properties are accepted both flat at the cue root and nested inside spec blocks (e.g. `camera:` / `observer_camera:`), and verify scoped child overrides.
+3. **Compiler Strictness Verification**: Always run `npm run build` (`tsc -b && vite build`) or `npx tsc -b` alongside `npm test`. Never rely on transpiled Vitest passes alone, as esbuild strips types without enforcing strict flags (`noUnusedParameters`, strict null checks).
+4. **Docs-as-Code Fixture Awareness**: In documentation suites that act as live test fixtures (e.g. `tests/unit/guideSnippets.test.ts`), any added or modified markdown YAML block directly impacts unit test suites. Run tests after updating docs.
+5. **Dual-Tier Documentation Sync**: When updating documentation for schema changes, update both descriptive guide prose (`YAML_AUTHORING_GUIDE.md`) AND formal AST contract tables (`STAGEFLOW_SCRIPT_SPECIFICATION.md §7.2`).
+6. Run `npm test`, `npm run build`, and `npm run lint`.
+7. Verify that no monolithic files were introduced and layer boundaries remain pure.
+8. Run `rg` across [`AGENTS.md`](AGENTS.md), [`README.md`](README.md), [`docs/*.md`](docs/) (including [`docs/ARCHITECTURE_FILE_MAP.md`](docs/ARCHITECTURE_FILE_MAP.md)), and [`.agents/skills/`](.agents/skills/) for all modified fields, invariants, or file paths, and synchronize every reference.
+9. Record granular change bullets in [`CHANGELOG.md`](CHANGELOG.md) under `## [Unreleased]` based directly on pending diffs (`git diff HEAD`).
+10. Run `git status` and `git diff HEAD` and provide a ready-to-copy Conventional Commit message.

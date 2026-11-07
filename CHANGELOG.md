@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Agent Governance Hardening for Declarative DSL Polymorphism & Pre-Delivery Verification (`AGENTS.md`)**:
+  - Added Rule 2.6 (`Declarative DSL Polymorphism`) to [`AGENTS.md`](AGENTS.md), codifying that properties must be parsed and supported both flat at the cue root and nested inside specialized sub-blocks (`camera:`, `observer_camera:`), with scoped child blocks empowered to override parent track defaults.
+  - Hardened Section 5 (`Pre-Delivery Audit Checklist`) with four model-agnostic guardrails: (1) mandatory DSL polymorphism audits, (2) strict compiler verification (`tsc -b`) to catch unused parameters and type defects masked by transpiled Vitest runners, (3) docs-as-code fixture awareness (`guideSnippets.test.ts`), and (4) dual-tier documentation synchronization across descriptive guides and formal normalized AST contract tables.
 - **Observer Camera Continuity & Parity with Stage Camera (`src/core/types.ts`, `src/core/cameraCueParser.ts`, `src/core/scoreParser.ts`, `src/core/trajectoryChain.ts`, `tests/unit/*`, `docs/*`, `.agents/skills/*`)**:
   - Brought full temporal and kinematic continuity to the Observer Camera, achieving bit-for-bit parity with the Stage Camera across both Tier 1 (`observer_shots:`) and Tier 2 (`shots[].observer_camera`).
   - Generalized `isContinuous` in [`src/core/trajectoryChain.ts`](src/core/trajectoryChain.ts) by removing the hardcoded `role === 'stage'` barrier across trajectory sampling, cache building, and runtime track evaluation, enabling Observer Camera Dutch roll (`roll`) and framing offsets (`target_offset`) to smoothly persist and glide across cue boundaries without snapping to neutral baselines ($0^\circ$ and $[0, 0, 0]$).
