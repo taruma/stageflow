@@ -40,63 +40,15 @@ export const ScoreAuthoringGuideView: React.FC<ScoreAuthoringGuideViewProps> = (
     return 'guide';
   });
   const [filterInput, setFilterInput] = useState('');
-  const [debouncedFilterQuery, setDebouncedFilterQuery] = useState('');
   const [activeId, setActiveId] = useState<string>('section-1');
   const [isMobileDrawerOpen, setMobileDrawerOpen] = useState(false);
 
-  // 150ms debounce for markdown AST compilation & KaTeX math rendering
-  useEffect(() => {
-    if (!filterInput) {
-      setDebouncedFilterQuery('');
-      return;
-    }
-    const timer = setTimeout(() => {
-      setDebouncedFilterQuery(filterInput);
-    }, 150);
-    return () => clearTimeout(timer);
-  }, [filterInput]);
-
   const handleClearFilter = useCallback(() => {
     setFilterInput('');
-    setDebouncedFilterQuery('');
   }, []);
 
   const currentRawDoc = activeDoc === 'spec' ? scriptSpecificationRaw : yamlAuthoringGuideRaw;
   const tocItems = useMemo(() => extractGuideToc(currentRawDoc), [currentRawDoc]);
-
-  const displayedContent = useMemo(() => {
-    if (!debouncedFilterQuery.trim()) return currentRawDoc;
-    const query = debouncedFilterQuery.toLowerCase();
-    const lines = currentRawDoc.split('\n');
-    const matchedIndices: number[] = [];
-
-    lines.forEach((line, idx) => {
-      if (line.toLowerCase().includes(query)) matchedIndices.push(idx);
-    });
-
-    if (matchedIndices.length === 0) {
-      return `_No matches found for **"${debouncedFilterQuery}"**. Try searching for coordinate axes, maneuver names, or lenses._`;
-    }
-
-    const contextLines = new Set<number>();
-    matchedIndices.forEach((idx) => {
-      for (let i = Math.max(0, idx - 2); i <= Math.min(lines.length - 1, idx + 2); i++) {
-        contextLines.add(i);
-      }
-    });
-
-    const sorted = Array.from(contextLines).sort((a, b) => a - b);
-    const result: string[] = [`_Found ${matchedIndices.length} matches for **"${debouncedFilterQuery}"**:_\n\n---`];
-    let lastIdx = -1;
-
-    sorted.forEach((idx) => {
-      if (lastIdx !== -1 && idx > lastIdx + 1) result.push('\n`...`\n');
-      result.push(lines[idx]);
-      lastIdx = idx;
-    });
-
-    return result.join('\n');
-  }, [currentRawDoc, debouncedFilterQuery]);
 
   const handleSwitchDoc = (nextDoc?: GuideDocType, anchor?: string) => {
     if (nextDoc && nextDoc !== activeDoc) {
@@ -116,21 +68,12 @@ export const ScoreAuthoringGuideView: React.FC<ScoreAuthoringGuideViewProps> = (
   };
 
   const handleJumpToSection = (targetId: string) => {
-    const jump = () => {
-      const el =
-        document.getElementById(targetId) ||
-        document.querySelector(`[data-slug="${targetId}"]`);
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        setActiveId(targetId);
-      }
-    };
-
-    if (filterInput.trim()) {
-      handleClearFilter();
-      setTimeout(jump, 60);
-    } else {
-      jump();
+    const el =
+      document.getElementById(targetId) ||
+      document.querySelector(`[data-slug="${targetId}"]`);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      setActiveId(targetId);
     }
   };
 
@@ -186,7 +129,7 @@ export const ScoreAuthoringGuideView: React.FC<ScoreAuthoringGuideViewProps> = (
       window.removeEventListener('scroll', handleScroll);
       cancelAnimationFrame(animationFrameId);
     };
-  }, [tocItems, displayedContent]);
+  }, [tocItems, currentRawDoc]);
 
   const markdownComponents = useMemo(
     () => createGuideMarkdownComponents({ onSwitchDoc: handleSwitchDoc }),
@@ -293,7 +236,7 @@ export const ScoreAuthoringGuideView: React.FC<ScoreAuthoringGuideViewProps> = (
             rehypePlugins={[rehypeKatex]}
             components={markdownComponents}
           >
-            {displayedContent}
+            {currentRawDoc}
           </ReactMarkdown>
         </main>
       </div>

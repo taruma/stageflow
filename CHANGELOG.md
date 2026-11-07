@@ -18,7 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Replaced the redundant 179-line annotated YAML template in Section 7 of `docs/STAGEFLOW_SCRIPT_SPECIFICATION.md` with the **Normalized AST Data Model & Clamping Contract** synchronized 1:1 with `src/core/constants.ts` and `src/core/types.ts`, and updated `GUIDE_DOC_SHORTCUTS.spec[6]` label in [`src/ui/guide/guideUtils.ts`](src/ui/guide/guideUtils.ts) from `"Schema"` to `"Contract"`.
   - Streamlined `docs/YAML_AUTHORING_GUIDE.md` Sections 1.2, 4.3, 4.4, and 4.6 to focus on directorial feel, accepted aliases, and lookup tables while cross-linking to `docs/STAGEFLOW_SCRIPT_SPECIFICATION.md` for formal KaTeX derivations.
   - Synchronized all baseline camera pose snippets across documentation to `DEFAULT_OBSERVER_POSE` (`[0, 1.0, 0]`, `7.5m`, `26°`, `38°`, `35mm`) and `DEFAULT_STAGE_CAMERA_POSE` (`[0, 1.2, 0]`, `3.2m`, `6°`, `-25°`, `50mm`).
-- **Documentation Viewer & Studio Granular Bundle Code-Splitting and Search Debounce (`src/App.tsx`, `src/ui/InteractiveStudioApp.tsx`, `vite.config.ts`, `src/ui/guide/*`)**:
+- **TOC-Targeted Topic Search & Document Integrity Preservation (`src/ui/guide/ScoreAuthoringGuideView.tsx`, `docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md`)**:
+  - Removed legacy markdown line-grep text shredder (`displayedContent`) that previously replaced the reading canvas with fragmented line snippets during search.
+  - Search input now directly filters the Table of Contents topic outline on the left sidebar in real time while keeping the central reading canvas 100% complete, intact, and readable.
+  - Eliminated unnecessary search debouncing and full markdown AST / KaTeX re-compilations, enabling native 60fps typing without frame drops or re-renders.
+  - Selecting any topic in the filtered Table of Contents navigates directly to the target anchor without clearing or modifying the document.
+- **Documentation Viewer & Studio Granular Bundle Code-Splitting (`src/App.tsx`, `src/ui/InteractiveStudioApp.tsx`, `vite.config.ts`, `src/ui/guide/*`)**:
   - Decoupled `InteractiveStudioApp` from `src/App.tsx` into a dedicated orchestrator component, reducing `App.tsx` from 627 lines to 137 lines.
   - Implemented dynamic lazy-loading with `React.lazy()` for `InteractiveStudioApp`, `ScoreAuthoringGuideView`, and `HeadlessRecorderView`, allowing synchronous URL routing to request only the bundle chunks needed for the active mode.
   - Configured Rollup `manualChunks` in `vite.config.ts` separating `vendor-three` (~364kB gzip), `vendor-katex` (~133kB gzip), and `vendor-codemirror` (~112kB gzip), dropping the initial cold-load payload of `?mode=guide` and `?mode=spec` from 783kB gzip to 181kB gzip (a ~77% payload reduction).
@@ -27,7 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Two-Tier Table of Contents Sidebar with Subheadings & Scroll Spy (`src/ui/guide/GuideSidebarToc.tsx`, `src/ui/guide/ScoreAuthoringGuideView.tsx`, `src/ui/guide/guideUtils.ts`, `src/ui/guide/guideMarkdownComponents.tsx`, `tests/unit/guideUtils.test.ts`)**:
   - Implemented a dedicated persistent left sidebar Table of Contents (`GuideSidebarToc.tsx`) for the in-app documentation viewer on desktop screens (`lg:` / $\ge 1024\text{px}$), showing full two-tier hierarchy of H2 chapters and detailed H3 subheadings.
   - Added live Scroll Spy tracking via requestAnimationFrame scroll observing, highlighting active sections and subheadings as the user scrolls through the document.
-  - Added real-time topic filtering with quick-clear button, filtering both the TOC tree and the rendered reading canvas.
+  - Added real-time topic filtering with quick-clear button, filtering the TOC tree outline in real-time.
   - Added responsive slide-over drawer for mobile and tablet displays (`< lg`) triggered by a header TOC button with backdrop blur and auto-close on selection.
   - Retired the redundant top horizontal shortcut pill bar, reclaiming vertical reading space.
   - Updated `cleanMarkdownHeading` and `extractGuideToc` in `guideUtils.ts` with comprehensive unit test coverage in `tests/unit/guideUtils.test.ts`.
