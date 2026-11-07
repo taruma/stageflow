@@ -73,7 +73,7 @@ sequenceDiagram
     Core-->>Loop: nextFrame (StageFrame)
     Loop->>Loop: Mutate frameRef.current = nextFrame
     R3F->>Three: Read frameRef.current & mutate Object3D transforms directly
-    alt Every >= 95ms OR Shot Changed OR Paused/Seeked
+    alt Every >= 95ms OR Shot Changed OR Entity Cue Changed OR Paused/Seeked
         Loop->>UI: setUiSnapshot({ timestampSec, frame, liveViewportPose })
     end
 ```
@@ -82,17 +82,22 @@ sequenceDiagram
    - Inside [`DioramaCanvas.tsx`](../src/stage/DioramaCanvas.tsx), `FrameLoopTicker` runs at `useFrame` priority `-1`, calling `evaluateTick60fps()` once per animation frame.
    - [`ObserverCameraRig`](../src/stage/ObserverCameraRig.tsx), [`StageCameraRig`](../src/stage/StageCameraRig.tsx), and [`DirectionalMannequin`](../src/stage/DirectionalMannequin.tsx) read `frameRef.current` inside their own `useFrame` hooks and mutate `THREE.Group` / `THREE.PerspectiveCamera` transforms directly in memory.
 2. **Tier 2 — Throttled ~10Hz React UI Snapshot (`uiSnapshot`)**:
-   - `setUiSnapshot` is throttled to fire at most once every `95ms` during continuous playback, or immediately whenever a shot boundary is crossed, playback pauses, the user scrubs/steps frames (`forceSyncUi()`), or the camera POV mode is toggled.
+   - `setUiSnapshot` is throttled to fire at most once every `95ms` during continuous playback, or immediately whenever a shot boundary is crossed (`shotChanged`), an entity enters/exits an active blocking cue (`entityCueChanged`), playback pauses, the user scrubs/steps frames (`forceSyncUi()`), or camera POV mode is toggled.
+   - **Live Free-Orbit Telemetry Sync (`notifyFreeOrbitChange`)**: When dragging `OrbitControls` in Free Orbit mode, telemetry updates are throttled at `80ms` and backed by an `85ms` trailing timer (`trailingSyncTimeoutRef`) guaranteeing the user's final resting mouse coordinates always flush reliably to React state. 1-click camera preset snaps bypass the throttle (`immediate = true`) to update coordinates instantaneously.
 
 ---
 
-## 4. Transport Controls & Keyboard Shortcuts (`src/hooks/useMediaClock.ts`)
+## 4. Transport Controls & Global Keyboard Shortcuts (`src/hooks/`)
 
-| Action | UI Control | Keyboard Shortcut | Behavior |
+Transport playback, frame-stepping, and diorama display modes are managed via [`useMediaClock.ts`](../src/hooks/useMediaClock.ts) and [`useStudioDisplaySettings.ts`](../src/hooks/useStudioDisplaySettings.ts). All single-key shortcuts include input element protection, safely deactivating whenever the user types inside an `<input>`, `<textarea>`, `<select>`, or `isContentEditable` element (such as CodeMirror 6 or search fields).
+
+| Action | UI Control | Keyboard Shortcut | Behavior & Target Hook |
 | :--- | :--- | :--- | :--- |
-| **Play / Pause** | Play / Pause Button | `Space` | Toggles active `MediaClockDriver` playback; restarts from `0.0s` if at end. |
-| **Frame Step Back** | `< [` Button | `[` | Pauses playback and seeks backward by $-\frac{1}{30}\text{s}$ (`-33.3ms`). |
-| **Frame Step Forward** | `] >` Button | `]` | Pauses playback and seeks forward by $+\frac{1}{30}\text{s}$ (`+33.3ms`). |
-| **Skip $\pm 1\text{s}$ / $\pm 5\text{s}$** | Scrubber Bar | `ArrowLeft` / `ArrowRight` (`+Shift` for $5\text{s}$) | Seeks $\pm 1\text{s}$ (or $\pm 5\text{s}$ with `Shift`) and increments `lastManualSeekIdRef`. |
-| **Playback Speed** | `0.25x`, `0.5x`, `1x`, `2x` | — | Adjusts `playbackRate` across HTML5, YouTube, and Procedural drivers. |
-| **Loop Active Shot** | `Loop Shot` Toggle | — | Automatically seeks back to `activeShot.startSec` when reaching `activeShot.endSec`. |
+| **Play / Pause** | Play / Pause Button | `Space` | Toggles active `MediaClockDriver` playback; restarts from `0.0s` if at end (`useMediaClock`). |
+| **Frame Step Back** | `< [` Button | `[` | Pauses playback and seeks backward by $-\frac{1}{30}\text{s}$ (`-33.3ms`) (`useMediaClock`). |
+| **Frame Step Forward** | `] >` Button | `]` | Pauses playback and seeks forward by $+\frac{1}{30}\text{s}$ (`+33.3ms`) (`useMediaClock`). |
+| **Skip $\pm 1\text{s}$ / $\pm 5\text{s}$** | Scrubber Bar | `ArrowLeft` / `ArrowRight` (`+Shift` for $5\text{s}$) | Seeks $\pm 1\text{s}$ (or $\pm 5\text{s}$ with `Shift`) and increments `lastManualSeekIdRef` (`useMediaClock`). |
+| **Cycle 3D Labels** | Label Mode Toggle | `L` | Cycles diorama labels through `'all' -> 'camera-only' -> 'off' -> 'all'` (`useStudioDisplaySettings`). |
+| **Toggle Safe Guides**| Guides Button | `G` | Toggles optical safe-action box, 3x3 grid, and center reticle in Stage Cam POV / Monitor (`useStudioDisplaySettings`). |
+| **Playback Speed** | `0.25x`, `0.5x`, `1x`, `2x` | — | Adjusts `playbackRate` across HTML5, YouTube, and Procedural drivers (`useMediaClock`). |
+| **Loop Active Shot** | `Loop Shot` Toggle | — | Automatically seeks back to `activeShot.startSec` when reaching `activeShot.endSec` (`useMediaClock`). |

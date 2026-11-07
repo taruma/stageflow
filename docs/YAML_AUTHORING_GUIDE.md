@@ -248,15 +248,18 @@ The detective now translates smoothly from $t = 0.0\text{s}$ to $t = 8.0\text{s}
 | **`recoil`** | Shockwave impulse kick (`breathe: 1.25` default) that settles back onto the subject |
 | **`spline`** | Smooth $C^1$ Catmull-Rom curve passing through an arbitrary sequence of `waypoints:` |
 
-### 2.5 Learn From Bundled Blueprints
+### 2.5 Learn From Bundled Studies & Blueprints
 
-StageFlow bundles 5 production-grade blueprint scores in `src/scores/blueprints/`:
+StageFlow organizes choreography scores into a clean 3-tier taxonomy (`study`, `blueprint`, `custom`). Explore the bundled catalog for real-world blocking patterns:
 
-1. **`demo_blueprint.yaml` (Blueprint 01: Two-Shot Arc)**: Single-shot profile two-shot to OTS arc using `50mm` standard prime.
-2. **`blueprint_02_dialogue.yaml` (Blueprint 02: Dialogue Flow)**: 6-shot dialogue scene demonstrating OTS reversal, 85mm low hero arc, Catmull-Rom spline, and decoupled diorama master orbits (`observer_shots:`).
-3. **`blueprint_03_ball_pass.yaml` (Blueprint 03: The Long Distance Pass)**: 30-meter 3-actor sequence with parabolic projectile kinetics, dynamic character gaze tracking, and Dutch angles from $-18^\circ$ to $+22^\circ$.
-4. **`blueprint_04_cinematography_tutorial.yaml` (Blueprint 04: Cinematography Masterclass)**: 16-shot tutorial sequence teaching framing sizes (EWS to ECU), rule-of-thirds `target_offset`, continuous oners, and barrel rolls.
-5. **`blueprint_05_two_rooms.yaml` (Blueprint 05: Two Rooms)**: 17-shot sequence in `2.39:1` anamorphic scope demonstrating multi-actor decoupled blocking (`blocking:`) across two physical rooms with carried item prop tracking.
+- **Directorial Scene Studies (`src/scores/studies/`)**:
+  - **`vector_field.yaml` (Vector Field — Primary Default Scene)**: Authored by Taruma Sakti (1,080 lines, 32 shots, decoupled continuous `blocking:`, 6 observer moves). Demonstrates large-scale multi-actor spatial staging, continuous dialogue tracking, dynamic camera speed ramps, and theatrical look-at anchor handoffs.
+- **Factory Camera-Blocking Blueprints (`src/scores/blueprints/`)**:
+  1. **`demo_blueprint.yaml` (Blueprint 01: Two-Shot Arc)**: Single-shot profile two-shot to OTS arc using `50mm` standard prime.
+  2. **`blueprint_02_dialogue.yaml` (Blueprint 02: Dialogue Flow)**: 6-shot dialogue scene demonstrating OTS reversal, 85mm low hero arc, Catmull-Rom spline, and decoupled diorama master orbits (`observer_shots:`).
+  3. **`blueprint_03_ball_pass.yaml` (Blueprint 03: The Long Distance Pass)**: 30-meter 3-actor sequence with parabolic projectile kinetics, dynamic character gaze tracking, and Dutch angles from $-18^\circ$ to $+22^\circ$.
+  4. **`blueprint_04_cinematography_tutorial.yaml` (Blueprint 04: Cinematography Masterclass)**: 16-shot tutorial sequence teaching framing sizes (EWS to ECU), rule-of-thirds `target_offset`, continuous oners, and barrel rolls.
+  5. **`blueprint_05_two_rooms.yaml` (Blueprint 05: Two Rooms)**: 17-shot sequence in `2.39:1` anamorphic scope demonstrating multi-actor decoupled blocking (`blocking:`) across two physical rooms with carried item prop tracking.
 
 ### 2.6 The 8 Most Common Authoring Mistakes
 

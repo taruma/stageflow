@@ -31,13 +31,18 @@ Both the **Observer Camera** (viewport camera) and the **Stage Camera** (illustr
 ```typescript
 export interface SphericalPose {
   target: Vec3;          // 3D look-at target point in meters
-  distance: number;      // Radial distance from target to camera eye in meters
+  distance: number;      // Radial distance from target to camera eye in meters (0.4m to 100.0m)
   pitch: number;         // Vertical elevation angle in radians (-85° to +85°)
   yaw: number;           // Horizontal azimuth angle in radians around Y-axis
   roll: number;          // Optical sightline roll angle in radians (0 = level horizon, + = CW from operator POV)
-  focalLengthMm: number; // Full-frame equivalent focal length in millimeters
+  focalLengthMm: number; // Full-frame equivalent focal length in millimeters (12mm to 200mm)
 }
 ```
+
+### 2.0 Canonical Boundaries (`CAMERA_LIMITS` in `constants.ts`)
+- **Distance ($d$)**: Clamped to $[0.4\text{m}, 100.0\text{m}]$ (`CAMERA_LIMITS.MIN_DISTANCE_M = 0.4`, `CAMERA_LIMITS.MAX_DISTANCE_M = 100.0`). The $100\text{m}$ ceiling supports wide-angle architectural overviews, stadium/arena tracking, and long telephoto master shots.
+- **Pitch ($\theta$)**: Clamped to $[-85^\circ, +85^\circ]$ ($\left[-1.4835, +1.4835\right]\text{ rad}$) to eliminate top/bottom pole gimbal singularities.
+- **Focal Length ($f_{\text{mm}}$)**: Clamped to $[12\text{mm}, 200\text{mm}]$ full-frame sensor equivalents.
 
 ### 2.1 Forward Conversion (`sphericalToCartesian`)
 Given a `SphericalPose`, [`sphericalToCartesian`](../src/core/sphericalMath.ts) computes the 3D eye position $(x, y, z)$ and the orthonormal rolled camera up-vector $\vec{U}_{\text{rolled}}$:
@@ -93,8 +98,8 @@ StageFlow models camera framing using standard **35mm Full-Frame Sensor Gate Wid
 - Calling `computeStageFrame(5.0, score)` after playing forward ($0 \to 5$) or scrubbing backward ($10 \to 5$) produces the exact same 3D coordinates bit-for-bit.
 
 ### 4.2 Forward Pose Chaining ($P_0 \to P_1 \to \dots \to P_k$) & Track Normalization
-In [`trajectoryChain.ts`](../src/core/trajectoryChain.ts), [`cameraTargetResolver.ts`](../src/core/cameraTargetResolver.ts), [`shotPoseEvaluator.ts`](../src/core/shotPoseEvaluator.ts), and [`entityEngine.ts`](../src/core/entityEngine.ts):
-- Each shot cuts cleanly (`0ms`) to its target anchor point (`spec.target`) unless explicit camera travel from another anchor is authored via `from:`. Both baseline `stage` cameras and shot cues resolve entity IDs/labels, stage presets (`"center"`, `"origin"`, `"stage"` $\to$ `[0, 1.0, 0]`), and explicit `[x, y, z]` coordinates.
+In [`trajectoryChain.ts`](../src/core/trajectoryChain.ts), [`cameraTargetResolver.ts`](../src/core/cameraTargetResolver.ts), [`shotPoseEvaluator.ts`](../src/core/shotPoseEvaluator.ts), and the modular entity engine ([`entityEngine.ts`](../src/core/entityEngine.ts), [`entityBlockingEvaluator.ts`](../src/core/entityBlockingEvaluator.ts), [`entityLegacyEvaluator.ts`](../src/core/entityLegacyEvaluator.ts), [`entityKinematicUtils.ts`](../src/core/entityKinematicUtils.ts)):
+- Each shot cuts cleanly (`0ms`) to its target anchor point (`spec.target`) unless explicit camera travel from another anchor is authored via `from:`. Both baseline `stage` cameras and shot cues resolve entity IDs/labels, stage presets (`"center"`, `"origin"`, `"stage"` $\to$ `[0, 1.0, 0]`), and explicit `[x, y, z]` coordinates. Targeting a character automatically anchors to eye level ($0.90 \times \text{height} \approx 1.575\text{m}$), while props anchor to center-volume ($0.50 \times \text{height}$).
 - Continuous camera parameters (`distance`, `pitch`, `yaw`) forward-chain from the preceding shot's terminal pose $P_{\text{end}}$ when unspecified, but immediately adopt newly specified angles (`pitch`, `pitch_start`, `yaw`, `yaw_start`) without cross-shot drift.
 - **Option A Shot-Boundary Roll & Target-Offset Reset**: Unlike spatial position angles, both `roll` (Dutch angle) and `target_offset` (`[dx, dy, dz]` metric displacement from the base anchor) default to resetting to their neutral baselines (`0°` and `[0, 0, 0]`) at shot boundaries whenever a shot omits those parameters. To animate a continuous Dutch tilt or target offset across shots or smoothly recover back to neutral, authors specify `roll_start`/`roll_end` (or `roll_end: 0`) and `target_offset_start`/`target_offset_end` (or `target_offset_end: [0, 0, 0]`).
 - For moving camera maneuvers, `sampleCueTrajectoryPoints()` in [`trajectoryChain.ts`](../src/core/trajectoryChain.ts) pre-samples $N = 32$ 3D world-space coordinates across the entire shot duration ($t_k \in [\text{startSec}, \text{endSec}]$) evaluating moving targets at each temporal step. Results are cached in a pure `WeakMap<StageScore, CueTrackCache>` so intra-shot frames yield referentially stable (`===`) trajectory point arrays without floating/drifting tracks or React memoization jitter. Trajectory lines are visibility-gated to the active shot ID to prevent 1-frame asynchronous ghosting across cut boundaries.
@@ -102,9 +107,9 @@ In [`trajectoryChain.ts`](../src/core/trajectoryChain.ts), [`cameraTargetResolve
   1. **Tier 1 (Root `observer_shots:`)**: If `score.observerShots` is defined, the Observer Camera evaluates exclusively across these decoupled cues, allowing diorama viewport moves to span smoothly across film cuts. During any time gap between observer shots, the camera holds the terminal resting pose $P_{\text{end}}$ of the last completed cue and forward-chains into the next cue.
   2. **Tier 2 (Per-Shot `shots[].observer_camera`)**: If root `observer_shots:` is omitted, the engine extracts observer cues from `shots:`.
   3. **Tier 3 (Baseline Default)**: If neither is defined, the camera holds steady at `stage.defaultObserverPose`.
-- **3-Tier Entity Blocking Normalization (`entityEngine.ts`, `entityBlockingEvaluator.ts`, `entityLegacyEvaluator.ts`)**:
-  1. **Tier 1 (Root `blocking:`)**: If `score.blocking` is defined and non-empty, scene entities evaluate across these decoupled time windows (`startSec`, `endSec`) via a **Two-Pass Kinematic Evaluator** (Pass 1 resolves all entity 3D positions and visibility chains; Pass 2 resolves facing rotations and $C^0$ continuous `look_at` handoffs). During un-cued gaps, entities hold their preceding terminal pose ($P_{\text{end}, k-1}$). While an entity is inside an active blocking cue with displacement $> 0.05\text{m}$, its floor trail (`trailPoints`) reflects the full 16-segment path of that blocking cue across any camera cuts (Option A). Per-shot `shots[k].entities.<id>.highlighted` and `note` overlay non-destructively on top.
-  2. **Tier 2 (Per-Shot `shots[].entities`)**: If root `blocking:` is omitted, entity movements chain across `shots:`.
+- **3-Tier Entity Blocking Normalization (`entityEngine.ts`, `entityBlockingEvaluator.ts`, `entityLegacyEvaluator.ts`, `entityKinematicUtils.ts`)**:
+  1. **Tier 1 (Root `blocking:`)**: If `score.blocking` is defined and non-empty, scene entities evaluate across these decoupled time windows (`startSec`, `endSec`) via a **Two-Pass Kinematic Evaluator** in `entityBlockingEvaluator.ts` (Pass 1 resolves all entity 3D positions and visibility chains; Pass 2 resolves facing rotations and $C^0$ continuous `look_at` handoffs). During un-cued gaps, entities hold their preceding terminal pose ($P_{\text{end}, k-1}$). While an entity is inside an active blocking cue with displacement $> 0.05\text{m}$, its floor trail (`trailPoints`) reflects the full 16-segment path of that blocking cue across any camera cuts (built via `buildGroundTrailPoints` in `entityKinematicUtils.ts`). Per-shot `shots[k].entities.<id>.highlighted` and `note` overlay non-destructively on top.
+  2. **Tier 2 (Per-Shot `shots[].entities`)**: If root `blocking:` is omitted, entity movements chain across `shots:` via `entityLegacyEvaluator.ts`.
   3. **Tier 3 (Baseline Default)**: If neither provides movement, entities hold their initial pose from `entities:`.
 
 ### 4.3 Supported Easing Curves & Trajectory Maneuvers (`maneuvers.ts`)
@@ -132,7 +137,7 @@ In [`trajectoryChain.ts`](../src/core/trajectoryChain.ts), [`cameraTargetResolve
 
 ## 5. Declarative YAML Choreography Schema (`scoreParser.ts`, `scorePrimitives.ts`, `cameraCueParser.ts`)
 
-Scores are authored in human-readable YAML (see [`src/scores/blueprints/demo_blueprint.yaml`](../src/scores/blueprints/demo_blueprint.yaml)):
+Scores are authored in human-readable YAML (see primary directorial study [`src/scores/studies/vector_field.yaml`](../src/scores/studies/vector_field.yaml) and synthetic testbeds in [`src/scores/blueprints/`](../src/scores/blueprints/)):
 
 ```yaml
 version: "1.0"
@@ -149,8 +154,8 @@ stage:
   depth: 10                          # Stage depth in meters
   grid_step: 1                       # Major grid spacing in meters
   observer_camera:
-    target: [0, 1.0, 0]
-    distance: 7.5
+    target: [0, 1.0, 0]              # Or "center", "origin", "stage"
+    distance: 7.5                    # Clamped to [0.4, 100.0]m
     pitch: 26                        # Degrees
     yaw: 38                          # Degrees
     lens: 35mm
@@ -165,9 +170,25 @@ entities:
   - id: "protagonist"
     label: "Subject A (Lead)"
     kind: "character"                # "character" (actor/person) | "prop" (set/furniture/item/object) | "marker" (spike/mark)
+    style: "mannequin"               # "mannequin" (default) | "edges" | "silhouette" | "wireframe"
     position: [-0.9, 0, 0]           # Meters (Y=0 is floor)
     rotation: 90                     # Facing angle in degrees
     color: "#38bdf8"
+  - id: "ball"
+    label: "Soccer Ball"
+    kind: "prop"                     # Or "item", "object"
+    shape: "sphere"                  # "box" (default) | "sphere" | "cylinder" | "capsule"
+    style: "edges"                   # "edges" (default) | "glass" | "solid" | "wireframe"
+    position: [0, 0, 0]
+    radius: 0.35                     # Auto-derives height = 2 * radius (0.70m)
+    color: "#f59e0b"
+  - id: "start-mark"
+    label: "Actor Spike"
+    kind: "marker"                   # Or "spike", "mark"
+    shape: "x"                       # "x" (default) | "t" | "circle" | "puck"
+    style: "tape"                    # "tape" (default) | "glow" | "beacon"
+    position: [-0.9, 0, 0]
+    color: "#fb7185"
 
 # Optional Decoupled Entity Blocking Timeline (spans continuously across film cuts)
 blocking:
@@ -233,14 +254,47 @@ observer_shots:
 
 ## 6. Client Storage Persistence & Video Authority
 
-### 6.1 Score Draft Persistence (`src/core/storage/scoreDb.ts`)
+### 6.1 Three-Tier Score Taxonomy & Catalog Registry (`scoreCatalog.ts`)
+StageFlow categorizes scores into a clean 3-tier provenance taxonomy (`ScoreCategory = 'study' | 'blueprint' | 'custom'` in [`src/core/types.ts`](../src/core/types.ts)):
+1. **Directorial Scene Studies (`'study'`)**: Authentic auteur scene studies authored by Taruma Sakti in [`src/scores/studies/`](../src/scores/studies/). The primary default scene loaded on application launch is **Vector Field** ([`vector_field.yaml`](../src/scores/studies/vector_field.yaml), 1,080 lines, 32 shots, decoupled blocking, 6 observer moves).
+2. **Bundled Blueprints (`'blueprint'`)**: Synthetic educational camera-blocking presets and testbeds in [`src/scores/blueprints/`](../src/scores/blueprints/) (BP 01–BP 05).
+3. **Custom Projects (`'custom'`)**: User-authored or imported projects persisted in browser IndexedDB.
+
+### 6.2 Score Draft Persistence (`src/core/storage/scoreDb.ts`)
 Live YAML edits and custom imported score files are persisted to an IndexedDB object store (`'stageflow-db'` $\to$ `'scores'`) using the [`idb`](https://github.com/jakearchibald/idb) promise library:
 - **Record Structure**: `{ id, title, subtitle, rawYaml, isCustom, updatedAt }`.
-- **Auto-save**: Debounced at `350ms` on every valid YAML edit.
+- **Auto-save**: Debounced at `350ms` on every valid YAML edit (and `150ms` live sync in CodeMirror 6 studio).
 - **Hydration & Deferred Invalidation**: On application mount, initial state preserves stored scene pointers without premature fallback. When IndexedDB hydration finishes, it reconciles the active scene pointer against the fully merged catalog.
 - **Confirmed Reset**: Resetting a score deletes its IndexedDB record via `deleteStoredScore()` and reverts state to the bundled YAML.
+- **Deep Linking Support**: The URL query parameter `?scene=<id>` deep-links directly to any bundled or custom score on cold load.
 
-### 6.2 Video Format Support & YAML SSOT Authority
+### 6.3 Pure Layer 1 YAML Manipulation (`src/core/scoreYamlUtils.ts`)
+Decoupled Layer 1 utility module (`src/core/scoreYamlUtils.ts`) providing pure string operations with zero React/DOM dependencies:
+- `updateScoreYamlId(yaml, newId)`: Replaces or prepends score `id` using clean quote-aware regex.
+- `updateScoreYamlTitle(yaml, newTitle)`: Modifies or inserts `title` metadata.
+- `generateCustomScoreId(baseSlug)`: Creates collision-free unique slugs (`custom-<slug>-<timestamp>`).
+- `downloadYamlBlob(filename, yamlContent)`: Triggers browser file download.
+
+### 6.4 Structured Parser Diagnostics (`scoreParser.ts`, `types.ts`)
+`parseStageScore(rawYaml)` produces a non-breaking `ParseScoreResult`:
+```typescript
+export interface ScoreDiagnostic {
+  line: number;
+  column?: number;
+  message: string;
+  severity: 'error' | 'warning';
+}
+
+export interface ParseScoreResult {
+  score: StageScore | null;
+  error: string | null;
+  warning?: string | null;
+  diagnostics?: ScoreDiagnostic[];
+}
+```
+Extracts exact line and column numbers from YAML AST errors (`YAMLParseError.linePos`) to power the 1-click **`[ Jump ]`** button in the CodeMirror 6 YAML Studio banner.
+
+### 6.5 Video Format Support & YAML SSOT Authority
 The score parser supports both concise string syntax and structured object syntax for video:
 ```yaml
 # Concise string syntax

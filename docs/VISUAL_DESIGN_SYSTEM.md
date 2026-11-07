@@ -151,14 +151,16 @@ To prevent Three.js Drei `<Html>` elements from colliding with or occluding 2D U
 The Choreography Score Library ([`ScoreLibraryModal.tsx`](../src/ui/ScoreLibraryModal.tsx)) implements an elevated 2-column studio layout (`max-w-5xl`) optimized for rapid browsing across large catalogs (10–50+ scores):
 
 ### 7.1 High-Density Navigation List (Left Column, ~40%)
+- **4-Way Filter Tabs**: Segmented category selector (`All`, `Studies`, `Blueprints`, `Custom`) for instant filtering across score collections.
 - **Ultra-Compact 2-Line Row Layout (`~50px`)**: Eliminates chunky multi-card waste, fitting 9–10 scores in the viewport simultaneously without scrolling.
-  - **Line 1 (Identity)**: Unified category tag (`BP 01`–`BP 05` in Sky Blue, `CUSTOM` in Warm Amber) alongside `Inter` (`font-sans text-xs font-semibold`) un-truncated title.
+  - **Line 1 (Identity)**: Unified category tag (`STUDY` in Violet, `BP 01`–`BP 05` in Sky Blue, `CUSTOM` in Warm Amber) alongside `Inter` (`font-sans text-xs font-semibold`) un-truncated title.
   - **Line 2 (Telemetry)**: Precision `JetBrains Mono` (`font-mono text-[10px]`) delimited string displaying media badge (`Simulator`, `YouTube`, `Local`), duration (`30.0s`), shot count (`17 shots`), and aspect ratio (`16:9`, `2.39:1`).
-- **Unified Category Color Coding**:
+- **3-Tier Category Color Coding**:
+  - **Directorial Scene Studies**: Deep **Violet / Purple** (`border-l-violet-500`, `bg-violet-500/15`, `text-violet-400`), conveying authentic scene studies authored by Taruma Sakti (such as *Vector Field*).
   - **Bundled Blueprints**: Pure diorama **Sky Blue** (`border-l-sky-500`, `bg-sky-500/15`, `text-sky-400`), conveying factory-tested architectural reference material.
   - **Custom User Projects**: Warm **Amber** (`border-l-amber-500`, `bg-amber-500/15`, `text-amber-400`), conveying active directorial drafting and user-authored scenes.
 - **Interactive Collapsible Sections**:
-  - `BUNDLED BLUEPRINTS` and `CUSTOM PROJECTS` section headers function as interactive accordions with rotating chevrons (`ChevronDown` / `ChevronRight`) and count badges.
+  - `DIRECTORIAL SCENE STUDIES`, `BUNDLED BLUEPRINTS`, and `CUSTOM PROJECTS` section headers function as interactive accordions with rotating chevrons (`ChevronDown` / `ChevronRight`) and count badges.
   - Clicking any section header collapses or expands that group's cards to optimize vertical scanning space.
 - **Keyboard Traversal & Dynamic Visibility**:
   - `↑` / `ArrowUp` and `↓` / `ArrowDown` step smoothly across visible scores, automatically skipping collapsed sections and updating the inspector and 2D SVG minimap live.

@@ -47,7 +47,7 @@ To eliminate stage clipping in the resizable split workspace without forcing bla
 > [!IMPORTANT]
 > **Instant Cut Invariant (0ms Transition)**: Switching between `'scripted'`, `'free'`, and `'stage-pov'` applies an instantaneous cut on the very next animation frame without slerp/lerp transition lag.
 
-### 2.2 The Illustrative Stage Camera Rig (`StageCameraRig.tsx`)
+### 2.3 The Illustrative Stage Camera Rig (`StageCameraRig.tsx`)
 Visualizes the physical camera filming the shot inside the 3D diorama:
 - **Camera Chassis & Lens Barrel**: Positioned at `stageCamera.transform.position` and oriented via `lookAt(target)`. Automatically hidden when `cameraMode === 'stage-pov'` so the 3D chassis does not occlude the viewport lens. The chassis, lens barrel, and frustum pyramid bank around the optical sightline inside a dedicated rolled group (`rotation.z = -pose.roll`), while the floating monospace label badge (`STAGE CAM`) remains upright in unrolled space.
 - **Rectangular Cinematic Gate Frustum**:
@@ -59,12 +59,12 @@ Visualizes the physical camera filming the shot inside the 3D diorama:
   - When a shot has an active world-space `target_offset` ($\ge 0.01\text{m}$), renders a cyan anchor beacon at the subject's un-offset look anchor (`baseTarget`) and a subtle dashed blueprint tether line connecting `baseTarget -> target`, making negative space composition, lead room, and headroom bias immediately readable in 3D.
   - Automatically hidden when `target_offset` magnitude is zero or when viewing through `'stage-pov'`.
 
-### 2.3 Shared 3D Scene & Stage Cam Monitor Viewport (`BlueprintStageScene.tsx`, `StageCamMonitorCanvas.tsx`)
+### 2.4 Shared 3D Scene & Stage Cam Monitor Viewport (`BlueprintStageScene.tsx`, `StageCamMonitorCanvas.tsx`)
 To enforce strict DRY principles and visual parity:
 - **`BlueprintStageScene.tsx`**: Renders studio lighting, the metric floor grid (`BlueprintFloorGrid.tsx`), and directional mannequins (`DirectionalMannequin.tsx`), shared identically by both the 3D Diorama and the Stage Cam Viewport.
 - **`StageCamMonitorCanvas.tsx` & `StageCamViewRig.tsx`**: When `score.video` uses `procedural://`, mounts an R3F `<Canvas>` locked directly to `frame.stageCamera.transform` (`position`, `target`, `fovDeg`), overlaid with a director's optical monitor HUD (90% safe-action frame, rule-of-thirds grid guides, optical reticle, and live focal length/distance telemetry). When video playback uses local `.mp4` or YouTube, the 3D canvas is unmounted (0% GPU overhead).
 
-### 2.4 Dual-Tier State Gating on Camera & Blocking Cuts (Atomic Handover)
+### 2.5 Dual-Tier State Gating on Camera & Blocking Cuts (Atomic Handover)
 To eliminate 1-frame asynchronous ghosting between 60fps WebGL transforms (`frameRef.current`) and batched React 19 UI state (`uiFrame`):
 - All 3D stage components ([`StageCameraRig.tsx`](../src/stage/StageCameraRig.tsx), [`ObserverCameraRig.tsx`](../src/stage/ObserverCameraRig.tsx), [`StageCamViewRig.tsx`](../src/stage/StageCamViewRig.tsx), and [`DirectionalMannequin.tsx`](../src/stage/DirectionalMannequin.tsx)) implement **Gated Frame Cuts**.
 - Camera rigs gate on `shotId` (`liveFrame.stageCamera.shotId !== uiFrame.stageCamera.shotId`), while [`DirectionalMannequin.tsx`](../src/stage/DirectionalMannequin.tsx) gates on each entity's active `cueId` (`liveEntity.cueId !== initialState.cueId`). When an entity walks continuously across camera cuts via root `blocking:`, its `cueId` remains unchanged across the cut, ensuring zero frame freeze while still synchronizing instantaneous cue boundary transitions (`useStageFrameLoop.ts` flushes `uiSnapshot` immediately on both `shotChanged` and `entityCueChanged`).
@@ -114,16 +114,16 @@ Scene entities (`character`, `prop`, `marker`) are rendered with unambiguous ori
 ### 4.1 Three-Wing Studio Header & Score Library (`WorkspaceHeader.tsx`, `ScoreLibraryModal.tsx`)
 - **SceneFlow 3-Wing Architecture**: Aligned with sister application SceneFlow (`Screenplay-Sync`), the top studio header bar is divided into three ergonomic wings:
   - **Left Wing**: Brand identity (`StageFlow · 3D Blocking Diorama`), tiered `File ▾` dropdown (`FileMenuDropdown.tsx`), and the interactive `ActiveScoreIndicator.tsx` pill displaying the active score title with uncluttered clarity (technical storage badges like `Bundled Baseline` and `Custom` are reserved for the YAML drawer and Score Library). Clicking the active score chip immediately opens the Score Library.
-  - **Center Stage**: Centered `LayoutSegmentedControl.tsx` housing the 2 workspace layout modes (`Split` | `Full`) in an elevated pill container.
-  - **Right Wing**: Standalone amber `[ 📖 Library ]` gateway button opening `ScoreLibraryModal.tsx` and the `[ YAML Score ]` drawer toggle.
-  - **Authoritative Stacking Context**: The header uses `relative z-30`, ensuring all dropdown menus (`File ▾`) and popovers render safely above viewport HUD elements, labels, and badges.
+  - **Center Stage**: Centered `LayoutSegmentedControl.tsx` housing the 2 workspace layout modes (`Split` | `Full`) and an adjacent amber-accented **`[ ✎ Edit ]`** toggle pill in an elevated container.
+  - **Right Wing**: Theme mode dropdown (`ThemeSelectorDropdown.tsx`), standalone amber `[ 📖 Library ]` gateway button opening `ScoreLibraryModal.tsx`, and a tactile 1-click **`[ Reset Layout ]`** button.
+  - **Authoritative Stacking Context**: The header uses `relative z-30`, ensuring all dropdown menus (`File ▾`, `Color Themes ▾`) and popovers render safely above viewport HUD elements, labels, and badges.
 - **Tiered `File ▾` Menu (`FileMenuDropdown.tsx`)**:
   - *Media & Score I/O*: "Open Video or Score..." (file picker trigger) and "Export Active Score (.yaml)" (direct browser download).
   - *Scores*: "New Blank Score..." and "Manage Custom Scores" (with custom scores badge count).
-  - *Reference*: "Score Library..." and link to the YAML Authoring Guide.
+  - *Reference*: "Score Library..." and links to the YAML Authoring Guide and Script Specification.
 - **2-Column Master-Detail Score Library & Project Hub (`ScoreLibraryModal.tsx`, `ScoreInspectorPane.tsx`, `ScoreStageMinimap.tsx`)**:
   - Accessible `max-w-5xl` studio dialog integrating score discovery and project lifecycle management into a unified 2-column layout.
-  - **Left Column (~40%)**: Fast-scrolling catalog list (`ScoreLibraryCard.tsx`) with category tabs (`All`, `Bundled`, `Custom`), un-truncated titles, media engine badges (`YouTube`, `Simulator`, `Video`), and active scene indicators.
+  - **Left Column (~40%)**: Fast-scrolling catalog list (`ScoreLibraryCard.tsx`) with 4-way filter tabs (`All`, `Studies`, `Blueprints`, `Custom`), un-truncated titles, media engine badges (`YouTube`, `Simulator`, `Video`), and active scene indicators across 3 collapsible sections (`DIRECTORIAL SCENE STUDIES`, `BUNDLED BLUEPRINTS`, `CUSTOM PROJECTS`).
   - **Right Column (~60%)**: Rich Choreography Inspector (`ScoreInspectorPane.tsx`) featuring:
     - **Procedural 2D Vector SVG Stage Minimap (`ScoreStageMinimap.tsx`)**: Renders architectural top-down stage schematics (metric grid, character proxy circles with facing chevrons, and camera trajectory cones) derived directly from in-memory score geometry in $< 0.1\text{ms}$ with zero WebGL overhead.
     - **Cinematic Telemetry**: Full titles, directorial notes, focal length breakdown (e.g. `35mm, 50mm`), camera maneuver tags, and actor/prop lineup.
@@ -132,12 +132,22 @@ Scene entities (`character`, `prop`, `marker`) are rendered with unambiguous ori
 - **Desktop (`lg+`) 3-Column Studio Workspace Architecture (`ResizableSplitWorkspace.tsx`)**:
   - **Left Column (~30%)**: Houses the reference video player (anchored top, aspect-fit), a continuous horizontal drag divider, and the modular **`VideoWorkspaceSubpanel.tsx`**. Features a dual-mode **`[ Notes | Stage Cam ]`** header toggle when reference video is present, allowing directors to preview the virtual 3D Stage Cam monitor directly beneath the video while capping active WebGL contexts at 2. Utilizes pure CSS container-query aspect-fit containment (`.aspect-fit-container` and `.aspect-fit-box` via `min(100cqw, calc(100cqh * ratio))`) across both viewports, strictly maintaining film aspect ratios (16:9, 2.39:1) with automatic letterboxing/pillarboxing and SMPTE 90% safe-action guides without vertical squishing.
   - **Center Column (~40%)**: Dedicated, uninterrupted 3D Blueprint Diorama viewport with 4-corner directorial HUD.
-  - **Right Column (~30%)**: Dedicated, full-height YAML Score Studio (`YamlInspectorDrawer.tsx` in flex column mode) for real-time score authoring and validation.
+  - **Right Column (~30%)**: Dedicated, full-height YAML Score Studio (`YamlStudioPanel.tsx` in flex column mode) for real-time score authoring and validation.
+- **1-Click Reset Layout (`WorkspaceHeader.tsx`, `useWorkspaceLayout.ts`)**:
+  - Clicking **Reset Layout** in the header right wing restores default column widths (30/40/30), video height (45%), and subpanel expansion, persisting changes to `localStorage` with a confirmation toast.
 - **Center Header Workflow & Layout Pairing (`LayoutSegmentedControl.tsx`)**:
   - Couples the layout mode segmented pill `[ ◫ Split | ⛶ Full ]` with an adjacent **`[ ✎ Edit ]`** toggle pill (styled with SceneFlow-aligned amber accent active state).
 - **Workspace State Matrix**:
   - `Split + Edit OFF`: Classic 2-column playback view (Video 50% / Diorama 50%). Subpanel collapses into minimal header.
   - `Split + Edit ON`: Full 3-Column Studio (Left 30% [Video + Subpanel] | Center 40% [Diorama] | Right 30% [YAML]). Subpanel defaults to expanded.
+  - `Full + Edit OFF`: 100% 3D Diorama stage. Reference video is mounted offscreen (`fixed -left-[99999px]`) to maintain media clock and audio sync without interruption.
+  - `Full + Edit ON`: 2-Column Mode (Diorama 60% | YAML 40%, video cleanly offscreened). Perfect for procedural blueprint scores.
+- **Continuous 3-Way Resizing**:
+  - Left vertical divider (col-resize) adjusts Left Column width ($18\%$ to $45\%$).
+  - Right vertical divider (col-resize) adjusts Right Column width ($18\%$ to $45\%$).
+  - Left horizontal divider (row-resize) adjusts Video container height ($180\text{px}$ min video, $140\text{px}$ min subpanel).
+  - Enforces `.is-resizing-split` during any drag operation to maintain 60fps responsiveness across WebGL and IFrames.
+- **Narrow Screens (`< lg`)**: Responsively stacks the Video Panel (`40%` height) above the 3D Diorama Stage and hides the center layout presets to prevent header crowding.
   - `Full + Edit OFF`: 100% 3D Diorama stage. Reference video is mounted offscreen (`fixed -left-[99999px]`) to maintain media clock and audio sync without interruption.
   - `Full + Edit ON`: 2-Column Mode (Diorama 60% | YAML 40%, video cleanly offscreened). Perfect for procedural blueprint scores.
 - **Continuous 3-Way Resizing**:
@@ -176,7 +186,7 @@ Adopts professional 3D viewport convention (Blender, Unreal Engine, Maya) distri
   - **Right Wing**: Unified `[ View ▾ ]` popover consolidating 1-click angle presets (Top, Iso, Front, Side, Reset), 3D label display modes (All, Cam, Off), and viewfinder guides toggle into an accessible, collision-free dropdown.
   - **Outside Click Dismissal**: Automatically closes open popovers on outside pointer interactions.
 
-### 4.3 Code-First YAML Score Studio (`src/ui/editor/`, `YamlStudioPanel.tsx`)
+### 4.5 Code-First YAML Score Studio (`src/ui/editor/`, `YamlStudioPanel.tsx`)
 - Mounted full-height in the right studio column when Edit Mode is active (`[ ✎ Edit ]` toggle).
 - **CodeMirror 6 Engine (`YamlEditorCanvas.tsx`, `useYamlEditor.ts`)**:
   - Replaces plain `<textarea>` with a virtualized, responsive CodeMirror 6 editor featuring Lezer-based YAML grammar (`@codemirror/lang-yaml`), line numbers gutter, soft line-wrapping, 2-space tab indent (`indentWithTab`), and native search/replace (`Ctrl+F`).
@@ -203,11 +213,11 @@ Adopts professional 3D viewport convention (Blender, Unreal Engine, Maya) distri
   - Displays amber warnings for non-fatal schema diagnostics.
 - **Backward Compatibility**: `YamlInspectorDrawer.tsx` is preserved as a thin adapter delegating to `YamlStudioPanel.tsx`.
 
-### 4.4 Drag-and-Drop Custom Asset Loader (`useFileDropLoader.ts`)
+### 4.6 Drag-and-Drop Custom Asset Loader (`useFileDropLoader.ts`)
 - Dropping any `.yaml`/`.yml`/`.json` file or `.mp4`/`.webm`/`.mov` video file anywhere onto the window (or selecting via `[ Load Video / YAML ]`) binds the assets in browser memory (`URL.createObjectURL`) with zero server upload required.
 - **Auto-Fork Collision Guard**: If a dropped YAML file has an `id` that matches a bundled preset (e.g. `demo-blueprint`), StageFlow automatically forks it with a unique custom ID, preserving the factory preset intact and saving the file to `Custom Projects`.
 
-### 4.5 Storage Persistence Indicator (`StorageStatusBadge.tsx`)
+### 4.7 Storage Persistence Indicator (`StorageStatusBadge.tsx`)
 - Displayed in the top studio header and the YAML inspector status bar.
 - Visually communicates the active persistence tier:
   - `Bundled Baseline` (pristine unedited preset).
@@ -215,31 +225,15 @@ Adopts professional 3D viewport convention (Blender, Unreal Engine, Maya) distri
   - `Custom (IndexedDB)` (imported custom scene saved in IndexedDB).
   - `Saving Draft...` (transient pulse while debounced auto-save writes).
 
-### 4.6 Reset Confirmation Modal (`ConfirmResetModal.tsx`)
+### 4.8 Reset Confirmation Modal (`ConfirmResetModal.tsx`)
 - Accessible modal dialog protecting against accidental data loss.
 
-### 4.7 Unified Project Management & Toast Notifications (`ScoreLibraryModal.tsx`, `ToastContainer.tsx`)
+### 4.9 Unified Project Management & Toast Notifications (`ScoreLibraryModal.tsx`, `ToastContainer.tsx`)
 - **Unified Studio Hub**: Custom projects (stored in IndexedDB) are managed directly within the Score Library's Inspector pane (`ScoreInspectorPane.tsx`), featuring inline title renaming, YAML file export, project duplication, and delete confirmation with smooth fallback to Blueprint 01, completely eliminating redundant standalone dialogs.
 - **Transient Toast Feedback (`ToastContainer.tsx`)**: Lightweight 3-second floating feedback banners confirming file drops, auto-forks, project deletions, and exports.
 - **Legacy Draft Auto-Migration**: On startup hydration, any legacy drafts in IndexedDB that modified bundled presets are automatically migrated into standalone Custom Projects with zero data loss.
 
-### 4.7 Directorial HUD & Viewport Overlays (`ShotBreakdownHud.tsx`, `CameraModeSwitcher.tsx`, `CameraPresetControls.tsx`, `CameraTelemetryCapsule.tsx`)
-- **Top-Center Camera POV Mode Switcher (`CameraModeSwitcher.tsx`)**:
-  - Elevated floating tactile segmented pill centered at `top-3` (`[ 👁 Scripted | 🪐 Free Orbit | 📷 Stage Cam ]`), decoupling viewport perspective selection from the bottom transport bar.
-- **Top-Right Directorial Camera Presets (`CameraPresetControls.tsx`, `cameraPresets.ts`)**:
-  - 1-click angle snaps cluster (`Top/Plan 84°`, `Iso 45°`, `Front 12°`, `Side 90°`, `Reset`) that snaps camera perspective and switches to Free Orbit without pausing playback.
-- **Top-Left Shot Breakdown HUD (`ShotBreakdownHud.tsx`)**:
-  - Displays active shot identifier formatted as `#xx` (`#01`–`#17`), clean un-prefixed label, prime lens focal length, gate aspect ratio, active maneuver, 3D target offset, and camera mode status.
-  - Automatically de-duplicates redundant title prefixes (`#01 Slow Arc...` instead of repeating `Shot 01 · `).
-  - **Strict 2-Line Collapsed Mode**: Features a 1-click fold chevron (and whole-card click target) shrinking the card to strictly 2 lines (`Line 1: [#xx] Title >` and `Line 2: 50mm · DOLLY · Δ 0.36m · Free Orbit`) with precision single-line truncation, saving ~70% screen real estate.
-  - **Structured Expanded Mode**: Dedicated header row for `#xx` and `OFFSET` badges, prominent full-width title row, rich optics/maneuver row with icons, and directorial description.
-  - When `target_offset` is active ($\ge 0.01\text{m}$), surfaces a cyan `OFFSET <magnitude>m` badge with crosshair icon and displays the exact world displacement vector `Δ [+X, +Y, +Z]m` in the optics row.
-- **Bottom-Right Authoring Telemetry Capsule (`CameraTelemetryCapsule.tsx`)**:
-  - Formatted with inline muted monospace micro-labels: `P 26.0° · Y 35.0° · [R -5.0°] · D 7.50m · TGT [0.0, 1.1, 0.0] · 50mm` for instant glanceability.
-- **Stage Cam Monitor Optical HUD (`StageCamMonitorCanvas.tsx`)**:
-  - Displays live lens focal length, distance, yaw, roll degrees, and metric `OFFSET` magnitude in the bottom status bar.
-
-### 4.8 Viewport Label & Composition Guides Controls (`LabelDisplayModeToggle.tsx`)
+### 4.10 Viewport Label & Composition Guides Controls (`LabelDisplayModeToggle.tsx`)
 - Floating top-right glassmorphic pill overlay mounted on the 3D diorama canvas.
 - Conditioned so the `Guides` toggle button appears strictly when in `Stage Cam POV` (`cameraMode === 'stage-pov'`), keeping the 3D Observer view chrome uncluttered.
 - Supports 3 distinct directorial visibility modes (`LabelDisplayMode`):
@@ -250,14 +244,14 @@ Adopts professional 3D viewport convention (Blender, Unreal Engine, Maya) distri
 - **Composition Guides Toggle (`[ Guides ]` / Hotkey `G`)**: Toggles the 90% safe-action boundary, rule-of-thirds grid, and center reticle across both the right Viewfinder and the left Procedural Monitor.
 - **Synchronous Persistence**: Preferences are remembered across reloads via `localStorage` (`stageflow:ui:label-mode`, `stageflow:ui:viewfinder-guides`).
 
-### 4.9 Director's Optical Viewfinder Overlay (`StageCamViewfinderOverlay.tsx`)
+### 4.11 Director's Optical Viewfinder Overlay (`StageCamViewfinderOverlay.tsx`)
 - Engages automatically whenever the 3D diorama switches to **`Stage Cam POV`** (`cameraMode === 'stage-pov'`).
 - **Centered Film Gate**: Sized to `score.aspectRatio` (`16:9`, `2.39:1`) and scaled to 84% of the viewport (`VIEWFINDER_GATE_SCALE = 0.84`), auto-scaling cleanly when the split divider is dragged.
 - **Semi-Translucent Look-Around Mask**: Renders an 82% darkened obsidian veil (`rgba(5, 8, 17, 0.82)`) outside the active gate boundary so off-camera actors and props waiting in the wings remain faintly visible while the active frame pops with commanding contrast.
 - **Framing Brackets & Stamp**: Luminous corner brackets and a top-left micro-stamp (`REC GATE · 16:9 · 50mm`).
 - **Toggleable Guides**: 90% Safe-Action dashed frame, Rule-of-Thirds 3x3 grid, and Center Optical Crosshairs.
 
-### 4.10 Deterministic 60fps Headless Viewport Recorder CLI (`scripts/record/`, `src/recorder/`)
+### 4.12 Deterministic 60fps Headless Viewport Recorder CLI (`scripts/record/`, `src/recorder/`)
 - Standalone CLI recording tool (`npm run record [scene] [options]`) driven by Playwright and FFmpeg.
 - **Stateless Frame Stepping ($t_i = i / 60\text{s}$)**: Steps through any choreography score frame-by-frame with zero dropped frames or browser pacing lag, streaming PNG frames into an FFmpeg H.264/VP9 pipe.
 - **Dedicated Headless Render Route (`?mode=headless-render`)**: `App.tsx` routes to `<HeadlessRecorderView />`, mounting a pure, chrome-free diorama canvas with zero localStorage polling, media clocks, or extraneous listeners.
@@ -274,7 +268,7 @@ Adopts professional 3D viewport convention (Blender, Unreal Engine, Maya) distri
   - `--shot <shot_id>` or `--start <sec> --end <sec>`: Slices exact shot cues or timestamp windows.
   - `--res 1080p | 4k | 720p | square | vertical`, `--fps <number>`.
 
-### 4.11 Theme Engine & Split Resize Invariants (`src/hooks/useAppShellTheme.ts`, `src/stage/dioramaTheme.ts`)
+### 4.13 Theme Engine & Split Resize Invariants (`src/hooks/useAppShellTheme.ts`, `src/stage/dioramaTheme.ts`)
 - **Visual Design System SSOT**: All typography, semantic CSS tokens, color palettes, and centralized `UI_TOKENS` are authored in [**`docs/VISUAL_DESIGN_SYSTEM.md`**](VISUAL_DESIGN_SYSTEM.md).
 - **Dual-Tier Decoupled Theme System (`useAppShellTheme.ts`, `ThemeSelectorDropdown.tsx`)**:
   - **App Shell Theme**: 4 modes (`Dark`, `Warm`, `Light`, `Auto`) persisted in `stageflow:ui:theme-mode`.
@@ -282,3 +276,7 @@ Adopts professional 3D viewport convention (Blender, Unreal Engine, Maya) distri
 - **Adaptive 3D Diorama Stage Palette (`dioramaTheme.ts`)**: Evaluates WebGL clear color, scene fog (`45m`–`160m`), and metric grid materials via `getDioramaPalette(effectiveCategory)` with **0 additional WebGL draw calls or shader passes**.
 - **Transition Freezing (`disableTransitionsTemporarily()`)**: Momentarily suppresses global CSS transitions across the DOM for 1 animation frame during theme swaps, eliminating animation reflow lag.
 - **60fps Split Resize Performance (`body.is-resizing-split`)**: Suppresses transitions and iframe pointer interception across the window while dragging the split workspace divider bar.
+
+### 4.14 Telemetry & Vercel Web Analytics (`@vercel/analytics/react`, `@vercel/speed-insights/react`)
+- Seamlessly integrates Core Web Vitals telemetry (`<Analytics />` and `<SpeedInsights />`) into the root `src/App.tsx`.
+- Gated conditionally so tracking scripts run strictly in interactive studio and documentation modes, remaining dormant during headless Playwright recording runs (`?mode=headless-render`).
