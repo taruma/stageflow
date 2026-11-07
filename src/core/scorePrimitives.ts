@@ -309,7 +309,7 @@ export function parseBlockingCues(
         endSec = startSec + 5.0;
       }
 
-      prevBlockEndSec = endSec;
+      prevBlockEndSec = Math.max(prevBlockEndSec, endSec);
 
       for (const [entKey, rawOv] of Object.entries(
         obj.entities as Record<string, unknown>
@@ -383,7 +383,7 @@ export function parseBlockingCues(
       if (hasExplicitStart) {
         startSec = Math.max(0, rawStart);
       } else if (isContinuous) {
-        startSec = prevEndSecByEntity.get(entityKey) ?? prevBlockEndSec;
+        startSec = prevBlockEndSec;
       } else {
         startSec = 0;
         if (idx > 0 && missingStartBlockingCueIds) {
@@ -403,7 +403,7 @@ export function parseBlockingCues(
         endSec = startSec + 5.0;
       }
 
-      prevBlockEndSec = endSec;
+      prevBlockEndSec = Math.max(prevBlockEndSec, endSec);
       prevEndSecByEntity.set(entityKey, endSec);
 
       cues.push({

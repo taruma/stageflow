@@ -981,6 +981,12 @@ blocking:
     actor: "evan"
     duration: 3.0
     position: [5, 0, 0]
+  # Beat 4: Flat single entity cue, omitted start, auto-chains to 9.5s with cut: true
+  - id: "beat-4-ruby"
+    actor: "ruby"
+    duration: 2.0
+    cut: true
+    position: [-8, 0, 0]
 `;
       const { score, error, warning } = parseStageScore(continuousBlockingYaml);
       expect(error).toBeNull();
@@ -988,7 +994,7 @@ blocking:
       expect(score).not.toBeNull();
 
       const blocking = score!.blocking!;
-      expect(blocking).toHaveLength(5); // 2 from beat-1, 2 from beat-2, 1 from beat-3
+      expect(blocking).toHaveLength(6); // 2 from beat-1, 2 from beat-2, 1 from beat-3, 1 from beat-4
 
       // Beat 1: 0.0 to 4.0
       const b1Ruby = blocking.find((b) => b.id === 'beat-1:ruby')!;
@@ -1011,6 +1017,14 @@ blocking:
       const b3Evan = blocking.find((b) => b.id === 'beat-3-evan')!;
       expect(b3Evan.startSec).toBe(6.5);
       expect(b3Evan.endSec).toBe(9.5);
+      expect(b3Evan.duration).toBe(3.0);
+
+      // Beat 4: 9.5 to 11.5 with cut: true
+      const b4Ruby = blocking.find((b) => b.id === 'beat-4-ruby')!;
+      expect(b4Ruby.startSec).toBe(9.5);
+      expect(b4Ruby.endSec).toBe(11.5);
+      expect(b4Ruby.duration).toBe(2.0);
+      expect(b4Ruby.cut).toBe(true);
     });
 
     it('emits diagnostic warning when blocking cue omits start outside continuous mode', () => {

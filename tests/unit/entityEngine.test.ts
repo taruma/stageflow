@@ -219,6 +219,15 @@ describe('Entity Engine Facade & Dispatching (entityEngine)', () => {
           rotationYRad: Math.PI / 2,
           easing: 'smooth',
         },
+        // Cue 3: continuous walk from (-10, 0, 5) to (-15, 0, 5) over 10s to 15s (from omitted!)
+        {
+          id: 'cue-walk-post-cut',
+          entityId: 'actor',
+          startSec: 10,
+          endSec: 15,
+          position: { x: -15, y: 0, z: 5 },
+          easing: 'linear',
+        },
       ],
     };
 
@@ -240,6 +249,13 @@ describe('Entity Engine Facade & Dispatching (entityEngine)', () => {
     const actorAt75 = resAt75.entitiesById.get('actor')!;
     expect(actorAt75.position).toEqual({ x: -10, y: 0, z: 5 });
     expect(actorAt75.trailPoints).toHaveLength(0);
+
+    // At 12.5s (mid-cue of walk post-cut): actor smoothly walks from (-10, 0, 5) to (-15, 0, 5) -> x = -12.5
+    const resAt125 = evaluateBlockingEntitiesAtTime(12.5, cutScore);
+    const actorAt125 = resAt125.entitiesById.get('actor')!;
+    expect(actorAt125.position.x).toBeCloseTo(-12.5, 3);
+    expect(actorAt125.position.z).toBeCloseTo(5.0, 3);
+    expect(actorAt125.trailPoints.length).toBeGreaterThan(0); // Trail resumes for normal walk!
   });
 
   it('evaluates Tier 2 legacy entity cut: true without sliding and with empty trailPoints', () => {
