@@ -153,6 +153,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Removed `'**/*.md'` from `server.watch.ignored` in [`vite.config.ts`](vite.config.ts), allowing Vite to detect documentation changes and invalidate `?raw` module caches automatically without serving stale strings during development.
 
 ### Refactored
+- **Prune Unused Blocking Map Remnants (`src/core/scorePrimitives.ts`)**:
+  - Removed unused `prevEndSecByEntity` map and redundant `entityKey` variables from `parseBlockingCues()`, keeping the blocking parser strictly lean and unified around the single `prevBlockEndSec` monotonic timeline playhead.
 - **App Shell Modularization & Submodule Extraction (`App.tsx`, `useWorkspaceLayout.ts`, `useStudioDisplaySettings.ts`, `useToastNotifications.ts`, `DioramaOverlayContainer.tsx`, `scoreYamlUtils.ts`)**:
   - Decomposed the 796-line monolith [`src/App.tsx`](src/App.tsx) into focused single-responsibility hooks and UI submodules, dropping `App.tsx` down to 556 lines while preserving 100% of workspace layout behaviors, storage keys, hotkeys, and diorama contracts.
   - Extracted [`src/core/scoreYamlUtils.ts`](src/core/scoreYamlUtils.ts) (63 lines) for pure Layer 1 YAML header manipulation (`updateScoreYamlId`, `updateScoreYamlTitle`, `generateCustomScoreId`, `downloadYamlBlob`), centralizing project slug generation and eliminating regex string-replacement duplication between `App.tsx` and `useScorePersistence.ts`.

@@ -242,7 +242,6 @@ export function parseBlockingCues(
   if (!Array.isArray(rawBlocking)) return undefined;
   const cues: BlockingCueSpec[] = [];
   let prevBlockEndSec = 0;
-  const prevEndSecByEntity = new Map<string, number>();
 
   rawBlocking.forEach((item, idx) => {
     if (!item || typeof item !== 'object' || Array.isArray(item)) return;
@@ -319,7 +318,6 @@ export function parseBlockingCues(
         }
         const ov = rawOv as Record<string, unknown>;
         const entityId = resolveEntityIdentifier(entKey, entities);
-        prevEndSecByEntity.set(entityId.toLowerCase(), endSec);
 
         const rawOvCut = ov.cut ?? blockCut;
         const isCut =
@@ -377,7 +375,6 @@ export function parseBlockingCues(
       obj.entity ?? obj.entity_id ?? obj.entityId ?? obj.actor ?? obj.subject;
     if (typeof rawEntity === 'string' && rawEntity.trim().length > 0) {
       const entityId = resolveEntityIdentifier(rawEntity, entities);
-      const entityKey = entityId.toLowerCase();
 
       let startSec: number;
       if (hasExplicitStart) {
@@ -404,7 +401,6 @@ export function parseBlockingCues(
       }
 
       prevBlockEndSec = Math.max(prevBlockEndSec, endSec);
-      prevEndSecByEntity.set(entityKey, endSec);
 
       cues.push({
         id: baseId,
