@@ -218,6 +218,21 @@ Adopts professional 3D viewport convention (Blender, Unreal Engine, Maya) distri
   - Omit redundant clutter (`Meters...` subtitle, storage badges, and mathematical slogans) for a clean directorial look.
 - **Directorial Action Bar (`YamlActionBar.tsx`)**:
   - Dedicated sub-header strip housing primary buffer actions: **`[ Wrap ]`** (toggles soft line-wrapping on `.cm-scroller` via a dynamic CodeMirror `Compartment`, persisted in `localStorage` under `stageflow:ui:editor-word-wrap`), **`[ Copy ]`** (copies full YAML with visual feedback), and **`[ Fork to Edit → ]`** (when viewing bundled blueprints).
+
+### 4.6 Directorial Playback Transport Suite (`DirectorialTransportBar.tsx`, `src/ui/transport/`)
+Decomposed into 3 focused submodules to preserve the $\le 250$ line modularity standard:
+1. **Directorial Timeline Track (`DirectorialTimelineTrack.tsx`)**:
+   - Proportional shot boundary razor edit cuts under the scrubber.
+   - Dual-gradient playback progress fill.
+   - **Floating Hover Preview Tooltip**: Hovering across the track displays a floating tactile pill above the cursor (`00:21.86 · #04 Evan Grabs Ruby's Arm`) clamped within container bounds, paired with a razor vertical hairline on the timeline.
+   - **Luminous Emerald Loop Indicator**: When `Loop Shot` is enabled, highlights the active shot's time range on the timeline with an emerald accent fill, subtle glow, and crisp `[` and `]` boundary bracket ticks.
+2. **Auto-Centering Shot Chips Strip (`DirectorialShotChipsStrip.tsx`)**:
+   - Automatically smooth-scrolls the active shot chip into the center on shot cut boundaries via `activeChipRef.scrollIntoView`.
+   - Allows free trackpad / mouse-wheel horizontal peeking forward and backward at any time.
+   - Edge fade masks (`mask-image: linear-gradient(...)`) indicate off-screen shots cleanly without an intrusive raw scrollbar track (`[scrollbar-width:none]`).
+3. **Unified Centered Transport Deck (`DirectorialTransportDeck.tsx`)**:
+   - Consolidates all transport controls (Restart, Frame Step Back, Play/Pause, Frame Step Forward, Timecode readout, Loop Shot toggle, Audio Mute, and Playback Speed pills `0.25x`–`2x`) into a **single, balanced, centered island**.
+   - Leaves both left and right outer flanks open, providing a clean, distraction-free cockpit.
   - Redundant project-level actions (`Duplicate`, `Reset`) are omitted as they reside in the Score Library.
 - **Dedicated Score Authoring Guide & Spec View (`ScoreAuthoringGuideView.tsx`, `?mode=guide` / `?mode=spec`)**:
   - Mounted when `?mode=guide` or `?mode=spec` is present in the URL, rendering `docs/YAML_AUTHORING_GUIDE.md` or `docs/STAGEFLOW_SCRIPT_SPECIFICATION.md` in a dedicated, full-window Markdown + KaTeX reading environment.

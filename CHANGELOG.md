@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- **Directorial Playback Interface Redesign & Submodule Decomposition (`src/ui/transport/*`, `src/ui/DirectorialTransportBar.tsx`, `docs/*`)**:
+  - Reorganized the bottom transport row into a **Unified Centered Island** (`DirectorialTransportDeck.tsx`), grouping Play/Pause, Frame Steps, Timecode, Loop Toggle, Audio Mute, and Playback Speed (`0.25x`–`2x`) into a cohesive cockpit with open left and right flanks.
+  - Implemented an **Auto-Centering Shot Chips Strip** (`DirectorialShotChipsStrip.tsx`) that smooth-scrolls the active shot into the center upon camera cuts (`scrollIntoView`), hides the intrusive scrollbar track, and adds bilateral gradient edge fades while supporting free trackpad/mouse peeking forward and backward.
+  - Added a **Floating Hover Preview Tooltip & Razor Hairline** (`DirectorialTimelineTrack.tsx`) displaying the exact timestamp, shot number, and shot label on mouse hover before clicking.
+  - Added a **Luminous Emerald Loop Region Indicator** with glowing fill and crisp `[` and `]` boundary brackets along the timeline bar when `Loop Shot` is active.
+  - Decomposed `DirectorialTransportBar.tsx` into 3 submodules in `src/ui/transport/` (`DirectorialTimelineTrack`, `DirectorialShotChipsStrip`, `DirectorialTransportDeck`), maintaining the strict $\le 250$ line modularity constraint.
 - **Spacious Observer Camera Diorama Distances (+8m) (`src/scores/blueprints/*.yaml`, `tests/unit/frameEngine.test.ts`, `tests/unit/cameraRigs.test.ts`)**:
   - Increased baseline and dynamic observer camera distances by $+8\text{m}$ across all 7 factory blueprints (BP 01–07), providing authentic architectural diorama perspective.
   - Eliminated viewport boundary clipping on the stage floor grid perimeter, cardinal labels (`+Z Downstage`, `-Z Upstage`), and Stage Camera frustum / track trajectories.

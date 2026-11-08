@@ -131,6 +131,10 @@ stageflow/
 │   │   │   ├── ScoreLibraryCard.tsx # Cinematic choreography score card with color tags & telemetry
 │   │   │   ├── ScoreInspectorPane.tsx # Rich master-detail choreography inspector & action bar
 │   │   │   └── ScoreStageMinimap.tsx # Pure 2D vector SVG top-down stage schematic preview
+│   │   ├── transport/               # Modular directorial transport bar submodules
+│   │   │   ├── DirectorialTimelineTrack.tsx # Scrubber track, shot ticks, hover tooltip & emerald loop brackets
+│   │   │   ├── DirectorialShotChipsStrip.tsx # Auto-centering shot chips, edge fade masks & hidden scrollbar
+│   │   │   └── DirectorialTransportDeck.tsx # Unified centered island deck (Play/Pause, timecode, loop, speed)
 │   │   ├── WorkspaceHeader.tsx      # SceneFlow-aligned 3-wing orchestrator header bar
 │   │   ├── ScoreLibraryModal.tsx    # Accessible 2-column master-detail score library & project hub
 │   │   ├── ResizableSplitWorkspace.tsx # Draggable 3-column studio container (30/40/30) with dual dividers
