@@ -311,6 +311,7 @@ shots:
     expect(f1.activeShot?.id).toBe('shot-01-tripod');
     expect(f1.stageCamera.rig?.type).toBe('tripod');
     expect(f1.stageCamera.transform.position.y).toBeCloseTo(1.55, 2);
+    expect(f1.observerCamera.transform.pose.distance).toBeCloseTo(16.5, 2);
 
     // Shot 2: Linear Dolly Track (Two-Shot Glide)
     const f2 = computeStageFrame(9.0, bp07);
@@ -318,12 +319,14 @@ shots:
     expect(f2.stageCamera.rig?.type).toBe('track');
     expect(f2.stageCamera.rig?.railPoints.length).toBeGreaterThanOrEqual(2);
     expect(f2.stageCamera.baseTarget).toBeDefined();
+    expect(f2.observerCamera.transform.pose.distance).toBeCloseTo(16.5, 2);
 
     // Shot 3: Sideways Truck (no target lock)
     const f3 = computeStageFrame(15.0, bp07);
     expect(f3.activeShot?.id).toBe('shot-03-sideways-truck');
     expect(f3.stageCamera.rig?.type).toBe('track');
     expect(f3.stageCamera.rig?.hasTargetLock).toBe(false);
+    expect(f3.observerCamera.transform.pose.distance).toBeCloseTo(16.5, 2);
 
     // Shot 4: Curved Spline Track with Two-Shot Centroid & Rack Focus
     const f4 = computeStageFrame(21.0, bp07);
@@ -331,6 +334,7 @@ shots:
     expect(f4.stageCamera.rig?.type).toBe('spline_track');
     expect(f4.stageCamera.dof.enabled).toBe(true);
     expect(f4.stageCamera.baseTarget).toBeDefined();
+    expect(f4.observerCamera.transform.pose.distance).toBeCloseTo(16.5, 2);
     // Midpoint X is between protagonist and interlocutor (X = 2.5)
     expect(f4.stageCamera.baseTarget!.x).toBeGreaterThan(-2.0);
     expect(f4.stageCamera.baseTarget!.x).toBeLessThan(2.5);
