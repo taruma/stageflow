@@ -5,7 +5,7 @@
  * Styled with SceneFlow tactile pill design tokens.
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   ChevronLeft,
   ChevronRight,
@@ -60,8 +60,9 @@ export const DirectorialTransportBar: React.FC<
   onToggleMute,
   onToggleLoopActiveShot,
 }) => {
+  const [scrubValue, setScrubValue] = useState<number | null>(null);
   const safeDuration = Math.max(0.1, durationSec);
-  const currentSec = frame.timestampSec;
+  const currentSec = scrubValue !== null ? scrubValue : frame.timestampSec;
 
   return (
     <footer className="shrink-0 bg-surface border-t border-border-main px-3 py-2 flex flex-col gap-2 select-none z-20 text-text-main shadow-xs">
@@ -106,7 +107,14 @@ export const DirectorialTransportBar: React.FC<
             max={safeDuration}
             step={0.01}
             value={currentSec}
-            onChange={(e) => onSeek(parseFloat(e.target.value))}
+            onChange={(e) => {
+              const val = parseFloat(e.target.value);
+              setScrubValue(val);
+              onSeek(val);
+            }}
+            onPointerUp={() => setScrubValue(null)}
+            onPointerCancel={() => setScrubValue(null)}
+            onKeyUp={() => setScrubValue(null)}
             className="relative w-full h-5 appearance-none bg-transparent cursor-pointer accent-text-main z-10"
             title="Scrub timeline (deterministically reconstructs 3D stage at any timestamp)"
           />

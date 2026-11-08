@@ -39,6 +39,7 @@ export interface MediaClockDriver {
 ### 2.1 `Html5MediaDriver` (`html5MediaDriver.ts`)
 - Binds directly to the mounted `<video>` element in [`UniversalVideoViewport.tsx`](../src/ui/UniversalVideoViewport.tsx).
 - Reads `video.currentTime` synchronously at 60fps and forwards native `play`, `pause`, `loadedmetadata`, `ratechange`, and `ended` events.
+- **Optimistic In-Flight Seek Latch**: During asynchronous keyframe demuxing (`video.seeking === true`), `getCurrentTime()` holds `pendingSeekSec` rather than reporting stale or un-seeked video timestamps until the native `seeked` event fires (or a 500ms safety timeout elapses).
 
 ### 2.2 `YouTubeMediaDriver` & 60fps Drift-Corrected Extrapolation (`youtubeMediaDriver.ts`)
 - Dynamically loads `https://www.youtube.com/iframe_api` via a singleton promise and mounts an chromeless player (`controls: 0`, `disablekb: 1`, `modestbranding: 1`, `rel: 0`, `playsinline: 1`).
@@ -49,6 +50,8 @@ export interface MediaClockDriver {
     2. On intermediate 60fps animation frames while playing, `getCurrentTime()` returns:
        $$t_{\text{extrapolated}} = \text{anchorVideoTimeSec} + \frac{\text{performance.now()} - \text{anchorPerfTimeMs}}{1000} \times \text{playbackRate}$$
     3. When `seek(targetSec)` is invoked (e.g. scrubbing while paused or frame-stepping), `anchorVideoTimeSec` updates **synchronously on the same call stack** before `player.seekTo(targetSec, true)` is dispatched, giving the 3D diorama **0ms scrub latency**.
+- **In-Flight Seek Protection (Anti-Reversion Guard)**:
+  - While YouTube processes `seekTo(targetSec)` asynchronously, incoming `player.getCurrentTime()` queries reporting stale pre-seek timestamps are filtered out until YouTube's clock catches up to within $0.35\text{s}$ of the target (or a 600ms safety timeout guard fires). This prevents the scrubber and 3D diorama from rubberbanding back to the pre-seek time.
 
 ### 2.3 `ProceduralMediaDriver` (`proceduralMediaDriver.ts`)
 - Pure `performance.now()` virtual clock used by `procedural://` blueprint scenes.

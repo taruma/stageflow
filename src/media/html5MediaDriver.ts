@@ -14,6 +14,8 @@ export class Html5MediaDriver implements MediaClockDriver {
   private fallbackDurationSec: number;
   private callbacks: MediaClockStateCallbacks;
   private ready = false;
+  private pendingSeekSec: number | null = null;
+  private pendingSeekTimestampMs = 0;
 
   private handlePlay = () => {
     this.callbacks.onPlayStateChange?.(true);
@@ -21,6 +23,10 @@ export class Html5MediaDriver implements MediaClockDriver {
 
   private handlePause = () => {
     this.callbacks.onPlayStateChange?.(false);
+  };
+
+  private handleSeeked = () => {
+    this.pendingSeekSec = null;
   };
 
   private handleLoadedMetadata = () => {
@@ -55,6 +61,7 @@ export class Html5MediaDriver implements MediaClockDriver {
 
     this.video.addEventListener('play', this.handlePlay);
     this.video.addEventListener('pause', this.handlePause);
+    this.video.addEventListener('seeked', this.handleSeeked);
     this.video.addEventListener('loadedmetadata', this.handleLoadedMetadata);
     this.video.addEventListener('ratechange', this.handleRateChange);
     this.video.addEventListener('ended', this.handleEnded);
@@ -69,6 +76,21 @@ export class Html5MediaDriver implements MediaClockDriver {
   }
 
   public getCurrentTime(): number {
+    if (this.pendingSeekSec !== null) {
+      const now = performance.now();
+      if (
+        !this.video.seeking &&
+        Math.abs((this.video.currentTime || 0) - this.pendingSeekSec) < 0.05
+      ) {
+        this.pendingSeekSec = null;
+        return this.video.currentTime || 0;
+      }
+      if (now - this.pendingSeekTimestampMs > 500) {
+        this.pendingSeekSec = null;
+        return this.video.currentTime || 0;
+      }
+      return this.pendingSeekSec;
+    }
     return this.video.currentTime || 0;
   }
 
@@ -100,6 +122,8 @@ export class Html5MediaDriver implements MediaClockDriver {
 
   public seek(timeSec: number): void {
     const clamped = Math.max(0, Math.min(this.getDuration(), timeSec));
+    this.pendingSeekSec = clamped;
+    this.pendingSeekTimestampMs = performance.now();
     this.video.currentTime = clamped;
   }
 
@@ -115,6 +139,7 @@ export class Html5MediaDriver implements MediaClockDriver {
   public destroy(): void {
     this.video.removeEventListener('play', this.handlePlay);
     this.video.removeEventListener('pause', this.handlePause);
+    this.video.removeEventListener('seeked', this.handleSeeked);
     this.video.removeEventListener('loadedmetadata', this.handleLoadedMetadata);
     this.video.removeEventListener('ratechange', this.handleRateChange);
     this.video.removeEventListener('ended', this.handleEnded);

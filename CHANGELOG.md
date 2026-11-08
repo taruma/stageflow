@@ -20,6 +20,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Synchronized living documentation in `docs/YAML_AUTHORING_GUIDE.md` and test suite descriptions.
 
 ### Fixed
+- **Optimistic In-Flight Seek Synchronization & Anti-Rubberbanding (`src/media/html5MediaDriver.ts`, `src/media/youtubeMediaDriver.ts`, `src/ui/DirectorialTransportBar.tsx`, `tests/unit/mediaDrivers.test.ts`, `docs/MEDIA_CLOCK_AND_SYNC_SPECIFICATIONS.md`)**:
+  - Implemented optimistic seek latching in `Html5MediaDriver` to hold `pendingSeekSec` while `video.seeking === true` until the native `'seeked'` event fires (backed by a 500ms safety timeout guard), eliminating intermediate decoder latency and rubberbanding.
+  - Implemented in-flight seek protection in `YouTubeMediaDriver` (`pendingSeekTarget`), filtering out stale pre-seek timestamps from YouTube's asynchronous `postMessage` polling until YouTube arrives within $0.35\text{s}$ of the target seek point (backed by a 600ms safety timeout guard), fixing the race condition where seeking a YouTube video would snap back or require clicking twice.
+  - Added temporary local drag tracking (`scrubValue`) in `DirectorialTransportBar` across pointer drag events (`onPointerUp`, `onPointerCancel`, `onKeyUp`), preventing React's controlled input from fighting cursor movement during rapid scrubbing.
+  - Added dedicated Vitest test suite (`tests/unit/mediaDrivers.test.ts`) covering HTML5, YouTube, and Procedural seek latching and timeout safety.
+  - Synchronized living domain specifications in `docs/MEDIA_CLOCK_AND_SYNC_SPECIFICATIONS.md` and file map in `docs/ARCHITECTURE_FILE_MAP.md`.
 - **Headless Recorder Bridge Resilience & Watcher Isolation (`src/recorder/HeadlessRecorderView.tsx`, `scripts/record/playwrightDriver.ts`, `scripts/record/serverManager.ts`, `vite.config.ts`)**:
   - Preserved `window.__STAGEFLOW_RECORDER__` bridge reference across React render transitions rather than deleting it on effect unmount, preventing transient undefined access during Playwright frame evaluations.
   - Expanded step retry ceiling to 10 attempts ($1.5\text{s}$) with explicit readiness checks in `playwrightDriver.ts`.

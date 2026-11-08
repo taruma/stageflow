@@ -95,6 +95,8 @@ export class YouTubeMediaDriver implements MediaClockDriver {
   private lastPolledYtTime = 0;
   private anchorVideoTimeSec = 0;
   private anchorPerfTimeMs = 0;
+  private pendingSeekTarget: number | null = null;
+  private pendingSeekTimestampMs = 0;
 
   constructor(
     containerElement: HTMLElement,
@@ -140,23 +142,39 @@ export class YouTubeMediaDriver implements MediaClockDriver {
           onStateChange: (ev) => {
             if (this.destroyed || !this.player) return;
             const state = ev.data;
+            const now = performance.now();
             // 1 = PLAYING, 2 = PAUSED, 0 = ENDED
             if (state === 1) {
               this.playing = true;
               const rawT = this.player.getCurrentTime() || 0;
-              this.lastPolledYtTime = rawT;
-              this.anchorVideoTimeSec = rawT;
-              this.anchorPerfTimeMs = performance.now();
+              const isSeekSettled =
+                this.pendingSeekTarget === null ||
+                Math.abs(rawT - this.pendingSeekTarget) < 0.35 ||
+                now - this.pendingSeekTimestampMs > 600;
+              if (isSeekSettled) {
+                this.pendingSeekTarget = null;
+                this.lastPolledYtTime = rawT;
+                this.anchorVideoTimeSec = rawT;
+                this.anchorPerfTimeMs = now;
+              }
               this.callbacks.onPlayStateChange?.(true);
             } else if (state === 2) {
               this.playing = false;
               const rawT = this.player.getCurrentTime() || this.anchorVideoTimeSec;
-              this.lastPolledYtTime = rawT;
-              this.anchorVideoTimeSec = rawT;
-              this.anchorPerfTimeMs = performance.now();
+              const isSeekSettled =
+                this.pendingSeekTarget === null ||
+                Math.abs(rawT - this.pendingSeekTarget) < 0.35 ||
+                now - this.pendingSeekTimestampMs > 600;
+              if (isSeekSettled) {
+                this.pendingSeekTarget = null;
+                this.lastPolledYtTime = rawT;
+                this.anchorVideoTimeSec = rawT;
+                this.anchorPerfTimeMs = now;
+              }
               this.callbacks.onPlayStateChange?.(false);
             } else if (state === 0) {
               this.playing = false;
+              this.pendingSeekTarget = null;
               this.anchorVideoTimeSec = this.getDuration();
               this.callbacks.onPlayStateChange?.(false);
               this.callbacks.onEnded?.();
@@ -189,6 +207,36 @@ export class YouTubeMediaDriver implements MediaClockDriver {
     }
 
     const rawYtTime = this.player.getCurrentTime();
+    const now = performance.now();
+
+    // If an asynchronous seek is pending, do not allow stale pre-seek time to revert the anchor
+    if (this.pendingSeekTarget !== null) {
+      const isClose =
+        typeof rawYtTime === 'number' &&
+        Number.isFinite(rawYtTime) &&
+        Math.abs(rawYtTime - this.pendingSeekTarget) < 0.35;
+      const isTimedOut = now - this.pendingSeekTimestampMs > 600;
+
+      if (isClose || isTimedOut) {
+        this.pendingSeekTarget = null;
+        if (typeof rawYtTime === 'number' && Number.isFinite(rawYtTime)) {
+          this.lastPolledYtTime = rawYtTime;
+          this.anchorVideoTimeSec = rawYtTime;
+          this.anchorPerfTimeMs = now;
+        }
+      } else {
+        if (!this.playing) {
+          return this.anchorVideoTimeSec;
+        }
+        const elapsedSec =
+          ((now - this.anchorPerfTimeMs) / 1000) * this.playbackRate;
+        return Math.max(
+          0,
+          Math.min(this.getDuration(), this.anchorVideoTimeSec + elapsedSec)
+        );
+      }
+    }
+
     if (
       typeof rawYtTime === 'number' &&
       Number.isFinite(rawYtTime) &&
@@ -196,14 +244,13 @@ export class YouTubeMediaDriver implements MediaClockDriver {
     ) {
       this.lastPolledYtTime = rawYtTime;
       this.anchorVideoTimeSec = rawYtTime;
-      this.anchorPerfTimeMs = performance.now();
+      this.anchorPerfTimeMs = now;
     }
 
     if (!this.playing) {
       return this.anchorVideoTimeSec;
     }
 
-    const now = performance.now();
     const elapsedSec =
       ((now - this.anchorPerfTimeMs) / 1000) * this.playbackRate;
     return Math.max(
@@ -254,6 +301,8 @@ export class YouTubeMediaDriver implements MediaClockDriver {
     this.anchorVideoTimeSec = clamped;
     this.lastPolledYtTime = clamped;
     this.anchorPerfTimeMs = performance.now();
+    this.pendingSeekTarget = clamped;
+    this.pendingSeekTimestampMs = performance.now();
     if (this.ready && this.player) {
       this.player.seekTo(clamped, true);
     }
@@ -284,6 +333,7 @@ export class YouTubeMediaDriver implements MediaClockDriver {
   public destroy(): void {
     this.destroyed = true;
     this.playing = false;
+    this.pendingSeekTarget = null;
     if (this.player) {
       try {
         this.player.destroy();
