@@ -56,7 +56,7 @@ export const InteractiveStudioApp: React.FC = () => {
   const layout = useWorkspaceLayout({ onNotify: showToast });
   const display = useStudioDisplaySettings();
   const [subpanelViewMode, setSubpanelViewMode] =
-    useState<SubpanelViewMode>('notes');
+    useState<SubpanelViewMode>('brief');
 
   const [catalog, setCatalog] = useState<ScoreCatalogItem[]>(
     INITIAL_CATALOG_ITEMS

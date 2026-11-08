@@ -1325,5 +1325,37 @@ shots:
       expect(shotEnt?.height).toBeCloseTo(1.75, 3);
       expect(shotEnt?.depth).toBeCloseTo(0.52, 3);
     });
+
+    it('parses root-level description and notes into score.description', () => {
+      const yamlWithDesc = `
+version: "1.0"
+id: "desc-test"
+title: "Premise Test"
+description: "Directorial overview of the staging."
+duration: 10
+shots:
+  - id: "s1"
+    start: 0
+    end: 10
+`;
+      const res1 = parseStageScore(yamlWithDesc);
+      expect(res1.error).toBeNull();
+      expect(res1.score?.description).toBe('Directorial overview of the staging.');
+
+      const yamlWithNotes = `
+version: "1.0"
+id: "notes-test"
+title: "Notes Fallback Test"
+notes: "Staging notes fallback."
+duration: 10
+shots:
+  - id: "s1"
+    start: 0
+    end: 10
+`;
+      const res2 = parseStageScore(yamlWithNotes);
+      expect(res2.error).toBeNull();
+      expect(res2.score?.description).toBe('Staging notes fallback.');
+    });
   });
 });

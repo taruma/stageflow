@@ -314,6 +314,7 @@ export interface StageScore {
   id: string;
   title: string;
   subtitle?: string;
+  description?: string; // Optional score-level directorial premise or staging notes
   continuous?: boolean; // When true, shots omitting `start` automatically chain from preceding shot's `end`
   videoUrl: string;    // Local path (/media/...), blob: URL, YouTube URL, or 'procedural://demo'
   aspectRatio: number; // Default 16 / 9 (1.7777778) or 2.39

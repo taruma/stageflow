@@ -125,6 +125,12 @@ export function parseStageScore(
   const title = String(root.title ?? 'Untitled StageFlow Scene');
   const subtitle =
     typeof root.subtitle === 'string' ? root.subtitle : undefined;
+  const description =
+    typeof root.description === 'string'
+      ? root.description
+      : typeof root.notes === 'string'
+      ? root.notes
+      : undefined;
   const continuous =
     root.continuous === true ||
     root.continuous === 'true' ||
@@ -485,6 +491,7 @@ export function parseStageScore(
       id,
       title,
       subtitle,
+      description,
       continuous: continuous || undefined,
       videoUrl,
       aspectRatio,

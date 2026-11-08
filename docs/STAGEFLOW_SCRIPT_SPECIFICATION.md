@@ -274,7 +274,7 @@ StageFlow is a **stateless functional evaluator** (`Frame_t = f(t, score)`). Eff
 
 | AST Interface | Field | Normalized Type & Mathematical Domain |
 | :--- | :--- | :--- |
-| **`StageScore`** | `version`, `id`, `title`, `subtitle` | `string` metadata identifiers (`version` default `"1.0"`) |
+| **`StageScore`** | `version`, `id`, `title`, `subtitle`, `description` | `string` metadata identifiers (`version` default `"1.0"`; optional `description` / `notes`) |
 | | `continuous` | `boolean \| undefined` (contiguous timeline & pose-flow flag) |
 | | `videoUrl`, `aspectRatio` | `string` media locator; `number` $\text{AR} > 0$ |
 | | `durationSec`, `offsetSec` | $T_{\text{duration}} > 0\text{ s}$; $t_{\text{offset}} \in \mathbb{R}\text{ s}$ (default $0.0\text{ s}$) |

@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Executive Scene Production Brief & Call Sheet (`src/ui/left-panel/SceneProductionBrief.tsx`, `src/ui/left-panel/SceneEntityRoster.tsx`, `src/ui/left-panel/VideoWorkspaceSubpanel.tsx`, `src/ui/InteractiveStudioApp.tsx`)**:
+  - Re-architected the Directorial Workspace (left-panel subpanel below the reference video player) into a rich, static Executive Scene Production Sheet & Call Sheet derived directly from score metadata.
+  - Replaced the playback-adapting active shot card and placeholder container with a high-density, non-adapting scene production overview.
+  - Built a 3-section layout:
+    1. **Scene Premise & Directorial Notes Card**: Renders scene title, subtitle, and optional Markdown-formatted premise/notes (`score.description` or `score.notes`).
+    2. **Production Specifications Grid**: 4-stat metric cards (Duration, Shots count, Film Gate aspect ratio, and Media Engine badge) plus dynamic Prime Lens Package and Camera Maneuver tag chips extracted across all scene shots.
+    3. **Categorized Cast & Props Lineup (`SceneEntityRoster.tsx`)**: Groups entities into Cast & Characters, Set Props, and Spike Marks with blueprint color dots, 3D metric dimensions ($w \times h \times d$ in meters, height, diameter), and presentation styling badges.
+  - Renamed the subpanel header toggle to **`[ 📄 Brief | 🎥 Stage Cam ]`** when a video source is attached, defaulting the subpanel view mode to `'brief'`.
+  - Added root-level `description` schema support (`description?: string` in `StageScore`, parsing `root.description ?? root.notes` in `scoreParser.ts`) with deterministic unit tests in `tests/unit/scoreParser.test.ts`.
+
 ### Changed
 - **Directorial Hover Card Header & Action Footer Polish (`src/ui/CameraTelemetryHoverCard.tsx`)**:
   - Replaced crowded 2-line header with a clean single-line title (`[ 🎥 Stage Camera ]` / `[ 👁 Observer Camera ]`) and dedicated `YAML` pill badge.

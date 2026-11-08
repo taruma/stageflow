@@ -1,8 +1,10 @@
 /**
  * VideoWorkspaceSubpanel Component.
  * Modular, decoupled subpanel mounted directly beneath the reference video in the left column.
- * Provides a dedicated directorial workspace for active shot context, notes, and an optional Stage Cam monitor.
+ * Provides a dedicated directorial workspace for the Executive Scene Production Brief
+ * and an optional 3D Stage Cam monitor POV simulator.
  * Supports independent collapse/expand states with SceneFlow tactile tokens.
+ * Layer 5 UI Component.
  */
 
 import React from 'react';
@@ -10,14 +12,13 @@ import {
   ChevronDown,
   ChevronUp,
   SlidersHorizontal,
-  Film,
-  Sparkles,
   Camera,
   FileText,
 } from 'lucide-react';
 import type { ShotCue, StageScore } from '../../core/types';
+import { SceneProductionBrief } from './SceneProductionBrief';
 
-export type SubpanelViewMode = 'notes' | 'stage-cam';
+export type SubpanelViewMode = 'brief' | 'notes' | 'stage-cam';
 
 export interface VideoWorkspaceSubpanelProps {
   isCollapsed: boolean;
@@ -35,24 +36,12 @@ export const VideoWorkspaceSubpanel: React.FC<VideoWorkspaceSubpanelProps> = ({
   isCollapsed,
   onToggleCollapse,
   score,
-  activeShot,
-  shotIndex = 0,
   hasVideoAttached = false,
-  viewMode = 'notes',
+  viewMode = 'brief',
   onSelectViewMode,
   stageCamSlot,
 }) => {
-  const shotNum = String(shotIndex + 1).padStart(2, '0');
-  const shotLabel = activeShot?.label || 'Directorial Workspace';
-  const maneuver =
-    activeShot?.stageCamera?.maneuver?.toUpperCase() || 'HOLD';
-  const startSec = activeShot?.startSec ?? 0;
-  const endSec = activeShot?.endSec ?? 0;
-  const durationSec = Math.max(0, endSec - startSec);
-  const targetLabel =
-    typeof activeShot?.stageCamera?.target === 'string'
-      ? activeShot.stageCamera.target
-      : 'stage';
+  const isStageCam = viewMode === 'stage-cam';
 
   return (
     <div className="w-full h-full flex flex-col bg-surface border-t border-border-main overflow-hidden text-text-main select-none">
@@ -92,26 +81,26 @@ export const VideoWorkspaceSubpanel: React.FC<VideoWorkspaceSubpanelProps> = ({
               <button
                 type="button"
                 role="button"
-                aria-pressed={viewMode === 'notes'}
-                onClick={() => onSelectViewMode('notes')}
+                aria-pressed={!isStageCam}
+                onClick={() => onSelectViewMode('brief')}
                 className={`flex items-center gap-1 px-2 py-0.5 rounded transition-colors cursor-pointer ${
-                  viewMode === 'notes'
+                  !isStageCam
                     ? 'bg-surface-muted text-text-main shadow-2xs font-semibold'
                     : 'text-text-muted hover:text-text-main'
                 }`}
-                title="Show Directorial Notes & Cue Context"
+                title="Show Scene Production Brief & Call Sheet"
               >
                 <FileText className="w-2.5 h-2.5" />
-                <span>Notes</span>
+                <span>Brief</span>
               </button>
 
               <button
                 type="button"
                 role="button"
-                aria-pressed={viewMode === 'stage-cam'}
+                aria-pressed={isStageCam}
                 onClick={() => onSelectViewMode('stage-cam')}
                 className={`flex items-center gap-1 px-2 py-0.5 rounded transition-colors cursor-pointer ${
-                  viewMode === 'stage-cam'
+                  isStageCam
                     ? 'bg-amber-500/15 text-amber-500 dark:text-amber-400 border border-amber-500/30 shadow-2xs font-semibold'
                     : 'text-text-muted hover:text-text-main'
                 }`}
@@ -154,7 +143,7 @@ export const VideoWorkspaceSubpanel: React.FC<VideoWorkspaceSubpanelProps> = ({
       {/* Subpanel Content Body (visible when not collapsed) */}
       {!isCollapsed && (
         <div className="flex-1 min-h-0 relative flex flex-col overflow-hidden bg-app">
-          {viewMode === 'stage-cam' && stageCamSlot ? (
+          {isStageCam && stageCamSlot ? (
             /* Mode A: True 3D Stage Cam POV Simulator with aspect-ratio containment */
             <div className="w-full h-full aspect-fit-container p-2 min-h-0 overflow-hidden">
               <div
@@ -167,51 +156,8 @@ export const VideoWorkspaceSubpanel: React.FC<VideoWorkspaceSubpanelProps> = ({
               </div>
             </div>
           ) : (
-            /* Mode B: Directorial Notes & Telemetry */
-            <div className="flex-1 min-h-0 p-3 overflow-y-auto space-y-2.5 custom-scrollbar">
-              {/* Active Shot Directorial Card */}
-              <div className="p-3 rounded-xl bg-surface border border-border-main shadow-xs space-y-2">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-xs font-mono font-bold text-accent-primary">
-                    #{shotNum} · {shotLabel}
-                  </span>
-                  <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-surface-muted text-text-faint uppercase font-bold tracking-wider">
-                    {maneuver}
-                  </span>
-                </div>
-
-                {activeShot?.description ? (
-                  <p className="text-xs text-text-body font-sans leading-relaxed">
-                    {activeShot.description}
-                  </p>
-                ) : (
-                  <p className="text-xs text-text-muted font-sans italic leading-relaxed">
-                    Scene: &ldquo;{score.title}&rdquo; · Total shots: {score.shots.length}
-                  </p>
-                )}
-
-                {/* Cue Telemetry Summary Bar */}
-                <div className="pt-2 border-t border-border-subtle flex items-center justify-between text-[10px] font-mono text-text-faint">
-                  <span className="flex items-center gap-1">
-                    <Film className="w-3 h-3 text-text-muted" />
-                    <span>Start: {startSec.toFixed(1)}s</span>
-                  </span>
-                  <span>Dur: {durationSec.toFixed(1)}s</span>
-                  <span>Target: {targetLabel}</span>
-                </div>
-              </div>
-
-              {/* Scaffolded Container Ready for Next Design Phase */}
-              <div className="p-3 rounded-xl border border-dashed border-border-main bg-surface/50 flex flex-col items-center justify-center text-center gap-1.5 py-4">
-                <Sparkles className="w-4 h-4 text-text-faint" />
-                <span className="text-[11px] font-medium text-text-muted">
-                  Directorial Subpanel Container
-                </span>
-                <span className="text-[9px] text-text-faint font-mono max-w-[260px]">
-                  Ready for customizable shot cue cards, timeline markers, or cast blocking inspector.
-                </span>
-              </div>
-            </div>
+            /* Mode B: Executive Scene Production Brief & Call Sheet */
+            <SceneProductionBrief score={score} />
           )}
         </div>
       )}

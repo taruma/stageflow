@@ -288,6 +288,7 @@ This chapter defines scene-level metadata, video source binding, stage metric di
 | **`id`** | `string` | `"custom-scene"` | — | Unique slug identifier used in storage and URL routing. |
 | **`title`** | `string` | `"Untitled..."` | — | Primary display title shown in header and minimaps. |
 | **`subtitle`** | `string` | `undefined` | — | Optional secondary descriptor. |
+| **`description`** | `string` | `undefined` | `notes` | Optional directorial premise or staging synopsis (rendered as rich Markdown in the Scene Brief). |
 | **`continuous`**| `boolean` | `false` | `"true"`, `"yes"` | Opt-in flag activating contiguous timeline chaining and forward pose flow. |
 | **`video`** | `string \| object` | `"procedural://demo"` | `video_url`, `videoUrl` | Video media binding (see §3.2). |
 | **`aspect_ratio`**| `string \| number` | `"16:9"` | `aspectRatio` | Stage and film gate aspect ratio (e.g. `"16:9"`, `"2.39:1"`, `1.777`). |

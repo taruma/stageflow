@@ -114,7 +114,9 @@ stageflow/
 │   │   │   ├── ActiveScoreIndicator.tsx # Interactive active score context chip with 1-click library open
 │   │   │   └── ThemeSelectorDropdown.tsx # Accessible 4-mode theme switcher (Auto, Dark, Warm, Light)
 │   │   ├── left-panel/              # Modular left column submodules
-│   │   │   └── VideoWorkspaceSubpanel.tsx # Modular directorial workspace subpanel below reference video
+│   │   │   ├── VideoWorkspaceSubpanel.tsx # Collapsible subpanel container with [Brief | Stage Cam] header toggle
+│   │   │   ├── SceneProductionBrief.tsx   # Executive Scene Production Sheet & Call Sheet (Premise, specs, lenses)
+│   │   │   └── SceneEntityRoster.tsx      # Categorized Cast, Props & Markers lineup with dimension badges
 │   │   ├── editor/                  # Modular CodeMirror 6 YAML Score Studio submodules
 │   │   │   ├── YamlStudioPanel.tsx  # In-flow right-column choreography score studio container
 │   │   │   ├── YamlEditorHeader.tsx # Top header with title, sync badge, Guide trigger & close
@@ -167,6 +169,7 @@ stageflow/
         ├── scoreParser.test.ts
         ├── scoreContract.test.ts
         ├── scoreYamlUtils.test.ts
+        ├── telemetryYamlFormatter.test.ts
         ├── guideUtils.test.ts
         ├── guideSnippets.test.ts
         ├── storage.test.ts
