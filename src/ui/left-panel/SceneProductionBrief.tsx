@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import type { StageScore } from '../../core/types';
 import { SceneEntityRoster } from './SceneEntityRoster';
+import { SceneMetadataCard } from './SceneMetadataCard';
 
 export interface SceneProductionBriefProps {
   score: StageScore;
@@ -136,7 +137,12 @@ export const SceneProductionBrief: React.FC<SceneProductionBriefProps> = ({
         ) : null}
       </div>
 
-      {/* 3. Camera & Optical Package */}
+      {/* 3. Scene-Wide Metadata & Production Notes Card */}
+      {score.metadata && Object.keys(score.metadata).length > 0 && (
+        <SceneMetadataCard metadata={score.metadata} />
+      )}
+
+      {/* 4. Camera & Optical Package */}
       {(lenses.length > 0 || maneuvers.length > 0) && (
         <div className="p-2.5 rounded-xl bg-surface border border-border-main shadow-2xs space-y-2">
           <span className="text-[9px] font-mono uppercase tracking-[0.18em] text-text-muted font-bold block">
@@ -185,7 +191,7 @@ export const SceneProductionBrief: React.FC<SceneProductionBriefProps> = ({
         </div>
       )}
 
-      {/* 4. Categorized Cast & Props Lineup */}
+      {/* 5. Categorized Cast & Props Lineup */}
       {score.entities && score.entities.length > 0 && (
         <div className="p-2.5 rounded-xl bg-surface border border-border-main shadow-2xs">
           <SceneEntityRoster entities={score.entities} />

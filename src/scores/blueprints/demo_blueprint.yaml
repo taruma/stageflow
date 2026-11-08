@@ -14,6 +14,15 @@ video: "procedural://demo-blueprint"
 aspect_ratio: "16:9"
 duration: 10.0
 
+metadata:
+  music: "Max Richter — On The Nature of Daylight · [Listen on Spotify](https://open.spotify.com)"
+  camera_package:
+    body: "ARRI Alexa Mini LF"
+    stabilizer: "Steadicam M-2"
+  production_notes:
+    - "Continuous 45° clockwise camera arc around conversational axis"
+    - "Maintain eye-level two-shot framing on Subject A and Subject B"
+
 stage:
   width: 10
   depth: 10

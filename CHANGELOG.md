@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Scene-Wide Custom Metadata Support (`src/core/types.ts`, `src/core/scoreParser.ts`, `src/ui/left-panel/SceneMetadataCard.tsx`, `src/ui/left-panel/SceneProductionBrief.tsx`, `src/scores/blueprints/demo_blueprint.yaml`, `tests/unit/scoreParser.test.ts`, `tests/unit/guideSnippets.test.ts`)**:
+  - Introduced dedicated root-level `metadata:` block in YAML choreography scores (`*.yaml`) and normalized AST (`score.metadata?: Record<string, unknown>`), providing a safe namespaced structure for production notes, music/soundtrack cues, camera gear packages, lighting setups, and crew credits.
+  - Implemented Layer 5 `SceneMetadataCard.tsx` in the Scene Desk (`SceneProductionBrief.tsx`) positioned directly after the Scene Premise card and before Camera & Optical Package:
+    - **Collapsible Accordion**: Subtle chevron toggle (`ChevronDown`/`ChevronRight`), default expanded.
+    - **Smart Category Icons & Formatting**: Auto-matches keys against semantic icons (Music/Audio 🎵, Notes/Memo 📝, Camera/Gear 🎥, Lighting/Look 💡, Cast/Crew 👥, fallback Tag 🔖) with human-friendly section titles (`camera_package` → `Camera Package`).
+    - **Polymorphic Value Rendering**: Seamlessly renders single strings with rich Markdown (`ReactMarkdown`), arrays of strings as bulleted checklists, and nested key-value objects as metadata pill badges.
+  - Updated default blueprint `src/scores/blueprints/demo_blueprint.yaml` with representative production metadata (music track with Spotify link, ARRI Alexa Mini LF + Steadicam package, and directorial notes).
+  - Extended `tests/unit/scoreParser.test.ts` with unit tests for string, array, and nested object metadata parsing, empty/omitted metadata handling, and non-object fallback protection.
+  - Documented `metadata:` in `docs/YAML_AUTHORING_GUIDE.md` and `docs/STAGEFLOW_SCRIPT_SPECIFICATION.md` (§7.2 AST contract table).
+
 ### Changed
 - **Scene Desk Visual Compacting & 4-Card Architecture (`src/ui/left-panel/VideoWorkspaceSubpanel.tsx`, `src/ui/left-panel/SceneProductionBrief.tsx`, `src/ui/left-panel/SceneEntityRoster.tsx`, `docs/ARCHITECTURE_FILE_MAP.md`, `docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md`)**:
   - Renamed left-panel subpanel from `"Directorial Workspace"` to **`"Scene Desk"`**, providing a punchy, industry-authentic title that eliminates header crowding alongside the `[ Brief | Stage Cam ]` toggle.

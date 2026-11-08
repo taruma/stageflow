@@ -1357,5 +1357,87 @@ shots:
       expect(res2.error).toBeNull();
       expect(res2.score?.description).toBe('Staging notes fallback.');
     });
+
+    it('parses scene-wide metadata block with strings, lists, and nested objects', () => {
+      const yamlWithMeta = `
+version: "1.0"
+id: "meta-test"
+title: "Scene Metadata Test"
+duration: 10
+metadata:
+  music: "Max Richter — On The Nature of Daylight"
+  camera_package:
+    camera: "ARRI Alexa Mini LF"
+    stabilizer: "Steadicam M-2"
+  production_notes:
+    - "Continuous clockwise arc around conversational axis"
+    - "Maintain eye-level framing on Dave"
+shots:
+  - id: "s1"
+    start: 0
+    end: 10
+`;
+      const { score, error } = parseStageScore(yamlWithMeta);
+      expect(error).toBeNull();
+      expect(score).not.toBeNull();
+      expect(score!.metadata).toBeDefined();
+      expect(score!.metadata?.music).toBe(
+        'Max Richter — On The Nature of Daylight'
+      );
+      expect(score!.metadata?.camera_package).toEqual({
+        camera: 'ARRI Alexa Mini LF',
+        stabilizer: 'Steadicam M-2',
+      });
+      expect(score!.metadata?.production_notes).toEqual([
+        'Continuous clockwise arc around conversational axis',
+        'Maintain eye-level framing on Dave',
+      ]);
+    });
+
+    it('handles omitted, empty, or non-object metadata gracefully', () => {
+      const yamlWithoutMeta = `
+version: "1.0"
+id: "no-meta"
+title: "No Meta"
+duration: 10
+shots:
+  - id: "s1"
+    start: 0
+    end: 10
+`;
+      const res1 = parseStageScore(yamlWithoutMeta);
+      expect(res1.error).toBeNull();
+      expect(res1.score?.metadata).toBeUndefined();
+
+      const yamlEmptyMeta = `
+version: "1.0"
+id: "empty-meta"
+title: "Empty Meta"
+duration: 10
+metadata: {}
+shots:
+  - id: "s1"
+    start: 0
+    end: 10
+`;
+      const res2 = parseStageScore(yamlEmptyMeta);
+      expect(res2.error).toBeNull();
+      expect(res2.score?.metadata).toBeUndefined();
+
+      const yamlScalarMeta = `
+version: "1.0"
+id: "scalar-meta"
+title: "Scalar Meta"
+duration: 10
+metadata: "Not an object"
+shots:
+  - id: "s1"
+    start: 0
+    end: 10
+`;
+      const res3 = parseStageScore(yamlScalarMeta);
+      expect(res3.error).toBeNull();
+      expect(res3.score?.metadata).toBeUndefined();
+    });
   });
 });

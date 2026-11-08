@@ -131,6 +131,20 @@ export function parseStageScore(
       : typeof root.notes === 'string'
       ? root.notes
       : undefined;
+
+  // Parse optional scene-wide metadata block
+  let metadata: Record<string, unknown> | undefined;
+  if (
+    root.metadata &&
+    typeof root.metadata === 'object' &&
+    !Array.isArray(root.metadata)
+  ) {
+    const rawMeta = root.metadata as Record<string, unknown>;
+    if (Object.keys(rawMeta).length > 0) {
+      metadata = { ...rawMeta };
+    }
+  }
+
   const continuous =
     root.continuous === true ||
     root.continuous === 'true' ||
@@ -492,6 +506,7 @@ export function parseStageScore(
       title,
       subtitle,
       description,
+      ...(metadata ? { metadata } : {}),
       continuous: continuous || undefined,
       videoUrl,
       aspectRatio,

@@ -58,7 +58,7 @@ entities:
 
   it('verifies all YAML blocks in the guide are valid syntax and compile properly', () => {
     const blocks = extractYamlBlocks(yamlAuthoringGuideRaw);
-    expect(blocks.length).toBe(29);
+    expect(blocks.length).toBe(30);
 
     blocks.forEach((rawSnippet) => {
       const cleanRaw = dedent(rawSnippet).trim();
@@ -99,6 +99,10 @@ entities:
         const fullScore = `version: "1.0"\nid: "test"\n${cleanRaw}\nshots:\n  - id: s1\n    start: 0\n    end: 5\n    stage_camera: { target: [0, 1, 0], distance: 3 }`;
         const res = parseStageScore(fullScore);
         expect(res.error, `Video fragment failed:\n${cleanRaw}`).toBeNull();
+      } else if (cleanRaw.startsWith('metadata:')) {
+        const fullScore = `${FIXTURE_ROOT}\n${cleanRaw}\nshots:\n  - id: s1\n    start: 0\n    end: 5\n    stage_camera: { target: [0, 1, 0], distance: 3 }`;
+        const res = parseStageScore(fullScore);
+        expect(res.error, `Metadata fragment failed:\n${cleanRaw}`).toBeNull();
       }
     });
   });

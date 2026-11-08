@@ -116,6 +116,7 @@ stageflow/
 │   │   ├── left-panel/              # Modular left column submodules
 │   │   │   ├── VideoWorkspaceSubpanel.tsx # Collapsible Scene Desk container with [Brief | Stage Cam] header toggle
 │   │   │   ├── SceneProductionBrief.tsx   # Executive Scene Production Sheet & Call Sheet (Premise, specs, lenses)
+│   │   │   ├── SceneMetadataCard.tsx      # Collapsible scene-wide metadata card (music, gear, notes, markdown)
 │   │   │   └── SceneEntityRoster.tsx      # Categorized Cast, Props & Markers lineup with dimension badges
 │   │   ├── editor/                  # Modular CodeMirror 6 YAML Score Studio submodules
 │   │   │   ├── YamlStudioPanel.tsx  # In-flow right-column choreography score studio container

@@ -289,6 +289,7 @@ This chapter defines scene-level metadata, video source binding, stage metric di
 | **`title`** | `string` | `"Untitled..."` | — | Primary display title shown in header and minimaps. |
 | **`subtitle`** | `string` | `undefined` | — | Optional secondary descriptor. |
 | **`description`** | `string` | `undefined` | `notes` | Optional directorial premise or staging synopsis (rendered as rich Markdown in the Scene Brief). |
+| **`metadata`** | `object` | `undefined` | — | Optional scene-wide production metadata & directorial notes (music, gear, checklist, lighting) rendered in the Scene Desk. |
 | **`continuous`**| `boolean` | `false` | `"true"`, `"yes"` | Opt-in flag activating contiguous timeline chaining and forward pose flow. |
 | **`video`** | `string \| object` | `"procedural://demo"` | `video_url`, `videoUrl` | Video media binding (see §3.2). |
 | **`aspect_ratio`**| `string \| number` | `"16:9"` | `aspectRatio` | Stage and film gate aspect ratio (e.g. `"16:9"`, `"2.39:1"`, `1.777`). |
@@ -300,6 +301,26 @@ This chapter defines scene-level metadata, video source binding, stage metric di
 | **`blocking`** | `array` | `undefined` | — | Optional decoupled actor/prop movement timeline. |
 | **`observer_shots`** | `array` | `undefined` | `observerShots` | Optional decoupled diorama viewport movement timeline. |
 | **`optics`** | `object` | `undefined` | — | Optional scene-wide optical defaults (`dof_blur: true`, `dof: "shallow"`, `aperture: "f/2.8"`). |
+
+### 3.1.1 Scene Metadata & Production Notes (metadata:)
+
+Choreography scores support an optional, dedicated `metadata:` block at the root level. All keys declared inside `metadata:` are parsed into the normalized AST (`score.metadata`) and rendered inside the **Scene Desk** (`SceneProductionBrief`) as a collapsible **SCENE METADATA** card with smart category icons and rich Markdown formatting.
+
+```yaml
+metadata:
+  music: "Max Richter — On The Nature of Daylight · [Listen](https://spotify.com)"
+  camera_package:
+    camera: "ARRI Alexa Mini LF"
+    stabilizer: "Steadicam M-2"
+  production_notes:
+    - "Continuous clockwise arc around conversational axis"
+    - "Actor Dave must hit floor mark by **00:14.5s**"
+```
+
+The metadata engine supports three polymorphic value structures:
+- **Single String / Markdown**: Formatted with full Markdown (`**bold**`, `*italics*`, `[links](url)`, `` `code` ``).
+- **Checklist Array**: A list of strings (`- item`), rendered as a callout checklist.
+- **Nested Key-Value Map**: Sub-dictionaries (`key: value`), rendered as compact metadata badge pills.
 
 ### 3.2 Video Binding & Formats
 
