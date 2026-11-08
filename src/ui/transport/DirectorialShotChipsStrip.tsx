@@ -2,12 +2,14 @@
  * Directorial Shot Chips Strip Component.
  * Features:
  *   - Auto-centering active shot chip on cut boundaries
- *   - Smooth free-scrolling with trackpad/mouse-wheel to peek forward/backward
+ *   - Flanking `<` and `>` navigation chevrons for smooth peek scrolling
  *   - Edge fade masks indicating off-screen shots without an intrusive scrollbar
+ *   - Free-scrolling with trackpad/mouse-wheel to peek forward/backward
  *   - Directorial jump-to-shot interaction
  */
 
-import React, { useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { ShotCue } from '../../core/types';
 
 export interface DirectorialShotChipsStripProps {
@@ -21,6 +23,26 @@ export const DirectorialShotChipsStrip: React.FC<
 > = ({ shots, activeShotId, onSeek }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const activeChipRef = useRef<HTMLButtonElement | null>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const updateScrollBounds = useCallback(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const { scrollLeft, scrollWidth, clientWidth } = el;
+    setCanScrollLeft(scrollLeft > 4);
+    setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 4);
+  }, []);
+
+  // Update bounds on mount, resize, and shot changes
+  useEffect(() => {
+    updateScrollBounds();
+    const el = containerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(updateScrollBounds);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [updateScrollBounds, shots.length]);
 
   // Smoothly center the active shot chip whenever activeShotId changes
   useEffect(() => {
@@ -30,25 +52,50 @@ export const DirectorialShotChipsStrip: React.FC<
         inline: 'center',
         block: 'nearest',
       });
+      // Check scroll bounds after smooth scroll begins
+      const timer = setTimeout(updateScrollBounds, 300);
+      return () => clearTimeout(timer);
     }
-  }, [activeShotId]);
+  }, [activeShotId, updateScrollBounds]);
+
+  const handleScrollBy = useCallback(
+    (delta: number) => {
+      containerRef.current?.scrollBy({ left: delta, behavior: 'smooth' });
+      setTimeout(updateScrollBounds, 250);
+    },
+    [updateScrollBounds]
+  );
 
   if (!shots || shots.length === 0) {
     return null;
   }
 
   return (
-    <div className="relative w-full overflow-hidden">
+    <div className="relative flex items-center w-full gap-1 select-none">
+      {/* Left Navigation Chevron */}
+      <button
+        type="button"
+        onClick={() => handleScrollBy(-220)}
+        disabled={!canScrollLeft}
+        className={`p-1 rounded-lg bg-surface hover:bg-surface-subtle border border-border-main text-text-muted hover:text-text-main shrink-0 transition-all cursor-pointer shadow-2xs active:scale-95 ${
+          !canScrollLeft ? 'opacity-25 cursor-not-allowed pointer-events-none' : ''
+        }`}
+        title="Scroll previous shots"
+      >
+        <ChevronLeft className="w-3.5 h-3.5" />
+      </button>
+
       {/* Scrollable Chip Row with Edge Fades & Hidden Raw Scrollbars */}
       <div
         ref={containerRef}
+        onScroll={updateScrollBounds}
         style={{
           maskImage:
-            'linear-gradient(to right, transparent, black 28px, black calc(100% - 28px), transparent)',
+            'linear-gradient(to right, transparent, black 24px, black calc(100% - 24px), transparent)',
           WebkitMaskImage:
-            'linear-gradient(to right, transparent, black 28px, black calc(100% - 28px), transparent)',
+            'linear-gradient(to right, transparent, black 24px, black calc(100% - 24px), transparent)',
         }}
-        className="flex items-center gap-1.5 overflow-x-auto px-6 py-0.5 select-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="flex-1 flex items-center gap-1.5 overflow-x-auto px-4 py-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {shots.map((shot) => {
           const isActive = activeShotId === shot.id;
@@ -80,6 +127,19 @@ export const DirectorialShotChipsStrip: React.FC<
           );
         })}
       </div>
+
+      {/* Right Navigation Chevron */}
+      <button
+        type="button"
+        onClick={() => handleScrollBy(220)}
+        disabled={!canScrollRight}
+        className={`p-1 rounded-lg bg-surface hover:bg-surface-subtle border border-border-main text-text-muted hover:text-text-main shrink-0 transition-all cursor-pointer shadow-2xs active:scale-95 ${
+          !canScrollRight ? 'opacity-25 cursor-not-allowed pointer-events-none' : ''
+        }`}
+        title="Scroll next shots"
+      >
+        <ChevronRight className="w-3.5 h-3.5" />
+      </button>
     </div>
   );
 };

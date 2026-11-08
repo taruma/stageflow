@@ -226,7 +226,8 @@ Decomposed into 3 focused submodules to preserve the $\le 250$ line modularity s
    - Dual-gradient playback progress fill.
    - **Floating Hover Preview Tooltip**: Hovering across the track displays a floating tactile pill above the cursor (`00:21.86 · #04 Evan Grabs Ruby's Arm`) clamped within container bounds, paired with a razor vertical hairline on the timeline.
    - **Luminous Emerald Loop Indicator**: When `Loop Shot` is enabled, highlights the active shot's time range on the timeline with an emerald accent fill, subtle glow, and crisp `[` and `]` boundary bracket ticks.
-2. **Auto-Centering Shot Chips Strip (`DirectorialShotChipsStrip.tsx`)**:
+2. **Auto-Centering Shot Chips Strip with Chevrons (`DirectorialShotChipsStrip.tsx`)**:
+   - Flanking `<` and `>` chevron buttons allowing 1-click smooth peek scrolling left/right through off-screen shots without jumping the playhead.
    - Automatically smooth-scrolls the active shot chip into the center on shot cut boundaries via `activeChipRef.scrollIntoView`.
    - Allows free trackpad / mouse-wheel horizontal peeking forward and backward at any time.
    - Edge fade masks (`mask-image: linear-gradient(...)`) indicate off-screen shots cleanly without an intrusive raw scrollbar track (`[scrollbar-width:none]`).
