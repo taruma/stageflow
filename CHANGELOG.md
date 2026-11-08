@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Responsive Directorial Monitor Header & Streamlined CAM Badge (`src/stage/StageCamMonitorCanvas.tsx`, `docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md`)**:
+  - Replaced verbose `"STAGE CAM 01"` designation and `"Full-Frame"` suffix with a concise `● CAM | [lens]mm · [f-stop]` format with `whitespace-nowrap shrink-0` protection.
+  - Made the secondary optical telemetry pill (`FOV · ROLL`) container-responsive with `hidden @md:flex whitespace-nowrap shrink-0`, automatically hiding on narrow panel widths ($< 448\text{px}$) to prevent header line wraps and collision with the `[BLUR ON/OFF]` button.
+  - Added `whitespace-nowrap shrink-0` and safe gap boundaries across bottom maneuver and telemetry pills (`YAW`, `DIST`, `FOCUS`), ensuring zero layout wrapping across narrow left-column subpanels.
+
 ### Added
 - **Centralized Lens Aperture F-Stop Formatter (`src/core/opticsMath.ts`, `tests/unit/opticsMath.test.ts`)**:
   - Implemented `formatApertureFStop(fStop)` rounding continuous iris ramp floats to 1 decimal place with trailing `.0` stripping (e.g. `2.5664...` $\to$ `f/2.6`, `2.0` $\to$ `f/2`, `11.0` $\to$ `f/11`).

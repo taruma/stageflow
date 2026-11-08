@@ -90,18 +90,18 @@ export const StageCamMonitorCanvas: React.FC<StageCamMonitorCanvasProps> = ({
       {/* 2. Optical Director's Monitor HUD Overlay */}
       <div className="absolute inset-0 pointer-events-none flex flex-col justify-between p-4 z-10">
         {/* Top Monitor Status Line */}
-        <div className="flex items-center justify-between text-[11px] font-mono tracking-wider">
-          <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between text-[11px] font-mono tracking-wider gap-2">
+          <div className="flex items-center gap-2 whitespace-nowrap shrink-0">
             <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-            <span className="font-bold text-amber-500">STAGE CAM 01</span>
+            <span className="font-bold text-amber-500">CAM</span>
             <span className="text-text-muted">|</span>
             <span className="text-text-body font-semibold">
-              {Math.round(pose.focalLengthMm)}mm Full-Frame
+              {Math.round(pose.focalLengthMm)}mm
               {dof.enabled ? ` · ${formatApertureFStop(dof.apertureFStop)}` : ''}
             </span>
           </div>
 
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 shrink-0">
             {onToggleDofBlur && (
               <button
                 type="button"
@@ -109,7 +109,7 @@ export const StageCamMonitorCanvas: React.FC<StageCamMonitorCanvasProps> = ({
                 title={`Toggle Optical DoF Blur Simulation [Hotkey: B] — Currently ${
                   dofBlurEnabled ? 'ON' : 'OFF'
                 }`}
-                className={`pointer-events-auto px-2 py-0.5 rounded-md border text-[10px] font-mono transition-colors cursor-pointer ${
+                className={`pointer-events-auto px-2 py-0.5 rounded-md border text-[10px] font-mono transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
                   dofBlurEnabled
                     ? 'bg-emerald-500 text-white border-emerald-500 font-semibold shadow-2xs'
                     : 'bg-surface/80 border-border-main text-text-muted hover:text-text-main'
@@ -119,7 +119,7 @@ export const StageCamMonitorCanvas: React.FC<StageCamMonitorCanvasProps> = ({
               </button>
             )}
 
-            <div className="flex items-center gap-2 bg-surface/80 border border-border-main px-2 py-0.5 rounded-md shadow-xs">
+            <div className="hidden @md:flex items-center gap-2 bg-surface/80 border border-border-main px-2 py-0.5 rounded-md shadow-xs whitespace-nowrap shrink-0">
               <span className="text-text-muted">FOV</span>
               <span className="text-text-main font-semibold">
                 {uiFrame.stageCamera.transform.fovDeg.toFixed(1)}°
@@ -161,15 +161,15 @@ export const StageCamMonitorCanvas: React.FC<StageCamMonitorCanvasProps> = ({
         )}
 
         {/* Bottom Horizon & Telemetry Bar */}
-        <div className="flex items-center justify-between text-[10px] font-mono text-text-muted z-10">
-          <div className="flex items-center gap-1.5 bg-surface/80 border border-border-main px-2 py-0.5 rounded-md shadow-xs">
+        <div className="flex items-center justify-between text-[10px] font-mono text-text-muted z-10 gap-2">
+          <div className="flex items-center gap-1.5 bg-surface/80 border border-border-main px-2 py-0.5 rounded-md shadow-xs whitespace-nowrap shrink-0">
             <span className="text-amber-500 font-bold">MANEUVER:</span>
             <span className="text-text-main uppercase font-semibold">
               {uiFrame.stageCamera.maneuver}
             </span>
           </div>
 
-          <div className="flex items-center gap-2 bg-surface/80 border border-border-main px-2 py-0.5 rounded-md shadow-xs">
+          <div className="flex items-center gap-2 bg-surface/80 border border-border-main px-2 py-0.5 rounded-md shadow-xs whitespace-nowrap shrink-0">
             <span>
               YAW: <strong className="text-text-main">{yawDeg.toFixed(1)}°</strong>
             </span>
