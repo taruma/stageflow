@@ -2,12 +2,16 @@
  * TypeScript interfaces for CLI recorder options and execution state.
  */
 
-import type { CameraViewMode, LabelDisplayMode } from '../../src/core/types';
+import type {
+  AppThemeCategory,
+  CameraViewMode,
+  LabelDisplayMode,
+} from '../../src/core/types';
 
 export interface CliOptions {
   sceneInput: string;
   cameraMode: CameraViewMode;
-  preset?: 'isometric' | 'top-down' | 'front' | 'side';
+  preset?: 'isometric' | 'top-down' | 'front' | 'side' | 'iso' | 'top';
   customPose?: {
     pitchDeg?: number;
     yawDeg?: number;
@@ -17,6 +21,8 @@ export interface CliOptions {
   labels: LabelDisplayMode;
   guides: boolean;
   hud: boolean;
+  dofBlur?: boolean;
+  theme?: AppThemeCategory;
   fps: number;
   width: number;
   height: number;

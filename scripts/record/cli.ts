@@ -7,7 +7,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { INITIAL_CATALOG_ITEMS } from '../../src/core/scoreCatalog';
 import { parseStageScore } from '../../src/core/scoreParser';
-import type { CameraViewMode, LabelDisplayMode } from '../../src/core/types';
+import type {
+  AppThemeCategory,
+  CameraViewMode,
+  LabelDisplayMode,
+} from '../../src/core/types';
 import { CAMERA_PRESETS } from './cameraPresets';
 import { runRecordSession } from './playwrightDriver';
 import type { CliOptions, ResolutionPresetKey } from './recorderTypes';
@@ -22,16 +26,20 @@ Usage:
   npm run record [scene] [options]
 
 Arguments:
-  scene                   Bundled ID (01, 02, 03, 04, blueprint_01_two_shot_arc)
+  scene                   Bundled shortcut (01-06, vf, vector-field)
+                          or bundled ID (blueprint_01_two_shot_arc, etc.)
                           or a path to a custom .yaml / .json file.
                           Default: "blueprint_01_two_shot_arc".
 
 Options:
   --camera <mode>         "scripted" (default) or "stage-pov"
+  --blur, --dof-blur      Force thin-lens DoF bokeh blur ON (Stage Cam POV)
+  --no-blur               Force thin-lens DoF bokeh blur OFF
+  --theme <category>      Diorama theme: "dark" (default), "warm", or "light"
   --labels <mode>         "all" (default), "camera-only", or "off"
   --guides                Show optical viewfinder composition guides
   --hud                   Include 2D shot breakdown and telemetry badges
-  --preset <name>         Camera angle preset: isometric, top-down, front, side
+  --preset <name>         Camera angle preset: isometric (iso), top-down (top), front, side
   --shot <shot_id>        Record only a specific shot (e.g. shot_01)
   --start <sec>           Custom start timestamp in seconds
   --end <sec>             Custom end timestamp in seconds
@@ -48,9 +56,10 @@ Options:
 
 Examples:
   npm run record 01
+  npm run record 06 -- --camera stage-pov --blur -o rack_focus.mp4
   npm run record 01 -- --camera stage-pov -o stage_pov.mp4
   npm run record 02 -- --labels off --shot shot_01 -o clean_shot.mp4
-  npm run record 04 -- --preset isometric --res 4k -o overview_4k.mp4
+  npm run record 04 -- --preset isometric --res 4k --theme warm -o overview_warm.mp4
 `);
 }
 
@@ -62,7 +71,22 @@ function resolveScoreYaml(input: string): { yaml: string; id: string } {
     return { yaml, id: filename };
   }
 
-  // Check numeric shortcuts: 01, 02, 03, 04, 05 (mapped to Blueprint numbers)
+  // Check aliases for study scenes: vf, vector_field, vector-field
+  const normalized = input.trim().toLowerCase().replace(/_/g, '-');
+  if (
+    normalized === 'vf' ||
+    normalized === 'vector-field' ||
+    normalized === 'vectorfield'
+  ) {
+    const vfItem = INITIAL_CATALOG_ITEMS.find((item) =>
+      item.id.toLowerCase().includes('vector-field')
+    );
+    if (vfItem) {
+      return { yaml: vfItem.rawYaml, id: vfItem.id };
+    }
+  }
+
+  // Check numeric shortcuts: 01, 02, 03, 04, 05, 06 (mapped to Blueprint numbers)
   const numMatch = input.match(/^(?:bp)?0?([1-9]\d*)$/i);
   if (numMatch) {
     const num = parseInt(numMatch[1], 10);
@@ -76,11 +100,12 @@ function resolveScoreYaml(input: string): { yaml: string; id: string } {
     }
   }
 
-  // Check catalog IDs or substring matches (e.g. vector-field, demo-blueprint)
+  // Check catalog IDs or substring matches (e.g. vector-field, demo-blueprint, optics-dof)
   const catalogItem = INITIAL_CATALOG_ITEMS.find(
     (item) =>
-      item.id.toLowerCase() === input.toLowerCase() ||
-      item.id.toLowerCase().includes(input.toLowerCase())
+      item.id.toLowerCase() === normalized ||
+      item.id.toLowerCase().includes(normalized) ||
+      item.id.toLowerCase().replace(/-/g, '_').includes(input.toLowerCase())
   );
   if (catalogItem) {
     return { yaml: catalogItem.rawYaml, id: catalogItem.id };
@@ -98,6 +123,8 @@ function parseArgs(args: string[]): CliOptions {
   let labels: LabelDisplayMode = 'all';
   let guides = false;
   let hud = false;
+  let dofBlur: boolean | undefined = undefined;
+  let theme: AppThemeCategory | undefined = undefined;
   let fps = 60;
   let resPreset: ResolutionPresetKey = '1080p';
   let customWidth: number | undefined;
@@ -120,6 +147,12 @@ function parseArgs(args: string[]): CliOptions {
       process.exit(0);
     } else if (arg === '--camera' && args[i + 1]) {
       cameraMode = args[++i] as CameraViewMode;
+    } else if (arg === '--blur' || arg === '--dof-blur') {
+      dofBlur = true;
+    } else if (arg === '--no-blur' || arg === '--no-dof-blur') {
+      dofBlur = false;
+    } else if (arg === '--theme' && args[i + 1]) {
+      theme = args[++i] as AppThemeCategory;
     } else if (arg === '--labels' && args[i + 1]) {
       labels = args[++i] as LabelDisplayMode;
     } else if (arg === '--guides') {
@@ -187,6 +220,8 @@ function parseArgs(args: string[]): CliOptions {
     labels,
     guides,
     hud,
+    dofBlur,
+    theme,
     fps,
     width,
     height,

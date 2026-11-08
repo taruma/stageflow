@@ -75,6 +75,8 @@ export async function runRecordSession(
       labelMode: options.labels,
       showGuides: options.guides,
       showHud: options.hud,
+      dofBlur: options.dofBlur,
+      theme: options.theme,
       fps: options.fps,
       width: options.width,
       height: options.height,
@@ -100,11 +102,24 @@ export async function runRecordSession(
       durationSec: sessionInfo.durationSec,
     });
 
+    const blurDisplay =
+      options.dofBlur !== undefined
+        ? options.dofBlur
+          ? 'ON (forced)'
+          : 'OFF (forced)'
+        : 'AUTO (from score)';
+    const themeDisplay = (options.theme ?? 'dark').toUpperCase();
+
     console.log('\n🎬 StageFlow Deterministic Viewport Recorder');
     console.log('━'.repeat(52));
     console.log(`  Camera Mode:   ${options.cameraMode.toUpperCase()}`);
-    console.log(`  Labels:        ${options.labels.toUpperCase()} | HUD: ${options.hud ? 'ON' : 'OFF'} | Guides: ${options.guides ? 'ON' : 'OFF'}`);
-    console.log(`  Audio Track:   ${options.audioPath ? options.audioPath : 'NONE (silent)'}`);
+    console.log(
+      `  Labels:        ${options.labels.toUpperCase()} | HUD: ${options.hud ? 'ON' : 'OFF'} | Guides: ${options.guides ? 'ON' : 'OFF'}`
+    );
+    console.log(`  Optics Blur:   ${blurDisplay} | Theme: ${themeDisplay}`);
+    console.log(
+      `  Audio Track:   ${options.audioPath ? options.audioPath : 'NONE (silent)'}`
+    );
     console.log(`  Framerate:     ${options.fps} fps (locked)`);
     console.log(`  Resolution:    ${options.width}x${options.height}`);
     console.log(`  Total Frames:  ${totalFrames} (${sessionInfo.durationSec.toFixed(2)}s)`);

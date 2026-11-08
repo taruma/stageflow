@@ -16,7 +16,9 @@ describe('Recorder Camera Presets', () => {
   it('defines valid pitch, yaw, and distance for all presets', () => {
     const keys = Object.keys(CAMERA_PRESETS);
     expect(keys).toContain('isometric');
+    expect(keys).toContain('iso');
     expect(keys).toContain('top-down');
+    expect(keys).toContain('top');
     expect(keys).toContain('front');
     expect(keys).toContain('side');
 
@@ -27,6 +29,11 @@ describe('Recorder Camera Presets', () => {
       expect(preset.distanceM).toBeGreaterThan(0);
       expect(preset.target).toHaveLength(3);
     }
+  });
+
+  it('aligns iso and isometric aliases identically', () => {
+    expect(CAMERA_PRESETS['iso']).toEqual(CAMERA_PRESETS['isometric']);
+    expect(CAMERA_PRESETS['top']).toEqual(CAMERA_PRESETS['top-down']);
   });
 });
 
@@ -84,5 +91,75 @@ describe('Recorder Audio Track Configuration', () => {
   it('supports opt-in audio path in CLI options schema', () => {
     const audioPath = '_examples/hb_stageflow_blueprint_01_result.mp4';
     expect(typeof audioPath).toBe('string');
+  });
+});
+
+describe('Bundled Scene Shortcuts & Catalog Resolution', () => {
+  it('resolves all 6 blueprints and vector field correctly', () => {
+    const resolveShortcut = (input: string) => {
+      const normalized = input.trim().toLowerCase().replace(/_/g, '-');
+      if (
+        normalized === 'vf' ||
+        normalized === 'vector-field' ||
+        normalized === 'vectorfield'
+      ) {
+        return INITIAL_CATALOG_ITEMS.find((item) =>
+          item.id.toLowerCase().includes('vector-field')
+        );
+      }
+      const numMatch = input.match(/^(?:bp)?0?([1-9]\d*)$/i);
+      if (numMatch) {
+        const num = parseInt(numMatch[1], 10);
+        const targetBpId = num === 1 ? 'demo-blueprint' : `blueprint-0${num}`;
+        return INITIAL_CATALOG_ITEMS.find(
+          (item) =>
+            item.id.toLowerCase().startsWith(targetBpId) ||
+            item.id === targetBpId
+        );
+      }
+      return INITIAL_CATALOG_ITEMS.find(
+        (item) =>
+          item.id.toLowerCase() === normalized ||
+          item.id.toLowerCase().includes(normalized)
+      );
+    };
+
+    expect(resolveShortcut('01')?.id).toBe('demo-blueprint');
+    expect(resolveShortcut('02')?.id).toBe('blueprint-02-dialogue');
+    expect(resolveShortcut('03')?.id).toBe('blueprint-03-ball-pass');
+    expect(resolveShortcut('04')?.id).toBe(
+      'blueprint-04-cinematography-tutorial'
+    );
+    expect(resolveShortcut('05')?.id).toBe('blueprint-05-two-rooms');
+    expect(resolveShortcut('06')?.id).toBe('blueprint-06-optics-dof');
+    expect(resolveShortcut('vf')?.id).toBe('vector-field-taruma-sakti');
+    expect(resolveShortcut('vector_field')?.id).toBe(
+      'vector-field-taruma-sakti'
+    );
+  });
+});
+
+describe('Optics Bokeh Blur Invariant in Headless Recorder', () => {
+  it('respects score optics dofBlur when CLI flag is omitted', () => {
+    const bp06 = INITIAL_CATALOG_ITEMS.find(
+      (i) => i.id === 'blueprint-06-optics-dof'
+    );
+    expect(bp06?.score.optics?.dofBlur).toBe(true);
+
+    const bp01 = INITIAL_CATALOG_ITEMS.find(
+      (i) => i.id === 'demo-blueprint'
+    );
+    expect(bp01?.score.optics?.dofBlur ?? false).toBe(false);
+
+    const resolveBlur = (cliBlur?: boolean, scoreBlur?: boolean) =>
+      cliBlur !== undefined ? cliBlur : (scoreBlur ?? false);
+
+    // Default inherit from score
+    expect(resolveBlur(undefined, bp06?.score.optics?.dofBlur)).toBe(true);
+    expect(resolveBlur(undefined, bp01?.score.optics?.dofBlur)).toBe(false);
+
+    // Explicit override via CLI flag
+    expect(resolveBlur(false, bp06?.score.optics?.dofBlur)).toBe(false);
+    expect(resolveBlur(true, bp01?.score.optics?.dofBlur)).toBe(true);
   });
 });

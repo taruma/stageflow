@@ -82,6 +82,9 @@ npm run record 01
 # Record Stage Camera POV through director's lens with safe-action guides
 npm run record 01 -- --camera stage-pov --guides -o stage_pov.mp4
 
+# Record Blueprint 06 Stage Camera POV with thin-lens DoF bokeh blur
+npm run record 06 -- --camera stage-pov --blur --guides -o bp06_rack_focus.mp4
+
 # Record clean 3D diorama geometry only (no HTML labels)
 npm run record 02 -- --labels off -o clean.mp4
 

@@ -265,12 +265,14 @@ Adopts professional 3D viewport convention (Blender, Unreal Engine, Maya) distri
   1. **Scripted Observer View (`--camera scripted`)**: Records the 3D diorama along the authored observer camera path.
   2. **Stage Camera POV (`--camera stage-pov`)**: Locks directly to the physical stage camera's optical sightline, focal length, and active film gate.
 - **Visual Overlays & Chrome Control**:
+  - `--blur`, `--dof-blur` / `--no-blur`: Opt-in single-pass WebGL2 thin-lens depth of field bokeh blur in Stage Cam POV (automatically inherits from score YAML `optics.dofBlur` when flag is omitted).
+  - `--theme dark | warm | light`: Sets diorama background, fog, and grid palette (default: `dark`).
   - `--labels all | camera-only | off`: Toggles 3D Drei HTML character and camera badges.
   - `--guides`: Renders the optical viewfinder safe-action box, rule of thirds, and reticle.
   - `--hud`: Includes top-left shot breakdown and bottom-right degree/meter telemetry badges.
   - `--audio <local_path>`: Opt-in audio extraction and muxing from a reference video or sound file (default output remains 100% silent).
 - **Cinematic Presets & Slicing**:
-  - `--preset isometric | top-down | front | side`: Sets fixed architectural perspective angles.
+  - `--preset isometric (iso) | top-down (top) | front | side`: Sets fixed architectural perspective angles locked to actor chest level.
   - `--shot <shot_id>` or `--start <sec> --end <sec>`: Slices exact shot cues or timestamp windows.
   - `--res 1080p | 4k | 720p | square | vertical`, `--fps <number>`.
 
