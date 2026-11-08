@@ -48,6 +48,9 @@ export const DirectionalMannequin: React.FC<DirectionalMannequinProps> = ({
   const meshContainerRef = useRef<THREE.Group | null>(null);
   const footprintRef = useRef<THREE.Group | null>(null);
   const labelGroupRef = useRef<THREE.Group | null>(null);
+  const charTorsoRef = useRef<THREE.Mesh | null>(null);
+  const charShoulderRef = useRef<THREE.Mesh | null>(null);
+  const charHeadGroupRef = useRef<THREE.Group | null>(null);
   const { def, highlighted, trailPoints } = initialState;
   const color = def.color;
   const height = def.height;
@@ -56,6 +59,8 @@ export const DirectionalMannequin: React.FC<DirectionalMannequinProps> = ({
   const baseDepth = def.depth ?? radius * 2;
   const rx = baseWidth * 0.5;
   const rz = baseDepth * 0.5;
+  const charScaleX = radius > 1e-5 ? rx / radius : 1;
+  const charScaleZ = radius > 1e-5 ? rz / radius : 1;
   const isBoxProp = def.kind === 'prop' && (def.shape ?? 'box') === 'box';
 
   // Helper to get synchronized live entity state
@@ -94,9 +99,32 @@ export const DirectionalMannequin: React.FC<DirectionalMannequinProps> = ({
     const sy = height > 1e-5 ? liveH / height : 1;
     const sz = baseDepth > 1e-5 ? liveD / baseDepth : 1;
 
-    if (meshContainerRef.current) {
-      meshContainerRef.current.scale.set(sx, sy, sz);
+    if (def.kind === 'character') {
+      if (meshContainerRef.current) {
+        meshContainerRef.current.scale.set(1, 1, 1);
+      }
+      if (charTorsoRef.current) {
+        const baseTorsoHeight = Math.max(0.2, height - 0.35);
+        const liveTorsoHeight = Math.max(0.2, liveH - 0.35);
+        const torsoSy = baseTorsoHeight > 1e-5 ? liveTorsoHeight / baseTorsoHeight : 1;
+        const torsoY = liveTorsoHeight * 0.5 + 0.05;
+        charTorsoRef.current.position.set(0, torsoY, 0);
+        charTorsoRef.current.scale.set(sx * charScaleX, torsoSy, sz * charScaleZ);
+      }
+      if (charShoulderRef.current) {
+        charShoulderRef.current.position.set(0, Math.max(0.25, liveH - 0.40), 0);
+        charShoulderRef.current.scale.set(sx * charScaleX, 1, sz * charScaleZ);
+      }
+      if (charHeadGroupRef.current) {
+        charHeadGroupRef.current.position.set(0, Math.max(0.35, liveH - 0.16), 0);
+        charHeadGroupRef.current.scale.set(1, 1, 1);
+      }
+    } else {
+      if (meshContainerRef.current) {
+        meshContainerRef.current.scale.set(sx, sy, sz);
+      }
     }
+
     if (footprintRef.current) {
       footprintRef.current.scale.set(sx, 1, sz);
     }
@@ -196,13 +224,14 @@ export const DirectionalMannequin: React.FC<DirectionalMannequinProps> = ({
       ? (highlighted ? 0.50 : 0.25)
       : 0.9;
 
-    const charScaleX = radius > 1e-5 ? rx / radius : 1;
-    const charScaleZ = radius > 1e-5 ? rz / radius : 1;
-
     return (
       <group>
-        {/* Stylized Architectural Torso Column */}
-        <mesh position={[0, torsoY, 0]} scale={[charScaleX, 1, charScaleZ]}>
+        {/* Stylized Architectural Torso Column (telescopes without squashing head) */}
+        <mesh
+          ref={charTorsoRef}
+          position={[0, torsoY, 0]}
+          scale={[charScaleX, 1, charScaleZ]}
+        >
           <capsuleGeometry args={[radius * 0.72, torsoHeight * 0.55, 8, 20]} />
           <meshStandardMaterial
             color={bodyColor}
@@ -217,8 +246,12 @@ export const DirectionalMannequin: React.FC<DirectionalMannequinProps> = ({
           {hasEdges && <Edges threshold={20} color={color} />}
         </mesh>
 
-        {/* Shoulder Cross-Bar to make body silhouette immediately clear (Slim Minimalist) */}
-        <mesh position={[0, height - 0.40, 0]} scale={[charScaleX, 1, charScaleZ]}>
+        {/* Shoulder Cross-Bar (thickness stays 0.08m, scales with character width) */}
+        <mesh
+          ref={charShoulderRef}
+          position={[0, height - 0.40, 0]}
+          scale={[charScaleX, 1, charScaleZ]}
+        >
           <boxGeometry args={[radius * 1.4, 0.08, radius * 0.55]} />
           <meshStandardMaterial
             color={bodyColor}
@@ -233,30 +266,32 @@ export const DirectionalMannequin: React.FC<DirectionalMannequinProps> = ({
           {hasEdges && <Edges threshold={20} color={color} />}
         </mesh>
 
-        {/* Mannequin Head Sphere */}
-        <mesh position={[0, headY, 0]}>
-          <sphereGeometry args={[0.14, 20, 20]} />
-          <meshStandardMaterial
-            color={bodyColor}
-            emissive={bodyEmissive}
-            emissiveIntensity={
-              isSilhouette
-                ? (highlighted ? 0.45 : 0)
-                : (highlighted ? 0.45 : 0.2)
-            }
-            transparent={!isSilhouette}
-            opacity={headOpacity}
-            roughness={isSilhouette ? 0.85 : 0.35}
-            wireframe={isWireframe}
-          />
-          {hasEdges && <Edges threshold={20} color={color} />}
-        </mesh>
+        {/* Mannequin Head & Visor Group (strictly Y=1.0 aspect ratio — never squashed into a pancake) */}
+        <group ref={charHeadGroupRef} position={[0, headY, 0]}>
+          <mesh position={[0, 0, 0]}>
+            <sphereGeometry args={[0.14, 20, 20]} />
+            <meshStandardMaterial
+              color={bodyColor}
+              emissive={bodyEmissive}
+              emissiveIntensity={
+                isSilhouette
+                  ? (highlighted ? 0.45 : 0)
+                  : (highlighted ? 0.45 : 0.2)
+              }
+              transparent={!isSilhouette}
+              opacity={headOpacity}
+              roughness={isSilhouette ? 0.85 : 0.35}
+              wireframe={isWireframe}
+            />
+            {hasEdges && <Edges threshold={20} color={color} />}
+          </mesh>
 
-        {/* Directional Eye Visor / Nose Wedge (+Z Forward) */}
-        <mesh position={[0, headY, 0.13]} rotation={[Math.PI / 2, 0, 0]}>
-          <coneGeometry args={[0.065, 0.14, 4]} />
-          <meshBasicMaterial color="#ffffff" />
-        </mesh>
+          {/* Directional Eye Visor / Nose Wedge (+Z Forward) */}
+          <mesh position={[0, 0, 0.13]} rotation={[Math.PI / 2, 0, 0]}>
+            <coneGeometry args={[0.065, 0.14, 4]} />
+            <meshBasicMaterial color="#ffffff" />
+          </mesh>
+        </group>
       </group>
     );
   };
