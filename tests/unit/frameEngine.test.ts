@@ -2045,44 +2045,61 @@ shots:
       expect(bp06).toBeDefined();
       if (!bp06) return;
 
-      expect(bp06.durationSec).toBe(32.0);
+      expect(bp06.durationSec).toBe(36.0);
       expect(bp06.shots).toHaveLength(8);
-      expect(bp06.observerShots).toHaveLength(4);
+      expect(bp06.observerShots).toHaveLength(2);
 
-      // Shot 01 (t = 2.0s): Off-axis focus locked to Bob (f/2.0, 85mm)
+      // Shot 01 (t = 2.0s): Off-axis focus locked to Alice (shallow f/2.8, 50mm, aimed at center)
       const f1 = computeStageFrame(2.0, bp06);
       expect(f1.activeShot?.id).toBe('shot-01-off-axis-focus');
-      expect(f1.stageCamera.dof.apertureFStop).toBe(2.0);
-      expect(f1.stageCamera.transform.pose.focalLengthMm).toBe(85);
+      expect(f1.stageCamera.dof.apertureFStop).toBe(2.8);
+      expect(f1.stageCamera.transform.pose.focalLengthMm).toBe(50);
       expect(f1.stageCamera.dof.focusTargetPoint).toBeDefined();
 
-      // Shot 02 (t = 4.0s vs t = 8.0s): Rack focus transition from Alice to Bob
-      const f2Start = computeStageFrame(4.0, bp06);
-      const f2End = computeStageFrame(7.99, bp06);
-      expect(f2Start.activeShot?.id).toBe('shot-02-rack-focus-ab');
-      expect(f2Start.stageCamera.dof.apertureFStop).toBe(1.8);
-      // Focus distance changes from Alice to Bob across the 4s rack
+      // Shot 02 (t = 4.5s vs t = 8.99s): 85mm Rack focus transition from Alice to Bob
+      const f2Start = computeStageFrame(4.5, bp06);
+      const f2End = computeStageFrame(8.99, bp06);
+      expect(f2Start.activeShot?.id).toBe('shot-02-subject-rack-focus');
+      expect(f2Start.stageCamera.dof.apertureFStop).toBe(2.8);
+      expect(f2Start.stageCamera.transform.pose.focalLengthMm).toBe(85);
+      // Focus distance changes from Alice to Bob across the rack
       expect(f2Start.stageCamera.dof.focusDistanceM).not.toBeCloseTo(
         f2End.stageCamera.dof.focusDistanceM,
         1
       );
 
-      // Shot 06 (t = 20.0s vs 23.99s): Iris aperture ramp from f/1.4 to f/11
-      const f6Start = computeStageFrame(20.0, bp06);
-      const f6End = computeStageFrame(23.99, bp06);
-      expect(f6Start.activeShot?.id).toBe('shot-06-aperture-ramp');
-      expect(f6Start.stageCamera.dof.apertureFStop).toBeCloseTo(1.4, 1);
-      expect(f6End.stageCamera.dof.apertureFStop).toBeCloseTo(11.0, 1);
+      // Shot 04 (t = 15.0s): Follow-focus tracking walking Claire @ f/2.0
+      const f4 = computeStageFrame(15.0, bp06);
+      expect(f4.activeShot?.id).toBe('shot-04-moving-actor-focus-track');
+      expect(f4.stageCamera.dof.apertureFStop).toBe(2.0);
+      expect(f4.stageCamera.dof.focusTargetPoint).toBeDefined();
+
+      // Shot 05 (t = 18.5s vs 22.99s): Iris aperture ramp from f/1.4 to f/11
+      const f5Start = computeStageFrame(18.5, bp06);
+      const f5End = computeStageFrame(22.99, bp06);
+      expect(f5Start.activeShot?.id).toBe('shot-05-aperture-iris-ramp');
+      expect(f5Start.stageCamera.dof.apertureFStop).toBeCloseTo(1.4, 1);
+      expect(f5End.stageCamera.dof.apertureFStop).toBeCloseTo(11.0, 1);
       // As aperture stops down from f/1.4 to f/11, DoF band expands dramatically
-      expect(f6End.stageCamera.dof.depthOfFieldM).toBeGreaterThan(
-        f6Start.stageCamera.dof.depthOfFieldM * 5
+      expect(f5End.stageCamera.dof.depthOfFieldM).toBeGreaterThan(
+        f5Start.stageCamera.dof.depthOfFieldM * 5
       );
 
-      // Shot 08 (t = 30.0s): Deep focus master at f/16
-      const f8 = computeStageFrame(30.0, bp06);
+      // Shot 07 (t = 30.0s): Flat polymorphic syntax with 3D Vec3 coordinate focus point
+      const f7 = computeStageFrame(30.0, bp06);
+      expect(f7.activeShot?.id).toBe('shot-07-flat-polymorphic-focus');
+      expect(f7.stageCamera.dof.apertureFStop).toBe(5.6);
+      expect(f7.stageCamera.dof.focusTargetPoint).toEqual({
+        x: 0.0,
+        y: 1.1,
+        z: 0.2,
+      });
+
+      // Shot 08 (t = 34.0s): Deep focus master at f/Infinity
+      const f8 = computeStageFrame(34.0, bp06);
       expect(f8.activeShot?.id).toBe('shot-08-deep-focus-master');
-      expect(f8.stageCamera.dof.apertureFStop).toBe(16.0);
-      expect(f8.stageCamera.dof.focusDistanceM).toBeCloseTo(3.5, 2);
+      expect(f8.stageCamera.dof.preset).toBe('deep');
+      expect(f8.stageCamera.dof.depthOfFieldM).toBe(Infinity);
     });
 
     it('evaluates static focus, dynamic rack focus between moving actors, and thin-lens DoF limits cleanly', () => {

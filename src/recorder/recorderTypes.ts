@@ -2,7 +2,7 @@
  * Shared types for headless deterministic recording and Playwright bridge communication.
  */
 
-import type { CameraViewMode, LabelDisplayMode } from '../core/types';
+import type { AppThemeCategory, CameraViewMode, LabelDisplayMode } from '../core/types';
 
 export interface RecorderConfig {
   scoreYaml: string;
@@ -10,6 +10,8 @@ export interface RecorderConfig {
   labelMode: LabelDisplayMode;
   showGuides: boolean;
   showHud: boolean;
+  dofBlur?: boolean;
+  theme?: AppThemeCategory;
   fps: number;
   width: number;
   height: number;
