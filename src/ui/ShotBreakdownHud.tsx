@@ -8,6 +8,7 @@
 import React, { useState } from 'react';
 import { Aperture, ChevronDown, ChevronRight, Compass, Crosshair } from 'lucide-react';
 import type { CameraViewMode, StageFrame, StageScore } from '../core/types';
+import { formatApertureFStop } from '../core/opticsMath';
 
 export interface ShotBreakdownHudProps {
   score: StageScore;
@@ -103,7 +104,7 @@ export const ShotBreakdownHud: React.FC<ShotBreakdownHudProps> = ({
                 <>
                   <span className="text-text-faint opacity-50">·</span>
                   <span className="text-emerald-500 font-semibold shrink-0">
-                    f/{dof.apertureFStop}
+                    {formatApertureFStop(dof.apertureFStop)}
                   </span>
                 </>
               )}
@@ -167,7 +168,7 @@ export const ShotBreakdownHud: React.FC<ShotBreakdownHudProps> = ({
               <span className="flex items-center gap-1 text-text-main font-semibold">
                 <Aperture className="w-3 h-3 text-sky-500" />
                 {lensMm}mm Prime
-                {dof.enabled ? ` · f/${dof.apertureFStop}` : ''} · {aspectLabel} Gate
+                {dof.enabled ? ` · ${formatApertureFStop(dof.apertureFStop)}` : ''} · {aspectLabel} Gate
               </span>
               {(dof.hasExplicitFocus || dof.enabled) && (
                 <>

@@ -247,6 +247,18 @@ export function apertureFStopToPreset(fStop: number): DofPreset {
 }
 
 /**
+ * Formats a lens aperture f-number for directorial UI display.
+ * Rounds to 1 decimal place and strips trailing .0 (e.g. 2.8 -> "f/2.8", 11 -> "f/11", 2.5664 -> "f/2.6").
+ */
+export function formatApertureFStop(fStop: number): string {
+  if (!Number.isFinite(fStop) || fStop <= 0) {
+    return 'f/∞';
+  }
+  const rounded = fStop.toFixed(1).replace(/\.0$/, '');
+  return `f/${rounded}`;
+}
+
+/**
  * Computes the exact focus plane distance d_focus (in meters) by projecting
  * (focusPoint - eye) orthogonally onto the unit optical sightline vector F = (lookTarget - eye) / ||lookTarget - eye||.
  * Eliminates the off-axis cosine overshoot of Euclidean distance.

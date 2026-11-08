@@ -11,6 +11,7 @@ import React, { useRef, useState, useLayoutEffect } from 'react';
 import type { StageFrame, StageScore } from '../core/types';
 import {
   computeContainedGateDimensionsPx,
+  formatApertureFStop,
 } from '../core/opticsMath';
 import { VIEWFINDER_GATE_SCALE } from '../core/constants';
 
@@ -98,7 +99,9 @@ export const StageCamViewfinderOverlay: React.FC<
             {dof.enabled && (
               <>
                 <span className="text-slate-500">·</span>
-                <span className="text-emerald-300">f/{dof.apertureFStop}</span>
+                <span className="text-emerald-300">
+                  {formatApertureFStop(dof.apertureFStop)}
+                </span>
               </>
             )}
             {(dof.hasExplicitFocus || dof.enabled) && (

@@ -14,6 +14,7 @@ import type {
   StageScore,
 } from '../core/types';
 import { radToDeg } from '../core/sphericalMath';
+import { formatApertureFStop } from '../core/opticsMath';
 import { BlueprintStageScene } from './BlueprintStageScene';
 import { StageCamViewRig } from './StageCamViewRig';
 import { StageCamDofEffect } from './StageCamDofEffect';
@@ -96,7 +97,7 @@ export const StageCamMonitorCanvas: React.FC<StageCamMonitorCanvasProps> = ({
             <span className="text-text-muted">|</span>
             <span className="text-text-body font-semibold">
               {Math.round(pose.focalLengthMm)}mm Full-Frame
-              {dof.enabled ? ` · f/${dof.apertureFStop}` : ''}
+              {dof.enabled ? ` · ${formatApertureFStop(dof.apertureFStop)}` : ''}
             </span>
           </div>
 

@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Centralized Lens Aperture F-Stop Formatter (`src/core/opticsMath.ts`, `tests/unit/opticsMath.test.ts`)**:
+  - Implemented `formatApertureFStop(fStop)` rounding continuous iris ramp floats to 1 decimal place with trailing `.0` stripping (e.g. `2.5664...` $\to$ `f/2.6`, `2.0` $\to$ `f/2`, `11.0` $\to$ `f/11`).
+  - Added deterministic unit tests in `tests/unit/opticsMath.test.ts` covering standard stops, dynamic interpolation decimals, and infinite DoF edge cases.
+
+### Changed
+- **Directorial HUD Aperture Readout Rounding (`src/ui/ShotBreakdownHud.tsx`, `src/stage/StageCamMonitorCanvas.tsx`, `src/ui/StageCamViewfinderOverlay.tsx`)**:
+  - Integrated `formatApertureFStop` across the Top-Left HUD, Procedural Monitor header, and Director's Viewfinder overlay, permanently eliminating 16-digit raw IEEE-754 float readouts during dynamic aperture racks and iris stop-down ramps.
 - **Pure 3D Billboard Label LOD & Visual Hierarchy Math (`src/stage/labelLodMath.ts`, `tests/unit/billboardLabelLod.test.ts`)**:
   - Extracted pure math functions and thresholds for distance-based semantic collapse (`computeBillboardLodMetrics`), kind-based opacity hierarchy (`getBillboardBaseOpacity`), and calibrated z-index sorting (`getBillboardZIndexRange`).
   - Added dedicated Vitest unit test suite (`tests/unit/billboardLabelLod.test.ts`) asserting 100% test coverage across proximity culling ($< 1.2\text{m}$), entity collapse ($24\text{m}$–$28\text{m}$), Stage Camera persistence ($52\text{m}$–$60\text{m}$), opacity order, and z-index boundary invariants.

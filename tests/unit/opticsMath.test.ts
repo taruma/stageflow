@@ -10,6 +10,7 @@ import {
   computeProjectedFocusDistanceM,
   computeViewfinderCanvasFovDeg,
   focalLengthToVerticalFovDeg,
+  formatApertureFStop,
   parseAspectRatio,
   presetToApertureFStop,
   verticalFovDegToFocalLengthMm,
@@ -157,5 +158,19 @@ describe('opticsMath — Directorial Lens & Frustum Gate Calculations', () => {
     expect(apertureFStopToPreset(16)).toBe('deep');
     expect(clampApertureFStop(0.2)).toBe(0.7);
     expect(clampApertureFStop(128)).toBe(64.0);
+  });
+
+  it('formats aperture f-stops with at most 1 decimal digit and strips trailing .0', () => {
+    expect(formatApertureFStop(1.4)).toBe('f/1.4');
+    expect(formatApertureFStop(2.0)).toBe('f/2');
+    expect(formatApertureFStop(2.8)).toBe('f/2.8');
+    expect(formatApertureFStop(4)).toBe('f/4');
+    expect(formatApertureFStop(5.6)).toBe('f/5.6');
+    expect(formatApertureFStop(8.0)).toBe('f/8');
+    expect(formatApertureFStop(11.0)).toBe('f/11');
+    expect(formatApertureFStop(2.566423732871568)).toBe('f/2.6');
+    expect(formatApertureFStop(Infinity)).toBe('f/∞');
+    expect(formatApertureFStop(-1)).toBe('f/∞');
+    expect(formatApertureFStop(Number.NaN)).toBe('f/∞');
   });
 });
