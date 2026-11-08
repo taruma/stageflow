@@ -1,6 +1,6 @@
 /**
  * SceneEntityRoster Component.
- * Displays categorized entity cards for Characters, Props, and Floor Markers
+ * Displays compact categorized entity cards for Characters, Props, and Floor Markers
  * with theme color dots, 3D dimensions, and presentation styles.
  * Layer 5 UI Component.
  */
@@ -36,16 +36,16 @@ export const SceneEntityRoster: React.FC<SceneEntityRosterProps> = ({ entities }
   if (entities.length === 0) return null;
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {/* 1. Cast / Characters */}
       {characters.length > 0 && (
-        <div className="space-y-1.5">
-          <div className="flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-wider text-text-muted font-bold">
+        <div className="space-y-1">
+          <div className="flex items-center gap-1.5 text-[9.5px] font-mono uppercase tracking-wider text-text-muted font-bold">
             <User className="w-3 h-3 text-sky-500" />
-            <span>Cast & Characters ({characters.length})</span>
+            <span>Cast ({characters.length})</span>
           </div>
 
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex flex-wrap gap-1">
             {characters.map((ent) => {
               const heightStr =
                 typeof ent.height === 'number' && ent.height > 0
@@ -56,7 +56,7 @@ export const SceneEntityRoster: React.FC<SceneEntityRosterProps> = ({ entities }
               return (
                 <div
                   key={ent.id}
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-surface border border-border-main text-xs font-mono shadow-2xs"
+                  className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-surface border border-border-main text-[11px] font-mono shadow-2xs"
                 >
                   <span
                     className="w-2 h-2 rounded-full shrink-0 shadow-xs"
@@ -65,12 +65,12 @@ export const SceneEntityRoster: React.FC<SceneEntityRosterProps> = ({ entities }
                   <span className="font-semibold text-text-main">
                     {ent.label || ent.id}
                   </span>
-                  <span className="text-[9.5px] px-1 py-0.2 rounded bg-surface-muted text-text-muted">
-                    {heightStr}
+                  <span className="text-[10px] text-text-muted font-normal">
+                    ({heightStr})
                   </span>
                   {styleStr !== 'mannequin' && (
                     <span className="text-[9px] text-text-faint capitalize">
-                      {styleStr}
+                      · {styleStr}
                     </span>
                   )}
                 </div>
@@ -82,13 +82,13 @@ export const SceneEntityRoster: React.FC<SceneEntityRosterProps> = ({ entities }
 
       {/* 2. Set Props & Architecture */}
       {props.length > 0 && (
-        <div className="space-y-1.5">
-          <div className="flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-wider text-text-muted font-bold">
+        <div className="space-y-1">
+          <div className="flex items-center gap-1.5 text-[9.5px] font-mono uppercase tracking-wider text-text-muted font-bold">
             <Box className="w-3 h-3 text-amber-500" />
             <span>Set Props ({props.length})</span>
           </div>
 
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex flex-wrap gap-1">
             {props.map((ent) => {
               const dimsStr =
                 typeof ent.width === 'number' &&
@@ -103,23 +103,18 @@ export const SceneEntityRoster: React.FC<SceneEntityRosterProps> = ({ entities }
               return (
                 <div
                   key={ent.id}
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-surface border border-border-main text-xs font-mono shadow-2xs"
+                  className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-surface border border-border-main text-[11px] font-mono shadow-2xs"
                 >
                   <span
-                    className="w-2 h-2 rounded-full shrink-0"
+                    className="w-2 h-2 rounded-full shrink-0 shadow-xs"
                     style={{ backgroundColor: ent.color || '#fb923c' }}
                   />
                   <span className="font-semibold text-text-main">
                     {ent.label || ent.id}
                   </span>
-                  <span className="text-[9.5px] px-1 py-0.2 rounded bg-surface-muted text-text-muted capitalize">
-                    {shapeStr}
+                  <span className="text-[10px] text-text-muted font-normal capitalize">
+                    ({shapeStr}{dimsStr ? ` · ${dimsStr}` : ''})
                   </span>
-                  {dimsStr && (
-                    <span className="text-[9px] text-text-faint">
-                      {dimsStr}
-                    </span>
-                  )}
                 </div>
               );
             })}
@@ -129,13 +124,13 @@ export const SceneEntityRoster: React.FC<SceneEntityRosterProps> = ({ entities }
 
       {/* 3. Floor Spike Marks */}
       {markers.length > 0 && (
-        <div className="space-y-1.5">
-          <div className="flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-wider text-text-muted font-bold">
+        <div className="space-y-1">
+          <div className="flex items-center gap-1.5 text-[9.5px] font-mono uppercase tracking-wider text-text-muted font-bold">
             <MapPin className="w-3 h-3 text-emerald-500" />
             <span>Spike Marks ({markers.length})</span>
           </div>
 
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex flex-wrap gap-1">
             {markers.map((ent) => {
               const styleStr = ent.style ?? 'tape';
               const shapeStr = ent.shape ?? 'circle';
@@ -143,7 +138,7 @@ export const SceneEntityRoster: React.FC<SceneEntityRosterProps> = ({ entities }
               return (
                 <div
                   key={ent.id}
-                  className="inline-flex items-center gap-1.5 px-2 py-0.8 rounded-xl bg-surface border border-border-main text-xs font-mono shadow-2xs"
+                  className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-lg bg-surface border border-border-main text-[10.5px] font-mono shadow-2xs"
                 >
                   <span
                     className="w-1.5 h-1.5 rounded-full shrink-0"
@@ -152,8 +147,8 @@ export const SceneEntityRoster: React.FC<SceneEntityRosterProps> = ({ entities }
                   <span className="font-medium text-text-body">
                     {ent.label || ent.id}
                   </span>
-                  <span className="text-[9px] px-1 py-0.2 rounded bg-surface-muted text-text-faint capitalize">
-                    {shapeStr} · {styleStr}
+                  <span className="text-[9.5px] text-text-faint capitalize">
+                    ({shapeStr} · {styleStr})
                   </span>
                 </div>
               );

@@ -59,15 +59,15 @@ export const VideoWorkspaceSubpanel: React.FC<VideoWorkspaceSubpanelProps> = ({
         className="h-9 px-3 bg-surface-subtle hover:bg-surface border-b border-border-subtle flex items-center justify-between gap-2 shrink-0 cursor-pointer select-none transition-colors group focus:outline-none focus:ring-1 focus:ring-accent-primary/40"
         title={
           isCollapsed
-            ? 'Click to expand Directorial Workspace'
-            : 'Click to collapse Subpanel'
+            ? 'Click to expand Scene Desk'
+            : 'Click to collapse Scene Desk'
         }
         aria-expanded={!isCollapsed}
       >
         <div className="flex items-center gap-2 min-w-0">
           <SlidersHorizontal className="w-3.5 h-3.5 text-accent-primary shrink-0" />
           <span className="text-[10px] font-mono font-bold tracking-wider text-text-main uppercase truncate group-hover:text-accent-primary transition-colors">
-            Directorial Workspace
+            Scene Desk
           </span>
 
           {/* Source/View Toggle Pill — Only visible when a video is attached */}
@@ -122,14 +122,14 @@ export const VideoWorkspaceSubpanel: React.FC<VideoWorkspaceSubpanelProps> = ({
           className="p-1 rounded-lg hover:bg-surface-muted text-text-muted hover:text-text-main transition-colors shrink-0 cursor-pointer"
           title={
             isCollapsed
-              ? 'Expand Directorial Workspace'
-              : 'Collapse Subpanel'
+              ? 'Expand Scene Desk'
+              : 'Collapse Scene Desk'
           }
           aria-expanded={!isCollapsed}
           aria-label={
             isCollapsed
-              ? 'Expand Directorial Workspace'
-              : 'Collapse Subpanel'
+              ? 'Expand Scene Desk'
+              : 'Collapse Scene Desk'
           }
         >
           {isCollapsed ? (

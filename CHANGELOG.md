@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- **Scene Desk Visual Compacting & 4-Card Architecture (`src/ui/left-panel/VideoWorkspaceSubpanel.tsx`, `src/ui/left-panel/SceneProductionBrief.tsx`, `src/ui/left-panel/SceneEntityRoster.tsx`, `docs/ARCHITECTURE_FILE_MAP.md`, `docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md`)**:
+  - Renamed left-panel subpanel from `"Directorial Workspace"` to **`"Scene Desk"`**, providing a punchy, industry-authentic title that eliminates header crowding alongside the `[ Brief | Stage Cam ]` toggle.
+  - Restructured the Scene Brief into a high-density 4-card architecture:
+    1. **Glance Stat Ribbon**: Single-line slate summary card displaying Duration, Shot count, Film Gate aspect ratio, and Media Engine badge with divider dots.
+    2. **Scene Premise & Notes**: Tightened title, subtitle, and Markdown description with proportional padding (`p-2.5 rounded-xl`).
+    3. **Camera & Optical Package**: Dedicated card for prime lens package and camera maneuver chips.
+    4. **Cast & Props Lineup (`SceneEntityRoster.tsx`)**: Streamlined entity tags with flattened attributes (e.g. `● Ruby (1.70m)`), eliminating double-nested gray background pills.
+  - Reduced total vertical scroll height by ~50% (~240px total), allowing the entire Scene Desk to be inspected above the scroll fold on standard viewports.
+
+### Changed
 - **Top-Left Directorial Shot Breakdown HUD Redesign & Visual Polish (`src/ui/ShotBreakdownHud.tsx`, `src/ui/shotBreakdownUtils.ts`, `tests/unit/shotBreakdownUtils.test.ts`, `docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md`)**:
   - Unified header layout across both Collapsed and Expanded states into a single continuous row (`[#xx]` dark badge, clean title without redundant `"Shot ## · "` prefix, and chevron toggle), permanently resolving the visual jump where `#xx` was previously stranded alone on an empty line in expanded view.
   - Streamlined collapsed line 2 with essential cine spec tokens (`35mm · DOLLY · F 2.6m · Δ 0.19m`) featuring semantic color accents, removing viewport state clutter (`Paused · Free Orbit` which is already displayed in the bottom-left camera dock).

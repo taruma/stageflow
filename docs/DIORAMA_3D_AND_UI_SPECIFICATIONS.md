@@ -160,8 +160,12 @@ Scene entities (`character`, `prop`, `marker`) are rendered with unambiguous ori
     - **Shot Coverage Sequence**: Miniature timeline breakdown detailing each shot's lens, maneuver, and duration.
     - **Unified Project Lifecycle Actions**: Direct inline **Rename**, **Duplicate**, **Export (.yaml)**, and **Delete** for custom projects (eliminating the redundant separate project management modal), alongside **Fork as Custom** for bundled blueprints and **Load Score into Studio**.
 - **Desktop (`lg+`) 3-Column Studio Workspace Architecture (`ResizableSplitWorkspace.tsx`)**:
-  - **Left Column (~30%)**: Houses the reference video player (anchored top, aspect-fit), a continuous horizontal drag divider, and the modular **`VideoWorkspaceSubpanel.tsx`** (Directorial Workspace). Features a dual-mode **`[ Brief | Stage Cam ]`** header toggle when reference video is present, hosting either:
-    - **Mode A (`Brief`)**: The Executive Scene Production Sheet & Call Sheet (`SceneProductionBrief.tsx`, `SceneEntityRoster.tsx`) displaying scene premise & directorial notes (Markdown rendered), optical & production specifications grid (duration, shots, film gate, media engine), prime lens & camera maneuver package tags, and a categorized Cast & Props roster with 3D metric dimensions and color dots.
+  - **Left Column (~30%)**: Houses the reference video player (anchored top, aspect-fit), a continuous horizontal drag divider, and the modular **`VideoWorkspaceSubpanel.tsx`** (Scene Desk). Features a dual-mode **`[ Brief | Stage Cam ]`** header toggle when reference video is present, hosting either:
+    - **Mode A (`Brief`)**: The Executive Scene Production Sheet & Call Sheet (`SceneProductionBrief.tsx`, `SceneEntityRoster.tsx`) organized into a high-density 4-card architecture:
+      1. **Glance Stat Ribbon**: Single-line slate summary displaying Duration, Shots count, Film Gate aspect ratio, and Media Engine.
+      2. **Scene Premise & Directorial Notes**: Title, subtitle, and Markdown-rendered premise notes.
+      3. **Camera & Optical Package**: Prime lens package and camera maneuver chips.
+      4. **Cast & Props Lineup**: Compact, streamlined entity tags with theme color dots and 3D dimensions.
     - **Mode B (`Stage Cam`)**: The virtual 3D Stage Cam monitor POV simulator directly beneath the video while capping active WebGL contexts at 2.
     Utilizes pure CSS container-query aspect-fit containment (`.aspect-fit-container` and `.aspect-fit-box` via `min(100cqw, calc(100cqh * ratio))`) across both viewports, strictly maintaining film aspect ratios (16:9, 2.39:1) with automatic letterboxing/pillarboxing and SMPTE 90% safe-action guides without vertical squishing.
   - **Center Column (~40%)**: Dedicated, uninterrupted 3D Blueprint Diorama viewport with 4-corner directorial HUD.
