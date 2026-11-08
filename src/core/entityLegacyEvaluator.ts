@@ -24,6 +24,8 @@ import {
 import {
   type EntityPoseSnapshot,
   buildGroundTrailPoints,
+  getEntityBaseSize,
+  resolveCueStartEndSize,
   resolveLookAtPoint,
 } from './entityKinematicUtils';
 
@@ -46,6 +48,7 @@ export function evaluateLegacyEntitiesAtTime(
       position: cloneVec3(def.position),
       rotationYRad: def.rotationYRad,
       visible: true,
+      size: getEntityBaseSize(def),
     });
   }
 
@@ -59,6 +62,7 @@ export function evaluateLegacyEntitiesAtTime(
       position: cloneVec3(pose.position),
       rotationYRad: pose.rotationYRad,
       visible: pose.visible,
+      size: cloneVec3(pose.size),
     });
   }
 
@@ -68,6 +72,7 @@ export function evaluateLegacyEntitiesAtTime(
 
     // First pass: determine start and end positions for this shot
     const endPositions = new Map<string, Vec3>();
+    const endSizes = new Map<string, Vec3>();
     for (const def of score.entities) {
       const prev = runningPoses.get(def.id)!;
       const override = shot.entities[def.id];
@@ -86,12 +91,20 @@ export function evaluateLegacyEntitiesAtTime(
         ? cloneVec3(override.position)
         : cloneVec3(startPos);
 
+      const { startSize, endSize } = resolveCueStartEndSize(
+        override ?? {},
+        prev.size,
+        isCut
+      );
+
       startMap.set(def.id, {
         position: startPos,
         rotationYRad: prev.rotationYRad,
         visible: override?.visible ?? prev.visible,
+        size: startSize,
       });
       endPositions.set(def.id, endPos);
+      endSizes.set(def.id, endSize);
     }
 
     // Second pass: resolve end rotations (including lookAt)
@@ -127,6 +140,7 @@ export function evaluateLegacyEntitiesAtTime(
         position: endPos,
         rotationYRad: endRot,
         visible: override?.visible ?? startSnap.visible,
+        size: endSizes.get(def.id)!,
       };
       endMap.set(def.id, endSnap);
     }
@@ -263,12 +277,25 @@ export function evaluateLegacyEntitiesAtTime(
           item.endSnap.position
         );
 
+    const size: Vec3 = {
+      x:
+        item.startSnap.size.x +
+        item.u * (item.endSnap.size.x - item.startSnap.size.x),
+      y:
+        item.startSnap.size.y +
+        item.u * (item.endSnap.size.y - item.startSnap.size.y),
+      z:
+        item.startSnap.size.z +
+        item.u * (item.endSnap.size.z - item.startSnap.size.z),
+    };
+
     const state: EvaluatedEntityState = {
       id: def.id,
       def,
       cueId: activeShot?.id ?? null,
       position: pos,
       rotationYRad: rotY,
+      size,
       highlighted: item.highlighted,
       visible: item.visible,
       note: item.note,

@@ -83,11 +83,17 @@ export const DEFAULT_STAGE_CAMERA_POSE: SphericalPose = {
  */
 export const ENTITY_DEFAULTS = {
   CHARACTER_HEIGHT_M: 1.75,
+  CHARACTER_WIDTH_M: 0.52,
+  CHARACTER_DEPTH_M: 0.52,
   CHARACTER_RADIUS_M: 0.26,
   CHARACTER_LOOK_ANCHOR_RATIO: 0.9, // Eye-level target height ratio (~1.575m for standard 1.75m character)
   PROP_HEIGHT_M: 0.85,
+  PROP_WIDTH_M: 0.70,
+  PROP_DEPTH_M: 0.70,
   PROP_RADIUS_M: 0.35,
   MARKER_HEIGHT_M: 0.15,
+  MARKER_WIDTH_M: 0.50,
+  MARKER_DEPTH_M: 0.50,
   MARKER_RADIUS_M: 0.25,
 } as const;
 

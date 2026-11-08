@@ -7,6 +7,7 @@
 
 import React, { useMemo } from 'react';
 import type { StageScore } from '../../core/types';
+import { computeOrientedBoundingBox } from '../../core/entityKinematicUtils';
 
 export interface ScoreStageMinimapProps {
   score: StageScore;
@@ -30,12 +31,19 @@ export const ScoreStageMinimap: React.FC<ScoreStageMinimapProps> = ({
       const entityList = (score?.entities ?? []).map((ent) => {
         const x = ent.position?.x ?? 0;
         const z = ent.position?.z ?? 0;
-        allPoints.push({ x, z });
+        const width = ent.width ?? ent.radius * 2;
+        const depth = ent.depth ?? ent.radius * 2;
+        const halfSpan = Math.max(width, depth) * 0.5;
+        allPoints.push({ x: x - halfSpan, z: z - halfSpan });
+        allPoints.push({ x: x + halfSpan, z: z + halfSpan });
         return {
           id: ent.id,
           label: ent.label || ent.id,
           x,
           z,
+          width,
+          depth,
+          shape: ent.shape,
           rotationYRad: ent.rotationYRad ?? 0,
           color: ent.color || '#38bdf8',
           kind: ent.kind,
@@ -307,16 +315,45 @@ export const ScoreStageMinimap: React.FC<ScoreStageMinimapProps> = ({
                 fill={ent.color}
               />
 
-              {/* Entity Base Body Circle */}
-              <circle
-                cx={ent.x}
-                cy={ent.z}
-                r="0.5"
-                fill={ent.color}
-                fillOpacity="0.85"
-                stroke="var(--surface)"
-                strokeWidth="0.14"
-              />
+              {/* Entity Base Body Geometry (Box polygon, ellipse, or circle) */}
+              {ent.kind === 'prop' && (ent.shape ?? 'box') === 'box' ? (
+                <polygon
+                  points={computeOrientedBoundingBox(
+                    { x: ent.x, z: ent.z },
+                    Math.max(0.6, ent.width),
+                    Math.max(0.6, ent.depth),
+                    ent.rotationYRad
+                  )
+                    .map((c) => `${c.x.toFixed(2)},${c.z.toFixed(2)}`)
+                    .join(' ')}
+                  fill={ent.color}
+                  fillOpacity="0.85"
+                  stroke="var(--surface)"
+                  strokeWidth="0.14"
+                />
+              ) : Math.abs(ent.width - ent.depth) > 0.05 ? (
+                <ellipse
+                  cx={ent.x}
+                  cy={ent.z}
+                  rx={Math.max(0.25, ent.width * 0.5)}
+                  ry={Math.max(0.25, ent.depth * 0.5)}
+                  transform={`rotate(${((ent.rotationYRad * 180) / Math.PI).toFixed(1)} ${ent.x} ${ent.z})`}
+                  fill={ent.color}
+                  fillOpacity="0.85"
+                  stroke="var(--surface)"
+                  strokeWidth="0.14"
+                />
+              ) : (
+                <circle
+                  cx={ent.x}
+                  cy={ent.z}
+                  r={Math.max(0.3, ent.width * 0.5)}
+                  fill={ent.color}
+                  fillOpacity="0.85"
+                  stroke="var(--surface)"
+                  strokeWidth="0.14"
+                />
+              )}
 
               {/* Entity Inner Dot */}
               <circle

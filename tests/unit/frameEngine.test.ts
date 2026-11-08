@@ -2203,5 +2203,64 @@ shots:
       expect(fSplineMid.stageCamera.dof.apertureFStop).toBeCloseTo(5.6, 4);
       expect(fSplineMid.stageCamera.dof.focusDistanceM).toBeCloseTo(4.0, 3);
     });
+
+    it('dynamically tracks look-at target elevation and DoF focus plane as actor crouches in blocking', () => {
+      const crouchDofYaml = `
+version: "1.0"
+id: "crouch-dof-tracking"
+title: "Dynamic Look-At and DoF Tracking During Crouch"
+duration: 6.0
+entities:
+  - id: "actor"
+    label: "Actor"
+    kind: "character"
+    position: [0, 0, 0]
+    height: 1.80
+shots:
+  - id: "s1"
+    shot: 1
+    start: 0
+    end: 6
+    stage_camera:
+      target: "actor"
+      focus: "actor"
+      dof: "shallow"
+      distance: 5.0
+      pitch: 0
+      yaw: 0
+      lens: 50mm
+blocking:
+  - id: "cue-crouch"
+    entity: "actor"
+    start: 0
+    end: 6
+    height: 1.00
+    easing: "linear"
+`;
+      const { score, error } = parseStageScore(crouchDofYaml);
+      expect(error).toBeNull();
+      expect(score).not.toBeNull();
+
+      // At t = 0.0s: actor height is 1.80m -> eye-level anchor is 0.90 * 1.80 = 1.62m
+      const frame0 = computeStageFrame(0.0, score!);
+      expect(frame0.stageCamera.transform.target.y).toBeCloseTo(1.62, 3);
+      expect(frame0.stageCamera.transform.position.y).toBeCloseTo(1.62, 3);
+      expect(frame0.stageCamera.dof.focusTargetPoint?.y).toBeCloseTo(1.62, 3);
+      expect(frame0.stageCamera.dof.focusDistanceM).toBeCloseTo(5.0, 3);
+
+      // At t = 3.0s (halfway): actor height is 1.40m -> eye-level anchor is 0.90 * 1.40 = 1.26m
+      const frameMid = computeStageFrame(3.0, score!);
+      expect(frameMid.stageCamera.transform.target.y).toBeCloseTo(1.26, 3);
+      expect(frameMid.stageCamera.transform.position.y).toBeCloseTo(1.26, 3);
+      expect(frameMid.stageCamera.dof.focusTargetPoint?.y).toBeCloseTo(1.26, 3);
+      expect(frameMid.stageCamera.dof.focusDistanceM).toBeCloseTo(5.0, 3);
+
+      // At t = 6.0s: actor height is 1.00m -> eye-level anchor is 0.90 * 1.00 = 0.90m
+      const frameEnd = computeStageFrame(6.0, score!);
+      expect(frameEnd.stageCamera.transform.target.y).toBeCloseTo(0.90, 3);
+      expect(frameEnd.stageCamera.transform.position.y).toBeCloseTo(0.90, 3);
+      expect(frameEnd.stageCamera.dof.focusTargetPoint?.y).toBeCloseTo(0.90, 3);
+      expect(frameEnd.stageCamera.dof.focusDistanceM).toBeCloseTo(5.0, 3);
+    });
   });
 });

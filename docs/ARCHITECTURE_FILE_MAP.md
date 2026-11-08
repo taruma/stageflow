@@ -60,7 +60,7 @@ stageflow/
 │   │   ├── entityEngine.ts          # Facade: evaluateEntitiesAtTime dispatcher (<50 lines)
 │   │   ├── entityBlockingEvaluator.ts # Tier 1: Decoupled root blocking: timeline kinematics
 │   │   ├── entityLegacyEvaluator.ts # Tier 2: Legacy per-shot shots[].entities kinematics
-│   │   ├── entityKinematicUtils.ts  # Shared look_at target resolution & ground trail generation
+│   │   ├── entityKinematicUtils.ts  # 3D dimension parsing, OBB footprint math, look_at target & trail generation
 │   │   ├── cameraTargetResolver.ts  # Target anchor resolution, 3D offsets & shot-boundary/continuous roll & offset flow
 │   │   ├── shotPoseEvaluator.ts     # Single-shot pose evaluation, Catmull-Rom splines & 3D path sampling
 │   │   ├── trajectoryChain.ts       # Forward pose chaining (P_0 -> P_k) & multi-shot timeline tracks

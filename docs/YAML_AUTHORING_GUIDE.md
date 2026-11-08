@@ -373,8 +373,7 @@ entities:
     style: "mannequin"         # "mannequin" (default) | "edges" | "silhouette" | "wireframe"
     position: [-1.2, 0, 0]     # [x, y, z] in meters (Y=0 is floor plane)
     rotation: 90               # Facing +90° (toward +X Stage Right)
-    height: 1.82               # Height in meters
-    radius: 0.28               # Footprint radius in meters
+    size: [0.55, 1.82, 0.45]   # [w, h, d] 3D dimensions in meters (or explicit width, height, depth)
     color: "#38bdf8"           # Hex token for proxy, badge, and floor ring
 
   - id: "desk"
@@ -383,8 +382,7 @@ entities:
     shape: "box"               # "box" (default) | "sphere" | "cylinder" | "capsule"
     style: "edges"             # "edges" (default) | "glass" | "solid" | "wireframe"
     position: [0, 0, 0]
-    height: 0.78
-    radius: 0.45
+    size: [1.8, 0.78, 0.9]     # [w, h, d] box prop: width 1.8m, height 0.78m, depth 0.9m
     color: "#94a3b8"
 
   - id: "mark_door"
@@ -421,6 +419,19 @@ Every entity can customize its diorama rendering mode via `style:` while maintai
 | **`"marker"`** | `tape` | **Yes** | — | Authentic theatrical/cinematic flat floor gaffer tape mark directly on the stage floor ($Y = 0.005\text{m}$). |
 | | `glow` | No | `pulse`, `luminous` | Flat floor tape mark paired with an illuminated soft emissive halo disc ($Y = 0.002\text{m}$). |
 | | `beacon` | No | `pin`, `stand`, `puck` | Floor mark paired with an elevated vertical glowing beacon pin ($0.44\text{m}$) and illuminated sphere tip. |
+
+#### 3.4.1 3D Spatial Dimensions & Shape-Matched Footprints
+Entities support full 3-dimensional control ($X, Y, Z$) to author realistic character proportions (broad vs. slender) and realistic prop geometries (conference tables, partition walls, area rugs):
+
+| Authoring Syntax | Syntax Description & Behavior | Examples |
+| :--- | :--- | :--- |
+| **`size: [w, h, d]`** | 3-element vector specifying metric **width**, **height**, and **depth** in meters. | `size: [2.2, 0.78, 0.9]` *(conference table)*<br>`size: [0.55, 1.82, 0.45]` *(character proportions)* |
+| **`size: [w, d]`** | 2-element vector specifying horizontal floor footprint (**width** and **depth**). Preserves default height. | `size: [2.0, 3.0]` *(area rug footprint)*<br>`size: [0.6, 0.6]` *(square column)* |
+| **`width`, `height`, `depth`** | Explicit scalar properties in meters. Override any values in `size`. `length` is accepted as an alias for `depth`. | `width: 2.4, height: 0.8, depth: 1.0`<br>`width: 1.5, height: 1.0` *(square box prop: depth defaults to width)* |
+| **`radius` derivation** | When `radius` is omitted, bounding radius is automatically derived as $r = \frac{\max(w, d)}{2}$. When `width` and `depth` are omitted, both default strictly to $2r$. | `radius: 0.35` $\implies w = 0.70\text{m}, d = 0.70\text{m}$ |
+
+- **Ground-Pinned Base Invariant**: Character feet and prop bases remain strictly pinned to floor elevation $Y = 0$. Adjusting `height` scales exclusively upward into $+Y$.
+- **Shape-Matched Ground Footprints**: Box props render an oriented rectangular polygon footprint matching the box dimensions and rotation in both 3D diorama and 2D SVG minimap. Circular props and mannequins render an elliptical footprint ($r_x = w/2, r_z = d/2$) when $w \ne d$.
 
 ---
 
@@ -735,12 +746,13 @@ blocking:
     duration: 9.0              # Duration in seconds (alias: dur; or specify end: 9.0)
     from: [-1.2, 0, 0]         # Optional starting position (defaults to previous cue end)
     position: [2.5, 0, 0.4]    # Destination position at end of cue
+    height: 1.15               # Dynamic crouching posture over cue duration (alias: size)
     rotation: 45               # Explicit destination facing angle in degrees
     look_at: "witness"         # Dynamic continuous gaze tracking (alias: lookAt)
     easing: "cruise"           # Movement easing curve
     highlighted: true          # Active focus ring and tag
     visible: true              # Proxy visibility toggle
-    note: "Crosses to desk"    # Staging note (alias: description)
+    note: "Crosses and ducks behind desk" # Staging note (alias: description)
 ```
 
 #### Format B: Multi-Entity Beat
@@ -751,9 +763,15 @@ blocking:
     duration: 5.0              # Duration in seconds (or end: 14.0)
     easing: "smooth"
     entities:
-      detective: { rotation: 0, look_at: "witness" }
+      detective: { rotation: 0, look_at: "witness", height: 1.75 }
       witness: { rotation: 180, highlighted: true }
 ```
+
+#### Dynamic Posture & Dimension Transformations
+Actors and props can dynamically transform dimensions during `blocking:` cues:
+- **Animated Posture Changes**: Authoring `height: 1.15` causes an actor to smoothly crouch down over the cue duration using the specified easing curve. Specifying `from_height` or `from_size` explicitly sets starting bounds; omitting them glides smoothly from the preceding cue's terminal dimensions.
+- **Per-Axis Forward Chaining**: Overriding one dimension (e.g. `height: 1.15`) does not reset other dimensions (`width`, `depth`) back to default; each axis preserves its active state across cues.
+- **Dynamic Look-At & Focus Tracking**: The Stage Camera's look-at target and thin-lens DoF focus plane dynamically follow the entity's moving anchor ($\vec{A}_i(t) = (x_i(t), y_i(t) + \text{ratio} \cdot h_i(t), z_i(t))$). As an actor crouches, the camera smoothly lowers its framing and maintains sharp optical focus on the actor's head.
 
 #### Continuous Auto-Chaining & Instant Cuts (`continuous: true` & `cut: true`)
 Just like camera tracks, `blocking:` supports continuous timeline auto-chaining and instant jump cut placement:

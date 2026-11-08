@@ -120,11 +120,12 @@ export function resolveTargetPoint3D(
           ent.id.toLowerCase() === clean ||
           ent.def.label.toLowerCase() === clean
         ) {
+          const effectiveHeight = ent.size?.y ?? ent.def.height;
           const anchorY =
             ent.def.kind === 'character'
               ? ent.position.y +
-                ent.def.height * ENTITY_DEFAULTS.CHARACTER_LOOK_ANCHOR_RATIO
-              : ent.position.y + ent.def.height * 0.5;
+                effectiveHeight * ENTITY_DEFAULTS.CHARACTER_LOOK_ANCHOR_RATIO
+              : ent.position.y + effectiveHeight * 0.5;
           base = {
             x: ent.position.x,
             y: anchorY,

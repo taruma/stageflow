@@ -94,6 +94,13 @@ Scene entities (`character`, `prop`, `marker`) are rendered with unambiguous ori
     - `glass`: Translucent 45% volumetric mass without outline edges.
     - `solid`: Dense 88% opaque solid architectural mass with specular highlights.
     - `wireframe`: Blueprint wireframe lattice cage.
+- **3D Spatial Dimension Scaling & Shape-Matched Footprints**:
+  - **Hardware 60fps Scale Multipliers**: Scaled imperatively via `meshContainerRef.current.scale.set(sx, sy, sz)` in `useFrame`, enabling dynamic 60fps dimension transformations (such as actor crouching or prop expansion) without React re-renders or GPU geometry re-allocations.
+  - **Ground-Pinned Base Invariant ($Y = 0$)**: Scaling in $Y$ extends exclusively upward ($y_{\text{base}} = y_{\text{pos}}$); feet and prop bottoms stay anchored to the stage floor.
+  - **Badge Scale Isolation**: The floating `<StageBillboardLabel>` resides in an unscaled parent group (`labelGroupRef`) positioned dynamically at $Y = y_{\text{pos}} + h \cdot s_y + 0.28\text{m}$, preventing HUD text from squashing or stretching under non-uniform scaling.
+  - **Shape-Matched Ground Footprints**:
+    - Box props render an oriented rectangular polygon footprint (`boxFootprintGeometry`) matching the prop's width and depth dimensions.
+    - Circular props and mannequins render an elliptical footprint ($r_x = w/2, r_z = d/2$) when $w \ne d$, and a standard circular ring when $w = d$.
 - **Stage Floor Gaffer Tape Markers (`kind === 'marker'`)**:
   - Authentic theatrical/cinematic floor spike marks rendered flat at $Y = 0.005\text{m}$, supporting four geometric shapes via `shape:` (`x`, `t`, `circle`, `puck`) and three presentation styles via `style:`:
     - `tape` *(default)*: Clean flat floor spike mark.
@@ -130,7 +137,7 @@ Scene entities (`character`, `prop`, `marker`) are rendered with unambiguous ori
   - Accessible `max-w-5xl` studio dialog integrating score discovery and project lifecycle management into a unified 2-column layout.
   - **Left Column (~40%)**: Fast-scrolling catalog list (`ScoreLibraryCard.tsx`) with 4-way filter tabs (`All`, `Studies`, `Blueprints`, `Custom`), un-truncated titles, media engine badges (`YouTube`, `Simulator`, `Video`), and active scene indicators across 3 collapsible sections (`DIRECTORIAL SCENE STUDIES`, `BUNDLED BLUEPRINTS`, `CUSTOM PROJECTS`).
   - **Right Column (~60%)**: Rich Choreography Inspector (`ScoreInspectorPane.tsx`) featuring:
-    - **Procedural 2D Vector SVG Stage Minimap (`ScoreStageMinimap.tsx`)**: Renders architectural top-down stage schematics (metric grid, character proxy circles with facing chevrons, and camera trajectory cones) derived directly from in-memory score geometry in $< 0.1\text{ms}$ with zero WebGL overhead.
+    - **Procedural 2D Vector SVG Stage Minimap (`ScoreStageMinimap.tsx`)**: Renders architectural top-down stage schematics (metric grid, character proxy circles/ellipses with facing chevrons, oriented rectangular polygon bounding boxes for box props via `computeOrientedBoundingBox`, and camera trajectory cones) derived directly from in-memory score geometry in $< 0.1\text{ms}$ with zero WebGL overhead.
     - **Cinematic Telemetry**: Full titles, directorial notes, focal length breakdown (e.g. `35mm, 50mm`), camera maneuver tags, and actor/prop lineup.
     - **Shot Coverage Sequence**: Miniature timeline breakdown detailing each shot's lens, maneuver, and duration.
     - **Unified Project Lifecycle Actions**: Direct inline **Rename**, **Duplicate**, **Export (.yaml)**, and **Delete** for custom projects (eliminating the redundant separate project management modal), alongside **Fork as Custom** for bundled blueprints and **Load Score into Studio**.

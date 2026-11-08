@@ -17,9 +17,12 @@ import {
   BLUEPRINT_PALETTE,
   DEFAULT_OBSERVER_POSE,
   DEFAULT_STAGE_CAMERA_POSE,
-  ENTITY_DEFAULTS,
 } from './constants';
 import { parseAspectRatio } from './opticsMath';
+import {
+  parseEntityCueDimensionOverrides,
+  resolveEntityDefDimensions,
+} from './entityKinematicUtils';
 import {
   normalizeCameraEasing,
   normalizeCameraManeuver,
@@ -192,36 +195,6 @@ export function parseStageScore(
       const shape = normalizeEntityShape(kind, ent.shape);
       const style = normalizeEntityStyle(kind, ent.style);
 
-      const defaultHeight =
-        kind === 'character'
-          ? ENTITY_DEFAULTS.CHARACTER_HEIGHT_M
-          : kind === 'prop'
-          ? ENTITY_DEFAULTS.PROP_HEIGHT_M
-          : ENTITY_DEFAULTS.MARKER_HEIGHT_M;
-
-      const defaultRadius =
-        kind === 'character'
-          ? ENTITY_DEFAULTS.CHARACTER_RADIUS_M
-          : kind === 'prop'
-          ? ENTITY_DEFAULTS.PROP_RADIUS_M
-          : ENTITY_DEFAULTS.MARKER_RADIUS_M;
-
-      const parsedRadius =
-        typeof ent.radius === 'number' && ent.radius > 0
-          ? ent.radius
-          : defaultRadius;
-
-      // If a prop is a sphere and height is omitted, default height to diameter (2 * radius)
-      const defaultHeightForShape =
-        kind === 'prop' && shape === 'sphere'
-          ? parsedRadius * 2
-          : defaultHeight;
-
-      const parsedHeight =
-        typeof ent.height === 'number' && ent.height > 0
-          ? ent.height
-          : defaultHeightForShape;
-
       const defaultColor =
         kind === 'character'
           ? idx % 2 === 0
@@ -231,6 +204,12 @@ export function parseStageScore(
           ? BLUEPRINT_PALETTE.propDefault
           : BLUEPRINT_PALETTE.markerDefault;
 
+      const { width, height, depth, radius } = resolveEntityDefDimensions(
+        ent,
+        kind,
+        shape
+      );
+
       return {
         id: String(ent.id ?? `entity_${idx + 1}`),
         label: String(ent.label ?? ent.id ?? `Entity ${idx + 1}`),
@@ -239,8 +218,10 @@ export function parseStageScore(
         style,
         position: parseVec3(ent.position, { x: 0, y: 0, z: 0 }),
         rotationYRad: parseAngleToRad(ent.rotation ?? ent.yaw, 0) ?? 0,
-        height: parsedHeight,
-        radius: parsedRadius,
+        height,
+        width,
+        depth,
+        radius,
         color:
           typeof ent.color === 'string' && ent.color.trim().length > 0
             ? ent.color.trim()
@@ -330,6 +311,10 @@ export function parseStageScore(
         )) {
           if (!rawOv || typeof rawOv !== 'object') continue;
           const ov = rawOv as Record<string, unknown>;
+          const matchedEnt = entities.find(
+            (e) => e.id.toLowerCase() === entId.toLowerCase()
+          );
+          const dimOverrides = parseEntityCueDimensionOverrides(ov, matchedEnt);
           const rawOvCut = ov.cut;
           const isCut =
             typeof rawOvCut === 'boolean'
@@ -359,6 +344,7 @@ export function parseStageScore(
             position: ov.position ? parseVec3(ov.position) : undefined,
             rotationYRad: parseAngleToRad(ov.rotation ?? ov.yaw),
             lookAt: parseTargetOrVec3(ov.look_at ?? ov.lookAt),
+            ...dimOverrides,
             easing: normalizeCameraEasing(ov.easing),
             highlighted: Boolean(ov.highlighted ?? ov.highlight),
             visible: ov.visible !== false,

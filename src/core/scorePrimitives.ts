@@ -23,6 +23,7 @@ import {
   presetToApertureFStop,
 } from './opticsMath';
 import { degToRad } from './sphericalMath';
+import { parseEntityCueDimensionOverrides } from './entityKinematicUtils';
 
 export function parseVec3(
   raw: unknown,
@@ -440,6 +441,10 @@ export function parseBlockingCues(
         }
         const ov = rawOv as Record<string, unknown>;
         const entityId = resolveEntityIdentifier(entKey, entities);
+        const baseDef = entities.find(
+          (e) => e.id.toLowerCase() === entityId.toLowerCase()
+        );
+        const dimOverrides = parseEntityCueDimensionOverrides(ov, baseDef);
 
         const rawOvCut = ov.cut ?? blockCut;
         const isCut =
@@ -476,6 +481,7 @@ export function parseBlockingCues(
           position: ov.position ? parseVec3(ov.position) : undefined,
           rotationYRad: parseAngleToRad(ov.rotation ?? ov.yaw),
           lookAt: parseTargetOrVec3(ov.look_at ?? ov.lookAt),
+          ...dimOverrides,
           easing: normalizeCameraEasing(ov.easing ?? obj.easing),
           highlighted:
             ov.highlighted !== undefined || ov.highlight !== undefined
@@ -497,6 +503,10 @@ export function parseBlockingCues(
       obj.entity ?? obj.entity_id ?? obj.entityId ?? obj.actor ?? obj.subject;
     if (typeof rawEntity === 'string' && rawEntity.trim().length > 0) {
       const entityId = resolveEntityIdentifier(rawEntity, entities);
+      const baseDef = entities.find(
+        (e) => e.id.toLowerCase() === entityId.toLowerCase()
+      );
+      const dimOverrides = parseEntityCueDimensionOverrides(obj, baseDef);
 
       let startSec: number;
       if (hasExplicitStart) {
@@ -539,6 +549,7 @@ export function parseBlockingCues(
         position: obj.position ? parseVec3(obj.position) : undefined,
         rotationYRad: parseAngleToRad(obj.rotation ?? obj.yaw),
         lookAt: parseTargetOrVec3(obj.look_at ?? obj.lookAt),
+        ...dimOverrides,
         easing: normalizeCameraEasing(obj.easing),
         highlighted:
           obj.highlighted !== undefined || obj.highlight !== undefined

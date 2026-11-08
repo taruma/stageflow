@@ -7,6 +7,7 @@ import {
   evaluateLegacyEntitiesAtTime,
   resolveLookAtPoint,
 } from '../../src/core/entityEngine';
+import { computeOrientedBoundingBox } from '../../src/core/entityKinematicUtils';
 
 describe('Entity Kinematic Utilities (entityKinematicUtils)', () => {
   it('resolves lookAt targets properly for string IDs, labels, center, and Vec3', () => {
@@ -309,5 +310,109 @@ describe('Entity Engine Facade & Dispatching (entityEngine)', () => {
     const actorAt75 = resAt75.entitiesById.get('actor')!;
     expect(actorAt75.position).toEqual({ x: -20, y: 0, z: 0 });
     expect(actorAt75.trailPoints).toHaveLength(0);
+  });
+
+  describe('3D Entity Dimensions, Oriented Bounding Box & Blocking Transforms', () => {
+    it('computes oriented 2D bounding boxes accurately under 0° and 90° yaw', () => {
+      // At 0 rad yaw: local +X is world +X, local +Z is world +Z
+      const obb0 = computeOrientedBoundingBox({ x: 2, z: 3 }, 4.0, 2.0, 0);
+      expect(obb0).toHaveLength(4);
+
+      // Corners: (-hw, -hd), (hw, -hd), (hw, hd), (-hw, hd)
+      // center (2, 3) + (-2, -1) = (0, 2)
+      expect(obb0[0].x).toBeCloseTo(0, 4);
+      expect(obb0[0].z).toBeCloseTo(2, 4);
+      // center (2, 3) + (2, -1) = (4, 2)
+      expect(obb0[1].x).toBeCloseTo(4, 4);
+      expect(obb0[1].z).toBeCloseTo(2, 4);
+      // center (2, 3) + (2, 1) = (4, 4)
+      expect(obb0[2].x).toBeCloseTo(4, 4);
+      expect(obb0[2].z).toBeCloseTo(4, 4);
+      // center (2, 3) + (-2, 1) = (0, 4)
+      expect(obb0[3].x).toBeCloseTo(0, 4);
+      expect(obb0[3].z).toBeCloseTo(4, 4);
+
+      // At 90° (Math.PI / 2) yaw:
+      // cos(90°) = 0, sin(90°) = 1
+      // rx = -dz, rz = dx
+      const obb90 = computeOrientedBoundingBox({ x: 0, z: 0 }, 4.0, 2.0, Math.PI / 2);
+      expect(obb90[0].x).toBeCloseTo(-1, 4); // local (-2, -1) -> x = -hw*cos + -hd*sin = 0 - 1 = -1
+      expect(obb90[0].z).toBeCloseTo(2, 4); // z = - (-hw)*sin + -hd*cos = -(-2)*1 + 0 = 2
+    });
+
+    it('interpolates dimensions at 60fps and forward-chains individual axes across cues', () => {
+      const dimensionScore: StageScore = {
+        ...baseScore,
+        entities: [
+          {
+            id: 'actor',
+            label: 'Actor',
+            kind: 'character',
+            position: { x: 0, y: 0, z: 0 },
+            rotationYRad: 0,
+            width: 0.52,
+            height: 1.75,
+            depth: 0.52,
+            radius: 0.26,
+            color: '#ffffff',
+          },
+        ],
+        blocking: [
+          // Cue 1 (0s - 4s): crouch down to height: 1.05 with linear easing
+          {
+            id: 'cue-crouch',
+            entityId: 'actor',
+            startSec: 0,
+            endSec: 4,
+            height: 1.05,
+            easing: 'linear',
+          },
+          // Cue 2 (4s - 8s): widen stance to width: 0.80, height omitted!
+          {
+            id: 'cue-widen',
+            entityId: 'actor',
+            startSec: 4,
+            endSec: 8,
+            width: 0.80,
+            easing: 'linear',
+          },
+        ],
+      };
+
+      // At t = 0s: initial baseline dimensions
+      const at0 = evaluateBlockingEntitiesAtTime(0, dimensionScore);
+      const actor0 = at0.entitiesById.get('actor')!;
+      expect(actor0.size).toBeDefined();
+      expect(actor0.size!.x).toBeCloseTo(0.52, 3);
+      expect(actor0.size!.y).toBeCloseTo(1.75, 3);
+      expect(actor0.size!.z).toBeCloseTo(0.52, 3);
+
+      // At t = 2s (mid-crouch): height is halfway between 1.75 and 1.05 = 1.40
+      const at2 = evaluateBlockingEntitiesAtTime(2, dimensionScore);
+      const actor2 = at2.entitiesById.get('actor')!;
+      expect(actor2.size!.y).toBeCloseTo(1.40, 3);
+      expect(actor2.size!.x).toBeCloseTo(0.52, 3);
+      expect(actor2.size!.z).toBeCloseTo(0.52, 3);
+
+      // At t = 4s (end of crouch): height is 1.05
+      const at4 = evaluateBlockingEntitiesAtTime(4, dimensionScore);
+      const actor4 = at4.entitiesById.get('actor')!;
+      expect(actor4.size!.y).toBeCloseTo(1.05, 3);
+
+      // At t = 6s (mid-widen in Cue 2):
+      // Height should be PRESERVED at 1.05m (not reset to baseline 1.75m!)
+      // Width should be halfway between 0.52 and 0.80 = 0.66
+      const at6 = evaluateBlockingEntitiesAtTime(6, dimensionScore);
+      const actor6 = at6.entitiesById.get('actor')!;
+      expect(actor6.size!.y).toBeCloseTo(1.05, 3);
+      expect(actor6.size!.x).toBeCloseTo(0.66, 3);
+      expect(actor6.size!.z).toBeCloseTo(0.52, 3);
+
+      // At t = 8s: full widen
+      const at8 = evaluateBlockingEntitiesAtTime(8, dimensionScore);
+      const actor8 = at8.entitiesById.get('actor')!;
+      expect(actor8.size!.y).toBeCloseTo(1.05, 3);
+      expect(actor8.size!.x).toBeCloseTo(0.80, 3);
+    });
   });
 });

@@ -1174,4 +1174,156 @@ shots:
       expect(s4Wps[1].apertureFStop).toBe(5.6);
     });
   });
+
+  describe('3D Entity Custom Dimensions and Blocking Scale Parsing', () => {
+    it('parses entity size vectors, explicit dimensions, and derives bounding radius', () => {
+      const entityYaml = `
+version: "1.0"
+id: "entity-dimensions-test"
+title: "Entity Dimensions Test"
+duration: 10.0
+entities:
+  - id: "table"
+    label: "Dining Table"
+    kind: "prop"
+    shape: "box"
+    position: [0, 0, 0]
+    size: [2.2, 0.85, 0.9]
+  - id: "pillar"
+    label: "Column Pillar"
+    kind: "prop"
+    shape: "cylinder"
+    position: [3, 0, 0]
+    size: [0.6, 3.2, 0.6]
+  - id: "rug"
+    label: "Area Rug"
+    kind: "prop"
+    shape: "box"
+    position: [0, 0, -5]
+    size: [2.0, 3.0]
+  - id: "bench"
+    label: "Park Bench"
+    kind: "prop"
+    shape: "box"
+    position: [-3, 0, 0]
+    size: [1.8, 0.5, 0.6]
+    width: 2.0
+  - id: "square_crate"
+    label: "Square Crate"
+    kind: "prop"
+    shape: "box"
+    position: [0, 0, 3]
+    width: 1.4
+    height: 1.0
+  - id: "hero"
+    label: "Hero"
+    kind: "character"
+    position: [0, 0, -2]
+    size: [0.60, 1.85, 0.40]
+shots:
+  - id: "s1"
+    shot: 1
+    start: 0
+    end: 10
+`;
+      const { score, error } = parseStageScore(entityYaml);
+      expect(error).toBeNull();
+      expect(score).not.toBeNull();
+
+      const table = score!.entities.find((e) => e.id === 'table')!;
+      expect(table.width).toBeCloseTo(2.2, 3);
+      expect(table.height).toBeCloseTo(0.85, 3);
+      expect(table.depth).toBeCloseTo(0.9, 3);
+      expect(table.radius).toBeCloseTo(1.1, 3); // max(2.2, 0.9) / 2
+
+      const pillar = score!.entities.find((e) => e.id === 'pillar')!;
+      expect(pillar.width).toBeCloseTo(0.6, 3);
+      expect(pillar.depth).toBeCloseTo(0.6, 3);
+      expect(pillar.height).toBeCloseTo(3.2, 3);
+      expect(pillar.radius).toBeCloseTo(0.3, 3);
+
+      const rug = score!.entities.find((e) => e.id === 'rug')!;
+      expect(rug.width).toBeCloseTo(2.0, 3);
+      expect(rug.depth).toBeCloseTo(3.0, 3); // 2-element tuple [w, d] sets footprint
+      expect(rug.radius).toBeCloseTo(1.5, 3);
+
+      const bench = score!.entities.find((e) => e.id === 'bench')!;
+      expect(bench.width).toBeCloseTo(2.0, 3); // explicit width overrides vector x
+      expect(bench.height).toBeCloseTo(0.5, 3);
+      expect(bench.depth).toBeCloseTo(0.6, 3);
+
+      const crate = score!.entities.find((e) => e.id === 'square_crate')!;
+      expect(crate.width).toBeCloseTo(1.4, 3);
+      expect(crate.depth).toBeCloseTo(1.4, 3); // depth defaulted to width for box prop
+      expect(crate.height).toBeCloseTo(1.0, 3);
+
+      const hero = score!.entities.find((e) => e.id === 'hero')!;
+      expect(hero.width).toBeCloseTo(0.60, 3);
+      expect(hero.height).toBeCloseTo(1.85, 3);
+      expect(hero.depth).toBeCloseTo(0.40, 3);
+    });
+
+    it('parses blocking cue and legacy shot dimension overrides', () => {
+      const blockingYaml = `
+version: "1.0"
+id: "blocking-dimensions-test"
+title: "Blocking Dimensions Test"
+duration: 12.0
+entities:
+  - id: "actor"
+    label: "Actor"
+    kind: "character"
+    position: [0, 0, 0]
+blocking:
+  - id: "cue-crouch"
+    entity: "actor"
+    start: 0
+    end: 3
+    from_size: [0.52, 1.75, 0.52]
+    size: [0.60, 1.10, 0.60]
+  - id: "cue-expand"
+    beat: 2
+    start: 3
+    end: 6
+    entities:
+      actor:
+        height: 1.80
+        width: 0.55
+        from_height: 1.10
+shots:
+  - id: "shot-legacy"
+    shot: 1
+    start: 6
+    end: 12
+    entities:
+      actor:
+        size: [0.52, 1.75, 0.52]
+`;
+      const { score, error } = parseStageScore(blockingYaml);
+      expect(error).toBeNull();
+      expect(score).not.toBeNull();
+
+      expect(score!.blocking).toBeDefined();
+      expect(score!.blocking!).toHaveLength(2);
+
+      const cue1 = score!.blocking![0];
+      expect(cue1.fromWidth).toBeCloseTo(0.52, 3);
+      expect(cue1.fromHeight).toBeCloseTo(1.75, 3);
+      expect(cue1.fromDepth).toBeCloseTo(0.52, 3);
+      expect(cue1.width).toBeCloseTo(0.60, 3);
+      expect(cue1.height).toBeCloseTo(1.10, 3);
+      expect(cue1.depth).toBeCloseTo(0.60, 3);
+
+      const cue2 = score!.blocking![1];
+      expect(cue2.fromHeight).toBeCloseTo(1.10, 3);
+      expect(cue2.height).toBeCloseTo(1.80, 3);
+      expect(cue2.width).toBeCloseTo(0.55, 3);
+
+      const shotEnt = score!.shots[0].entities?.actor;
+      expect(shotEnt).toBeDefined();
+      expect(shotEnt?.width).toBeCloseTo(0.52, 3);
+      expect(shotEnt?.height).toBeCloseTo(1.75, 3);
+      expect(shotEnt?.depth).toBeCloseTo(0.52, 3);
+    });
+  });
 });

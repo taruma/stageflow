@@ -23,6 +23,8 @@ import {
 import {
   type ChainedBlockingCueEntry,
   buildGroundTrailPoints,
+  getEntityBaseSize,
+  resolveCueStartEndSize,
   resolveLookAtPoint,
 } from './entityKinematicUtils';
 
@@ -46,6 +48,7 @@ export function evaluateBlockingEntitiesAtTime(
       .sort((a, b) => a.startSec - b.startSec);
 
     let prevPos: Vec3 = cloneVec3(def.position);
+    let prevSize: Vec3 = getEntityBaseSize(def);
     let prevVis: boolean = true;
     const entries: ChainedBlockingCueEntry[] = [];
 
@@ -63,6 +66,11 @@ export function evaluateBlockingEntitiesAtTime(
       const endPos = cue.position
         ? cloneVec3(cue.position)
         : cloneVec3(startPos);
+      const { startSize, endSize } = resolveCueStartEndSize(
+        cue,
+        prevSize,
+        isCut
+      );
       const visible: boolean = cue.visible ?? prevVis;
 
       entries.push({
@@ -71,11 +79,14 @@ export function evaluateBlockingEntitiesAtTime(
         endPos,
         startRot: def.rotationYRad,
         endRot: def.rotationYRad,
+        startSize,
+        endSize,
         visible,
         isCut,
       });
 
       prevPos = cloneVec3(endPos);
+      prevSize = cloneVec3(endSize);
       prevVis = visible;
     }
 
@@ -177,6 +188,7 @@ export function evaluateBlockingEntitiesAtTime(
       .find((e) => elapsedSec >= e.cue.endSec);
 
     let rotY = def.rotationYRad;
+    let size: Vec3 = getEntityBaseSize(def);
     let visible = shotOv?.visible ?? true;
     let highlighted = Boolean(shotOv?.highlighted);
     let note = shotOv?.note;
@@ -194,6 +206,12 @@ export function evaluateBlockingEntitiesAtTime(
       rotY =
         active.startRot +
         u * shortestAngleDiff(active.endRot, active.startRot);
+
+      size = {
+        x: active.startSize.x + u * (active.endSize.x - active.startSize.x),
+        y: active.startSize.y + u * (active.endSize.y - active.startSize.y),
+        z: active.startSize.z + u * (active.endSize.z - active.startSize.z),
+      };
 
       if (active.cue.lookAt) {
         const lookTarget = resolveLookAtPoint(
@@ -215,6 +233,7 @@ export function evaluateBlockingEntitiesAtTime(
       cueId = active.cue.id;
     } else if (lastFinished) {
       rotY = lastFinished.endRot;
+      size = cloneVec3(lastFinished.endSize);
       visible = lastFinished.visible;
       cueId = `hold:${lastFinished.cue.id}`;
     }
@@ -225,6 +244,7 @@ export function evaluateBlockingEntitiesAtTime(
       cueId,
       position: pos,
       rotationYRad: rotY,
+      size,
       highlighted,
       visible,
       note,

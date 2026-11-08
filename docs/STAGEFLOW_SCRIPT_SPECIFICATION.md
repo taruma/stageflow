@@ -104,11 +104,11 @@ Each entity $i$ declared in `entities` has a normalized kind $k_i \in \{\text{"c
 ### 4.1 Default Geometry & Intrinsic Look-At Anchor ($\vec{A}_i$)
 When a camera `target` or `from` references an entity by `id` or `label` (in either baseline `stage` cameras or shot cues), it resolves to the entity's intrinsic 3D anchor $\vec{A}_i$:
 
-| Normalized `kind` | Default `height` ($h$) | Default `radius` ($r$) | Anchor Elevation Ratio | Resolved Look-At Anchor $\vec{A}_i$ |
-| :--- | :---: | :---: | :---: | :--- |
-| `"character"` | $1.75\text{ m}$ | $0.26\text{ m}$ | $0.90 h$ | $(x_i,\; y_i + 0.90 h_i,\; z_i)$ *(default $y = 1.575\text{ m}$ eye level)* |
-| `"prop"` | $0.85\text{ m}$* | $0.35\text{ m}$ | $0.50 h$ | $(x_i,\; y_i + 0.50 h_i,\; z_i)$ *(default $y = 0.425\text{ m}$)* |
-| `"marker"` | $0.15\text{ m}$ | $0.25\text{ m}$ | $0.50 h$ | $(x_i,\; y_i + 0.50 h_i,\; z_i)$ *(default $y = 0.075\text{ m}$)* |
+| Normalized `kind` | Default `height` ($h$) | Default `radius` ($r$) | Default `width` ($w$) | Default `depth` ($d$) | Anchor Elevation Ratio | Resolved Look-At Anchor $\vec{A}_i$ |
+| :--- | :---: | :---: | :---: | :---: | :---: | :--- |
+| `"character"` | $1.75\text{ m}$ | $0.26\text{ m}$ | $0.52\text{ m}$ | $0.52\text{ m}$ | $0.90 h$ | $(x_i,\; y_i + 0.90 h_i,\; z_i)$ *(default $y = 1.575\text{ m}$ eye level)* |
+| `"prop"` | $0.85\text{ m}$* | $0.35\text{ m}$ | $0.70\text{ m}$ | $0.70\text{ m}$ | $0.50 h$ | $(x_i,\; y_i + 0.50 h_i,\; z_i)$ *(default $y = 0.425\text{ m}$)* |
+| `"marker"` | $0.15\text{ m}$ | $0.25\text{ m}$ | $0.50\text{ m}$ | $0.50\text{ m}$ | $0.50 h$ | $(x_i,\; y_i + 0.50 h_i,\; z_i)$ *(default $y = 0.075\text{ m}$)* |
 
 *\*Sphere Prop Height Rule: When $k_i = \text{"prop"}$ and $s_i = \text{"sphere"}$ with `height` omitted, default height equals the sphere diameter $h_i = 2 r_i$ (default $0.70\text{ m}$, anchor elevation $y = 0.35\text{ m}$).*
 
@@ -122,6 +122,30 @@ When a camera `target` or `from` references an entity by `id` or `label` (in eit
 - **Dynamic Gaze (`look_at`)**: When an entity specifies `look_at: "<target_id>"` (or `[x, y, z]`) at position $\vec{p}_{\text{target}}$, its horizontal facing yaw at time $t$ is computed continuously as:
   $$\psi_{\text{entity}}(t) = \operatorname{atan2}\!\left(x_{\text{target}}(t) - x_{\text{self}}(t),\; z_{\text{target}}(t) - z_{\text{self}}(t)\right)$$
 - **Automatic Locomotion Heading**: If an entity translates during a cue ($\|\vec{p}_{\text{end}, xz} - \vec{p}_{\text{start}, xz}\| > 0.05\text{ m}$) and neither `rotation` nor `look_at` is specified for that cue, $\psi_{\text{entity}}$ automatically aligns with the displacement vector $\operatorname{atan2}(\Delta x, \Delta z)$.
+
+### 4.3 3D Spatial Dimensions, Ground Footprints & Blocking Scale Transformations
+Entities in StageFlow can specify custom 3-dimensional extents ($X, Y, Z$) at baseline and dynamically animate them during blocking cues:
+
+- **Polymorphic Declaration**:
+  - `size: [w, h, d]` defines full 3D bounding dimensions in metric meters.
+  - `size: [w, d]` sets floor footprint dimensions (width and depth), preserving default height.
+  - Explicit scalar keys `width` ($w$), `height` ($h$), and `depth` / `length` ($d$) override vector components. For box props, omitting `depth` defaults symmetrically to `width` ($d = w$).
+  - When `radius` is omitted, bounding radius is automatically derived as $r = \frac{\max(w, d)}{2}$. When `width` and `depth` are omitted, both default strictly to $2r$.
+- **Ground-Pinned Base Invariant ($Y = 0$)**:
+  - Scaling along $Y$ (elevation) scales exclusively upward: character feet and prop bases remain strictly pinned to floor elevation $Y = 0$ ($y_{\text{base}} = y_i$).
+  - Scaling along $X$ (lateral) and $Z$ (sagittal) expands symmetrically from the entity's central pivot axis.
+- **Shape-Matched Ground Footprints**:
+  - Box props render an oriented rectangular polygon footprint $\operatorname{OBB}(\vec{p}_{xz}, w, d, \psi)$ in both 3D diorama and 2D SVG minimap.
+  - Non-uniform circular props and mannequins render an elliptical footprint ($r_x = w/2, r_z = d/2$) when $w \ne d$, and a standard circular footprint when $w = d$.
+- **Decoupled Blocking Cue Dimension Transformations**:
+  - `blocking:` cues and shot-level `entities:` overrides can animate dimensions over time via `size: [w, h, d]`, `from_size: [w, h, d]`, or per-axis `width`, `height`, `depth`, `from_width`, `from_height`, `from_depth`.
+  - Dimensions interpolate smoothly at 60fps using the cue's easing curve $u = E(\tau)$:
+    $$w(t) = w_{\text{start}} + u \cdot (w_{\text{end}} - w_{\text{start}}), \quad h(t) = h_{\text{start}} + u \cdot (h_{\text{end}} - h_{\text{start}}), \quad d(t) = d_{\text{start}} + u \cdot (d_{\text{end}} - d_{\text{start}})$$
+  - Individual dimension axes forward-chain independently across cues: modifying `height` in a cue preserves previously overridden `width` and `depth`.
+- **Dynamic Look-At Anchor & Thin-Lens Focus Tracking**:
+  - When an entity scales or crouches during a cue, its intrinsic look-at anchor $\vec{A}_i(t)$ updates dynamically on every frame:
+    $$\vec{A}_i(t) = \left(x_i(t),\; y_i(t) + \text{ratio} \cdot h_i(t),\; z_i(t)\right)$$
+  - Cameras targeting or focusing on entity $i$ smoothly follow changing posture and elevation without visual lag.
 
 ---
 
@@ -253,9 +277,13 @@ StageFlow is a **stateless functional evaluator** (`Frame_t = f(t, score)`). Eff
 | | `continuous`, `cut` | `boolean \| undefined` (contiguous timeline auto-chaining and instant cut flags) |
 | | `startSec`, `endSec`, `duration` | $t_{\text{start}}, t_{\text{end}} \ge 0.0\text{ s}$ timing bounds; optional duration in $\text{s}$ |
 | | `fromPosition`, `position` | `Vec3 \| undefined` world positions in $\text{m}$ (when `cut: true`, `startPos = position`) |
+| | `fromWidth`, `fromHeight`, `fromDepth` | `number \| undefined` start dimensions in $\text{m}$ for animated transitions |
+| | `width`, `height`, `depth` | `number \| undefined` destination dimensions in $\text{m}$ |
 | | `rotationYRad`, `lookAt` | Optional facing yaw in radians; anchor identifier or world `Vec3` |
 | | `easing`, `highlighted`, `visible`, `note` | `CameraEasing` (default `'smooth'`), `boolean`, `boolean`, `string \| undefined` |
 | **`EntityCueOverride`** | `position`, `fromPosition`, `cut` | Optional per-shot entity movement overrides and instant cut flag |
+| | `fromWidth`, `fromHeight`, `fromDepth` | `number \| undefined` start dimensions in $\text{m}$ for per-shot transitions |
+| | `width`, `height`, `depth` | `number \| undefined` destination dimensions in $\text{m}$ |
 | | `rotationYRad`, `lookAt`, `easing` | Optional facing angle, gaze target, and velocity easing profile |
 | | `highlighted`, `visible`, `note`, `continuous` | Hybrid per-shot highlight badge, visibility toggle, note, and continuity flag |
 | **`SphericalPose`** | `target` | `Vec3` $\{x, y, z\} \in \mathbb{R}^3\text{ m}$ |
@@ -266,6 +294,12 @@ StageFlow is a **stateless functional evaluator** (`Frame_t = f(t, score)`). Eff
 | | `kind`, `shape`, `style` | `EntityKind`, `EntityShape \| undefined`, `EntityStyle` |
 | | `position`, `rotationYRad` | `Vec3` floor position in $\text{m}$; facing yaw $\psi_{\text{entity}} \in \mathbb{R}\text{ rad}$ |
 | | `height`, `radius` | `number` $h_i > 0\text{ m}$, $r_i > 0\text{ m}$ |
+| | `width`, `depth` | `number \| undefined` $w_i > 0\text{ m}$, $d_i > 0\text{ m}$ (default $2r_i$) |
+| **`EvaluatedEntityState`** | `id`, `def` | Entity ID and immutable definition reference |
+| | `position`, `rotationYRad` | 60fps evaluated world position $\vec{p}(t)$ and facing angle $\psi(t)$ |
+| | `size` | `Vec3 \| undefined` 60fps evaluated dimensions $\{w(t), h(t), d(t)\}$ in $\text{m}$ |
+| | `trailPoints` | `Vec3[]` 16-segment ground trail path points |
+| | `highlighted`, `visible`, `opacity` | Directorial focus styling and visibility flags |
 | **`CameraCueSpec`** | `continuous`, `maneuver`, `easing` | Optional `boolean` continuity override; `CameraManeuver` (default `'dolly'`), `CameraEasing` (default `'smooth'`) |
 | | `target`, `from` | `string \| Vec3 \| undefined` anchor identifiers or world coordinates |
 | | `targetOffset*` | `Vec3 \| undefined` (`targetOffset`, `targetOffsetStart`, `targetOffsetEnd`) in $\text{m}$ |

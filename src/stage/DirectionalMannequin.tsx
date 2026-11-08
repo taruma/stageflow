@@ -45,10 +45,18 @@ export const DirectionalMannequin: React.FC<DirectionalMannequinProps> = ({
   cameraMode,
 }) => {
   const groupRef = useRef<THREE.Group | null>(null);
+  const meshContainerRef = useRef<THREE.Group | null>(null);
+  const footprintRef = useRef<THREE.Group | null>(null);
+  const labelGroupRef = useRef<THREE.Group | null>(null);
   const { def, highlighted, trailPoints } = initialState;
   const color = def.color;
   const height = def.height;
   const radius = def.radius;
+  const baseWidth = def.width ?? radius * 2;
+  const baseDepth = def.depth ?? radius * 2;
+  const rx = baseWidth * 0.5;
+  const rz = baseDepth * 0.5;
+  const isBoxProp = def.kind === 'prop' && (def.shape ?? 'box') === 'box';
 
   // Helper to get synchronized live entity state
   const getSynchronizedEntity = (liveFrame: StageFrame | null) => {
@@ -69,31 +77,42 @@ export const DirectionalMannequin: React.FC<DirectionalMannequinProps> = ({
     return liveEntity;
   };
 
+  const syncEntityTransform = (entity: EvaluatedEntityState) => {
+    if (!groupRef.current) return;
+    groupRef.current.visible = entity.visible;
+    groupRef.current.position.set(
+      entity.position.x,
+      entity.position.y,
+      entity.position.z
+    );
+    groupRef.current.rotation.set(0, entity.rotationYRad, 0);
+
+    const liveW = entity.size?.x ?? baseWidth;
+    const liveH = entity.size?.y ?? height;
+    const liveD = entity.size?.z ?? baseDepth;
+    const sx = baseWidth > 1e-5 ? liveW / baseWidth : 1;
+    const sy = height > 1e-5 ? liveH / height : 1;
+    const sz = baseDepth > 1e-5 ? liveD / baseDepth : 1;
+
+    if (meshContainerRef.current) {
+      meshContainerRef.current.scale.set(sx, sy, sz);
+    }
+    if (footprintRef.current) {
+      footprintRef.current.scale.set(sx, 1, sz);
+    }
+    if (labelGroupRef.current) {
+      labelGroupRef.current.position.set(0, liveH + 0.28, 0);
+    }
+  };
+
   // Ensure synchronous pre-paint alignment so React reconciler never resets 60fps transform
   useLayoutEffect(() => {
-    if (!groupRef.current) return;
-    const entity = getSynchronizedEntity(frameRef.current);
-    groupRef.current.visible = entity.visible;
-    groupRef.current.position.set(
-      entity.position.x,
-      entity.position.y,
-      entity.position.z
-    );
-    groupRef.current.rotation.set(0, entity.rotationYRad, 0);
+    syncEntityTransform(getSynchronizedEntity(frameRef.current));
   });
 
-  // Imperatively sync 3D position and facing rotation at 60fps
+  // Imperatively sync 3D position, facing rotation, and scale at 60fps
   useFrame(() => {
-    if (!groupRef.current) return;
-    const entity = getSynchronizedEntity(frameRef.current);
-
-    groupRef.current.visible = entity.visible;
-    groupRef.current.position.set(
-      entity.position.x,
-      entity.position.y,
-      entity.position.z
-    );
-    groupRef.current.rotation.set(0, entity.rotationYRad, 0);
+    syncEntityTransform(getSynchronizedEntity(frameRef.current));
   });
 
   // Floor trail points in world space
@@ -105,14 +124,41 @@ export const DirectionalMannequin: React.FC<DirectionalMannequinProps> = ({
   // Forward ground gaze vector line in local +Z space
   const forwardIndicatorPoints = useMemo<Array<[number, number, number]>>(
     () => [
-      [0, 0.02, radius * 0.8],
-      [0, 0.02, radius * 2.5],
-      [-0.08, 0.02, radius * 2.0],
-      [0, 0.02, radius * 2.5],
-      [0.08, 0.02, radius * 2.0],
+      [0, 0.02, rz * 0.8],
+      [0, 0.02, rz * 2.5],
+      [-0.08, 0.02, rz * 2.0],
+      [0, 0.02, rz * 2.5],
+      [0.08, 0.02, rz * 2.0],
     ],
-    [radius]
+    [rz]
   );
+
+  const boxFootprintGeometry = useMemo(() => {
+    if (!isBoxProp) return null;
+    const outerScale = highlighted ? 1.35 : 1.12;
+    const innerScale = 0.92;
+    const ow = rx * outerScale;
+    const od = rz * outerScale;
+    const iw = rx * innerScale;
+    const id = rz * innerScale;
+
+    const shape = new THREE.Shape();
+    shape.moveTo(-ow, -od);
+    shape.lineTo(ow, -od);
+    shape.lineTo(ow, od);
+    shape.lineTo(-ow, od);
+    shape.closePath();
+
+    const hole = new THREE.Path();
+    hole.moveTo(-iw, -id);
+    hole.lineTo(iw, -id);
+    hole.lineTo(iw, id);
+    hole.lineTo(-iw, id);
+    hole.closePath();
+    shape.holes.push(hole);
+
+    return new THREE.ShapeGeometry(shape);
+  }, [isBoxProp, highlighted, rx, rz]);
 
   const headY = height * ENTITY_DEFAULTS.CHARACTER_LOOK_ANCHOR_RATIO;
   const torsoHeight = Math.max(0.4, height - 0.55);
@@ -150,10 +196,13 @@ export const DirectionalMannequin: React.FC<DirectionalMannequinProps> = ({
       ? (highlighted ? 0.50 : 0.25)
       : 0.9;
 
+    const charScaleX = radius > 1e-5 ? rx / radius : 1;
+    const charScaleZ = radius > 1e-5 ? rz / radius : 1;
+
     return (
       <group>
         {/* Stylized Architectural Torso Column */}
-        <mesh position={[0, torsoY, 0]}>
+        <mesh position={[0, torsoY, 0]} scale={[charScaleX, 1, charScaleZ]}>
           <capsuleGeometry args={[radius * 0.72, torsoHeight * 0.55, 8, 20]} />
           <meshStandardMaterial
             color={bodyColor}
@@ -169,7 +218,7 @@ export const DirectionalMannequin: React.FC<DirectionalMannequinProps> = ({
         </mesh>
 
         {/* Shoulder Cross-Bar to make body silhouette immediately clear (Slim Minimalist) */}
-        <mesh position={[0, height - 0.40, 0]}>
+        <mesh position={[0, height - 0.40, 0]} scale={[charScaleX, 1, charScaleZ]}>
           <boxGeometry args={[radius * 1.4, 0.08, radius * 0.55]} />
           <meshStandardMaterial
             color={bodyColor}
@@ -246,29 +295,34 @@ export const DirectionalMannequin: React.FC<DirectionalMannequinProps> = ({
 
     switch (shape) {
       case 'sphere': {
-        const sphereRadius = radius > 0 ? radius : height * 0.5;
+        const sphereR = rx > 0 ? rx : height * 0.5;
+        const sySphere = sphereR > 1e-5 ? (height * 0.5) / sphereR : 1;
+        const szSphere = sphereR > 1e-5 ? rz / sphereR : 1;
         return (
-          <mesh position={[0, sphereRadius, 0]}>
-            <sphereGeometry args={[sphereRadius, 32, 32]} />
+          <mesh position={[0, height * 0.5, 0]} scale={[1, sySphere, szSphere]}>
+            <sphereGeometry args={[sphereR, 32, 32]} />
             {material}
             {edgesChild}
           </mesh>
         );
       }
       case 'cylinder': {
+        const szCyl = rx > 1e-5 ? rz / rx : 1;
         return (
-          <mesh position={[0, height * 0.5, 0]}>
-            <cylinderGeometry args={[radius, radius, height, 32]} />
+          <mesh position={[0, height * 0.5, 0]} scale={[1, 1, szCyl]}>
+            <cylinderGeometry args={[rx, rx, height, 32]} />
             {material}
             {edgesChild}
           </mesh>
         );
       }
       case 'capsule': {
-        const capRadius = radius;
+        const capRadius = Math.min(rx, rz);
         const bodyLen = Math.max(0.01, height - capRadius * 2);
+        const sxCap = capRadius > 1e-5 ? rx / capRadius : 1;
+        const szCap = capRadius > 1e-5 ? rz / capRadius : 1;
         return (
-          <mesh position={[0, height * 0.5, 0]}>
+          <mesh position={[0, height * 0.5, 0]} scale={[sxCap, 1, szCap]}>
             <capsuleGeometry args={[capRadius, bodyLen, 8, 20]} />
             {material}
             {edgesChild}
@@ -279,7 +333,7 @@ export const DirectionalMannequin: React.FC<DirectionalMannequinProps> = ({
       default: {
         return (
           <mesh position={[0, height * 0.5, 0]}>
-            <boxGeometry args={[radius * 2, height, radius * 2]} />
+            <boxGeometry args={[baseWidth, height, baseDepth]} />
             {material}
             {edgesChild}
           </mesh>
@@ -295,8 +349,8 @@ export const DirectionalMannequin: React.FC<DirectionalMannequinProps> = ({
     const isBeacon = markerStyle === 'beacon';
 
     const tapeThickness = 0.003;
-    const stripWidth = Math.max(0.04, radius * 0.28);
-    const stripLen = radius * 2;
+    const stripWidth = Math.max(0.04, rx * 0.28);
+    const stripLen = baseWidth;
     const tapeMaterial = (
       <meshBasicMaterial
         color={color}
@@ -307,8 +361,8 @@ export const DirectionalMannequin: React.FC<DirectionalMannequinProps> = ({
     );
 
     const glowHalo = isGlow ? (
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.002, 0]}>
-        <ringGeometry args={[0, radius * 1.35, 32]} />
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.002, 0]} scale={[1, rx > 1e-5 ? rz / rx : 1, 1]}>
+        <ringGeometry args={[0, rx * 1.35, 32]} />
         <meshBasicMaterial
           color={color}
           transparent
@@ -340,12 +394,12 @@ export const DirectionalMannequin: React.FC<DirectionalMannequinProps> = ({
     let shapeMesh: React.ReactNode;
     switch (shape) {
       case 't': {
-        const stemLen = radius * 1.5;
+        const stemLen = rz * 1.5;
         shapeMesh = (
           <group position={[0, 0.005, 0]}>
             {/* Top crossbar (horizontal along X) */}
             <mesh position={[0, 0, 0]}>
-              <boxGeometry args={[stripLen, tapeThickness, stripWidth]} />
+              <boxGeometry args={[baseWidth, tapeThickness, stripWidth]} />
               {tapeMaterial}
             </mesh>
             {/* Vertical stem (pointing along -Z) */}
@@ -358,19 +412,21 @@ export const DirectionalMannequin: React.FC<DirectionalMannequinProps> = ({
         break;
       }
       case 'circle': {
+        const szCirc = rx > 1e-5 ? rz / rx : 1;
         shapeMesh = (
-          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.005, 0]}>
-            <ringGeometry args={[radius * 0.72, radius, 32]} />
+          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.005, 0]} scale={[1, szCirc, 1]}>
+            <ringGeometry args={[rx * 0.72, rx, 32]} />
             {tapeMaterial}
           </mesh>
         );
         break;
       }
       case 'puck': {
+        const szPuck = rx > 1e-5 ? rz / rx : 1;
         shapeMesh = (
-          <mesh position={[0, Math.max(0.04, height * 0.5), 0]}>
+          <mesh position={[0, Math.max(0.04, height * 0.5), 0]} scale={[1, 1, szPuck]}>
             <cylinderGeometry
-              args={[radius * 0.6, radius, Math.max(0.08, height), 16]}
+              args={[rx * 0.6, rx, Math.max(0.08, height), 16]}
             />
             {tapeMaterial}
           </mesh>
@@ -426,25 +482,43 @@ export const DirectionalMannequin: React.FC<DirectionalMannequinProps> = ({
       {/* 60fps Animated Entity Transform Group (controlled imperatively to avoid JSX prop overwrite) */}
       <group ref={groupRef}>
         {/* Ground Contact Shadow & Selection Ring */}
-        <mesh
-          rotation={[-Math.PI / 2, 0, 0]}
-          position={[0, 0.012, 0]}
-          visible={def.kind !== 'marker' || highlighted}
-        >
-          <ringGeometry
-            args={[
-              radius * 0.92,
-              highlighted ? radius * 1.35 : radius * 1.12,
-              32,
-            ]}
-          />
-          <meshBasicMaterial
-            color={color}
-            transparent
-            opacity={highlighted ? 0.9 : 0.45}
-            side={THREE.DoubleSide}
-          />
-        </mesh>
+        <group ref={footprintRef}>
+          {isBoxProp && boxFootprintGeometry ? (
+            <mesh
+              rotation={[-Math.PI / 2, 0, 0]}
+              position={[0, 0.012, 0]}
+              geometry={boxFootprintGeometry}
+            >
+              <meshBasicMaterial
+                color={color}
+                transparent
+                opacity={highlighted ? 0.9 : 0.45}
+                side={THREE.DoubleSide}
+              />
+            </mesh>
+          ) : (
+            <mesh
+              rotation={[-Math.PI / 2, 0, 0]}
+              position={[0, 0.012, 0]}
+              scale={[1, rx > 1e-5 ? rz / rx : 1, 1]}
+              visible={def.kind !== 'marker' || highlighted}
+            >
+              <ringGeometry
+                args={[
+                  rx * 0.92,
+                  highlighted ? rx * 1.35 : rx * 1.12,
+                  32,
+                ]}
+              />
+              <meshBasicMaterial
+                color={color}
+                transparent
+                opacity={highlighted ? 0.9 : 0.45}
+                side={THREE.DoubleSide}
+              />
+            </mesh>
+          )}
+        </group>
 
         {/* Ground Facing Direction Arrow (+Z Forward) */}
         {(def.kind !== 'marker' || def.shape === 'puck' || def.rotationYRad !== 0) && (
@@ -457,23 +531,28 @@ export const DirectionalMannequin: React.FC<DirectionalMannequinProps> = ({
           />
         )}
 
-        {def.kind === 'character' ? (
-          renderCharacter()
-        ) : def.kind === 'prop' ? (
-          renderPropShape()
-        ) : (
-          renderMarkerShape()
-        )}
+        {/* Scaled 3D Mesh Container (Base at Y=0) */}
+        <group ref={meshContainerRef}>
+          {def.kind === 'character' ? (
+            renderCharacter()
+          ) : def.kind === 'prop' ? (
+            renderPropShape()
+          ) : (
+            renderMarkerShape()
+          )}
+        </group>
 
-        {/* Floating Identity Badge (Ultra-Compact Micro-Pill) */}
-        <StageBillboardLabel
-          position={[0, height + 0.28, 0]}
-          label={def.label}
-          accentColor={color}
-          highlighted={highlighted}
-          ghosted={isPlaying}
-          visible={labelMode === 'all' && cameraMode !== 'stage-pov'}
-        />
+        {/* Floating Identity Badge (Independent of Mesh Scale) */}
+        <group ref={labelGroupRef} position={[0, height + 0.28, 0]}>
+          <StageBillboardLabel
+            position={[0, 0, 0]}
+            label={def.label}
+            accentColor={color}
+            highlighted={highlighted}
+            ghosted={isPlaying}
+            visible={labelMode === 'all' && cameraMode !== 'stage-pov'}
+          />
+        </group>
       </group>
     </group>
   );
