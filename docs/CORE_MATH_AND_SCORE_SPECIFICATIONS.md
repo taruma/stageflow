@@ -122,6 +122,8 @@ In [`trajectoryChain.ts`](../src/core/trajectoryChain.ts), [`cameraTargetResolve
   3. **Tier 3 (Baseline Default)**: If neither provides movement, entities hold their initial pose and base dimensions from `entities:`.
 - **Dynamic Look-At Anchor & Thin-Lens Focus Tracking**:
   When an entity changes elevation or crouches during a blocking cue ($h(t)$), its intrinsic look-at anchor $\vec{A}_i(t) = (x_i(t), y_i(t) + \text{ratio} \cdot h(t), z_i(t))$ updates dynamically on every frame. Any camera targeting or focusing on entity $i$ smoothly tracks changing posture and elevation without visual lag. Feet and prop bases remain strictly pinned to floor elevation $Y = 0$.
+- **Rigid Anatomical Proportions & Telescoping Torso**:
+  While prop volumes scale uniformly along $Y$, character mannequins enforce strict anatomical preservation: the head sphere ($r = 0.14\text{m}$) and eye-visor cone maintain an un-squashed $Y \equiv 1.0$ aspect ratio at $Y_{\text{head}} = h(t) - 0.16\text{m}$, and the shoulder cross-bar retains $0.08\text{m}$ thickness at $Y_{\text{shoulder}} = h(t) - 0.40\text{m}$. Only the lower capsule torso column telescopes dynamically ($s_{\text{torso}, y} = \frac{h(t) - 0.35}{1.40}$) to bridge the distance from the floor, preserving dignified architectural silhouettes when sitting, kneeling, or crouching.
 - **Shape-Matched Ground Footprint**:
   Box props render an oriented rectangular polygon footprint $\operatorname{OBB}(\vec{p}_{xz}, w, d, \psi)$ matching the box dimensions and rotation in both 3D diorama and 2D SVG minimap. Non-uniform circular props and mannequins render an elliptical footprint ($r_x = w/2, r_z = d/2$) when $w \ne d$, and a standard circular footprint when $w = d$.
 

@@ -168,7 +168,7 @@ The Choreography Score Library ([`ScoreLibraryModal.tsx`](../src/ui/ScoreLibrary
 
 ### 7.2 Choreography Inspector (Right Column, ~60%)
 - **Directorial Metadata & Notes**: High-contrast title in `Libre Baskerville` serif, full directorial notes, and media engine indicators.
-- **Procedural 2D Vector Stage Minimap (`ScoreStageMinimap.tsx`)**: Renders an instantaneous top-down SVG blueprint schematic of stage geometry, character proxies with facing chevrons, and camera trajectory cones in $< 0.1\text{ms}$ with zero WebGL overhead.
+- **Procedural 2D Vector Stage Minimap (`ScoreStageMinimap.tsx`)**: Renders an instantaneous top-down SVG blueprint schematic of stage geometry, character proxies with facing chevrons, oriented bounding box polygons for box props, elliptical footprints, and camera trajectory cones in $< 0.1\text{ms}$ with zero WebGL overhead.
 - **Optical & Staging Grid**: 4-quadrant display of duration, shot count, film gate aspect ratio, and entity count.
 - **Shot Coverage Strips**: Sequential step-by-step breakdown of camera focal lengths, maneuvers, and duration cuts.
 - **Unified Lifecycle Controls**: Inline renaming, score duplication, YAML export, and deletion without auxiliary modal windows.

@@ -99,7 +99,7 @@ stageflow/
 │   │   ├── StageCamViewRig.tsx      # Stage Camera POV lock controller for procedural monitor
 │   │   ├── StageCamDofEffect.tsx    # Opt-in single-pass WebGL2 thin-lens Depth-of-Field blur effect
 │   │   ├── StageCamMonitorCanvas.tsx# True 3D Stage Cam monitor with optical safe-action HUD & DoF blur toggle
-│   │   ├── DirectionalMannequin.tsx # Stylized character/prop proxies with facing visor & floor trails
+│   │   ├── DirectionalMannequin.tsx # Stylized character/prop proxies with rigid anatomy, telescoping torso, facing visor & floor trails
 │   │   └── StageBillboardLabel.tsx  # Crisp 3D HTML floating identity badges
 │   ├── ui/                          # Layer 5: 2D Directorial UI Shell
 │   │   ├── tokens/                  # SceneFlow-aligned design tokens

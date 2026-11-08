@@ -431,6 +431,7 @@ Entities support full 3-dimensional control ($X, Y, Z$) to author realistic char
 | **`radius` derivation** | When `radius` is omitted, bounding radius is automatically derived as $r = \frac{\max(w, d)}{2}$. When `width` and `depth` are omitted, both default strictly to $2r$. | `radius: 0.35` $\implies w = 0.70\text{m}, d = 0.70\text{m}$ |
 
 - **Ground-Pinned Base Invariant**: Character feet and prop bases remain strictly pinned to floor elevation $Y = 0$. Adjusting `height` scales exclusively upward into $+Y$.
+- **Rigid Anatomical Head & Shoulder Preservation**: For character mannequins, adjusting `height` dynamically telescopes the capsule torso while rigidly preserving head sphere ($r = 0.14\text{m}$) and shoulder thickness ($0.08\text{m}$) at un-squashed $Y \equiv 1.0$ proportions, completely preventing pancake distortion when sitting or crouching.
 - **Shape-Matched Ground Footprints**: Box props render an oriented rectangular polygon footprint matching the box dimensions and rotation in both 3D diorama and 2D SVG minimap. Circular props and mannequins render an elliptical footprint ($r_x = w/2, r_z = d/2$) when $w \ne d$.
 
 ---
@@ -769,9 +770,34 @@ blocking:
 
 #### Dynamic Posture & Dimension Transformations
 Actors and props can dynamically transform dimensions during `blocking:` cues:
-- **Animated Posture Changes**: Authoring `height: 1.15` causes an actor to smoothly crouch down over the cue duration using the specified easing curve. Specifying `from_height` or `from_size` explicitly sets starting bounds; omitting them glides smoothly from the preceding cue's terminal dimensions.
+- **Animated Posture Changes**: Authoring `height: 1.15` causes an actor to smoothly crouch down or sit in a chair over the cue duration using the specified easing curve. Specifying `from_height` or `from_size` explicitly sets starting bounds; omitting them glides smoothly from the preceding cue's terminal dimensions.
+- **Rigid Anatomical Proportions (Telescoping Torso)**: When lowering an actor's height to sit on a chair or crouch behind cover (e.g. `height: 1.15`), StageFlow automatically protects anatomical proportions: the head sphere ($r = 0.14\text{m}$) and eye-visor cone remain perfectly spherical ($Y \equiv 1.0$) and the shoulder bar maintains standard thickness ($0.08\text{m}$). The torso column telescopes cleanly between the floor and shoulders without squashing the head or neck into a pancake.
 - **Per-Axis Forward Chaining**: Overriding one dimension (e.g. `height: 1.15`) does not reset other dimensions (`width`, `depth`) back to default; each axis preserves its active state across cues.
 - **Dynamic Look-At & Focus Tracking**: The Stage Camera's look-at target and thin-lens DoF focus plane dynamically follow the entity's moving anchor ($\vec{A}_i(t) = (x_i(t), y_i(t) + \text{ratio} \cdot h_i(t), z_i(t))$). As an actor crouches, the camera smoothly lowers its framing and maintains sharp optical focus on the actor's head.
+
+```yaml
+blocking:
+  # Beat 1: Arthur crosses over toward desk chair at standing height (1.75m)
+  - id: "arthur-walks-to-chair"
+    entity: "arthur"
+    start: 0.0
+    duration: 3.5
+    from: [-3.0, 0, 0]
+    position: [-0.6, 0, 0]
+    easing: "cruise"
+    look_at: "desk"
+
+  # Beat 2: Arthur sits down in the chair (height smoothly telescopes 1.75m -> 1.15m)
+  - id: "arthur-sits"
+    entity: "arthur"
+    start: 3.5
+    duration: 1.5
+    position: [0.0, 0, 0]
+    height: 1.15
+    rotation: 90
+    easing: "smooth"
+    note: "Sits down; torso telescopes while head & shoulders retain rigid anatomy"
+```
 
 #### Continuous Auto-Chaining & Instant Cuts (`continuous: true` & `cut: true`)
 Just like camera tracks, `blocking:` supports continuous timeline auto-chaining and instant jump cut placement:

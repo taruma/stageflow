@@ -131,9 +131,10 @@ Entities in StageFlow can specify custom 3-dimensional extents ($X, Y, Z$) at ba
   - `size: [w, d]` sets floor footprint dimensions (width and depth), preserving default height.
   - Explicit scalar keys `width` ($w$), `height` ($h$), and `depth` / `length` ($d$) override vector components. For box props, omitting `depth` defaults symmetrically to `width` ($d = w$).
   - When `radius` is omitted, bounding radius is automatically derived as $r = \frac{\max(w, d)}{2}$. When `width` and `depth` are omitted, both default strictly to $2r$.
-- **Ground-Pinned Base Invariant ($Y = 0$)**:
+- **Ground-Pinned Base Invariant ($Y = 0$) & Rigid Mannequin Anatomy**:
   - Scaling along $Y$ (elevation) scales exclusively upward: character feet and prop bases remain strictly pinned to floor elevation $Y = 0$ ($y_{\text{base}} = y_i$).
   - Scaling along $X$ (lateral) and $Z$ (sagittal) expands symmetrically from the entity's central pivot axis.
+  - **Rigid Anatomical Proportions & Telescoping Torso**: While prop volumes scale uniformly along $Y$, character mannequins enforce strict anatomical preservation: the head sphere ($r = 0.14\text{m}$) and eye-visor cone maintain an un-squashed $Y \equiv 1.0$ aspect ratio at $Y_{\text{head}} = h(t) - 0.16\text{m}$, and the shoulder cross-bar retains $0.08\text{m}$ thickness at $Y_{\text{shoulder}} = h(t) - 0.40\text{m}$. Only the lower capsule torso column telescopes dynamically ($s_{\text{torso}, y} = \frac{h(t) - 0.35}{1.40}$) to bridge the distance from the floor, completely eliminating pancake-head distortion when sitting or crouching.
 - **Shape-Matched Ground Footprints**:
   - Box props render an oriented rectangular polygon footprint $\operatorname{OBB}(\vec{p}_{xz}, w, d, \psi)$ in both 3D diorama and 2D SVG minimap.
   - Non-uniform circular props and mannequins render an elliptical footprint ($r_x = w/2, r_z = d/2$) when $w \ne d$, and a standard circular footprint when $w = d$.
