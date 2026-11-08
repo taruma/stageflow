@@ -149,7 +149,7 @@ export class YouTubeMediaDriver implements MediaClockDriver {
               const rawT = this.player.getCurrentTime() || 0;
               const isSeekSettled =
                 this.pendingSeekTarget === null ||
-                Math.abs(rawT - this.pendingSeekTarget) < 0.35 ||
+                Math.abs(rawT - this.pendingSeekTarget) < 1.5 ||
                 now - this.pendingSeekTimestampMs > 600;
               if (isSeekSettled) {
                 this.pendingSeekTarget = null;
@@ -163,7 +163,7 @@ export class YouTubeMediaDriver implements MediaClockDriver {
               const rawT = this.player.getCurrentTime() || this.anchorVideoTimeSec;
               const isSeekSettled =
                 this.pendingSeekTarget === null ||
-                Math.abs(rawT - this.pendingSeekTarget) < 0.35 ||
+                Math.abs(rawT - this.pendingSeekTarget) < 1.5 ||
                 now - this.pendingSeekTimestampMs > 600;
               if (isSeekSettled) {
                 this.pendingSeekTarget = null;
@@ -214,7 +214,7 @@ export class YouTubeMediaDriver implements MediaClockDriver {
       const isClose =
         typeof rawYtTime === 'number' &&
         Number.isFinite(rawYtTime) &&
-        Math.abs(rawYtTime - this.pendingSeekTarget) < 0.35;
+        Math.abs(rawYtTime - this.pendingSeekTarget) < 1.5;
       const isTimedOut = now - this.pendingSeekTimestampMs > 600;
 
       if (isClose || isTimedOut) {
