@@ -35,7 +35,8 @@ export function useStageFrameLoop(
   score: StageScore,
   driverRef: React.RefObject<MediaClockDriver | null>,
   loopActiveShot: boolean,
-  isPlaying: boolean
+  isPlaying: boolean,
+  lastManualSeekIdRef?: React.RefObject<number>
 ): UseStageFrameLoopResult {
   const [cameraMode, setCameraModeState] = useState<CameraViewMode>('scripted');
 
@@ -46,7 +47,7 @@ export function useStageFrameLoop(
   );
   const lastUiSyncPerfMsRef = useRef<number>(0);
   const trailingSyncTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const lockedLoopShotIdRef = useRef<string | null>(null);
+  const lastHandledSeekIdRef = useRef<number>(-1);
 
   const [uiSnapshot, setUiSnapshot] = useState<StageUiSnapshot>(() => ({
     timestampSec: 0,
@@ -81,15 +82,6 @@ export function useStageFrameLoop(
     }
     forceSyncUi();
   }, [score, isPlaying, cameraMode, driverRef, forceSyncUi]);
-
-  // Track which shot to loop when loopActiveShot is toggled on
-  useEffect(() => {
-    if (loopActiveShot) {
-      lockedLoopShotIdRef.current = frameRef.current.activeShot?.id ?? null;
-    } else {
-      lockedLoopShotIdRef.current = null;
-    }
-  }, [loopActiveShot]);
 
   const setCameraMode = useCallback(
     (mode: CameraViewMode) => {
@@ -176,21 +168,27 @@ export function useStageFrameLoop(
   const evaluateTick60fps = useCallback((): StageFrame => {
     const drv = driverRef.current;
     let currentSec = drv ? drv.getCurrentTime() : 0;
+    const prevTime = frameRef.current.timestampSec;
+    const manualSeekOccurred =
+      (lastManualSeekIdRef &&
+        lastHandledSeekIdRef.current !== lastManualSeekIdRef.current) ||
+      Math.abs(currentSec - prevTime) > 0.5;
 
-    // Handle active shot looping
-    if (loopActiveShot && drv && drv.isPlaying()) {
-      const targetShot =
-        score.shots.find((s) => s.id === lockedLoopShotIdRef.current) ??
-        frameRef.current.activeShot;
-      if (targetShot && currentSec >= targetShot.endSec - 0.02) {
-        drv.seek(targetShot.startSec);
-        currentSec = targetShot.startSec;
+    if (manualSeekOccurred && lastManualSeekIdRef) {
+      lastHandledSeekIdRef.current = lastManualSeekIdRef.current;
+    }
+
+    // Dynamic active shot looping: seamlessly loops whichever shot is currently active without trapping manual jumps
+    if (loopActiveShot && drv && drv.isPlaying() && !manualSeekOccurred) {
+      const activeShot = frameRef.current.activeShot;
+      if (activeShot && currentSec >= activeShot.endSec - 0.02) {
+        drv.seek(activeShot.startSec);
+        currentSec = activeShot.startSec;
       }
     }
 
     const prevFrame = frameRef.current;
     const prevShotId = prevFrame.activeShot?.id ?? null;
-    const prevTime = prevFrame.timestampSec;
     const nextFrame = computeStageFrame(currentSec, score);
     frameRef.current = nextFrame;
 

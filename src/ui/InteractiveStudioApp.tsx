@@ -163,7 +163,8 @@ export const InteractiveStudioApp: React.FC = () => {
     activeScore,
     mediaClock.driverRef,
     mediaClock.loopActiveShot,
-    mediaClock.isPlaying
+    mediaClock.isPlaying,
+    mediaClock.lastManualSeekIdRef
   );
 
   const cameraPresetActionRef = useRef<{

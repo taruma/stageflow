@@ -103,4 +103,4 @@ Transport playback, frame-stepping, and diorama display modes are managed via [`
 | **Cycle 3D Labels** | Label Mode Toggle | `L` | Cycles diorama labels through `'all' -> 'camera-only' -> 'off' -> 'all'` (`useStudioDisplaySettings`). |
 | **Toggle Safe Guides**| Guides Button | `G` | Toggles optical safe-action box, 3x3 grid, and center reticle in Stage Cam POV / Monitor (`useStudioDisplaySettings`). |
 | **Playback Speed** | `0.25x`, `0.5x`, `1x`, `2x` | — | Adjusts `playbackRate` across HTML5, YouTube, and Procedural drivers (`useMediaClock`). |
-| **Loop Active Shot** | `Loop Shot` Toggle | — | Automatically seeks back to `activeShot.startSec` when reaching `activeShot.endSec` (`useMediaClock`). |
+| **Loop Active Shot** | `Loop Shot` Toggle | — | Dynamically bounds and loops playback within whichever shot is currently active (`activeShot.startSec` to `activeShot.endSec`), updating smoothly when jumping across shots without trapping manual seeks (`useStageFrameLoop`). |

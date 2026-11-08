@@ -226,7 +226,7 @@ Decomposed into 3 focused submodules to preserve the $\le 250$ line modularity s
    - Dual-gradient playback progress fill.
    - **Auto-Pause on Scrubber Interaction**: Grabbing the range slider (`onPointerDown`) or dragging across it (`onChange`) automatically pauses active playback so the director can inspect exact frame poses manually without fighting playback advance.
    - **Floating Hover Preview Tooltip**: Hovering across the track displays a floating tactile pill above the cursor (`00:21.86 · #04 Evan Grabs Ruby's Arm`) clamped within container bounds, paired with a razor vertical hairline on the timeline.
-   - **Luminous Emerald Loop Indicator**: When `Loop Shot` is enabled, highlights the active shot's time range on the timeline with an emerald accent fill, subtle glow, and crisp `[` and `]` boundary bracket ticks.
+   - **Luminous Emerald Loop Indicator & Dynamic Shot Looping**: When `Loop Shot` is enabled, dynamically highlights and bounds playback to whichever shot is currently active with an emerald accent fill, subtle glow, and crisp `[` and `]` boundary bracket ticks that update in real-time when clicking different shot chips or scrubbing without trapping manual seeks.
 2. **Auto-Centering Shot Chips Strip with Chevrons (`DirectorialShotChipsStrip.tsx`)**:
    - Flanking `<` and `>` chevron buttons allowing 1-click smooth peek scrolling left/right through off-screen shots without jumping the playhead.
    - Automatically smooth-scrolls the active shot chip into the center on shot cut boundaries via `activeChipRef.scrollIntoView`.

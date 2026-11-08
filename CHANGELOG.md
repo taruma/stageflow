@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- **Dynamic Active Shot Looping (`src/hooks/useStageFrameLoop.ts`, `src/ui/InteractiveStudioApp.tsx`, `docs/*`)**:
+  - Converted `Loop Shot` playback mode from static single-shot lock to a contextual dynamic active-shot loop that automatically tracks whichever shot is under the playhead.
+  - Clicking any shot chip or scrubbing to a different cut smoothly transitions the rehearsal loop to the newly selected shot with zero trapping or snap-back race conditions.
+  - Synchronized `mediaClock.lastManualSeekIdRef` with `useStageFrameLoop` to cleanly distinguish between forward playback loop triggers and manual directorial jumps across cut boundaries.
 - **Segmented Centered Transport Deck & Streamlined Playback Controls (`src/ui/transport/DirectorialTransportDeck.tsx`, `docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md`)**:
   - Restructured the centered transport deck into a 3-segment hierarchy: precision timecode on the left, core transport (`[ ↻ ]` and hero `[ ▶ Play / ❚❚ Pause ]`) dead-center, and directorial modifiers (`Loop Shot`, `Mute`, speed pills) on the right separated by subtle vertical dividers.
   - Omitted visual single-frame step buttons (`< [` and `] >`) from the UI chrome to eliminate clutter, while preserving global keyboard hotkeys (`[` and `]`) in `useMediaClock.ts`.
