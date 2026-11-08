@@ -21,7 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Entity Kind Opacity Hierarchy & Context Passthrough (`src/stage/DirectionalMannequin.tsx`, `docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md`)**:
   - Wired `def.kind` (`'character' | 'prop' | 'marker'`) to `<StageBillboardLabel>`, establishing a 4-tier opacity hierarchy: Camera ($100\%$) $\ge$ Active Focus ($100\%$ paused, $60\%$ playing) $>$ Characters ($85\%$ paused, $25\%$ playing) $>$ Props ($55\%$ paused, $15\%$ playing) $>$ Markers ($35\%$ paused, $10\%$ playing), subduing static stage markers and props while keeping actors prominent with zero YAML changes.
 - **Elevated Stage Camera Badge & Blueprint Leader Stem (`src/stage/StageCameraRig.tsx`, `docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md`)**:
-  - Elevated the `STAGE CAM` badge from `Y = +0.36m` to `Y = +0.72m` and anchored it with a subtle dashed vertical blueprint leader line (`<Line>` from $Y = 0.12\text{m}$ to $0.58\text{m}$), preventing over-the-shoulder (OTS) camera badges from colliding with or occluding actor head badges.
+  - Elevated the camera badge from `Y = +0.36m` to `Y = +0.72m` and anchored it with a subtle dashed vertical blueprint leader line (`<Line>` from $Y = 0.12\text{m}$ to $0.58\text{m}$), preventing over-the-shoulder (OTS) camera badges from colliding with or occluding actor head badges.
+  - Streamlined the 3D telemetry label format to `CAM · [lens]mm · [MANEUVER]` (e.g. `CAM · 50mm · DOLLY`), removing redundant `STAGE` and aperture substrings from the 3D diorama badge (preserved in the 2D top-left HUD), cutting badge width by over $33\%$ for clean, distraction-free spatial blocking.
 
 ### Changed
 - **Ultra-Compact Icon-Only Transport Deck (`src/ui/transport/DirectorialTransportDeck.tsx`, `docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md`)**:

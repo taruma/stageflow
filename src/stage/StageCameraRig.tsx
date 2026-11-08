@@ -286,14 +286,8 @@ export const StageCameraRig: React.FC<StageCameraRigProps> = ({
             )}
             <StageBillboardLabel
               position={[0, 0.72, -0.14]}
-              label="STAGE CAM"
-              sublabel={
-                stageCam.dof?.enabled
-                  ? `${Math.round(pose.focalLengthMm)}mm · f/${stageCam.dof.apertureFStop
-                      .toFixed(1)
-                      .replace(/\.0$/, '')} · ${stageCam.maneuver.toUpperCase()}`
-                  : `${Math.round(pose.focalLengthMm)}mm · ${stageCam.maneuver.toUpperCase()}`
-              }
+              label="CAM"
+              sublabel={`${Math.round(pose.focalLengthMm)}mm · ${stageCam.maneuver.toUpperCase()}`}
               accentColor={color}
               kind="camera"
               highlighted
