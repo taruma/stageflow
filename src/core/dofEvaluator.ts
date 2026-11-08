@@ -11,6 +11,7 @@ import type {
   EvaluatedEntityState,
   ShotCue,
   StageScore,
+  TargetAnchor,
   Vec3,
 } from './types';
 import { CAMERA_LIMITS } from './constants';
@@ -56,7 +57,7 @@ function pointAlongSightline(
  * Resolves a single focus endpoint (target key/Vec3 or metric distance) at the current frame.
  */
 function resolveFocusEndpoint(
-  targetKey: string | Vec3 | undefined,
+  targetKey: TargetAnchor | undefined,
   explicitDistanceM: number | undefined,
   eye: Vec3,
   lookTarget: Vec3,

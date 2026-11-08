@@ -8,6 +8,7 @@ import type {
   EntityKind,
   EntityShape,
   SceneEntityDef,
+  TargetAnchor,
   Vec3,
 } from './types';
 import { ENTITY_DEFAULTS } from './constants';
@@ -355,14 +356,31 @@ export function resolveCueStartEndSize(
 }
 
 /**
- * Resolves a lookAt target (entity ID, entity label, "center", or explicit Vec3) into world coordinates.
+ * Resolves a lookAt target (entity ID, multi-entity array, entity label, "center", or explicit Vec3) into world coordinates.
  */
 export function resolveLookAtPoint(
-  lookAt: string | Vec3 | undefined,
+  lookAt: TargetAnchor | undefined,
   currentPositions: Map<string, Vec3>,
   entities?: SceneEntityDef[]
 ): Vec3 | null {
   if (!lookAt) return null;
+  if (Array.isArray(lookAt)) {
+    if (lookAt.length === 0) return null;
+    let sumX = 0;
+    let sumY = 0;
+    let sumZ = 0;
+    let count = 0;
+    for (const key of lookAt) {
+      const pt = resolveLookAtPoint(key, currentPositions, entities);
+      if (pt) {
+        sumX += pt.x;
+        sumY += pt.y;
+        sumZ += pt.z;
+        count++;
+      }
+    }
+    return count > 0 ? { x: sumX / count, y: sumY / count, z: sumZ / count } : null;
+  }
   if (typeof lookAt === 'object') {
     return lookAt;
   }

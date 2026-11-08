@@ -7,6 +7,7 @@ import type {
   CameraCueSpec,
   EvaluatedEntityState,
   SphericalPose,
+  TargetAnchor,
   Vec3,
 } from './types';
 import { ENTITY_DEFAULTS } from './constants';
@@ -94,11 +95,45 @@ export function resolveShotDestOffset(
 }
 
 /**
- * Resolves an anchor key (entity ID, preset name, or Vec3) into a 3D world look-at point,
- * applying an optional world-space metric offset [dx, dy, dz].
+ * Evaluates the 3D look-at anchor point of a single entity (eye-level for characters, volume center for props).
+ */
+export function getEntityLookAnchor(ent: EvaluatedEntityState): Vec3 {
+  const effectiveHeight = ent.size?.y ?? ent.def.height;
+  const anchorY =
+    ent.def.kind === 'character'
+      ? ent.position.y +
+        effectiveHeight * ENTITY_DEFAULTS.CHARACTER_LOOK_ANCHOR_RATIO
+      : ent.position.y + effectiveHeight * 0.5;
+  return {
+    x: ent.position.x,
+    y: anchorY,
+    z: ent.position.z,
+  };
+}
+
+function findEntityByCleanKey(
+  cleanKey: string,
+  entitiesById: Map<string, EvaluatedEntityState>
+): EvaluatedEntityState | undefined {
+  const direct = entitiesById.get(cleanKey);
+  if (direct) return direct;
+  for (const ent of entitiesById.values()) {
+    if (
+      ent.id.toLowerCase() === cleanKey ||
+      ent.def.label.toLowerCase() === cleanKey
+    ) {
+      return ent;
+    }
+  }
+  return undefined;
+}
+
+/**
+ * Resolves an anchor key (single entity ID, multi-entity array for two-shots/group centroids,
+ * preset name, or Vec3) into a 3D world look-at point, applying an optional world-space metric offset [dx, dy, dz].
  */
 export function resolveTargetPoint3D(
-  targetKey: string | Vec3 | undefined,
+  targetKey: TargetAnchor | undefined,
   entitiesById: Map<string, EvaluatedEntityState>,
   fallbackTarget: Vec3,
   offset?: Vec3
@@ -107,6 +142,30 @@ export function resolveTargetPoint3D(
 
   if (!targetKey) {
     base = { ...fallbackTarget };
+  } else if (Array.isArray(targetKey)) {
+    // Multi-entity array: compute pure 3D centroid midpoint
+    const anchors: Vec3[] = [];
+    for (const key of targetKey) {
+      const clean = key.trim().toLowerCase();
+      if (clean === 'center' || clean === 'origin' || clean === 'stage') {
+        anchors.push({ x: 0, y: 1.0, z: 0 });
+      } else {
+        const ent = findEntityByCleanKey(clean, entitiesById);
+        if (ent) {
+          anchors.push(getEntityLookAnchor(ent));
+        }
+      }
+    }
+    if (anchors.length > 0) {
+      const count = anchors.length;
+      base = {
+        x: anchors.reduce((sum, a) => sum + a.x, 0) / count,
+        y: anchors.reduce((sum, a) => sum + a.y, 0) / count,
+        z: anchors.reduce((sum, a) => sum + a.z, 0) / count,
+      };
+    } else {
+      base = { ...fallbackTarget };
+    }
   } else if (typeof targetKey === 'object') {
     base = { ...targetKey };
   } else {
@@ -114,25 +173,9 @@ export function resolveTargetPoint3D(
     if (clean === 'center' || clean === 'origin' || clean === 'stage') {
       base = { x: 0, y: 1.0, z: 0 };
     } else {
-      // Match entity by ID or label
-      for (const ent of entitiesById.values()) {
-        if (
-          ent.id.toLowerCase() === clean ||
-          ent.def.label.toLowerCase() === clean
-        ) {
-          const effectiveHeight = ent.size?.y ?? ent.def.height;
-          const anchorY =
-            ent.def.kind === 'character'
-              ? ent.position.y +
-                effectiveHeight * ENTITY_DEFAULTS.CHARACTER_LOOK_ANCHOR_RATIO
-              : ent.position.y + effectiveHeight * 0.5;
-          base = {
-            x: ent.position.x,
-            y: anchorY,
-            z: ent.position.z,
-          };
-          break;
-        }
+      const ent = findEntityByCleanKey(clean, entitiesById);
+      if (ent) {
+        base = getEntityLookAnchor(ent);
       }
     }
   }

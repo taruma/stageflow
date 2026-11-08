@@ -448,8 +448,8 @@ StageFlow uses a unified spherical camera model across both the Illustrative Sta
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **`maneuver`** | `string` | — | Both | `style` | Trajectory path geometry (see §4.3). Default: `dolly`. |
 | **`easing`** | `string` | — | Both | — | Temporal velocity profile (see §4.4). Default: `smooth`. |
-| **`target`** | `string \| array`| `m` | Both | — | Destination look-at anchor (entity ID, `"center"`, or `[x,y,z]`). |
-| **`from`** | `string \| array`| `m` | Both | — | Starting look-at anchor at shot start (glides from `from` to `target`). |
+| **`target`** | `string \| array`| `m` | Both | — | Destination look-at anchor (entity ID, multi-entity array `["a", "b"]` for two-shots/group staging, `"center"`, or `[x,y,z]`). |
+| **`from`** | `string \| array`| `m` | Both | — | Starting look-at anchor at shot start (glides from `from` to `target`, supports multi-entity centroid arrays). |
 | **`target_offset`**| `[dx, dy, dz]` | `m` | Both | `targetOffset` | World-space metric offset added to target anchor. Resets to `[0,0,0]` on standard cuts if omitted (persists/glides in `continuous: true`). |
 | **`target_offset_start`** | `[dx, dy, dz]` | `m` | Both | `targetOffsetStart` | Starting target offset vector. |
 | **`target_offset_end`** | `[dx, dy, dz]` | `m` | Both | `targetOffsetEnd` | Ending target offset vector. |
@@ -480,9 +480,9 @@ StageFlow uses a unified spherical camera model across both the Illustrative Sta
 | **`show_path`** | `boolean` | — | Stage only | `showPath` | Renders 3D dashed trajectory ribbon in diorama (default: `true`). |
 | **`rig`** | `object` | — | Both | `camera_rig`, `mount` | Physical camera mount (`tripod`, `track`, `spline_track`). See §4.9. |
 | **`show_rig`** | `boolean` | — | Stage only | `showRig` | Toggles rendering of 3D tripod legs or floor rails and dolly cart in diorama (default: `true`). |
-| **`focus`** | `string \| number \| array` | `m` | Stage only | `focus_target`, `focusTarget` | Subject entity ID/label, 3D coordinate `[x,y,z]`, or manual metric focus distance (`3.5` or `"3.5m"`). |
-| **`focus_start`** | `string \| number \| array` | `m` | Stage only | `focusStart` | Starting focus target or metric distance for a rack focus pull. |
-| **`focus_end`** | `string \| number \| array` | `m` | Stage only | `focusEnd` | Ending focus target or metric distance for a rack focus pull. |
+| **`focus`** | `string \| number \| array` | `m` | Stage only | `focus_target`, `focusTarget` | Subject entity ID/label, multi-entity array `["a", "b"]`, 3D coordinate `[x,y,z]`, or manual metric focus distance (`3.5` or `"3.5m"`). |
+| **`focus_start`** | `string \| number \| array` | `m` | Stage only | `focusStart` | Starting focus target (single, multi-entity array, or coordinate) or metric distance for a rack focus pull. |
+| **`focus_end`** | `string \| number \| array` | `m` | Stage only | `focusEnd` | Ending focus target (single, multi-entity array, or coordinate) or metric distance for a rack focus pull. |
 | **`focus_distance`** | `number \| string` | `m` | Stage only | `focusDistance`, `focus_dist` | Explicit manual focus distance in meters (`0.4m` to `100.0m`). |
 | **`focus_distance_start`** | `number \| string` | `m` | Stage only | `focusDistanceStart` | Starting manual focus distance in meters for a rack focus pull. |
 | **`focus_distance_end`** | `number \| string` | `m` | Stage only | `focusDistanceEnd` | Ending manual focus distance in meters for a rack focus pull. |
@@ -493,15 +493,40 @@ StageFlow uses a unified spherical camera model across both the Illustrative Sta
 
 ### 4.2 Aiming & Anchors (`target`, `from`, `target_offset`)
 
-A camera look-at anchor $\vec{T}$ resolves in one of three ways:
+A camera look-at anchor $\vec{T}$ resolves in one of four ways:
 1. **Entity Identifier or Label**: Automatically binds to the entity's intrinsic anchor (eye-level `0.90h` for characters; center-volume `0.50h` for props/markers). As the entity moves across the stage, the camera dynamically tracks their position.
-2. **Stage Presets (`"center"`, `"origin"`, `"stage"`)**: Resolves to the stage center chest level: `[0.0, 1.0, 0.0]`.
-3. **Explicit 3D Vector**: Authored as `[x, y, z]` or `{x, y, z}` in world meters.
+2. **Multi-Entity Centroid Array (`["actor_a", "actor_b"]`)**: Computes the exact 3D world-space midpoint (centroid) across two or more active entities for dynamic two-shots and group framing.
+3. **Stage Presets (`"center"`, `"origin"`, `"stage"`)**: Resolves to the stage center chest level: `[0.0, 1.0, 0.0]`.
+4. **Explicit 3D Vector**: Authored as `[x, y, z]` or `{x, y, z}` in world meters.
 
 #### World Target Offsets (`target_offset`)
 The `target_offset: [dx, dy, dz]` vector displaces the resolved look-at anchor in world space:
 - Use `target_offset: [0, 0.25, 0]` to establish lead headroom above an actor's eye-line.
 - Use `target_offset: [0.4, 0, 0]` for Rule-of-Thirds lead-room in the direction of gaze.
+
+#### Multi-Entity Centroid Framing (Dynamic Two-Shots & Group Staging)
+When staging a conversation or standoff between two or more characters, directors think in terms of the conversational volume between them rather than locking onto a single actor. Authoring `target:` or `from:` as an array of entity identifiers computes the pure 3D centroid across their intrinsic eye anchors $\vec{A}_i(t)$:
+
+$$\vec{T}_{\text{centroid}}(t) = \frac{1}{K} \sum_{i=1}^K \vec{A}_i(t)$$
+
+```yaml
+  - id: "two-shot-conversation"
+    start: 0.0
+    end: 4.0
+    stage_camera:
+      target: ["detective", "witness"]
+      distance: 3.5
+      pitch: 12
+      yaw: 0
+      lens: 35mm
+      focus: ["detective", "witness"]
+      dof: "shallow"
+```
+
+- **Dynamic 60fps Tracking**: If either character translates across the stage (via `blocking:`), the camera automatically tracks the shifting midpoint at 60fps without keyframing.
+- **Single-to-Two-Shot Glides**: Staging `from: "detective"` and `target: ["detective", "witness"]` glides seamlessly from an intimate close-up to a wide conversational two-shot master.
+- **Centroid Rack Focus**: Setting `focus: ["detective", "witness"]` places the orthogonal focus plane directly onto the conversational midpoint with thin-lens Depth-of-Field.
+
 
 ### 4.3 Maneuver Catalog
 

@@ -14,6 +14,7 @@ import type {
   EntityShape,
   EntityStyle,
   SceneEntityDef,
+  TargetAnchor,
   Vec3,
 } from './types';
 import { CAMERA_LIMITS } from './constants';
@@ -63,11 +64,17 @@ export function parseOptionalVec3(raw: unknown): Vec3 | undefined {
   return undefined;
 }
 
-export function parseTargetOrVec3(raw: unknown): string | Vec3 | undefined {
+export function parseTargetOrVec3(raw: unknown): TargetAnchor | undefined {
   if (typeof raw === 'string' && raw.trim().length > 0) {
     return raw.trim();
   }
-  if (Array.isArray(raw) || (raw && typeof raw === 'object')) {
+  if (Array.isArray(raw)) {
+    if (raw.length > 0 && raw.every((item) => typeof item === 'string' && item.trim().length > 0)) {
+      return raw.map((item) => String(item).trim());
+    }
+    return parseVec3(raw);
+  }
+  if (raw && typeof raw === 'object') {
     return parseVec3(raw);
   }
   return undefined;
@@ -102,10 +109,10 @@ export function parseMetricDistanceM(raw: unknown): number | undefined {
 /**
  * Polymorphically parses a `focus:` / `focus_start:` / `focus_end:` value:
  * - Numeric or metric string (`3.5`, `"3.5m"`) -> `{ distanceM: 3.5 }`
- * - Entity ID/label (`"alice"`) or 3D tuple (`[0, 1.5, -2]`) -> `{ target: ... }`
+ * - Entity ID/label (`"alice"`), entity array (`["alice", "bob"]`), or 3D tuple (`[0, 1.5, -2]`) -> `{ target: ... }`
  */
 export function parseFocusTargetOrDistance(raw: unknown): {
-  target?: string | Vec3;
+  target?: string | string[] | Vec3;
   distanceM?: number;
 } {
   if (raw === undefined || raw === null) {
@@ -124,7 +131,13 @@ export function parseFocusTargetOrDistance(raw: unknown): {
     }
     return {};
   }
-  if (Array.isArray(raw) || (raw && typeof raw === 'object')) {
+  if (Array.isArray(raw)) {
+    if (raw.length > 0 && raw.every((item) => typeof item === 'string' && item.trim().length > 0)) {
+      return { target: raw.map((item) => String(item).trim()) };
+    }
+    return { target: parseVec3(raw) };
+  }
+  if (raw && typeof raw === 'object') {
     return { target: parseVec3(raw) };
   }
   return {};

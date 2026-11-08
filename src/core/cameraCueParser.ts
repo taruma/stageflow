@@ -10,6 +10,7 @@ import type {
   SceneEntityDef,
   SphericalPose,
   StageCameraCueSpec,
+  Vec3,
 } from './types';
 import { BLUEPRINT_PALETTE, ENTITY_DEFAULTS } from './constants';
 import { clampSphericalPose } from './sphericalMath';
@@ -79,11 +80,44 @@ export function resolveStageCamEntityTarget(
 ): void {
   if (!rawCam || typeof rawCam !== 'object') return;
   const camObj = rawCam as Record<string, unknown>;
-  if (typeof camObj.target !== 'string') return;
-  const tgtName = camObj.target.trim().toLowerCase();
   const offset = parseOptionalVec3(
     camObj.target_offset ?? camObj.targetOffset
   );
+
+  if (Array.isArray(camObj.target) && camObj.target.length > 0 && camObj.target.every((item) => typeof item === 'string')) {
+    const anchors: Vec3[] = [];
+    for (const item of camObj.target) {
+      const clean = String(item).trim().toLowerCase();
+      if (clean === 'center' || clean === 'origin' || clean === 'stage') {
+        anchors.push({ x: 0, y: 1.0, z: 0 });
+      } else {
+        const matched = entities.find(
+          (e) => e.id.toLowerCase() === clean || e.label.toLowerCase() === clean
+        );
+        if (matched) {
+          const anchorRatio =
+            matched.kind === 'character' ? ENTITY_DEFAULTS.CHARACTER_LOOK_ANCHOR_RATIO : 0.5;
+          anchors.push({
+            x: matched.position.x,
+            y: matched.position.y + matched.height * anchorRatio,
+            z: matched.position.z,
+          });
+        }
+      }
+    }
+    if (anchors.length > 0) {
+      const count = anchors.length;
+      pose.target = {
+        x: anchors.reduce((sum, a) => sum + a.x, 0) / count + (offset?.x ?? 0),
+        y: anchors.reduce((sum, a) => sum + a.y, 0) / count + (offset?.y ?? 0),
+        z: anchors.reduce((sum, a) => sum + a.z, 0) / count + (offset?.z ?? 0),
+      };
+    }
+    return;
+  }
+
+  if (typeof camObj.target !== 'string') return;
+  const tgtName = camObj.target.trim().toLowerCase();
 
   if (tgtName === 'center' || tgtName === 'origin' || tgtName === 'stage') {
     pose.target = {

@@ -128,6 +128,9 @@ When a camera `target` or `from` references an entity by `id` or `label` (in eit
 
 - **Stage Preset Anchor**: `target: "center"` (or `"origin"`, `"stage"`) resolves universally in both baseline `stage` cameras and shot cues to $\vec{A}_{\text{center}} = (0,\; 1.0,\; 0)$.
 - **Explicit Coordinate Anchor**: `target: [x, y, z]` resolves directly to $(x,\; y,\; z)$.
+- **Multi-Entity Centroid Anchor**: When `target` or `from` is specified as an array of entity identifiers `["id_1", "id_2", ..., "id_K"]` ($K \ge 2$), the resolved anchor is the pure 3D world-space centroid across all $K$ entities' active intrinsic anchors $\vec{A}_i(t)$:
+  $$\vec{T}_{\text{centroid}}(t) = \frac{1}{K} \sum_{i=1}^K \vec{A}_i(t)$$
+  This formulation enables dynamic two-shot framing, group conversation tracking at 60fps, and single-to-two-shot glides without hardcoded coordinates. Unknown entity IDs in the array are gracefully omitted; if all IDs fail to resolve, the anchor falls back to the default stage target. Centroid averaging applies symmetrically to `target`, `from`, `focus` (orthogonal focus plane projection), and entity `look_at`.
 - **Target Offset Displacement**: Adding `target_offset: [dx, dy, dz]` shifts the resolved anchor in world space:
   $$\vec{T}_{\text{effective}} = \vec{A} + (\text{dx},\; \text{dy},\; \text{dz})$$
 
@@ -299,7 +302,7 @@ StageFlow is a **stateless functional evaluator** (`Frame_t = f(t, score)`). Eff
 | **`EntityCueOverride`** | `position`, `fromPosition`, `cut` | Optional per-shot entity movement overrides and instant cut flag |
 | | `fromWidth`, `fromHeight`, `fromDepth` | `number \| undefined` start dimensions in $\text{m}$ for per-shot transitions |
 | | `width`, `height`, `depth` | `number \| undefined` destination dimensions in $\text{m}$ |
-| | `rotationYRad`, `lookAt`, `easing` | Optional facing angle, gaze target, and velocity easing profile |
+| | `rotationYRad`, `lookAt`, `easing` | Optional facing angle, gaze target (`TargetAnchor = string \| string[] \| Vec3`), and velocity easing profile |
 | | `highlighted`, `visible`, `note`, `continuous` | Hybrid per-shot highlight badge, visibility toggle, note, and continuity flag |
 | **`SphericalPose`** | `target` | `Vec3` $\{x, y, z\} \in \mathbb{R}^3\text{ m}$ |
 | | `distance` | `number` $d \in [0.4, 100.0]\text{ m}$ |
@@ -317,10 +320,10 @@ StageFlow is a **stateless functional evaluator** (`Frame_t = f(t, score)`). Eff
 | | `highlighted`, `visible`, `opacity` | Directorial focus styling and visibility flags |
 | **`CameraCueSpec`** | `continuous`, `maneuver`, `easing` | Optional `boolean` continuity override; `CameraManeuver` (default `'dolly'`), `CameraEasing` (default `'smooth'`) |
 | | `rig`, `showRig` | Optional `CameraRigSpec` (`tripod`, `track`, `spline_track`) and 3D rig visibility toggle |
-| | `target`, `from` | `string \| Vec3 \| undefined` anchor identifiers or world coordinates |
+| | `target`, `from` | `TargetAnchor = string \| string[] \| Vec3 \| undefined` anchor identifiers, centroid arrays, or world coordinates |
 | | `targetOffset*` | `Vec3 \| undefined` (`targetOffset`, `targetOffsetStart`, `targetOffsetEnd`) in $\text{m}$ |
 | | `distance*`, `pitch*Rad`, `yaw*Rad`, `roll*Rad`, `focalLength*Mm` | Optional scalar/radian/mm endpoints and deltas (`yawDeltaRad`, `rollDeltaRad`) |
-| | `focus`, `focusStart`, `focusEnd` | `string \| Vec3 \| undefined` focus target identifiers or 3D coordinates |
+| | `focus`, `focusStart`, `focusEnd` | `string \| string[] \| Vec3 \| undefined` focus target identifiers, centroid arrays, or 3D coordinates |
 | | `focusDistanceM`, `focusDistanceStartM`, `focusDistanceEndM` | `number \| undefined` explicit metric focus distances $d_{\text{focus}} \in [0.4, 100.0]\text{ m}$ |
 | | `dof`, `apertureFStop`, `apertureStartFStop`, `apertureEndFStop` | `DofPreset \| undefined` (`'shallow' \| 'medium' \| 'deep'`); aperture $N \in [0.7, 64.0]$ |
 | | `breathe` | `number` ($1.12$ for `arc`/`swoop`, $1.25$ for `recoil`, $1.0$ otherwise) |

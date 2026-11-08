@@ -66,6 +66,22 @@ export const ScoreStageMinimap: React.FC<ScoreStageMinimapProps> = ({
             targetX = matched.x;
             targetZ = matched.z;
           }
+        } else if (Array.isArray(sc.target)) {
+          let sumX = 0;
+          let sumZ = 0;
+          let count = 0;
+          for (const item of sc.target) {
+            const matched = entityList.find((e) => e.id === item);
+            if (matched) {
+              sumX += matched.x;
+              sumZ += matched.z;
+              count++;
+            }
+          }
+          if (count > 0) {
+            targetX = sumX / count;
+            targetZ = sumZ / count;
+          }
         } else if (sc.target && typeof sc.target === 'object') {
           targetX = sc.target.x ?? 0;
           targetZ = sc.target.z ?? 0;
@@ -99,6 +115,22 @@ export const ScoreStageMinimap: React.FC<ScoreStageMinimapProps> = ({
           if (matched) {
             tX = matched.x;
             tZ = matched.z;
+          }
+        } else if (Array.isArray(sc.target)) {
+          let sumX = 0;
+          let sumZ = 0;
+          let count = 0;
+          for (const item of sc.target) {
+            const matched = entityList.find((e) => e.id === item);
+            if (matched) {
+              sumX += matched.x;
+              sumZ += matched.z;
+              count++;
+            }
+          }
+          if (count > 0) {
+            tX = sumX / count;
+            tZ = sumZ / count;
           }
         } else if (sc.target && typeof sc.target === 'object') {
           tX = sc.target.x ?? 0;

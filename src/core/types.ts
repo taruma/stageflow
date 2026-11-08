@@ -116,7 +116,7 @@ export interface EntityCueOverride {
   fromPosition?: Vec3;
   position?: Vec3;
   rotationYRad?: number;
-  lookAt?: string | Vec3; // Entity ID or world Vec3 to face toward
+  lookAt?: TargetAnchor; // Entity ID, multiple entity IDs, or world Vec3 to face toward
   fromWidth?: number;
   fromHeight?: number;
   fromDepth?: number;
@@ -145,7 +145,7 @@ export interface BlockingCueSpec {
   fromPosition?: Vec3;
   position?: Vec3;
   rotationYRad?: number;
-  lookAt?: string | Vec3;
+  lookAt?: TargetAnchor;
   fromWidth?: number;
   fromHeight?: number;
   fromDepth?: number;
@@ -194,15 +194,18 @@ export interface EvaluatedDofState {
   hasExplicitFocus: boolean;   // True when focus or focus_distance was explicitly authored
 }
 
+export type TargetAnchor = string | string[] | Vec3;
+
 export interface CameraWaypointSpec {
-  target?: string | Vec3;
+  target?: TargetAnchor;
+  from?: TargetAnchor;
   targetOffset?: Vec3;
   distance?: number;
   pitchRad?: number;
   yawRad?: number;
   rollRad?: number;
   focalLengthMm?: number;
-  focus?: string | Vec3;
+  focus?: string | string[] | Vec3;
   focusDistanceM?: number;
   dof?: DofPreset;
   apertureFStop?: number;
@@ -231,8 +234,8 @@ export interface CameraCueSpec {
   continuous?: boolean;
   maneuver: CameraManeuver;
   easing: CameraEasing;
-  target?: string | Vec3;
-  from?: string | Vec3;
+  target?: TargetAnchor;
+  from?: TargetAnchor;
   targetOffset?: Vec3;
   targetOffsetStart?: Vec3;
   targetOffsetEnd?: Vec3;
@@ -253,9 +256,9 @@ export interface CameraCueSpec {
   focalLengthMm?: number;
   focalLengthStartMm?: number;
   focalLengthEndMm?: number;
-  focus?: string | Vec3;
-  focusStart?: string | Vec3;
-  focusEnd?: string | Vec3;
+  focus?: string | string[] | Vec3;
+  focusStart?: string | string[] | Vec3;
+  focusEnd?: string | string[] | Vec3;
   focusDistanceM?: number;
   focusDistanceStartM?: number;
   focusDistanceEndM?: number;
