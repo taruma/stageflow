@@ -210,11 +210,11 @@ export const ShotBreakdownHud: React.FC<ShotBreakdownHudProps> = ({
               )}
             </div>
 
-            {/* Row 4: Directorial Staging Description (Screenplay Callout Box) */}
+            {/* Row 4: Directorial Staging Description (Simple Italic Writing) */}
             {shot?.description && (
-              <div className="mt-1 p-2.5 rounded-xl bg-surface-subtle/80 border-l-2 border-accent-primary text-[11.5px] font-sans text-text-body leading-relaxed shadow-2xs">
-                <p>{shot.description}</p>
-              </div>
+              <p className="pt-1.5 border-t border-border-subtle text-[11px] font-sans italic text-text-muted leading-relaxed">
+                {shot.description}
+              </p>
             )}
           </div>
         )}

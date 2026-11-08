@@ -198,7 +198,7 @@ Adopts professional 3D viewport convention (Blender, Unreal Engine, Maya) distri
      - **Header**: Single-line `#xx` tag, clean title, and `ChevronDown`.
      - **Optics & Rig Row**: Focal length, aperture stop, film gate aspect ratio (`16:9 Gate`, `2.39:1 Gate`), compass rig/maneuver badge, and focus distance.
      - **Directorial Tracking Row**: Look-At Target with crosshair and entity theme color dot (`🎯 ● Ruby (Hero)` resolved via `shotBreakdownUtils.ts`), full 3D signed offset vector (`Δ [+0.15, -0.12, +0.00]m`), and shot timing (`Start 42.0s · Dur 16.0s`).
-     - **Screenplay Callout Box**: Directorial staging description styled in a soft tinted callout container (`bg-surface-subtle/80 rounded-xl p-2.5 border-l-2 border-accent-primary`) with high-contrast text.
+     - **Directorial Staging Note**: Rendered as simple, elegant italic text (`text-[11px] font-sans italic text-text-muted leading-relaxed`) separated by a subtle top border divider, keeping the card light and distraction-free.
 2. **Top-Right (Display & Legend)**: [`LabelDisplayModeToggle.tsx`](../src/ui/LabelDisplayModeToggle.tsx) providing rapid toggles for 3D character/camera billboard labels (`All`, `Cam`, `Off`) and viewfinder composition guides.
 3. **Bottom-Left (Camera Workstation Dock)**: 2-tier stacked dock positioned immediately above the transport scrubber deck:
    - **Upper Tier ([`CameraPresetControls.tsx`](../src/ui/CameraPresetControls.tsx))**: 1-click angle snaps featuring bespoke **isometric 3D ViewCube SVG icons** (Top plan, Iso 45°, Front proscenium, Side profile, and Reset) with rich tooltips, eliminating text clutter and avoiding popup menus.

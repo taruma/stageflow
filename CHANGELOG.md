@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Implemented structured 2-row directorial spec strip in the expanded state:
     - **Optics & Rig Row**: Focal length, aperture stop, film gate aspect ratio (`16:9 Gate`, `2.39:1 Gate`), compass rig/maneuver badge, and focus distance.
     - **Directorial Tracking Row**: Look-At Target with crosshair and entity theme color dot (`🎯 ● Ruby (Hero)` resolved against scene entities), full 3D signed offset vector (`Δ [+0.15, -0.12, +0.00]m`), and shot timing (`Start 42.0s · Dur 16.0s`).
-  - Restyled directorial staging description into an authentic screenplay callout container (`bg-surface-subtle/80 rounded-xl p-2.5 border-l-2 border-accent-primary`) with high-contrast text.
+  - Restyled directorial staging description into simple, elegant italic text (`text-[11px] font-sans italic text-text-muted leading-relaxed`) below a subtle border-t divider, removing heavy card containers and borders for a clean, distraction-free reading experience.
   - Extracted pure helper functions (`cleanShotLabel`, `resolveShotTargetInfo`, `formatSignedVector3D`, `formatFilmGateLabel`, `formatShotTiming`) into `shotBreakdownUtils.ts` with 12 deterministic unit tests in `tests/unit/shotBreakdownUtils.test.ts`.
 
 ### Added
