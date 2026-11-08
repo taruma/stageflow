@@ -140,7 +140,7 @@ When dragging the split workspace divider bar between the video player and 3D di
 
 ### 6.3 Stacking Context Isolation & 3D Billboard Label Layering
 To prevent Three.js Drei `<Html>` elements from colliding with or occluding 2D UI chrome:
-- **Calibrated Z-Index Range**: [`StageBillboardLabel.tsx`](../src/stage/StageBillboardLabel.tsx) restricts `<Html>` depth sorting to `zIndexRange={[5, 0]}`. Closer 3D mannequins render above farther ones in 3D space, but remain strictly beneath 2D viewport HUDs (`z-10`) and bottom telemetry capsules (`z-20`).
+- **Calibrated Z-Index Range**: [`StageBillboardLabel.tsx`](../src/stage/StageBillboardLabel.tsx) restricts `<Html>` depth sorting to a 5-tier band strictly within `zIndexRange={[8, 0]}` (`camera: [8, 7]`, `highlighted: [6, 5]`, `character: [4, 3]`, `prop: [2, 1]`, `marker: [1, 0]`). Higher-priority elements (Stage Camera and active focus subjects) render reliably above secondary props and markers in 3D space, while remaining strictly beneath 2D viewport HUDs (`z-10`) and bottom telemetry capsules (`z-20`).
 - **Viewport Stacking Isolation**: The 3D diorama container in [`ResizableSplitWorkspace.tsx`](../src/ui/ResizableSplitWorkspace.tsx) enforces `isolation: isolate`, confining all 3D canvas HTML DOM projections inside a discrete stacking context.
 - **Authoritative Studio Header**: The top header (`WorkspaceHeader.tsx`) enforces `relative z-30`, ensuring all navigation dropdowns (`File ▾`, `Color Themes ▾`) and modal overlays (`z-[100]`) render authoritatively above the 3D diorama canvas.
 

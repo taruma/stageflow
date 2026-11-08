@@ -583,6 +583,7 @@ export const DirectionalMannequin: React.FC<DirectionalMannequinProps> = ({
             position={[0, 0, 0]}
             label={def.label}
             accentColor={color}
+            kind={def.kind}
             highlighted={highlighted}
             ghosted={isPlaying}
             visible={labelMode === 'all' && cameraMode !== 'stage-pov'}

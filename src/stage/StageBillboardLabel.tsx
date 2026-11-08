@@ -1,27 +1,32 @@
 /**
- * Crisp 3D floating billboard badge for actors, props, and the Stage Camera.
- * Rendered with clamped perspective scaling (1.65x near -> 0.80x far, anchored at 12m)
- * and prominent HUD-grade typography (14px font-mono, glowing dot).
- * Proximity culling (< 1.2m) smoothly fades out extreme foreground badges.
+ * Crisp 3D floating billboard badge for actors, props, markers, and the Stage Camera.
+ * Evaluates distance-based semantic collapse (full pill <-> glowing accent dot),
+ * kind-based opacity hierarchy (camera > focus > character > prop > marker),
+ * and priority z-index ranges strictly within the [0, 8] viewport band.
  *
- * Directorial 3-Tier Hierarchy:
- *   - Stage Cam: 100% opacity always (master telemetry).
- *   - Active Focus Subject (highlighted: true): 100% paused, 55% during playback with glowing dot & accent border.
- *   - Passive Subjects: 85% paused, 20% ghosted during playback.
+ * Governed by:
+ *   - AGENTS.md Invariant 7 (Dual-Tier 60fps Loop: 0 React re-renders in Tier 1).
+ *   - Visual Design System §6.3 (Stacking Context Isolation: 3D <Html> z-index < 10).
  *
- * Memoized with deep position equality to prevent redundant DOM re-paints during playback.
+ * Memoized with deep equality to prevent redundant DOM re-mounts during playback.
  */
 
-import React, { useState, useRef } from 'react';
-import { useFrame } from '@react-three/fiber';
+import React, { useRef, useLayoutEffect } from 'react';
+import { useFrame, useThree } from '@react-three/fiber';
 import { Html } from '@react-three/drei';
 import * as THREE from 'three';
+import {
+  computeBillboardLodMetrics,
+  getBillboardZIndexRange,
+  type BillboardLabelKind,
+} from './labelLodMath';
 
 export interface StageBillboardLabelProps {
   position: [number, number, number];
   label: string;
   sublabel?: string;
   accentColor: string;
+  kind?: BillboardLabelKind;
   highlighted?: boolean;
   ghosted?: boolean;
   visible?: boolean;
@@ -29,64 +34,73 @@ export interface StageBillboardLabelProps {
 
 const _tempVec = new THREE.Vector3();
 
-// Clamped perspective scaling constants:
-// Dampened square-root falloff curve anchored at 12m reference distance.
-const REF_DISTANCE_M = 12.0;
-const MIN_PERSPECTIVE_SCALE = 0.80; // Never shrink to an unreadable speck at far pullback (35m+)
-const MAX_PERSPECTIVE_SCALE = 1.65; // Never balloon into a giant banner close up (<= 2m)
-const PROXIMITY_CULL_M = 1.2;       // Smoothly fade out when camera lens gets within 1.2m
-
 export const StageBillboardLabel: React.FC<StageBillboardLabelProps> = React.memo(
   ({
     position,
     label,
     sublabel,
     accentColor,
+    kind = 'character',
     highlighted = false,
     ghosted = false,
     visible = true,
   }) => {
     const groupRef = useRef<THREE.Group>(null);
-    const badgeRef = useRef<HTMLDivElement>(null);
-    const [isTooClose, setIsTooClose] = useState(false);
+    const pillRef = useRef<HTMLDivElement>(null);
+    const dotRef = useRef<HTMLDivElement>(null);
+    const camera = useThree((s) => s.camera);
 
-    // True world-space camera distance check for proximity culling & clamped perspective scaling
-    useFrame(({ camera }) => {
+    const syncDomStyles = (cam: THREE.Camera) => {
       if (!groupRef.current) return;
       groupRef.current.getWorldPosition(_tempVec);
-      const dist = camera.position.distanceTo(_tempVec);
+      const dist = cam.position.distanceTo(_tempVec);
+      const metrics = computeBillboardLodMetrics(
+        dist,
+        kind,
+        highlighted,
+        ghosted
+      );
 
-      // Proximity culling threshold (< 1.2m)
-      const tooClose = dist < PROXIMITY_CULL_M;
-      if (tooClose !== isTooClose) {
-        setIsTooClose(tooClose);
+      if (pillRef.current) {
+        if (!metrics.showPill || metrics.pillOpacity <= 0.001) {
+          pillRef.current.style.visibility = 'hidden';
+          pillRef.current.style.opacity = '0';
+        } else {
+          pillRef.current.style.visibility = 'visible';
+          pillRef.current.style.opacity = metrics.pillOpacity.toFixed(3);
+          pillRef.current.style.transform = `scale(${metrics.pillScale.toFixed(3)})`;
+        }
       }
 
-      // Clamped perspective scaling (60fps direct DOM transform mutation, zero React re-renders)
-      if (badgeRef.current) {
-        const rawScale = Math.sqrt(REF_DISTANCE_M / Math.max(dist, 1.0));
-        const clampedScale = Math.min(
-          Math.max(rawScale, MIN_PERSPECTIVE_SCALE),
-          MAX_PERSPECTIVE_SCALE
-        );
-        badgeRef.current.style.transform = `scale(${clampedScale.toFixed(3)})`;
+      if (dotRef.current) {
+        if (!metrics.showDot || metrics.dotOpacity <= 0.001) {
+          dotRef.current.style.visibility = 'hidden';
+          dotRef.current.style.opacity = '0';
+        } else {
+          dotRef.current.style.visibility = 'visible';
+          dotRef.current.style.opacity = metrics.dotOpacity.toFixed(3);
+          dotRef.current.style.transform = `scale(${metrics.dotScale.toFixed(3)})`;
+        }
+      }
+    };
+
+    // Synchronous layout effect ensures frame-0 / scrubbed poses style DOM before paint
+    useLayoutEffect(() => {
+      if (visible) {
+        syncDomStyles(camera);
+      }
+    });
+
+    // 60fps/144fps imperative DOM mutation loop (0 React re-renders)
+    useFrame(({ camera: activeCam }) => {
+      if (visible) {
+        syncDomStyles(activeCam);
       }
     });
 
     if (!visible) return null;
 
-    // 3-Tier Visual Hierarchy:
-    // When playing (ghosted): Active focus is 55% (distinct contrast), passive is 20% (quiet background).
-    // When paused: Active focus is 100% (prominent white + accent border), passive is 85%.
-    const opacityClass = isTooClose
-      ? 'opacity-0 pointer-events-none'
-      : ghosted
-        ? highlighted
-          ? 'opacity-55'
-          : 'opacity-20'
-        : highlighted
-          ? 'opacity-100'
-          : 'opacity-85';
+    const zIndexRange = getBillboardZIndexRange(kind, highlighted);
 
     const isHexColor = accentColor.startsWith('#') && accentColor.length === 7;
     const accentBorderColor = isHexColor ? `${accentColor}99` : accentColor;
@@ -96,12 +110,11 @@ export const StageBillboardLabel: React.FC<StageBillboardLabelProps> = React.mem
 
     return (
       <group ref={groupRef} position={position}>
-        <Html center zIndexRange={[5, 0]}>
-          <div
-            className={`flex flex-col items-center select-none pointer-events-none transition-opacity duration-200 ${opacityClass}`}
-          >
+        <Html center zIndexRange={zIndexRange}>
+          <div className="relative flex items-center justify-center select-none pointer-events-none">
+            {/* 1. Full Telemetry / Identity Badge */}
             <div
-              ref={badgeRef}
+              ref={pillRef}
               style={{
                 transformOrigin: 'center center',
                 borderColor: highlighted ? accentBorderColor : undefined,
@@ -139,6 +152,21 @@ export const StageBillboardLabel: React.FC<StageBillboardLabelProps> = React.mem
                 </span>
               )}
             </div>
+
+            {/* 2. Collapsed Minimal Glowing Accent Dot (Distance Pullback / Crane LOD) */}
+            <div
+              ref={dotRef}
+              style={{
+                transformOrigin: 'center center',
+                backgroundColor: accentColor,
+                boxShadow: highlighted
+                  ? `0 0 14px ${accentColor}, 0 0 4px #ffffff`
+                  : `0 0 10px ${accentColor}, 0 2px 6px rgba(0, 0, 0, 0.65)`,
+                visibility: 'hidden',
+                opacity: 0,
+              }}
+              className="absolute w-2.5 h-2.5 rounded-full border border-white/50 shrink-0 pointer-events-none"
+            />
           </div>
         </Html>
       </group>
@@ -148,6 +176,7 @@ export const StageBillboardLabel: React.FC<StageBillboardLabelProps> = React.mem
     prev.label === next.label &&
     prev.sublabel === next.sublabel &&
     prev.accentColor === next.accentColor &&
+    prev.kind === next.kind &&
     Boolean(prev.highlighted) === Boolean(next.highlighted) &&
     Boolean(prev.ghosted) === Boolean(next.ghosted) &&
     Boolean(prev.visible) === Boolean(next.visible) &&

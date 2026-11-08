@@ -268,21 +268,39 @@ export const StageCameraRig: React.FC<StageCameraRigProps> = ({
       <group ref={rigGroupRef}>
         {/* Floating Camera Lens & Maneuver Badge stays upright in unrolled parent group */}
         {isBodyVisible && (
-          <StageBillboardLabel
-            position={[0, 0.36, -0.1]}
-            label="STAGE CAM"
-            sublabel={
-              stageCam.dof?.enabled
-                ? `${Math.round(pose.focalLengthMm)}mm · f/${stageCam.dof.apertureFStop
-                    .toFixed(1)
-                    .replace(/\.0$/, '')} · ${stageCam.maneuver.toUpperCase()}`
-                : `${Math.round(pose.focalLengthMm)}mm · ${stageCam.maneuver.toUpperCase()}`
-            }
-            accentColor={color}
-            highlighted
-            ghosted={false}
-            visible={labelMode !== 'off'}
-          />
+          <>
+            {labelMode !== 'off' && (
+              <Line
+                points={[
+                  [0, 0.12, -0.14],
+                  [0, 0.58, -0.14],
+                ]}
+                color={color}
+                transparent
+                opacity={0.45}
+                lineWidth={1}
+                dashed
+                dashSize={0.04}
+                gapSize={0.03}
+              />
+            )}
+            <StageBillboardLabel
+              position={[0, 0.72, -0.14]}
+              label="STAGE CAM"
+              sublabel={
+                stageCam.dof?.enabled
+                  ? `${Math.round(pose.focalLengthMm)}mm · f/${stageCam.dof.apertureFStop
+                      .toFixed(1)
+                      .replace(/\.0$/, '')} · ${stageCam.maneuver.toUpperCase()}`
+                  : `${Math.round(pose.focalLengthMm)}mm · ${stageCam.maneuver.toUpperCase()}`
+              }
+              accentColor={color}
+              kind="camera"
+              highlighted
+              ghosted={false}
+              visible={labelMode !== 'off'}
+            />
+          </>
         )}
 
         {/* Rolled Group containing Camera Chassis, Barrel, and Frustum Gate */}

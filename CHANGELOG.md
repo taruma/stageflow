@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Pure 3D Billboard Label LOD & Visual Hierarchy Math (`src/stage/labelLodMath.ts`, `tests/unit/billboardLabelLod.test.ts`)**:
+  - Extracted pure math functions and thresholds for distance-based semantic collapse (`computeBillboardLodMetrics`), kind-based opacity hierarchy (`getBillboardBaseOpacity`), and calibrated z-index sorting (`getBillboardZIndexRange`).
+  - Added dedicated Vitest unit test suite (`tests/unit/billboardLabelLod.test.ts`) asserting 100% test coverage across proximity culling ($< 1.2\text{m}$), entity collapse ($24\text{m}$–$28\text{m}$), Stage Camera persistence ($52\text{m}$–$60\text{m}$), opacity order, and z-index boundary invariants.
+
+### Changed
+- **Diorama 3D Billboard Label Semantic Dot Collapse & Zero-Re-Render 60fps Loop (`src/stage/StageBillboardLabel.tsx`, `docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md`)**:
+  - Eliminated `useState` inside `useFrame` in compliance with Invariant 7 (Dual-Tier 60fps Render Engine: 0 React re-renders in Tier 1), driving proximity culling, perspective scaling, and dot collapse imperatively via DOM refs (`pillRef` and `dotRef`) in `useLayoutEffect` and `useFrame`.
+  - Implemented dual-element DOM structure: full pill identity badge at standard distances smoothly cross-fades into a minimal $8\text{px}$–$10\text{px}$ glowing accent dot at distances $\ge 28\text{m}$, permanently eliminating the center-stage cluster blob during high crane pullbacks ($D = 46\text{m}$) and zenith holds ($D = 98\text{m}$).
+  - Kept Stage Camera telemetry badge readable up to $52\text{m}$ (cross-fading between $52\text{m}$ and $60\text{m}$) as the master directorial tool.
+  - Calibrated 3D `<Html>` depth sorting to a strict 5-tier band within `zIndexRange={[8, 0]}` (`camera [8, 7]` > `highlighted [6, 5]` > `character [4, 3]` > `prop [2, 1]` > `marker [1, 0]`), guaranteeing 3D labels never overlap 2D viewport HUDs (`z-10`).
+- **Entity Kind Opacity Hierarchy & Context Passthrough (`src/stage/DirectionalMannequin.tsx`, `docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md`)**:
+  - Wired `def.kind` (`'character' | 'prop' | 'marker'`) to `<StageBillboardLabel>`, establishing a 4-tier opacity hierarchy: Camera ($100\%$) $\ge$ Active Focus ($100\%$ paused, $60\%$ playing) $>$ Characters ($85\%$ paused, $25\%$ playing) $>$ Props ($55\%$ paused, $15\%$ playing) $>$ Markers ($35\%$ paused, $10\%$ playing), subduing static stage markers and props while keeping actors prominent with zero YAML changes.
+- **Elevated Stage Camera Badge & Blueprint Leader Stem (`src/stage/StageCameraRig.tsx`, `docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md`)**:
+  - Elevated the `STAGE CAM` badge from `Y = +0.36m` to `Y = +0.72m` and anchored it with a subtle dashed vertical blueprint leader line (`<Line>` from $Y = 0.12\text{m}$ to $0.58\text{m}$), preventing over-the-shoulder (OTS) camera badges from colliding with or occluding actor head badges.
+
 ### Changed
 - **Ultra-Compact Icon-Only Transport Deck (`src/ui/transport/DirectorialTransportDeck.tsx`, `docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md`)**:
   - Streamlined the centered transport deck into an ultra-compact ~`290px` cockpit by removing persistent speed pills (`0.25x`–`2x`) and switching to icon-only controls across all segments.

@@ -103,7 +103,8 @@ stageflow/
 │   │   ├── StageCamDofEffect.tsx    # Opt-in single-pass WebGL2 thin-lens Depth-of-Field blur effect
 │   │   ├── StageCamMonitorCanvas.tsx# True 3D Stage Cam monitor with optical safe-action HUD & DoF blur toggle
 │   │   ├── DirectionalMannequin.tsx # Stylized character/prop proxies with rigid anatomy, telescoping torso, facing visor & floor trails
-│   │   └── StageBillboardLabel.tsx  # Crisp 3D HTML floating identity badges
+│   │   ├── labelLodMath.ts          # Pure 3D billboard label distance LOD, opacity hierarchy & z-index math
+│   │   └── StageBillboardLabel.tsx  # Crisp 3D HTML floating identity badges & distance-collapsed glowing dots
 │   ├── ui/                          # Layer 5: 2D Directorial UI Shell
 │   │   ├── tokens/                  # SceneFlow-aligned design tokens
 │   │   │   └── ui.ts                # Centralized UI_TOKENS for layout, pills, buttons & modals
@@ -169,6 +170,7 @@ stageflow/
         ├── storage.test.ts
         ├── multiTargetFraming.test.ts
         ├── mediaDrivers.test.ts
+        ├── billboardLabelLod.test.ts
         └── recorder.test.ts
 ```
 
