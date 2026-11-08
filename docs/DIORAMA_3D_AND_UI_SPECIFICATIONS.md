@@ -233,7 +233,10 @@ Decomposed into 3 focused submodules to preserve the $\le 250$ line modularity s
    - Allows free trackpad / mouse-wheel horizontal peeking forward and backward at any time.
    - Edge fade masks (`mask-image: linear-gradient(...)`) indicate off-screen shots cleanly without an intrusive raw scrollbar track, enforced cross-browser via `.no-scrollbar` and inline `scrollbarWidth: none` styles.
 3. **Unified Centered Transport Deck (`DirectorialTransportDeck.tsx`)**:
-   - Consolidates all transport controls (Restart, Frame Step Back, Play/Pause, Frame Step Forward, Timecode readout, Loop Shot toggle, Audio Mute, and Playback Speed pills `0.25x`–`2x`) into a **single, balanced, centered island**.
+   - Organizes controls into a **balanced 3-segment centered island** with subtle dividers:
+     - **Left Segment**: Precision timecode readout (`01:01.63 / 01:02.00`).
+     - **Center Segment**: Core kinetic transport featuring Restart to 0 (`[ ↻ ]`) and the hero **`[ ▶ Play / ❚❚ Pause ]`** toggle. Visual frame-step buttons (`< [` and `] >`) are omitted to maximize visual clarity and focus, while global single-frame keyboard hotkeys (`[` and `]`) remain active in `useMediaClock.ts`.
+     - **Right Segment**: Directorial modifiers including `[ 🔁 Loop Shot ]`, `[ 🔊 ]` audio mute, and slow-motion speed pills (`0.25x`–`2x`).
    - Leaves both left and right outer flanks open, providing a clean, distraction-free cockpit.
    - Redundant project-level actions (`Duplicate`, `Reset`) are omitted as they reside in the Score Library.
 

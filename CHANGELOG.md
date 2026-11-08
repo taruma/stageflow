@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- **Segmented Centered Transport Deck & Streamlined Playback Controls (`src/ui/transport/DirectorialTransportDeck.tsx`, `docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md`)**:
+  - Restructured the centered transport deck into a 3-segment hierarchy: precision timecode on the left, core transport (`[ ↻ ]` and hero `[ ▶ Play / ❚❚ Pause ]`) dead-center, and directorial modifiers (`Loop Shot`, `Mute`, speed pills) on the right separated by subtle vertical dividers.
+  - Omitted visual single-frame step buttons (`< [` and `] >`) from the UI chrome to eliminate clutter, while preserving global keyboard hotkeys (`[` and `]`) in `useMediaClock.ts`.
 - **Auto-Pause on Scrubber Interaction & Cross-Browser Scrollbar Hiding (`src/ui/transport/*`, `src/ui/DirectorialTransportBar.tsx`, `src/ui/InteractiveStudioApp.tsx`, `src/index.css`, `docs/*`)**:
   - Implemented auto-pause on scrubber grab and scrub drag (`onPointerDown` and `onChange` on the timeline range slider), pausing active playback upon initial touch/click so the user can inspect intermediate frames without the playhead running away.
   - Added `.no-scrollbar` cross-browser utility in `src/index.css` paired with explicit `scrollbarWidth: 'none'` and `msOverflowStyle: 'none'` styles on `DirectorialShotChipsStrip.tsx`, permanently eliminating native browser scrollbar tracks on Windows Chromium/WebKit/Firefox.
