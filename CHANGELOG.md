@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- **Ultra-Compact Icon-Only Transport Deck (`src/ui/transport/DirectorialTransportDeck.tsx`, `docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md`)**:
+  - Streamlined the centered transport deck into an ultra-compact ~`290px` cockpit by removing persistent speed pills (`0.25x`–`2x`) and switching to icon-only controls across all segments.
+  - Retained high-contrast distinct color styling for the hero Play/Pause button (`bg-amber-500` for active playing, `bg-btn-primary-bg` for paused) with optical triangle centering on the `▶` play glyph.
+  - Converted `Loop Shot` to an icon-only `[ ⇄ ]` toggle with luminous emerald styling when active, and maintained subtle vertical dividers between timecode, core transport, and directorial modifiers.
 - **Adaptive Centering & Zero-Reflow Number Strip for Shot Chips (`src/ui/transport/DirectorialShotChipsStrip.tsx`, `docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md`)**:
   - Implemented dynamic adaptive centering: when all shot chips fit within the viewport (e.g. 5–15 shots or wide displays), the entire row automatically centers (`justify-center`) directly above the centered transport deck, while navigation chevrons and edge fade masks are cleanly hidden.
   - When shots overflow (e.g. 25+ shots or narrower viewports), navigation chevrons and edge fade masks appear dynamically, and active cuts automatically smooth-scroll into the center on cut boundaries.

@@ -236,10 +236,11 @@ Decomposed into 3 focused submodules to preserve the $\le 250$ line modularity s
    - **Smooth Scrolling on Overflow**: When a scene contains numerous shots that exceed screen width, flanking `<` and `>` chevron buttons appear for 1-click smooth peek scrolling, bilateral edge fade masks indicate off-screen shots, and active cuts automatically smooth-scroll into the center via `activeChipRef.scrollIntoView`.
    - Allows free trackpad / mouse-wheel horizontal peeking forward and backward at any time without intrusive raw scrollbars (`.no-scrollbar`).
 3. **Unified Centered Transport Deck (`DirectorialTransportDeck.tsx`)**:
-   - Organizes controls into a **balanced 3-segment centered island** with subtle dividers:
+   - Organizes controls into an ultra-compact **balanced 3-segment centered island** (~`290px` footprint) with subtle vertical dividers:
      - **Left Segment**: Precision timecode readout (`01:01.63 / 01:02.00`).
-     - **Center Segment**: Core kinetic transport featuring Restart to 0 (`[ ↻ ]`) and the hero **`[ ▶ Play / ❚❚ Pause ]`** toggle. Visual frame-step buttons (`< [` and `] >`) are omitted to maximize visual clarity and focus, while global single-frame keyboard hotkeys (`[` and `]`) remain active in `useMediaClock.ts`.
-     - **Right Segment**: Directorial modifiers including `[ 🔁 Loop Shot ]`, `[ 🔊 ]` audio mute, and slow-motion speed pills (`0.25x`–`2x`).
+     - **Center Segment**: Core kinetic transport featuring Restart to 0 (`[ ↻ ]`) and the hero **`[ ▶ / ❚❚ ]`** icon toggle (`w-8 h-8 rounded-xl`) retaining distinct color cues (amber `bg-amber-500` when playing, primary `bg-btn-primary-bg` when paused) and optical triangle centering.
+     - **Right Segment**: Directorial modifiers with icon-only controls: `[ 🔁 ]` active shot loop toggle (illuminating in emerald `bg-emerald-500/20` when active) and `[ 🔊 ]` audio mute.
+   - Speed pills (`0.25x`–`2x`) and frame-step buttons (`< [` and `] >`) are omitted from the UI chrome to eliminate clutter, while single-frame keyboard hotkeys (`[` and `]`) and variable speed driver capabilities remain active.
    - Leaves both left and right outer flanks open, providing a clean, distraction-free cockpit.
    - Redundant project-level actions (`Duplicate`, `Reset`) are omitted as they reside in the Score Library.
 
