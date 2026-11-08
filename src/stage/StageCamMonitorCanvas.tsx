@@ -90,8 +90,8 @@ export const StageCamMonitorCanvas: React.FC<StageCamMonitorCanvasProps> = ({
       {/* 2. Optical Director's Monitor HUD Overlay */}
       <div className="absolute inset-0 pointer-events-none flex flex-col justify-between p-4 z-10">
         {/* Top Monitor Status Line */}
-        <div className="flex items-center justify-between text-[11px] font-mono tracking-wider gap-2">
-          <div className="flex items-center gap-2 whitespace-nowrap shrink-0">
+        <div className="flex items-center justify-between text-[11px] font-mono gap-2">
+          <div className="flex items-center gap-1.5 whitespace-nowrap shrink-0">
             <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
             <span className="font-bold text-amber-500">CAM</span>
             <span className="text-text-muted">|</span>
@@ -119,22 +119,26 @@ export const StageCamMonitorCanvas: React.FC<StageCamMonitorCanvasProps> = ({
               </button>
             )}
 
-            <div className="hidden @md:flex items-center gap-2 bg-surface/80 border border-border-main px-2 py-0.5 rounded-md shadow-xs whitespace-nowrap shrink-0">
-              <span className="text-text-muted">FOV</span>
-              <span className="text-text-main font-semibold">
-                {uiFrame.stageCamera.transform.fovDeg.toFixed(1)}°
-              </span>
+            <div className="hidden @md:flex items-center gap-1.5 bg-surface/80 border border-border-main px-2 py-0.5 rounded-md shadow-xs whitespace-nowrap shrink-0">
+              <div className="flex items-center gap-1">
+                <span className="text-text-muted">FOV</span>
+                <span className="text-text-main font-semibold">
+                  {uiFrame.stageCamera.transform.fovDeg.toFixed(1)}°
+                </span>
+              </div>
               <span className="text-border-main">·</span>
-              <span className="text-text-muted">ROLL</span>
-              <span
-                className={`font-semibold ${
-                  Math.abs(rollDeg) >= 0.05
-                    ? 'text-violet-500'
-                    : 'text-text-main'
-                }`}
-              >
-                {rollDeg.toFixed(1)}°
-              </span>
+              <div className="flex items-center gap-1">
+                <span className="text-text-muted">ROLL</span>
+                <span
+                  className={`font-semibold ${
+                    Math.abs(rollDeg) >= 0.05
+                      ? 'text-violet-500'
+                      : 'text-text-main'
+                  }`}
+                >
+                  {rollDeg.toFixed(1)}°
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -162,14 +166,14 @@ export const StageCamMonitorCanvas: React.FC<StageCamMonitorCanvasProps> = ({
 
         {/* Bottom Horizon & Telemetry Bar */}
         <div className="flex items-center justify-between text-[10px] font-mono text-text-muted z-10 gap-2">
-          <div className="flex items-center gap-1.5 bg-surface/80 border border-border-main px-2 py-0.5 rounded-md shadow-xs whitespace-nowrap shrink-0">
+          <div className="flex items-center gap-1 bg-surface/80 border border-border-main px-2 py-0.5 rounded-md shadow-xs whitespace-nowrap shrink-0">
             <span className="text-amber-500 font-bold">MANEUVER:</span>
             <span className="text-text-main uppercase font-semibold">
               {uiFrame.stageCamera.maneuver}
             </span>
           </div>
 
-          <div className="flex items-center gap-2 bg-surface/80 border border-border-main px-2 py-0.5 rounded-md shadow-xs whitespace-nowrap shrink-0">
+          <div className="flex items-center gap-1.5 bg-surface/80 border border-border-main px-2 py-0.5 rounded-md shadow-xs whitespace-nowrap shrink-0">
             <span>
               YAW: <strong className="text-text-main">{yawDeg.toFixed(1)}°</strong>
             </span>
