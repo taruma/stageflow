@@ -134,6 +134,7 @@ stageflow/
 │   │   ├── ScoreLibraryModal.tsx    # Accessible 2-column master-detail score library & project hub
 │   │   ├── ResizableSplitWorkspace.tsx # Draggable 3-column studio container (30/40/30) with dual dividers
 │   │   ├── DioramaOverlayContainer.tsx # Center stage responsive HUD overlay dock
+│   │   ├── CompactDioramaHeader.tsx # Unified compact diorama header (<768px)
 │   │   ├── UniversalVideoViewport.tsx  # Local video, YouTube IFrame, or 60fps Stage Cam Simulator
 │   │   ├── ShotBreakdownHud.tsx     # Top-left active shot, lens, maneuver & staging note overlay
 │   │   ├── CameraTelemetryCapsule.tsx  # Live degree/meter readout with 1-click YAML snippet copy

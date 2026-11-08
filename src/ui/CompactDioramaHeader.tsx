@@ -1,5 +1,5 @@
 /**
- * Dedicated Compact Diorama Header for Narrow Viewports (<580px).
+ * Dedicated Compact Diorama Header for Narrow Viewports (<768px).
  * Mounts at top-3 left-3 right-3 when the split workspace is narrow.
  * Consolidates:
  *   1. Active Shot Badge & Info Popover
@@ -114,7 +114,7 @@ export const CompactDioramaHeader: React.FC<CompactDioramaHeaderProps> = ({
           <span className="px-1.5 py-0.2 rounded-md bg-btn-primary-bg text-btn-primary-text text-[10px] font-mono font-bold shrink-0 shadow-2xs">
             {shotTag}
           </span>
-          <span className="truncate max-w-[80px] sm:max-w-[120px] font-semibold text-[11px] text-text-main">
+          <span className="truncate max-w-[90px] sm:max-w-[160px] md:max-w-[220px] font-semibold text-[11px] text-text-main">
             {cleanLabel}
           </span>
           <Info className="w-3 h-3 text-text-faint shrink-0" />

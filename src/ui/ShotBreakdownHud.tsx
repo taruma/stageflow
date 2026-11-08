@@ -59,7 +59,7 @@ export const ShotBreakdownHud: React.FC<ShotBreakdownHudProps> = ({
       : 'Free Orbit';
 
   return (
-    <div className="absolute top-3 left-3 max-w-sm sm:max-w-md flex flex-col gap-1.5 pointer-events-none select-none z-10">
+    <div className="absolute top-3 left-3 max-w-[calc(100%-320px)] sm:max-w-md flex flex-col gap-1.5 pointer-events-none select-none z-10">
       <div
         role="button"
         tabIndex={0}

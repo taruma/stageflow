@@ -13,12 +13,15 @@ import { radToDeg } from '../core/sphericalMath';
 export interface CameraTelemetryCapsuleProps {
   pose: SphericalPose;
   activeRig?: EvaluatedCameraRigState;
+  dioramaWidth?: number;
 }
 
 export const CameraTelemetryCapsule: React.FC<CameraTelemetryCapsuleProps> =
-  memo(({ pose, activeRig }) => {
+  memo(({ pose, activeRig, dioramaWidth }) => {
     const [copied, setCopied] = useState(false);
     const [isHovered, setIsHovered] = useState(false);
+
+    const showTargetCoords = dioramaWidth === undefined || dioramaWidth >= 880;
 
     const pitchDeg = radToDeg(pose.pitch).toFixed(1);
     const yawDeg = radToDeg(pose.yaw).toFixed(1);
@@ -181,13 +184,16 @@ export const CameraTelemetryCapsule: React.FC<CameraTelemetryCapsuleProps> =
             </span>
           </span>
 
-          <span className="text-border-main hidden sm:inline">·</span>
-
           {/* Target */}
-          <span className="hidden sm:flex items-center gap-0.5 text-text-muted">
-            <span className="text-[9px] text-text-faint font-mono">TGT</span>
-            <span>[{tx}, {ty}, {tz}]</span>
-          </span>
+          {showTargetCoords && (
+            <>
+              <span className="text-border-main hidden sm:inline">·</span>
+              <span className="hidden sm:flex items-center gap-0.5 text-text-muted">
+                <span className="text-[9px] text-text-faint font-mono">TGT</span>
+                <span>[{tx}, {ty}, {tz}]</span>
+              </span>
+            </>
+          )}
 
           <span className="text-border-main hidden md:inline">·</span>
 

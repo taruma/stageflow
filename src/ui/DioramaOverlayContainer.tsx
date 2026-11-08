@@ -1,6 +1,6 @@
 /**
  * Center stage diorama HUD overlay container.
- * Manages responsive switching between narrow-viewport compact header (<580px)
+ * Manages responsive switching between narrow-viewport compact header (<768px)
  * and the 4-corner directorial workspace dock (Shot HUD, ViewCube presets,
  * camera POV switcher, 3D label toggle, and live telemetry capsule).
  * Layer 5 UI Component.
@@ -33,6 +33,7 @@ export interface DioramaOverlayContainerProps {
   showGuides: boolean;
   dofBlurEnabled?: boolean;
   isNarrow: boolean;
+  dioramaWidth?: number;
   onSetCameraMode: (mode: CameraViewMode) => void;
   onSelectPreset: (preset: CameraPresetType) => void;
   onSelectLabelMode: (mode: LabelDisplayMode) => void;
@@ -50,6 +51,7 @@ export const DioramaOverlayContainer: React.FC<DioramaOverlayContainerProps> = (
   showGuides,
   dofBlurEnabled = false,
   isNarrow,
+  dioramaWidth,
   onSetCameraMode,
   onSelectPreset,
   onSelectLabelMode,
@@ -67,7 +69,7 @@ export const DioramaOverlayContainer: React.FC<DioramaOverlayContainerProps> = (
         />
       )}
 
-      {/* Narrow Viewport: Dedicated Unified Compact Header (<580px) */}
+      {/* Narrow Viewport: Dedicated Unified Compact Header (<768px) */}
       {isNarrow ? (
         <CompactDioramaHeader
           score={score}
@@ -128,6 +130,7 @@ export const DioramaOverlayContainer: React.FC<DioramaOverlayContainerProps> = (
               ? frame.stageCamera.rig
               : frame.observerCamera.rig ?? frame.stageCamera.rig
           }
+          dioramaWidth={dioramaWidth}
         />
       )}
     </>

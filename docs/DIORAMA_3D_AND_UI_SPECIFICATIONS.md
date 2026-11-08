@@ -175,9 +175,9 @@ Scene entities (`character`, `prop`, `marker`) are rendered with unambiguous ori
   - Enforces `.is-resizing-split` during any drag operation to maintain 60fps responsiveness across WebGL and IFrames.
 - **Narrow Screens (`< lg`)**: Responsively stacks the Video Panel (`40%` height) above the 3D Diorama Stage and hides the center layout presets to prevent header crowding.
 
-### 4.2 4-Corner Directorial HUD Architecture (Wide Mode $\ge 580\text{px}$)
+### 4.2 4-Corner Directorial HUD Architecture (Wide Mode $\ge 768\text{px}$)
 Adopts professional 3D viewport convention (Blender, Unreal Engine, Maya) distributing chrome strictly to the 4 corners while leaving the center stage sightline 100% clean:
-1. **Top-Left (Metadata & Context)**: [`ShotBreakdownHud.tsx`](../src/ui/ShotBreakdownHud.tsx) displaying `#xx` active shot tag, clean title, and optical focal length. Defaults to a sleek 2-line collapsed pill to maintain a low profile; click anywhere on the card to toggle between collapsed and expanded states as a persistent directorial widget (retaining its state during 3D orbit and timeline playback without unexpected click-outside auto-dismissals).
+1. **Top-Left (Metadata & Context)**: [`ShotBreakdownHud.tsx`](../src/ui/ShotBreakdownHud.tsx) displaying `#xx` active shot tag, clean title, and optical focal length. Defaults to a sleek 2-line collapsed pill to maintain a low profile with a `max-w-[calc(100%-320px)]` safety margin preventing top-right collision; click anywhere on the card to toggle between collapsed and expanded states as a persistent directorial widget (retaining its state during 3D orbit and timeline playback without unexpected click-outside auto-dismissals).
 2. **Top-Right (Display & Legend)**: [`LabelDisplayModeToggle.tsx`](../src/ui/LabelDisplayModeToggle.tsx) providing rapid toggles for 3D character/camera billboard labels (`All`, `Cam`, `Off`) and viewfinder composition guides.
 3. **Bottom-Left (Camera Workstation Dock)**: 2-tier stacked dock positioned immediately above the transport scrubber deck:
    - **Upper Tier ([`CameraPresetControls.tsx`](../src/ui/CameraPresetControls.tsx))**: 1-click angle snaps featuring bespoke **isometric 3D ViewCube SVG icons** (Top plan, Iso 45°, Front proscenium, Side profile, and Reset) with rich tooltips, eliminating text clutter and avoiding popup menus.
@@ -187,7 +187,7 @@ Adopts professional 3D viewport convention (Blender, Unreal Engine, Maya) distri
 ### 4.3 Authoring Telemetry Capsule (`CameraTelemetryCapsule.tsx`)
 - Floating bottom-right glassmorphic badge inside the 3D viewport displaying live **human degrees and metric meters** (`Pitch° / Yaw° · Distance(m) · (X, Y, Z)`).
 - **Live Free-Orbit Tracking**: Updates in real time as the user orbits/pans/zooms via `OrbitControls` (`cartesianToSpherical`).
-- **Narrow Viewport Auto-Hiding**: When the diorama pane width drops below the $580\text{px}$ narrow threshold, the capsule is automatically unmounted to keep the bottom 3D stage area 100% clean and unobstructed.
+- **Narrow Viewport Auto-Hiding**: When the diorama pane width drops below the $768\text{px}$ narrow threshold, the capsule is automatically unmounted to keep the bottom 3D stage area 100% clean and unobstructed. In wide mode ($768\text{px}$ to $880\text{px}$), target vector coordinates (`TGT [...]`) are compacted to preserve bottom clearance with the camera mode switcher, expanding automatically when diorama width $\ge 880\text{px}$.
 - **1-Click YAML Snippet Copy**: Clicking the capsule copies a formatted YAML camera block directly to the clipboard:
   ```yaml
   target: [0.00, 1.10, 0.00]
@@ -198,8 +198,8 @@ Adopts professional 3D viewport convention (Blender, Unreal Engine, Maya) distri
   ```
 - **Context-Aware Physical Rig Readouts**: When an active shot has a physical mount (`tripod`, `track`, `spline_track`), the capsule renders an amber category badge (`TRIPOD` / `TRACK`) and an interactive tooltip breakdown. Clicking the capsule outputs clean `rig:` YAML syntax matching the physical mount.
 
-### 4.4 Dedicated Compact Diorama Header (`CompactDioramaHeader.tsx` — `< 580px`)
-- When the diorama pane width drops below $580\text{px}$ (e.g. in extreme split mode or on compact screens), `src/App.tsx` dynamically switches from the distributed top overlay trio to a dedicated, unified compact header mounted at `top-3 left-3 right-3`:
+### 4.4 Dedicated Compact Diorama Header (`CompactDioramaHeader.tsx` — `< 768px`)
+- When the diorama pane width drops below $768\text{px}$ (e.g. in 3-column studio edit mode, split mode, or on compact screens), `src/ui/InteractiveStudioApp.tsx` dynamically switches from the distributed top overlay trio to a dedicated, unified compact header mounted at `top-3 left-3 right-3`:
   - **Left Wing**: `#xx` tag and clean shot title with a click-to-expand details popover displaying focal length, gate aspect ratio, and maneuver note.
   - **Center Wing**: Streamlined 3-way segmented Camera POV Switcher (`Scripted`, `Free Orbit`, `Stage Cam`).
   - **Right Wing**: Unified `[ View ▾ ]` popover consolidating 1-click angle presets (Top, Iso, Front, Side, Reset), 3D label display modes (All, Cam, Off), and viewfinder guides toggle into an accessible, collision-free dropdown.

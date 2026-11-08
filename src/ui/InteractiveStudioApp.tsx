@@ -83,7 +83,7 @@ export const InteractiveStudioApp: React.FC = () => {
   const [isLibraryOpen, setIsLibraryOpen] = useState(false);
   const [libraryInitialTab, setLibraryInitialTab] = useState<FilterTab>('all');
 
-  // Measure diorama pane width to toggle between standard and compact header (<580px)
+  // Measure diorama pane width to toggle between standard and compact header (<768px)
   const stageContainerRef = useRef<HTMLDivElement | null>(null);
   const [dioramaWidth, setDioramaWidth] = useState<number>(1000);
 
@@ -102,7 +102,7 @@ export const InteractiveStudioApp: React.FC = () => {
     return () => ro.disconnect();
   }, []);
 
-  const isNarrowDiorama = dioramaWidth < 580;
+  const isNarrowDiorama = dioramaWidth < 768;
 
   const initialItem =
     INITIAL_CATALOG_ITEMS.find((item) => item.id === activeSceneId) ??
@@ -491,6 +491,7 @@ export const InteractiveStudioApp: React.FC = () => {
               showGuides={display.showGuides}
               dofBlurEnabled={display.dofBlurEnabled}
               isNarrow={isNarrowDiorama}
+              dioramaWidth={dioramaWidth}
               onSetCameraMode={stageLoop.setCameraMode}
               onSelectPreset={handleSelectCameraPreset}
               onSelectLabelMode={display.handleSelectLabelMode}

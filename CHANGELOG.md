@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- **Compact Diorama Header Breakpoint & Overlay Collision Protection (`src/ui/InteractiveStudioApp.tsx`, `src/ui/DioramaOverlayContainer.tsx`, `src/ui/CompactDioramaHeader.tsx`, `src/ui/CameraTelemetryCapsule.tsx`, `src/ui/ShotBreakdownHud.tsx`, `docs/*`)**:
+  - Increased the narrow diorama threshold from `580px` to `768px` (`dioramaWidth < 768`), ensuring standard 3-column Studio mode (`Split` + `Edit` ON) cleanly collapses into the unified single top bar (`CompactDioramaHeader`) instead of crowding the viewport.
+  - Added container-aware target vector compaction in `CameraTelemetryCapsule` (`showTargetCoords = dioramaWidth >= 880`), hiding bulky `TGT [...]` coordinates in medium-wide views ($768\text{px}$–$880\text{px}$) to prevent bottom-edge collisions between the camera mode switcher and telemetry capsule while preserving full coordinates on hover tooltip.
+  - Clamped `ShotBreakdownHud` max width to `max-w-[calc(100%-320px)]` to prevent long shot labels from colliding with the top-right toolbar.
+  - Expanded `CompactDioramaHeader` clean shot title truncation ceiling up to `220px` on wider tablet/desktop widths.
 - **Dolly Cart Tangent Steering & Gated Cut Protection (`src/stage/StageCameraRigMount.tsx`)**:
   - Dynamically aligned dolly cart heading (`cartGroupRef.current.rotation.y = Math.atan2(dx, dz)`) to the local track tangent along linear and Catmull-Rom spline rails, ensuring wheels roll squarely on top of the rails on lateral ($X$-axis) and curved trucking moves rather than sitting sideways.
   - Added atomic shot-desync gating (`isShotDesynced = liveFrame.stageCamera.shotId !== stageCam.shotId`) to freeze mount transforms during the 1-frame async React handover across camera cuts, eliminating transient 16ms mount twitching.
