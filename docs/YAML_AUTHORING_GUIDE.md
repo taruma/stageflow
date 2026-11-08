@@ -261,6 +261,7 @@ StageFlow organizes choreography scores into a clean 3-tier taxonomy (`study`, `
   4. **`blueprint_04_cinematography_tutorial.yaml` (Blueprint 04: Cinematography Masterclass)**: 16-shot tutorial sequence teaching framing sizes (EWS to ECU), rule-of-thirds `target_offset`, continuous oners, and barrel rolls.
   5. **`blueprint_05_two_rooms.yaml` (Blueprint 05: Two Rooms)**: 17-shot sequence in `2.39:1` anamorphic scope demonstrating multi-actor decoupled blocking (`blocking:`) across two physical rooms with carried item prop tracking.
   6. **`blueprint_06_optics_dof.yaml` (Blueprint 06: Optics, Rack Focus & DoF Masterclass)**: 8-shot pedagogical sequence demonstrating off-axis subject focus, cinematic rack focus, numerical metric distance pulls, dynamic follow-focus tracking on moving actors, iris aperture ramping ($f/1.4 \to f/11$), waypoint spline focus, and Citizen Kane style deep staging ($f/16$).
+  7. **`blueprint_07_camera_rigs.yaml` (Blueprint 07: Camera Rigs, Dolly Tracks & Trucking Masterclass)**: 4-shot masterclass demonstrating stationary tripod pan tracking walk, linear dolly track parallel trucking with shallow DoF ($f/2.8$), fixed-gaze sideways truck, and curved spline track with rack focus pull.
 
 ### 2.6 The 8 Most Common Authoring Mistakes
 
@@ -329,6 +330,7 @@ stage:
   width: 14            # Stage floor width along X-axis in meters (default: 10)
   depth: 12            # Stage floor depth along Z-axis in meters (default: 10)
   grid_step: 1         # Major metric grid division in meters (default: 1; minor lines at 0.25m)
+  show_rigs: true      # Global toggle for 3D camera tripod stands and dolly tracks (default: true)
 
   # Baseline pose for Viewport Camera (used before Shot 1 or when unscripted)
   observer_camera:
@@ -476,6 +478,8 @@ StageFlow uses a unified spherical camera model across both the Illustrative Sta
 | **`frustum_depth`**| `number` | `m` | Stage only | `cone_length` | Depth of 3D gate frustum. `0` or omitted auto-matches distance to target. |
 | **`frustum_color`**| `string` | hex | Stage only | — | Hex color token for frustum lines and focus frame (default: `"#f59e0b"`). |
 | **`show_path`** | `boolean` | — | Stage only | `showPath` | Renders 3D dashed trajectory ribbon in diorama (default: `true`). |
+| **`rig`** | `object` | — | Both | `camera_rig`, `mount` | Physical camera mount (`tripod`, `track`, `spline_track`). See §4.9. |
+| **`show_rig`** | `boolean` | — | Stage only | `showRig` | Toggles rendering of 3D tripod legs or floor rails and dolly cart in diorama (default: `true`). |
 | **`focus`** | `string \| number \| array` | `m` | Stage only | `focus_target`, `focusTarget` | Subject entity ID/label, 3D coordinate `[x,y,z]`, or manual metric focus distance (`3.5` or `"3.5m"`). |
 | **`focus_start`** | `string \| number \| array` | `m` | Stage only | `focusStart` | Starting focus target or metric distance for a rack focus pull. |
 | **`focus_end`** | `string \| number \| array` | `m` | Stage only | `focusEnd` | Ending focus target or metric distance for a rack focus pull. |
@@ -619,6 +623,61 @@ The following fields are parsed by `cameraCueParser.ts` for schema compatibility
 | :--- | :--- | :--- | :--- | :--- |
 | **`track:`** | `CameraCueSpec` | `trackTarget` | Ignored. Camera targets that reference an entity always dynamically track their live coordinates. | To frame a static coordinate where an entity started, author an explicit `[x, y, z]` vector. |
 | **`at:`** | `CameraWaypointSpec` | `at` | Ignored. Spline waypoints are partitioned into equal temporal intervals across the duration. | To alter waypoint duration, adjust overall shot duration or insert intermediate bridge waypoints. |
+
+### 4.9 Physical Camera Rigs (Tripod, Dolly Track & Spline Track)
+
+In standard spherical camera kinematics, setting `target: "hero"` causes the camera eye position to travel across the stage with the moving actor to maintain radial distance. In studio cinematography, however, directors frequently require **spatial decoupling**:
+- A **tripod** must remain firmly anchored to a single spot on the stage floor while its head swivels to track an actor.
+- A **dolly track** or **slider rail** must constrain camera travel to a straight or curved floor path, regardless of actor movements.
+- A **trucking shot** may hold a fixed camera gaze while sliding along a rail, allowing actors to pass through the frame.
+
+StageFlow solves this with the declarative `rig:` mount block.
+
+#### 4.9.1 Supported Rig Mount Types
+
+| Rig Type | Authored Fields | Movement Kinematics | 3D Blueprint Mount Rendered |
+| :--- | :--- | :--- | :--- |
+| **`tripod`** | `position: [x, y, z]` | $\vec{E}(t) \equiv \vec{P}_{\text{tripod}}$ (strictly stationary in world space). | Tubular 3-legged tripod stand with floor pucks and vertical column. |
+| **`track`** | `from: [x, y, z]`, `to: [x, y, z]` | Linear translation along the rail: $\vec{E}(u) = (1 - u)\vec{A} + u\vec{B}$ via shot easing $u = E(\tau)$. | Parallel steel rails ($0.42\text{m}$ gauge) with orthogonal sleepers + 4-wheeled cart. |
+| **`spline_track`** | `points: [[x,y,z], ...]` | Smooth Catmull-Rom curve along rail waypoints with arc-length parameterization. | Curved floor rails with sleepers and wheeled cart following the path. |
+
+#### 4.9.2 Target-Tracking vs. Fixed-Gaze Framing
+
+- **Target-Tracking Mode (`target:` declared)**: The camera head uses inverse spherical projection at 60fps to derive `yaw`, `pitch`, and `distance` from eye to target ($\vec{T} - \vec{E}$), panning and tilting to track the subject while the mount stays on its tripod or rail.
+- **Fixed-Gaze Mode (`target:` omitted)**: The camera holds or transitions fixed `yaw` and `pitch` (and Dutch `roll`), projecting its target anchor forward along the sightline at distance $d$. This enables pure lateral trucking shots, push/pulls, or drive-bys where actors cross through the frame without pulling camera orientation.
+
+#### 4.9.3 Continuous Rig Chaining (`continuous: true`)
+
+On continuous linear dolly tracks (`continuous: true`), omitting `from:` automatically inherits the previous shot's terminal eye position $\vec{E}_{\text{prev}}$:
+
+```yaml
+shots:
+  - id: "tripod-follow"
+    start: 0.0
+    end: 6.0
+    stage_camera:
+      target: "hero"
+      rig:
+        type: "tripod"
+        position: [0, 1.5, 4.5]
+      lens: 50mm
+  - id: "dolly-track-oner"
+    continuous: true
+    end: 12.0
+    stage_camera:
+      target: "hero"
+      rig:
+        type: "track"
+        to: [3.5, 1.2, 4.5]
+      lens: 35mm
+```
+
+#### 4.9.4 Visual Mount Visibility (`show_rig`, `stage.show_rigs`)
+
+3D tripod stands and dolly rails render automatically in the diorama. You can suppress them selectively without affecting camera kinematics:
+- **Per-Shot**: Set `show_rig: false` (or `camera: { show_rig: false }`) on any individual cue.
+- **Per-Scene**: Set `stage: { show_rigs: false }` to suppress all physical mount meshes globally.
+- **Stage Cam POV**: In `'stage-pov'` viewfinder mode, rig meshes are automatically unmounted to guarantee an unobstructed shot composition.
 
 ---
 

@@ -26,7 +26,7 @@ It synchronizes a universal video player (**Local `.mp4`/`.webm`**, **YouTube UR
    - 1-click angle snaps (**Top plan, Iso 45°, Front proscenium, Side profile, Reset**) powered by bespoke isometric 3D ViewCube SVG icons that preserve active look-at target pivots.
 7. **3-Tier Score Provenance Taxonomy & Vector Field**:
    - 3-tier catalog organization (`study`, `blueprint`, `custom`) accessible via a 2-column master-detail Score Library dialog with 4-way filter tabs and procedural 2D SVG stage minimaps.
-   - Defaults to **Vector Field** (`vector_field.yaml`, 1,080 lines, 32 shots, decoupled continuous blocking, 6 observer moves) authored by Taruma Sakti, alongside 6 educational blueprint presets (BP 01–06).
+   - Defaults to **Vector Field** (`vector_field.yaml`, 1,080 lines, 32 shots, decoupled continuous blocking, 6 observer moves) authored by Taruma Sakti, alongside 7 educational blueprint presets (BP 01–07).
 8. **Dual-Tier Storage Persistence & YAML SSOT**:
    - Automatically saves score drafts and custom imported scenes in browser **IndexedDB** (`idb`), while persisting UI layout preferences in **`localStorage`**. Heavy local dropped videos remain strictly in temporary session memory, and the YAML score remains the authoritative single source of truth for video playback.
 9. **Standalone In-App Documentation & Specification Viewer (`?mode=guide` / `?mode=spec`)**:

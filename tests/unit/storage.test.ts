@@ -239,6 +239,7 @@ describe('scoreCatalog — Bundled Presets & Blank Project Generator', () => {
     expect(isBundledSceneId('blueprint-04-cinematography-tutorial')).toBe(true);
     expect(isBundledSceneId('blueprint-05-two-rooms')).toBe(true);
     expect(isBundledSceneId('blueprint-06-optics-dof')).toBe(true);
+    expect(isBundledSceneId('blueprint-07-camera-rigs')).toBe(true);
 
     expect(isBundledSceneId('the-expansion')).toBe(false);
     expect(isBundledSceneId('custom-project-123')).toBe(false);

@@ -176,6 +176,18 @@ export function parseStageScore(
       ? rawStage.grid_step
       : 1;
 
+  const rawShowRigs =
+    rawStage.show_rigs ??
+    rawStage.showRigs ??
+    root.show_rigs ??
+    root.showRigs;
+  const showRigs =
+    rawShowRigs === false ||
+    rawShowRigs === 'false' ||
+    rawShowRigs === 'no'
+      ? false
+      : true;
+
   const defaultObserverPose = parseBaseSphericalPose(
     rawStage.observer_camera ?? rawStage.observerCamera,
     DEFAULT_OBSERVER_POSE
@@ -482,6 +494,7 @@ export function parseStageScore(
         width: stageWidth,
         depth: stageDepth,
         gridStep,
+        showRigs,
         defaultObserverPose,
         defaultStageCameraPose,
       },

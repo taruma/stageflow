@@ -107,7 +107,7 @@ stageflow/
 │   ├── stage/             # Layer 4: React Three Fiber 3D blueprint diorama, camera rigs & mannequins
 │   ├── ui/                # Layer 5: 2D directorial UI shell (header, left-panel, editor, guide, library)
 │   ├── recorder/          # Headless recording bridge (?mode=headless-render)
-│   └── scores/            # Choreography scores (*.yaml): studies/ (vector_field) & blueprints/ (BP 01–06)
+│   └── scores/            # Choreography scores (*.yaml): studies/ (vector_field) & blueprints/ (BP 01–07)
 └── tests/unit/            # Vitest deterministic unit test suites
 ```
 

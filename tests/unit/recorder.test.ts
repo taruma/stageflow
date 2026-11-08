@@ -132,6 +132,7 @@ describe('Bundled Scene Shortcuts & Catalog Resolution', () => {
     );
     expect(resolveShortcut('05')?.id).toBe('blueprint-05-two-rooms');
     expect(resolveShortcut('06')?.id).toBe('blueprint-06-optics-dof');
+    expect(resolveShortcut('07')?.id).toBe('blueprint-07-camera-rigs');
     expect(resolveShortcut('vf')?.id).toBe('vector-field-taruma-sakti');
     expect(resolveShortcut('vector_field')?.id).toBe(
       'vector-field-taruma-sakti'

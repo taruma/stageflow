@@ -69,6 +69,9 @@ export function computeStageFrame(
     stageTrack,
     entitiesById
   );
+  const showRig =
+    Boolean(stageTrack.rig) &&
+    (activeStageSpec?.showRig ?? score.stage.showRigs ?? true);
 
   // 3. Evaluate Viewport Observer Camera Track
   const observerTrack = evaluateCameraTrack(
@@ -92,6 +95,7 @@ export function computeStageFrame(
       frustumColor:
         activeStageSpec?.frustumColor ?? BLUEPRINT_PALETTE.frustumDefault,
       showPath: activeStageSpec?.showPath ?? true,
+      showRig,
       dof,
     },
     entitiesById,

@@ -73,6 +73,22 @@ All angular interpolations (`yaw`, `roll`, and entity `rotationYRad`) use [`shor
 ### 2.4 Directed Orbit Angular Differences (`directedAngleDiff`)
 When authoring `maneuver: "orbit"` or `"sweep"` with an explicit `direction: "cw"` or `"ccw"` alongside a destination `yaw`, [`directedAngleDiff(targetRad, currentRad, direction)`](../src/core/sphericalMath.ts) forces the angular rotation along the commanded azimuthal direction ($[-2\pi, 0]$ for clockwise, $[0, +2\pi]$ for counter-clockwise) rather than blindly defaulting to the shortest Euclidean arc. When `direction` is omitted, it falls back to `shortestAngleDiff`.
 
+### 2.5 Physical Camera Rig Kinematics & Inverse Look-At (`cameraRigEvaluator.ts`)
+When a camera cue specifies `rig: CameraRigSpec` (`tripod`, `track`, `spline_track`), [`cameraRigEvaluator.ts`](../src/core/cameraRigEvaluator.ts) overrides standard spherical eye calculations to anchor camera nodal point $\vec{E}(t)$ directly in 3D world space:
+1. **Stationary Tripod (`type: 'tripod'`)**:
+   $$\vec{E}(t) \equiv \vec{P}_{\text{tripod}} = (x_0, y_0, z_0)$$
+   Eye coordinates remain 100% stationary throughout the cue duration.
+2. **Linear Dolly Track (`type: 'track'`)**:
+   $$\vec{E}(u) = (1 - u)\vec{A} + u\vec{B}$$
+   The camera cart translates along the floor rail via normalized easing progress $u = E(\tau)$. In `continuous: true` mode, omitting `from:` automatically inherits the previous shot's terminal eye position $\vec{E}_{\text{prev}}$, guaranteeing unbroken physical continuity.
+3. **Curved Spline Dolly Track (`type: 'spline_track'`)**:
+   Interpolates through polyline control points using centripetal Catmull-Rom splines with cumulative chord arc-length parameterization.
+4. **Inverse Look-At vs. Fixed-Gaze Kinematics**:
+   - **Target-Tracking Mode (`target:` present)**: Given evaluated eye $\vec{E}(u)$ and resolved target anchor $\vec{T}(u)$, calls `cartesianToSpherical(eye, target, lens, roll)` to dynamically compute pan ($yaw$), tilt ($pitch$), and distance ($d = \|\vec{T} - \vec{E}\|$), swiveling the camera head at 60fps to track moving actors.
+   - **Fixed-Gaze Mode (`target:` omitted)**: Forward-projects target anchor $\vec{T}(u) = \vec{E}(u) + d \cdot \hat{F}$ along authored fixed or eased angles $(\theta, \psi)$, maintaining constant orientation while the cart moves along the track.
+5. **Rail Guide Sampling (`sampleRigRailPoints`)**:
+   Generates precision 3D rail polylines cached in `trajectoryChain.ts` and evaluated imperatively by Layer 4 mount components.
+
 ---
 
 ## 3. Directorial Lens Optics & Frustum Gate Geometry (`opticsMath.ts`)
@@ -275,7 +291,7 @@ observer_shots:
 ### 6.1 Three-Tier Score Taxonomy & Catalog Registry (`scoreCatalog.ts`)
 StageFlow categorizes scores into a clean 3-tier provenance taxonomy (`ScoreCategory = 'study' | 'blueprint' | 'custom'` in [`src/core/types.ts`](../src/core/types.ts)):
 1. **Directorial Scene Studies (`'study'`)**: Authentic auteur scene studies authored by Taruma Sakti in [`src/scores/studies/`](../src/scores/studies/). The primary default scene loaded on application launch is **Vector Field** ([`vector_field.yaml`](../src/scores/studies/vector_field.yaml), 1,080 lines, 32 shots, decoupled blocking, 6 observer moves).
-2. **Bundled Blueprints (`'blueprint'`)**: Synthetic educational camera-blocking presets and testbeds in [`src/scores/blueprints/`](../src/scores/blueprints/) (BP 01–BP 06).
+2. **Bundled Blueprints (`'blueprint'`)**: Synthetic educational camera-blocking presets and testbeds in [`src/scores/blueprints/`](../src/scores/blueprints/) (BP 01–BP 07).
 3. **Custom Projects (`'custom'`)**: User-authored or imported projects persisted in browser IndexedDB.
 
 ### 6.2 Score Draft Persistence (`src/core/storage/scoreDb.ts`)

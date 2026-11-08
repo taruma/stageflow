@@ -13,6 +13,7 @@ import type {
 } from './types';
 import { BLUEPRINT_PALETTE, ENTITY_DEFAULTS } from './constants';
 import { clampSphericalPose } from './sphericalMath';
+import { parseCameraRigSpec } from './cameraRigEvaluator';
 import {
   normalizeCameraEasing,
   normalizeCameraManeuver,
@@ -336,6 +337,14 @@ export function parseCameraCueSpec(
     orbitSpeedRad: parseAngleToRad(obj.orbit_speed ?? obj.orbitSpeed),
     waypoints,
     trackTarget: obj.track !== false,
+    ...(parseCameraRigSpec(obj.rig) ? { rig: parseCameraRigSpec(obj.rig) } : {}),
+    ...(typeof (obj.show_rig ?? obj.showRig ?? (obj.rig && typeof obj.rig === 'object' ? (obj.rig as Record<string, unknown>).show : undefined)) === 'boolean'
+      ? { showRig: Boolean(obj.show_rig ?? obj.showRig ?? (obj.rig as Record<string, unknown>).show) }
+      : (obj.show_rig ?? obj.showRig) === 'true' || (obj.show_rig ?? obj.showRig) === 'yes'
+      ? { showRig: true }
+      : (obj.show_rig ?? obj.showRig) === 'false' || (obj.show_rig ?? obj.showRig) === 'no'
+      ? { showRig: false }
+      : {}),
   };
 }
 
@@ -373,7 +382,10 @@ export function applyFlatShotCameraOverrides(
     shotObj.aperture_start !== undefined ||
     shotObj.apertureStart !== undefined ||
     shotObj.aperture_end !== undefined ||
-    shotObj.apertureEnd !== undefined;
+    shotObj.apertureEnd !== undefined ||
+    shotObj.rig !== undefined ||
+    shotObj.show_rig !== undefined ||
+    shotObj.showRig !== undefined;
 
   if (!hasFlatOpticalField) {
     return stageCam;
@@ -402,6 +414,8 @@ export function applyFlatShotCameraOverrides(
     apertureStartFStop:
       stageCam.apertureStartFStop ?? flatSpec.apertureStartFStop,
     apertureEndFStop: stageCam.apertureEndFStop ?? flatSpec.apertureEndFStop,
+    rig: stageCam.rig ?? flatSpec.rig,
+    showRig: stageCam.showRig ?? flatSpec.showRig,
   };
 }
 

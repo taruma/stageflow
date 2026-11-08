@@ -117,7 +117,7 @@ export const ShotBreakdownHud: React.FC<ShotBreakdownHudProps> = ({
               )}
               <span className="text-text-faint opacity-50">·</span>
               <span className="uppercase text-amber-500 font-semibold shrink-0">
-                {stageCam.maneuver}
+                {stageCam.rig ? `${stageCam.rig.type.replace('_', ' ')}` : stageCam.maneuver}
               </span>
               {hasOffset && (
                 <>
@@ -180,6 +180,7 @@ export const ShotBreakdownHud: React.FC<ShotBreakdownHudProps> = ({
               <span className="text-border-main">|</span>
               <span className="flex items-center gap-1 text-amber-600 dark:text-amber-300 uppercase font-semibold">
                 <Compass className="w-3 h-3 text-amber-500" />
+                {stageCam.rig ? `${stageCam.rig.type.replace('_', ' ')} · ` : ''}
                 {stageCam.maneuver}
               </span>
               {hasOffset && offset && (

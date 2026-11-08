@@ -157,14 +157,14 @@ shots:
   });
 
   it('registers and organizes scene studies and factory blueprints with distinct categories', () => {
-    expect(INITIAL_CATALOG_ITEMS.length).toBeGreaterThanOrEqual(7);
+    expect(INITIAL_CATALOG_ITEMS.length).toBeGreaterThanOrEqual(8);
 
     const studies = INITIAL_CATALOG_ITEMS.filter((item) => item.category === 'study');
     const blueprints = INITIAL_CATALOG_ITEMS.filter((item) => item.category === 'blueprint');
 
     expect(studies.length).toBeGreaterThanOrEqual(1);
     expect(studies[0].id).toBe('vector-field-taruma-sakti');
-    expect(blueprints.length).toBe(6);
+    expect(blueprints.length).toBe(7);
 
     for (const item of INITIAL_CATALOG_ITEMS) {
       expect(item.id).toBeTruthy();

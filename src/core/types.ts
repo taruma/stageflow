@@ -209,6 +209,24 @@ export interface CameraWaypointSpec {
   at?: number;
 }
 
+export type CameraRigType = 'tripod' | 'track' | 'spline_track';
+
+export interface CameraRigSpec {
+  type: CameraRigType;
+  position?: Vec3; // For 'tripod'
+  from?: Vec3;     // Start of 'track' rail (optional when continuous: true)
+  to?: Vec3;       // End of 'track' rail
+  points?: Vec3[]; // Waypoints for 'spline_track'
+}
+
+export interface EvaluatedCameraRigState {
+  type: CameraRigType;
+  progress: number;       // Eased progress u in [0, 1]
+  eyePosition: Vec3;      // Evaluated 3D camera nodal position on rig
+  railPoints: Vec3[];     // Sampled 3D rail path ([] for tripod, >=2 for track/spline_track)
+  hasTargetLock: boolean; // True when tracking a target, false when fixed/animated gaze
+}
+
 export interface CameraCueSpec {
   continuous?: boolean;
   maneuver: CameraManeuver;
@@ -252,6 +270,8 @@ export interface CameraCueSpec {
   orbitSpeedRad?: number;
   waypoints?: CameraWaypointSpec[];
   trackTarget: boolean;
+  rig?: CameraRigSpec;
+  showRig?: boolean;
 }
 
 export interface StageCameraCueSpec extends CameraCueSpec {
@@ -300,6 +320,7 @@ export interface StageScore {
     width: number;     // Default 10 (meters)
     depth: number;     // Default 10 (meters)
     gridStep: number;  // Default 1 (meter)
+    showRigs?: boolean; // When false, hides 3D tripod legs & dolly track rails across the score (default: true)
     defaultObserverPose: SphericalPose;
     defaultStageCameraPose: SphericalPose;
   };
@@ -319,6 +340,7 @@ export interface EvaluatedCameraTrack {
   trajectoryPoints: Vec3[]; // 3D world points showing the camera's movement path
   baseTarget?: Vec3;        // Anchor point before target_offset displacement
   targetOffset?: Vec3;      // Active world-space target offset vector at this frame
+  rig?: EvaluatedCameraRigState; // Active evaluated rig mount state (if on tripod/track)
 }
 
 export interface StageFrame {
@@ -332,6 +354,7 @@ export interface StageFrame {
     frustumDepth: number;
     frustumColor: string;
     showPath: boolean;
+    showRig: boolean;
     dof: EvaluatedDofState;
   };
   entitiesById: Map<string, EvaluatedEntityState>;

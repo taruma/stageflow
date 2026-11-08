@@ -7,15 +7,16 @@
 
 import React, { useState, memo } from 'react';
 import { Check, Compass, Copy } from 'lucide-react';
-import type { SphericalPose } from '../core/types';
+import type { EvaluatedCameraRigState, SphericalPose } from '../core/types';
 import { radToDeg } from '../core/sphericalMath';
 
 export interface CameraTelemetryCapsuleProps {
   pose: SphericalPose;
+  activeRig?: EvaluatedCameraRigState;
 }
 
 export const CameraTelemetryCapsule: React.FC<CameraTelemetryCapsuleProps> =
-  memo(({ pose }) => {
+  memo(({ pose, activeRig }) => {
     const [copied, setCopied] = useState(false);
     const [isHovered, setIsHovered] = useState(false);
 
@@ -32,14 +33,64 @@ export const CameraTelemetryCapsule: React.FC<CameraTelemetryCapsuleProps> =
 
     const handleCopyYaml = (e: React.MouseEvent) => {
       e.stopPropagation();
-      const yamlSnippet = [
-        `target: [${tx}, ${ty}, ${tz}]`,
-        `distance: ${distMeters}`,
-        `pitch: ${pitchDeg}`,
-        `yaw: ${yawDeg}`,
-        ...(hasNonZeroRoll ? [`roll: ${rollDeg}`] : []),
-        `lens: ${lensMm}mm`,
-      ].join('\n');
+
+      let yamlSnippet: string;
+      if (activeRig?.type === 'tripod') {
+        const ex = activeRig.eyePosition.x.toFixed(2);
+        const ey = activeRig.eyePosition.y.toFixed(2);
+        const ez = activeRig.eyePosition.z.toFixed(2);
+        yamlSnippet = [
+          'rig:',
+          '  type: tripod',
+          `  position: [${ex}, ${ey}, ${ez}]`,
+          ...(activeRig.hasTargetLock
+            ? [`target: [${tx}, ${ty}, ${tz}]`]
+            : [`pitch: ${pitchDeg}`, `yaw: ${yawDeg}`]),
+          ...(hasNonZeroRoll ? [`roll: ${rollDeg}`] : []),
+          `lens: ${lensMm}mm`,
+        ].join('\n');
+      } else if (activeRig?.type === 'track') {
+        const p0 = activeRig.railPoints[0] ?? activeRig.eyePosition;
+        const p1 =
+          activeRig.railPoints[activeRig.railPoints.length - 1] ??
+          activeRig.eyePosition;
+        yamlSnippet = [
+          'rig:',
+          '  type: track',
+          `  from: [${p0.x.toFixed(2)}, ${p0.y.toFixed(2)}, ${p0.z.toFixed(2)}]`,
+          `  to: [${p1.x.toFixed(2)}, ${p1.y.toFixed(2)}, ${p1.z.toFixed(2)}]`,
+          ...(activeRig.hasTargetLock
+            ? [`target: [${tx}, ${ty}, ${tz}]`]
+            : [`pitch: ${pitchDeg}`, `yaw: ${yawDeg}`]),
+          ...(hasNonZeroRoll ? [`roll: ${rollDeg}`] : []),
+          `lens: ${lensMm}mm`,
+        ].join('\n');
+      } else if (activeRig?.type === 'spline_track') {
+        const ptsStr = activeRig.railPoints
+          .filter((_, idx) => idx % Math.max(1, Math.floor(activeRig.railPoints.length / 4)) === 0 || idx === activeRig.railPoints.length - 1)
+          .map((p) => `    - [${p.x.toFixed(2)}, ${p.y.toFixed(2)}, ${p.z.toFixed(2)}]`)
+          .join('\n');
+        yamlSnippet = [
+          'rig:',
+          '  type: spline_track',
+          '  points:',
+          ptsStr,
+          ...(activeRig.hasTargetLock
+            ? [`target: [${tx}, ${ty}, ${tz}]`]
+            : [`pitch: ${pitchDeg}`, `yaw: ${yawDeg}`]),
+          ...(hasNonZeroRoll ? [`roll: ${rollDeg}`] : []),
+          `lens: ${lensMm}mm`,
+        ].join('\n');
+      } else {
+        yamlSnippet = [
+          `target: [${tx}, ${ty}, ${tz}]`,
+          `distance: ${distMeters}`,
+          `pitch: ${pitchDeg}`,
+          `yaw: ${yawDeg}`,
+          ...(hasNonZeroRoll ? [`roll: ${rollDeg}`] : []),
+          `lens: ${lensMm}mm`,
+        ].join('\n');
+      }
 
       navigator.clipboard.writeText(yamlSnippet);
       setCopied(true);
@@ -145,6 +196,15 @@ export const CameraTelemetryCapsule: React.FC<CameraTelemetryCapsuleProps> =
             {lensMm}mm
           </span>
 
+          {activeRig && (
+            <>
+              <span className="text-border-main hidden lg:inline">·</span>
+              <span className="hidden lg:inline px-1 py-0.5 rounded text-[8.5px] font-mono font-bold bg-amber-500/15 border border-amber-500/30 text-amber-600 dark:text-amber-400 uppercase">
+                {activeRig.type.replace('_', ' ')}
+              </span>
+            </>
+          )}
+
           <Copy className="w-3 h-3 text-text-faint group-hover:text-text-main ml-0.5 shrink-0" />
         </button>
 
@@ -215,6 +275,15 @@ export const CameraTelemetryCapsule: React.FC<CameraTelemetryCapsuleProps> =
               <span className="text-text-muted font-sans">Equivalent Lens:</span>
               <span className="text-amber-600 dark:text-amber-400 font-semibold">{lensMm}mm</span>
             </div>
+
+            {activeRig && (
+              <div className="flex justify-between items-center text-text-body font-mono">
+                <span className="text-text-muted font-sans">Rig Mount:</span>
+                <span className="text-amber-600 dark:text-amber-400 font-semibold uppercase">
+                  {activeRig.type.replace('_', ' ')}
+                </span>
+              </div>
+            )}
           </div>
         )}
       </div>

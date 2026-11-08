@@ -63,6 +63,11 @@ Visualizes the physical camera filming the shot inside the 3D diorama:
 - **3D Target Offset Tether & Anchor Beacon (`StageCameraOffsetTether.tsx`)**:
   - When a shot has an active world-space `target_offset` ($\ge 0.01\text{m}$), renders a cyan anchor beacon at the subject's un-offset look anchor (`baseTarget`) and a subtle dashed blueprint tether line connecting `baseTarget -> target`, making negative space composition, lead room, and headroom bias immediately readable in 3D.
   - Automatically hidden when `target_offset` magnitude is zero or when viewing through `'stage-pov'`.
+- **3D Blueprint Camera Rig Mounts (`StageCameraRigMount.tsx`)**:
+  - Positioned at floor level $Y=0$ beneath the camera eye position $\vec{E}(t)$, tracking the camera's spatial coordinates imperatively in R3F `useFrame`.
+  - When `rig.type === 'tripod'`: Renders a 3-legged blueprint tripod stand with tubular splayed legs ($0.52\text{m}$ base spread), circular floor pucks, and a vertical telescoping column rising to the camera chassis mount.
+  - When `rig.type === 'track'` or `'spline_track'`: Renders physical twin steel rails ($0.42\text{m}$ gauge) with orthogonal sleepers spaced every $0.5\text{m}$ along the track line or Catmull-Rom spline curve, plus a low-profile 4-wheeled dolly cart riding the rails with an upright column supporting the camera chassis.
+  - Opt-in visual suppression via `show_rig: false` (per cue) or `stage: { show_rigs: false }` (global), or in `'stage-pov'` viewfinder mode.
 
 ### 2.4 Shared 3D Scene & Stage Cam Monitor Viewport (`BlueprintStageScene.tsx`, `StageCamMonitorCanvas.tsx`)
 To enforce strict DRY principles and visual parity:
@@ -191,6 +196,7 @@ Adopts professional 3D viewport convention (Blender, Unreal Engine, Maya) distri
   yaw: 38.0
   lens: 35mm
   ```
+- **Context-Aware Physical Rig Readouts**: When an active shot has a physical mount (`tripod`, `track`, `spline_track`), the capsule renders an amber category badge (`TRIPOD` / `TRACK`) and an interactive tooltip breakdown. Clicking the capsule outputs clean `rig:` YAML syntax matching the physical mount.
 
 ### 4.4 Dedicated Compact Diorama Header (`CompactDioramaHeader.tsx` — `< 580px`)
 - When the diorama pane width drops below $580\text{px}$ (e.g. in extreme split mode or on compact screens), `src/App.tsx` dynamically switches from the distributed top overlay trio to a dedicated, unified compact header mounted at `top-3 left-3 right-3`:

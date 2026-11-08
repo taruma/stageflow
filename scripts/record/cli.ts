@@ -86,7 +86,7 @@ function resolveScoreYaml(input: string): { yaml: string; id: string } {
     }
   }
 
-  // Check numeric shortcuts: 01, 02, 03, 04, 05, 06 (mapped to Blueprint numbers)
+  // Check numeric shortcuts: 01, 02, 03, 04, 05, 06, 07 (mapped to Blueprint numbers)
   const numMatch = input.match(/^(?:bp)?0?([1-9]\d*)$/i);
   if (numMatch) {
     const num = parseInt(numMatch[1], 10);

@@ -66,6 +66,20 @@ Given $\vec{E}$ and $\vec{T}$ with displacement $\Delta\vec{p} = \vec{E} - \vec{
 
 $$d = \sqrt{\Delta x^2 + \Delta y^2 + \Delta z^2}, \quad d_{xz} = \sqrt{\Delta x^2 + \Delta z^2}, \quad \theta = \operatorname{atan2}(\Delta y, d_{xz}), \quad \psi = \operatorname{atan2}(\Delta x, \Delta z)$$
 
+### 2.3 Physical Camera Rigs & Inverse Look-At Kinematics
+When a camera cue mounts onto a physical studio rig (`CameraRigSpec`), camera eye position $\vec{E}(t)$ is constrained directly in world space rather than calculated as a spherical offset from the subject:
+1. **Stationary Tripod (`type: "tripod"`)**: Eye position is held stationary at the authored world coordinate:
+   $$\vec{E}(t) \equiv \vec{P}_{\text{tripod}} = (x_0, y_0, z_0)$$
+2. **Linear Dolly Track (`type: "track"`)**: Camera cart glides along a linear rail from $\vec{A}$ to $\vec{B}$ with eased progress $u = E(\tau)$:
+   $$\vec{E}(u) = (1 - u)\vec{A} + u\vec{B}$$
+   When `continuous: true` is active on a track and `from:` is omitted, $\vec{A}$ automatically inherits the preceding shot's terminal eye position $\vec{E}_{\text{prev}}$ to prevent spatial cuts.
+3. **Curved Spline Dolly Track (`type: "spline_track"`)**: Camera cart glides along a multi-point Catmull-Rom rail:
+   $$\vec{E}(u) = \operatorname{CatmullRom}\left(\mathbf{P}_0, \mathbf{P}_1, \mathbf{P}_2, \mathbf{P}_3, \tau\right)$$
+4. **Inverse Look-At Orientation**:
+   - **Target-Tracking Mode (`target:` present)**: With evaluated eye $\vec{E}(u)$ and target anchor $\vec{T}(u)$, orientation is resolved via inverse projection $\operatorname{cartesianToSpherical}(\vec{E}(u), \vec{T}(u), f_{\text{mm}}, \gamma)$, automatically panning and tilting the camera head to center the subject.
+   - **Fixed / Animated Gaze Mode (`target:` omitted)**: With fixed or eased angles $(\theta(u), \psi(u))$, target $\vec{T}(u)$ is projected forward along the sightline at distance $d$:
+     $$T_x = E_x - d\cos\theta\sin\psi, \quad T_y = E_y - d\sin\theta, \quad T_z = E_z - d\cos\theta\cos\psi$$
+
 ---
 
 ## 3. Optical Sensor & Film Gate Geometry
@@ -302,6 +316,7 @@ StageFlow is a **stateless functional evaluator** (`Frame_t = f(t, score)`). Eff
 | | `trailPoints` | `Vec3[]` 16-segment ground trail path points |
 | | `highlighted`, `visible`, `opacity` | Directorial focus styling and visibility flags |
 | **`CameraCueSpec`** | `continuous`, `maneuver`, `easing` | Optional `boolean` continuity override; `CameraManeuver` (default `'dolly'`), `CameraEasing` (default `'smooth'`) |
+| | `rig`, `showRig` | Optional `CameraRigSpec` (`tripod`, `track`, `spline_track`) and 3D rig visibility toggle |
 | | `target`, `from` | `string \| Vec3 \| undefined` anchor identifiers or world coordinates |
 | | `targetOffset*` | `Vec3 \| undefined` (`targetOffset`, `targetOffsetStart`, `targetOffsetEnd`) in $\text{m}$ |
 | | `distance*`, `pitch*Rad`, `yaw*Rad`, `roll*Rad`, `focalLength*Mm` | Optional scalar/radian/mm endpoints and deltas (`yawDeltaRad`, `rollDeltaRad`) |
@@ -311,6 +326,10 @@ StageFlow is a **stateless functional evaluator** (`Frame_t = f(t, score)`). Eff
 | | `breathe` | `number` ($1.12$ for `arc`/`swoop`, $1.25$ for `recoil`, $1.0$ otherwise) |
 | | `direction`, `hasExplicitDirection` | `'cw' \| 'ccw'` (default `'cw'`), `boolean` |
 | | `revolutions`, `orbitSpeedRad`, `waypoints` | Optional turn count, angular speed ($\text{rad/s}$), and `CameraWaypointSpec[]` |
+| **`CameraRigSpec`** | `type` | `'tripod' \| 'track' \| 'spline_track'` mount category |
+| | `position`, `from`, `to`, `points` | `Vec3 \| undefined` world coordinates for tripod, start/end of track rail, and spline waypoints |
+| **`EvaluatedCameraRigState`** | `type`, `progress`, `hasTargetLock` | `'tripod' \| 'track' \| 'spline_track'`; progress $u \in [0, 1]$; `boolean` target-tracking flag |
+| | `eyePosition`, `railPoints` | `Vec3` 60fps nodal point $\vec{E}(t)$; `Vec3[]` floor rail guide coordinates |
 | **`EvaluatedDofState`** | `enabled`, `preset`, `apertureFStop` | `boolean`; `DofPreset`; effective $f$-stop $N \in [0.7, 64.0] \cup \{\infty\}$ |
 | | `focusDistanceM`, `nearLimitM`, `farLimitM` | `number` focus plane depth and thin-lens near/far sharp boundaries in $\text{m}$ |
 | | `hyperfocalDistanceM`, `depthOfFieldM` | `number` hyperfocal distance $H$ and total sharp zone width $\Delta_{\text{DoF}}$ in $\text{m}$ |

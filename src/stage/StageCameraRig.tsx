@@ -25,6 +25,7 @@ import {
   StageCameraFocusTether,
 } from './StageCameraFocusRig';
 import { StageCameraOffsetTether } from './StageCameraOffsetTether';
+import { StageCameraRigMount } from './StageCameraRigMount';
 
 /**
  * Static normalized unit frustum pyramid coordinates (depth Z = 1, bounds [-1, 1]).
@@ -212,6 +213,14 @@ export const StageCameraRig: React.FC<StageCameraRigProps> = ({
 
   return (
     <group>
+      {/* 0. Physical Blueprint Camera Rig Mount (Tripod Stand / Floor Dolly Rails & Cart) */}
+      <StageCameraRigMount
+        frameRef={frameRef}
+        uiFrame={uiFrame}
+        isBodyVisible={isBodyVisible}
+        color={color}
+      />
+
       {/* 1. World-Space 3D Trajectory Curve for Moving Shots */}
       {isBodyVisible && trajectoryLinePoints.length >= 2 && (
         <group ref={trajectoryGroupRef}>

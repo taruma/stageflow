@@ -6,6 +6,7 @@
 
 import type {
   CameraCueSpec,
+  EvaluatedCameraRigState,
   EvaluatedCameraTrack,
   EvaluatedEntityState,
   SphericalPose,
@@ -31,6 +32,7 @@ import {
   evaluateSplineCameraPose,
   sampleTrajectoryPoints,
 } from './shotPoseEvaluator';
+import { sampleRigRailPoints } from './cameraRigEvaluator';
 import { evaluateEntitiesAtTime } from './entityEngine';
 
 // Re-export target resolution and shot-boundary reset helpers for backward compatibility
@@ -99,6 +101,7 @@ interface CueTrackCache {
   cueBaseStartPoses: Map<string, SphericalPose>;
   cueEndPoses: Map<string, SphericalPose>;
   cueTrajectoryPoints: Map<string, Vec3[]>;
+  cueRailPoints: Map<string, Vec3[]>;
 }
 
 const trackCache = new WeakMap<StageScore, Map<string, CueTrackCache>>();
@@ -113,7 +116,7 @@ function sampleCueTrajectoryPoints(
   samples = 32
 ): Vec3[] {
   const spec = cue.spec;
-  if (spec.maneuver === 'cut') {
+  if (spec.maneuver === 'cut' || spec.rig?.type === 'tripod') {
     return [];
   }
 
@@ -233,6 +236,7 @@ function getOrCreateCueTrackCache(
   const cueBaseStartPoses = new Map<string, SphericalPose>();
   const cueEndPoses = new Map<string, SphericalPose>();
   const cueTrajectoryPoints = new Map<string, Vec3[]>();
+  const cueRailPoints = new Map<string, Vec3[]>();
 
   let runningPose = baselinePose;
   let runningOffset = ZERO_OFFSET;
@@ -248,6 +252,13 @@ function getOrCreateCueTrackCache(
       i === 0
     );
     cueTrajectoryPoints.set(cue.id, points);
+
+    const prevEndEye = sphericalToCartesian(runningPose).position;
+    if (cue.spec.rig) {
+      cueRailPoints.set(cue.id, sampleRigRailPoints(cue.spec.rig, prevEndEye));
+    } else {
+      cueRailPoints.set(cue.id, []);
+    }
 
     const isContinuous =
       Boolean(cue.continuous ?? score.continuous) &&
@@ -330,6 +341,7 @@ function getOrCreateCueTrackCache(
     cueBaseStartPoses,
     cueEndPoses,
     cueTrajectoryPoints,
+    cueRailPoints,
   };
 
   scoreMap.set(cacheKey, data);
@@ -453,15 +465,28 @@ export function evaluateCameraTrack(
       z: livePose.target.z - liveOffset.z,
     };
 
+    const transform = sphericalToCartesian(livePose, score.aspectRatio);
+    const rigState: EvaluatedCameraRigState | undefined = spec.rig
+      ? {
+          type: spec.rig.type,
+          progress: u,
+          eyePosition: transform.position,
+          railPoints: trackCacheData.cueRailPoints.get(activeCue.id) ?? [],
+          hasTargetLock:
+            spec.target !== undefined || spec.from !== undefined,
+        }
+      : undefined;
+
     return {
       active: true,
       isHold: false,
       shotId: activeCue.id,
       maneuver: spec.maneuver,
-      transform: sphericalToCartesian(livePose, score.aspectRatio),
+      transform,
       trajectoryPoints,
       baseTarget,
       targetOffset: liveOffset,
+      ...(rigState ? { rig: rigState } : {}),
     };
   }
 
@@ -504,13 +529,26 @@ export function evaluateCameraTrack(
   const heldTrajectoryPoints = lastFinished
     ? trackCacheData.cueTrajectoryPoints.get(lastFinished.id) ?? []
     : [];
+  const heldTransform = sphericalToCartesian(heldPose, score.aspectRatio);
+  const heldRigState: EvaluatedCameraRigState | undefined = heldSpec?.rig
+    ? {
+        type: heldSpec.rig.type,
+        progress: 1,
+        eyePosition: heldTransform.position,
+        railPoints: lastFinished
+          ? trackCacheData.cueRailPoints.get(lastFinished.id) ?? []
+          : [],
+        hasTargetLock:
+          heldSpec.target !== undefined || heldSpec.from !== undefined,
+      }
+    : undefined;
 
   return {
     active: false,
     isHold: true,
     shotId: lastFinished?.id ?? null,
     maneuver: heldSpec?.maneuver ?? 'cut',
-    transform: sphericalToCartesian(heldPose, score.aspectRatio),
+    transform: heldTransform,
     trajectoryPoints: heldTrajectoryPoints,
     baseTarget: {
       x: heldPose.target.x - heldEndOffset.x,
@@ -518,5 +556,6 @@ export function evaluateCameraTrack(
       z: heldPose.target.z - heldEndOffset.z,
     },
     targetOffset: heldEndOffset,
+    ...(heldRigState ? { rig: heldRigState } : {}),
   };
 }

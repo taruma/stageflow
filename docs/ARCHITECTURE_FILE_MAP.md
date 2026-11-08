@@ -49,7 +49,7 @@ stageflow/
 │   │   └── recorderTypes.ts         # Bridge schemas & window.__STAGEFLOW_RECORDER__ interface
 │   ├── scores/                      # Choreography Scores (*.yaml)
 │   │   ├── studies/                 # Directorial Scene Studies (e.g. vector_field.yaml)
-│   │   └── blueprints/              # Factory camera-blocking presets (BP 01–06)
+│   │   └── blueprints/              # Factory camera-blocking presets (BP 01–07)
 │   ├── core/                        # Layer 1: Pure TypeScript Math, Optics & Stateless Frame Engine
 │   │   ├── types.ts                 # Canonical interfaces (StageScore, ShotCue, ObserverShotCue, BlockingCueSpec, StageFrame)
 │   │   ├── constants.ts             # Metric bounds, sensor constants, blueprint color palette
@@ -62,6 +62,7 @@ stageflow/
 │   │   ├── entityLegacyEvaluator.ts # Tier 2: Legacy per-shot shots[].entities kinematics
 │   │   ├── entityKinematicUtils.ts  # 3D dimension parsing, OBB footprint math, look_at target & trail generation
 │   │   ├── cameraTargetResolver.ts  # Target anchor resolution, 3D offsets & shot-boundary/continuous roll & offset flow
+│   │   ├── cameraRigEvaluator.ts    # Physical camera rig mounts (tripod, track, spline_track) & inverse look-at kinematics
 │   │   ├── shotPoseEvaluator.ts     # Single-shot pose evaluation, Catmull-Rom splines & 3D path sampling
 │   │   ├── trajectoryChain.ts       # Forward pose chaining (P_0 -> P_k) & multi-shot timeline tracks
 │   │   ├── frameEngine.ts           # Master stateless evaluator: computeStageFrame(t, score)
@@ -96,6 +97,7 @@ stageflow/
 │   │   ├── StageCameraRig.tsx       # 3D camera prop, rectangular gate frustum, sliding focus plane & path line
 │   │   ├── StageCameraFocusRig.tsx  # 3D Near/Far DoF limit brackets & emerald off-axis focus tether
 │   │   ├── StageCameraOffsetTether.tsx # 3D cyan anchor beacon & dashed tether line for target offsets
+│   │   ├── StageCameraRigMount.tsx  # Physical 3D tripod stands, floor rails & wheeled dolly cart
 │   │   ├── StageCamViewRig.tsx      # Stage Camera POV lock controller for procedural monitor
 │   │   ├── StageCamDofEffect.tsx    # Opt-in single-pass WebGL2 thin-lens Depth-of-Field blur effect
 │   │   ├── StageCamMonitorCanvas.tsx# True 3D Stage Cam monitor with optical safe-action HUD & DoF blur toggle
@@ -150,6 +152,7 @@ stageflow/
     └── unit/                        # Vitest deterministic unit test suites
         ├── opticsMath.test.ts
         ├── sphericalMath.test.ts
+        ├── cameraRigs.test.ts
         ├── entityEngine.test.ts
         ├── frameEngine.test.ts
         ├── scoreParser.test.ts

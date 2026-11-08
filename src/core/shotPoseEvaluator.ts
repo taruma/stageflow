@@ -27,6 +27,7 @@ import {
   resolveShotDestRoll,
   resolveTargetPoint3D,
 } from './cameraTargetResolver';
+import { evaluateRigCameraPose } from './cameraRigEvaluator';
 
 /**
  * Evaluates a Catmull-Rom spline camera path across multiple waypoints.
@@ -156,6 +157,19 @@ export function evaluateShotCameraPose(
   isContinuous = false
 ): SphericalPose {
   const u = evaluateCameraEasing(spec.easing, tRaw);
+
+  if (spec.rig) {
+    return evaluateRigCameraPose(
+      P0,
+      spec,
+      u,
+      entitiesById,
+      baselinePose,
+      startOffset,
+      destOffset,
+      isContinuous
+    );
+  }
 
   if (spec.maneuver === 'spline' && spec.waypoints && spec.waypoints.length > 0) {
     return evaluateSplineCameraPose(P0, spec, u, entitiesById);

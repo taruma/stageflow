@@ -58,7 +58,7 @@ entities:
 
   it('verifies all YAML blocks in the guide are valid syntax and compile properly', () => {
     const blocks = extractYamlBlocks(yamlAuthoringGuideRaw);
-    expect(blocks.length).toBe(27);
+    expect(blocks.length).toBe(28);
 
     blocks.forEach((rawSnippet) => {
       const cleanRaw = dedent(rawSnippet).trim();
