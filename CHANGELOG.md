@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Directorial Hover Card Header & Action Footer Polish (`src/ui/CameraTelemetryHoverCard.tsx`)**:
+  - Replaced crowded 2-line header with a clean single-line title (`[ 🎥 Stage Camera ]` / `[ 👁 Observer Camera ]`) and dedicated `YAML` pill badge.
+  - Relocated copy guidance to a centered helper footer (`📋 Click capsule to copy YAML block`), eliminating awkward line wraps and text breaks.
+
 ### Added
 - **Dual-Camera Telemetry Capsule with Integrated `[ OBS | CAM ]` Switcher (`src/ui/CameraTelemetryCapsule.tsx`, `src/ui/CameraTelemetryHoverCard.tsx`, `src/ui/telemetryYamlFormatter.ts`, `tests/unit/telemetryYamlFormatter.test.ts`)**:
   - Implemented an integrated segmented control (`[ 👁 OBS | 🎥 CAM ]`) inside the bottom-right telemetry capsule, enabling directors to seamlessly inspect and copy either the Observer Camera or the active shot's Stage Camera.
