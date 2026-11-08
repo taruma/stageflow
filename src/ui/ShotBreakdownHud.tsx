@@ -1,14 +1,29 @@
 /**
  * Minimalist Top-Left HUD Overlay inside the 3D Diorama Viewport.
- * Displays active Shot Number, Label, Lens Focal Length (mm), Active Maneuver,
- * and brief Directorial Staging Note.
- * Styled with SceneFlow tactile pill design tokens.
+ * Displays active Shot Number, Label, Cine Optics, Look-At Target, 3D Offset Vector,
+ * Timing, and Directorial Staging Screenplay Note.
+ * Styled with SceneFlow tactile design tokens.
+ * Layer 5 UI Component.
  */
 
 import React, { useState } from 'react';
-import { Aperture, ChevronDown, ChevronRight, Compass, Crosshair } from 'lucide-react';
+import {
+  Aperture,
+  ChevronDown,
+  ChevronRight,
+  Clock,
+  Compass,
+  Crosshair,
+} from 'lucide-react';
 import type { CameraViewMode, StageFrame, StageScore } from '../core/types';
 import { formatApertureFStop } from '../core/opticsMath';
+import {
+  cleanShotLabel,
+  formatFilmGateLabel,
+  formatShotTiming,
+  formatSignedVector3D,
+  resolveShotTargetInfo,
+} from './shotBreakdownUtils';
 
 export interface ShotBreakdownHudProps {
   score: StageScore;
@@ -20,8 +35,6 @@ export interface ShotBreakdownHudProps {
 export const ShotBreakdownHud: React.FC<ShotBreakdownHudProps> = ({
   score,
   frame,
-  cameraMode,
-  isPlaying,
 }) => {
   const [isCollapsed, setIsCollapsed] = useState(true);
 
@@ -29,38 +42,25 @@ export const ShotBreakdownHud: React.FC<ShotBreakdownHudProps> = ({
   const stageCam = frame.stageCamera;
   const dof = stageCam.dof;
   const lensMm = Math.round(stageCam.transform.pose.focalLengthMm);
-  const aspectLabel =
-    Math.abs(score.aspectRatio - 16 / 9) < 0.05
-      ? '16:9'
-      : Math.abs(score.aspectRatio - 2.39) < 0.08
-      ? '2.39:1'
-      : `${score.aspectRatio.toFixed(2)}:1`;
+  const aspectLabel = formatFilmGateLabel(score.aspectRatio);
 
   const offset = stageCam.targetOffset;
-  const offsetMag = offset
-    ? Math.hypot(offset.x, offset.y, offset.z)
-    : 0;
+  const offsetMag = offset ? Math.hypot(offset.x, offset.y, offset.z) : 0;
   const hasOffset = offsetMag >= 0.01;
 
-  // Clean redundant "Shot ## · " prefix if present since #xx badge already shows shotNumber
   const rawLabel = shot ? shot.label : score.title;
-  const cleanLabel = shot
-    ? rawLabel.replace(/^Shot\s*\d+\s*[·:–-]\s*/i, '').trim() || rawLabel
-    : rawLabel;
-
+  const cleanLabel = cleanShotLabel(rawLabel);
   const shotTag = shot ? `#${String(shot.shotNumber).padStart(2, '0')}` : '#--';
 
-  const cameraStateText =
-    cameraMode === 'scripted'
-      ? isPlaying
-        ? 'Locked Observer'
-        : 'Paused · Free Orbit'
-      : cameraMode === 'stage-pov'
-      ? 'Stage Cam Viewfinder'
-      : 'Free Orbit';
+  // Resolve Look-At Target against scene entities
+  const targetInfo = resolveShotTargetInfo(
+    shot?.stageCamera?.target,
+    score.entities,
+    stageCam.baseTarget
+  );
 
   return (
-    <div className="absolute top-3 left-3 max-w-[calc(100%-320px)] sm:max-w-md flex flex-col gap-1.5 pointer-events-none select-none z-10">
+    <div className="absolute top-3 left-3 max-w-[calc(100%-320px)] sm:max-w-md md:max-w-lg flex flex-col gap-1.5 pointer-events-none select-none z-10">
       <div
         role="button"
         tabIndex={0}
@@ -72,104 +72,96 @@ export const ShotBreakdownHud: React.FC<ShotBreakdownHudProps> = ({
             setIsCollapsed((prev) => !prev);
           }
         }}
-        className="px-3 py-2 rounded-2xl bg-surface/95 backdrop-blur-md border border-border-main hover:border-border-hover shadow-lg flex flex-col gap-1 text-text-main pointer-events-auto transition-all cursor-pointer group select-none focus:outline-none focus:ring-1 focus:ring-accent-primary/40"
-        title={isCollapsed ? 'Click to expand shot breakdown' : 'Click to collapse shot breakdown'}
+        className="px-3.5 py-2.5 rounded-2xl bg-surface/95 backdrop-blur-md border border-border-main hover:border-border-hover shadow-lg flex flex-col gap-1.5 text-text-main pointer-events-auto transition-all cursor-pointer group select-none focus:outline-none focus:ring-1 focus:ring-accent-primary/40"
+        title={
+          isCollapsed
+            ? 'Click to expand shot breakdown'
+            : 'Click to collapse shot breakdown'
+        }
       >
-        {/* COLLAPSED VIEW: Strictly 2 lines with precision truncation */}
+        {/* UNIFIED HEADER ROW: Same single-line structure for both Collapsed & Expanded */}
+        <div className="flex items-center justify-between gap-2 min-w-0">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            <span className="px-1.5 py-0.5 rounded-md bg-btn-primary-bg text-btn-primary-text text-[10px] font-mono font-bold shrink-0 shadow-2xs">
+              {shotTag}
+            </span>
+            <span className="text-xs font-sans font-semibold text-text-main truncate group-hover:text-accent-primary transition-colors">
+              {cleanLabel}
+            </span>
+          </div>
+
+          <div
+            aria-hidden="true"
+            className="p-1 rounded-lg text-text-faint group-hover:text-text-main group-hover:bg-surface-subtle transition-colors duration-100 shrink-0"
+          >
+            {isCollapsed ? (
+              <ChevronRight className="w-3.5 h-3.5" />
+            ) : (
+              <ChevronDown className="w-3.5 h-3.5" />
+            )}
+          </div>
+        </div>
+
+        {/* COLLAPSED VIEW: Line 2 with Essential Cine Tokens */}
         {isCollapsed ? (
-          <div className="space-y-1">
-            {/* Line 1: #xx Tag + Clean Title + Expand Chevron */}
-            <div className="flex items-center justify-between gap-2 min-w-0">
-              <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                <span className="px-1.5 py-0.5 rounded-md bg-btn-primary-bg text-btn-primary-text text-[10px] font-mono font-bold shrink-0 shadow-2xs">
-                  {shotTag}
+          <div className="flex items-center gap-1.5 text-[10px] font-mono text-text-muted truncate">
+            <span className="text-text-main font-semibold shrink-0">
+              {lensMm}mm
+            </span>
+            {dof.enabled && (
+              <>
+                <span className="text-text-faint opacity-50">·</span>
+                <span className="text-text-muted font-medium shrink-0">
+                  {formatApertureFStop(dof.apertureFStop)}
                 </span>
-                <span className="text-xs font-sans font-semibold text-text-main truncate group-hover:text-accent-primary transition-colors">
-                  {cleanLabel}
+              </>
+            )}
+            <span className="text-text-faint opacity-50">·</span>
+            <span className="uppercase text-amber-500 font-semibold shrink-0">
+              {stageCam.rig
+                ? `${stageCam.rig.type.replace('_', ' ')}`
+                : stageCam.maneuver}
+            </span>
+            {(dof.hasExplicitFocus || dof.enabled) && (
+              <>
+                <span className="text-text-faint opacity-50">·</span>
+                <span className="text-emerald-500 font-semibold shrink-0">
+                  F {dof.focusDistanceM.toFixed(1)}m
                 </span>
-              </div>
-
-              <div
-                aria-hidden="true"
-                className="p-1 rounded-lg text-text-faint group-hover:text-text-main group-hover:bg-surface-subtle transition-colors duration-100 shrink-0"
-              >
-                <ChevronRight className="w-3.5 h-3.5" />
-              </div>
-            </div>
-
-            {/* Line 2: Compact Telemetry & Status String */}
-            <div className="flex items-center gap-1.5 text-[10px] font-mono text-text-muted truncate">
-              <span className="text-text-main font-semibold shrink-0">{lensMm}mm</span>
-              {dof.enabled && (
-                <>
-                  <span className="text-text-faint opacity-50">·</span>
-                  <span className="text-emerald-500 font-semibold shrink-0">
-                    {formatApertureFStop(dof.apertureFStop)}
-                  </span>
-                </>
-              )}
-              {dof.hasExplicitFocus && (
-                <>
-                  <span className="text-text-faint opacity-50">·</span>
-                  <span className="text-emerald-500 font-semibold shrink-0">
-                    F {dof.focusDistanceM.toFixed(1)}m
-                  </span>
-                </>
-              )}
-              <span className="text-text-faint opacity-50">·</span>
-              <span className="uppercase text-amber-500 font-semibold shrink-0">
-                {stageCam.rig ? `${stageCam.rig.type.replace('_', ' ')}` : stageCam.maneuver}
-              </span>
-              {hasOffset && (
-                <>
-                  <span className="text-text-faint opacity-50">·</span>
-                  <span className="text-sky-500 font-semibold shrink-0">
-                    Δ {offsetMag.toFixed(2)}m
-                  </span>
-                </>
-              )}
-              <span className="text-text-faint opacity-50">·</span>
-              <span className="truncate">{cameraStateText}</span>
-            </div>
+              </>
+            )}
+            {hasOffset && (
+              <>
+                <span className="text-text-faint opacity-50">·</span>
+                <span className="text-sky-500 font-semibold shrink-0">
+                  Δ {offsetMag.toFixed(2)}m
+                </span>
+              </>
+            )}
           </div>
         ) : (
-          /* EXPANDED VIEW: Full rich multi-line card */
-          <>
-            {/* Header Row: #xx Badge, Offset pill, and Collapse Chevron */}
-            <div className="flex items-center justify-between gap-2 min-w-0">
-              <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                <span className="px-1.5 py-0.5 rounded-md bg-btn-primary-bg text-btn-primary-text text-[10px] font-mono font-bold shrink-0 shadow-2xs">
-                  {shotTag}
-                </span>
-
-                {hasOffset && (
-                  <span className="px-1.5 py-0.5 rounded-md bg-sky-500/15 border border-sky-500/30 text-sky-600 dark:text-sky-300 text-[10px] font-mono font-bold uppercase tracking-wider flex items-center gap-1 shrink-0">
-                    <Crosshair className="w-2.5 h-2.5" />
-                    <span>OFFSET {offsetMag.toFixed(2)}m</span>
-                  </span>
-                )}
-              </div>
-
-              <div
-                aria-hidden="true"
-                className="p-1 rounded-lg text-text-faint group-hover:text-text-main group-hover:bg-surface-subtle transition-colors duration-100 shrink-0"
-              >
-                <ChevronDown className="w-3.5 h-3.5" />
-              </div>
-            </div>
-
-            {/* Title Row */}
-            <div className="text-xs font-sans font-semibold text-text-main leading-snug group-hover:text-accent-primary transition-colors">
-              {cleanLabel}
-            </div>
-
-            {/* Optics & Maneuver Row */}
-            <div className="flex items-center gap-2 text-[10px] font-mono text-text-muted pt-0.5 flex-wrap">
+          /* EXPANDED VIEW: Multi-Row Directorial Spec Strip & Callout */
+          <div className="space-y-2 pt-0.5">
+            {/* Row 2: Optics & Physical Rig / Maneuver Spec Strip */}
+            <div className="flex items-center gap-2 text-[10.5px] font-mono text-text-muted flex-wrap">
               <span className="flex items-center gap-1 text-text-main font-semibold">
                 <Aperture className="w-3 h-3 text-sky-500" />
-                {lensMm}mm Prime
-                {dof.enabled ? ` · ${formatApertureFStop(dof.apertureFStop)}` : ''} · {aspectLabel} Gate
+                <span>
+                  {lensMm}mm Prime
+                  {dof.enabled ? ` · ${formatApertureFStop(dof.apertureFStop)}` : ''} · {aspectLabel}
+                </span>
               </span>
+
+              <span className="text-border-main">|</span>
+
+              <span className="flex items-center gap-1 text-amber-600 dark:text-amber-300 uppercase font-semibold">
+                <Compass className="w-3 h-3 text-amber-500" />
+                <span>
+                  {stageCam.rig ? `${stageCam.rig.type.replace('_', ' ')} · ` : ''}
+                  {stageCam.maneuver}
+                </span>
+              </span>
+
               {(dof.hasExplicitFocus || dof.enabled) && (
                 <>
                   <span className="text-border-main">|</span>
@@ -178,42 +170,53 @@ export const ShotBreakdownHud: React.FC<ShotBreakdownHudProps> = ({
                   </span>
                 </>
               )}
-              <span className="text-border-main">|</span>
-              <span className="flex items-center gap-1 text-amber-600 dark:text-amber-300 uppercase font-semibold">
-                <Compass className="w-3 h-3 text-amber-500" />
-                {stageCam.rig ? `${stageCam.rig.type.replace('_', ' ')} · ` : ''}
-                {stageCam.maneuver}
-              </span>
+            </div>
+
+            {/* Row 3: Directorial Tracking & Staging Strip */}
+            <div className="flex items-center gap-2.5 text-[10px] font-mono text-text-muted pt-1.5 border-t border-border-subtle flex-wrap">
+              {/* Target Entity with Blueprint Color Dot */}
+              <div className="flex items-center gap-1.5 shrink-0">
+                <Crosshair className="w-3 h-3 text-sky-500" />
+                {targetInfo.color && (
+                  <span
+                    className="w-2 h-2 rounded-full shrink-0 shadow-xs"
+                    style={{ backgroundColor: targetInfo.color }}
+                  />
+                )}
+                <span className="font-semibold text-text-main">
+                  {targetInfo.label}
+                </span>
+              </div>
+
+              {/* Full 3D Offset Vector */}
               {hasOffset && offset && (
                 <>
                   <span className="text-border-main">|</span>
-                  <span className="text-sky-600 dark:text-sky-300 font-mono">
-                    Δ [{offset.x >= 0 ? `+${offset.x.toFixed(2)}` : offset.x.toFixed(2)},{' '}
-                    {offset.y >= 0 ? `+${offset.y.toFixed(2)}` : offset.y.toFixed(2)},{' '}
-                    {offset.z >= 0 ? `+${offset.z.toFixed(2)}` : offset.z.toFixed(2)}]m
+                  <span className="text-sky-600 dark:text-sky-300 font-mono font-medium shrink-0">
+                    {formatSignedVector3D(offset)}
                   </span>
                 </>
               )}
-              <span className="text-border-main">|</span>
-              <span>
-                {cameraMode === 'stage-pov' ? (
-                  <span className="text-amber-600 dark:text-amber-300 font-semibold inline-flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                    Stage Cam Viewfinder
+
+              {/* Shot Timing */}
+              {shot && (
+                <>
+                  <span className="text-border-main">|</span>
+                  <span className="flex items-center gap-1 text-text-muted shrink-0">
+                    <Clock className="w-3 h-3 text-text-faint" />
+                    <span>{formatShotTiming(shot.startSec, shot.endSec)}</span>
                   </span>
-                ) : (
-                  cameraStateText
-                )}
-              </span>
+                </>
+              )}
             </div>
 
-            {/* Directorial Staging Description */}
+            {/* Row 4: Directorial Staging Description (Screenplay Callout Box) */}
             {shot?.description && (
-              <p className="text-[11px] font-sans text-text-muted leading-relaxed pt-1 border-t border-border-subtle line-clamp-2">
-                {shot.description}
-              </p>
+              <div className="mt-1 p-2.5 rounded-xl bg-surface-subtle/80 border-l-2 border-accent-primary text-[11.5px] font-sans text-text-body leading-relaxed shadow-2xs">
+                <p>{shot.description}</p>
+              </div>
             )}
-          </>
+          </div>
         )}
       </div>
     </div>

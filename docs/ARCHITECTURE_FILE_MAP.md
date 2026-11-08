@@ -145,6 +145,7 @@ stageflow/
 │   │   ├── CompactDioramaHeader.tsx # Unified compact diorama header (<768px)
 │   │   ├── UniversalVideoViewport.tsx  # Local video, YouTube IFrame, or 60fps Stage Cam Simulator
 │   │   ├── ShotBreakdownHud.tsx     # Top-left active shot, lens, maneuver & staging note overlay
+│   │   ├── shotBreakdownUtils.ts    # Target resolver, 3D offset formatting & film gate helpers
 │   │   ├── CameraTelemetryCapsule.tsx  # Dual-camera telemetry pill with [OBS|CAM] switch & 1-click YAML copy
 │   │   ├── CameraTelemetryHoverCard.tsx # Precision degrees, meters, focus & aperture hover inspection card
 │   │   ├── telemetryYamlFormatter.ts   # Pure generator for scoped `camera:` and `observer_camera:` snippets
@@ -170,6 +171,7 @@ stageflow/
         ├── scoreContract.test.ts
         ├── scoreYamlUtils.test.ts
         ├── telemetryYamlFormatter.test.ts
+        ├── shotBreakdownUtils.test.ts
         ├── guideUtils.test.ts
         ├── guideSnippets.test.ts
         ├── storage.test.ts

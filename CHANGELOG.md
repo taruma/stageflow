@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Top-Left Directorial Shot Breakdown HUD Redesign & Visual Polish (`src/ui/ShotBreakdownHud.tsx`, `src/ui/shotBreakdownUtils.ts`, `tests/unit/shotBreakdownUtils.test.ts`, `docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md`)**:
+  - Unified header layout across both Collapsed and Expanded states into a single continuous row (`[#xx]` dark badge, clean title without redundant `"Shot ## · "` prefix, and chevron toggle), permanently resolving the visual jump where `#xx` was previously stranded alone on an empty line in expanded view.
+  - Streamlined collapsed line 2 with essential cine spec tokens (`35mm · DOLLY · F 2.6m · Δ 0.19m`) featuring semantic color accents, removing viewport state clutter (`Paused · Free Orbit` which is already displayed in the bottom-left camera dock).
+  - Implemented structured 2-row directorial spec strip in the expanded state:
+    - **Optics & Rig Row**: Focal length, aperture stop, film gate aspect ratio (`16:9 Gate`, `2.39:1 Gate`), compass rig/maneuver badge, and focus distance.
+    - **Directorial Tracking Row**: Look-At Target with crosshair and entity theme color dot (`🎯 ● Ruby (Hero)` resolved against scene entities), full 3D signed offset vector (`Δ [+0.15, -0.12, +0.00]m`), and shot timing (`Start 42.0s · Dur 16.0s`).
+  - Restyled directorial staging description into an authentic screenplay callout container (`bg-surface-subtle/80 rounded-xl p-2.5 border-l-2 border-accent-primary`) with high-contrast text.
+  - Extracted pure helper functions (`cleanShotLabel`, `resolveShotTargetInfo`, `formatSignedVector3D`, `formatFilmGateLabel`, `formatShotTiming`) into `shotBreakdownUtils.ts` with 12 deterministic unit tests in `tests/unit/shotBreakdownUtils.test.ts`.
+
 ### Added
 - **Executive Scene Production Brief & Call Sheet (`src/ui/left-panel/SceneProductionBrief.tsx`, `src/ui/left-panel/SceneEntityRoster.tsx`, `src/ui/left-panel/VideoWorkspaceSubpanel.tsx`, `src/ui/InteractiveStudioApp.tsx`)**:
   - Re-architected the Directorial Workspace (left-panel subpanel below the reference video player) into a rich, static Executive Scene Production Sheet & Call Sheet derived directly from score metadata.
