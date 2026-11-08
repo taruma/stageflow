@@ -22,6 +22,7 @@ export interface DirectorialTransportBarProps {
   isMuted: boolean;
   loopActiveShot: boolean;
   onTogglePlay: () => void;
+  onPause?: () => void;
   onSeek: (targetSec: number) => void;
   onStepFrames: (frames: number) => void;
   onSetPlaybackRate: (rate: number) => void;
@@ -40,6 +41,7 @@ export const DirectorialTransportBar: React.FC<
   isMuted,
   loopActiveShot,
   onTogglePlay,
+  onPause,
   onSeek,
   onStepFrames,
   onSetPlaybackRate,
@@ -58,7 +60,9 @@ export const DirectorialTransportBar: React.FC<
         safeDuration={safeDuration}
         currentSec={currentSec}
         loopActiveShot={loopActiveShot}
+        isPlaying={isPlaying}
         onSeek={onSeek}
+        onPause={onPause}
       />
 
       {/* Row 2: Auto-Centering Shot Chips with Edge Fade Masks & Hidden Raw Scrollbar */}

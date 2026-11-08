@@ -17,7 +17,9 @@ export interface DirectorialTimelineTrackProps {
   safeDuration: number;
   currentSec: number;
   loopActiveShot: boolean;
+  isPlaying: boolean;
   onSeek: (targetSec: number) => void;
+  onPause?: () => void;
 }
 
 export function formatTimecode(sec: number): string {
@@ -35,7 +37,9 @@ export const DirectorialTimelineTrack: React.FC<
   safeDuration,
   currentSec,
   loopActiveShot,
+  isPlaying,
   onSeek,
+  onPause,
 }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [hoverState, setHoverState] = useState<{
@@ -203,7 +207,17 @@ export const DirectorialTimelineTrack: React.FC<
         max={safeDuration}
         step={0.01}
         value={currentSec}
-        onChange={(e) => onSeek(parseFloat(e.target.value))}
+        onPointerDown={() => {
+          if (isPlaying) {
+            onPause?.();
+          }
+        }}
+        onChange={(e) => {
+          if (isPlaying) {
+            onPause?.();
+          }
+          onSeek(parseFloat(e.target.value));
+        }}
         className="relative w-full h-6 appearance-none bg-transparent cursor-pointer accent-text-main z-20"
         title="Scrub timeline (deterministically reconstructs 3D stage at any timestamp)"
       />

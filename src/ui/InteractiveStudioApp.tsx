@@ -528,6 +528,7 @@ export const InteractiveStudioApp: React.FC = () => {
         isMuted={mediaClock.isMuted}
         loopActiveShot={mediaClock.loopActiveShot}
         onTogglePlay={mediaClock.togglePlay}
+        onPause={mediaClock.pause}
         onSeek={handleSeekAndSync}
         onStepFrames={handleStepFramesAndSync}
         onSetPlaybackRate={mediaClock.setPlaybackRate}

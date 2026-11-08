@@ -180,6 +180,15 @@ pre {
   scrollbar-color: var(--border-main) transparent;
 }
 
+/* Completely hide scrollbars while maintaining full scrollability */
+.no-scrollbar {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
 .custom-scrollbar::-webkit-scrollbar,
 .cm-scroller::-webkit-scrollbar,
 pre::-webkit-scrollbar {

@@ -224,35 +224,24 @@ Decomposed into 3 focused submodules to preserve the $\le 250$ line modularity s
 1. **Directorial Timeline Track (`DirectorialTimelineTrack.tsx`)**:
    - Proportional shot boundary razor edit cuts under the scrubber.
    - Dual-gradient playback progress fill.
+   - **Auto-Pause on Scrubber Interaction**: Grabbing the range slider (`onPointerDown`) or dragging across it (`onChange`) automatically pauses active playback so the director can inspect exact frame poses manually without fighting playback advance.
    - **Floating Hover Preview Tooltip**: Hovering across the track displays a floating tactile pill above the cursor (`00:21.86 · #04 Evan Grabs Ruby's Arm`) clamped within container bounds, paired with a razor vertical hairline on the timeline.
    - **Luminous Emerald Loop Indicator**: When `Loop Shot` is enabled, highlights the active shot's time range on the timeline with an emerald accent fill, subtle glow, and crisp `[` and `]` boundary bracket ticks.
 2. **Auto-Centering Shot Chips Strip with Chevrons (`DirectorialShotChipsStrip.tsx`)**:
    - Flanking `<` and `>` chevron buttons allowing 1-click smooth peek scrolling left/right through off-screen shots without jumping the playhead.
    - Automatically smooth-scrolls the active shot chip into the center on shot cut boundaries via `activeChipRef.scrollIntoView`.
    - Allows free trackpad / mouse-wheel horizontal peeking forward and backward at any time.
-   - Edge fade masks (`mask-image: linear-gradient(...)`) indicate off-screen shots cleanly without an intrusive raw scrollbar track (`[scrollbar-width:none]`).
+   - Edge fade masks (`mask-image: linear-gradient(...)`) indicate off-screen shots cleanly without an intrusive raw scrollbar track, enforced cross-browser via `.no-scrollbar` and inline `scrollbarWidth: none` styles.
 3. **Unified Centered Transport Deck (`DirectorialTransportDeck.tsx`)**:
    - Consolidates all transport controls (Restart, Frame Step Back, Play/Pause, Frame Step Forward, Timecode readout, Loop Shot toggle, Audio Mute, and Playback Speed pills `0.25x`–`2x`) into a **single, balanced, centered island**.
    - Leaves both left and right outer flanks open, providing a clean, distraction-free cockpit.
-  - Redundant project-level actions (`Duplicate`, `Reset`) are omitted as they reside in the Score Library.
-- **Dedicated Score Authoring Guide & Spec View (`ScoreAuthoringGuideView.tsx`, `?mode=guide` / `?mode=spec`)**:
-  - Mounted when `?mode=guide` or `?mode=spec` is present in the URL, rendering `docs/YAML_AUTHORING_GUIDE.md` or `docs/STAGEFLOW_SCRIPT_SPECIFICATION.md` in a dedicated, full-window Markdown + KaTeX reading environment.
-  - Skips mounting the 3D diorama canvas, video player, and transport deck entirely (zero GPU/WebGL overhead).
-  - **Granular Bundle Code-Splitting**: `App.tsx` lazily imports `InteractiveStudioApp`, `ScoreAuthoringGuideView`, and `HeadlessRecorderView`. Rollup `manualChunks` separates `vendor-three` (Three.js, R3F, Drei: ~364kB gzip), `vendor-katex` (KaTeX, ReactMarkdown: ~133kB gzip), and `vendor-codemirror` (~112kB gzip). Navigating to `?mode=guide` drops the initial payload from ~783kB gzip down to ~181kB gzip (a ~77% reduction) because the 3D engine is never downloaded.
-  - **TOC-Targeted Topic Search**: Topic search filters the two-tier Table of Contents outline in real-time, highlighting matching chapters and subheadings while keeping the central reading canvas 100% complete and intact without markdown re-compilation or text shredding.
-  - **Suspense Loading States**: Features animated `<GuideLoadingSkeleton />` for progressive documentation loading and direct instant mounting (`fallback={null}`) for the 3D studio.
-  - Features StageFlow theme synchronization, a persistent two-tier Table of Contents sidebar (`GuideSidebarToc.tsx`) displaying H2 chapters and detailed H3 subheadings with active Scroll Spy tracking, responsive mobile slide-over drawer, in-app cross-specification tab switching, and a `[ ← Back to Studio ]` / tab-close button.
-- **Conditional Diagnostics & Alert Banner (`YamlDiagnosticsBanner.tsx`)**:
-  - Renders `null` when the score is valid, giving maximum vertical space directly to the CodeMirror 6 canvas without an empty idle strip.
-  - Displays exact line and column numbers on syntax errors (`Line X, Col Y`) extracted from `YAMLParseError.linePos` with a 1-click **`[ Jump ]`** button that positions the cursor and scrolls smoothly to the invalid line.
-  - Displays amber warnings for non-fatal schema diagnostics.
-- **Backward Compatibility**: `YamlInspectorDrawer.tsx` is preserved as a thin adapter delegating to `YamlStudioPanel.tsx`.
+   - Redundant project-level actions (`Duplicate`, `Reset`) are omitted as they reside in the Score Library.
 
-### 4.6 Drag-and-Drop Custom Asset Loader (`useFileDropLoader.ts`)
+### 4.7 Drag-and-Drop Custom Asset Loader (`useFileDropLoader.ts`)
 - Dropping any `.yaml`/`.yml`/`.json` file or `.mp4`/`.webm`/`.mov` video file anywhere onto the window (or selecting via `[ Load Video / YAML ]`) binds the assets in browser memory (`URL.createObjectURL`) with zero server upload required.
 - **Auto-Fork Collision Guard**: If a dropped YAML file has an `id` that matches a bundled preset (e.g. `demo-blueprint`), StageFlow automatically forks it with a unique custom ID, preserving the factory preset intact and saving the file to `Custom Projects`.
 
-### 4.7 Storage Persistence Indicator (`StorageStatusBadge.tsx`)
+### 4.8 Storage Persistence Indicator (`StorageStatusBadge.tsx`)
 - Displayed in the top studio header and the YAML inspector status bar.
 - Visually communicates the active persistence tier:
   - `Bundled Baseline` (pristine unedited preset).
@@ -260,15 +249,15 @@ Decomposed into 3 focused submodules to preserve the $\le 250$ line modularity s
   - `Custom (IndexedDB)` (imported custom scene saved in IndexedDB).
   - `Saving Draft...` (transient pulse while debounced auto-save writes).
 
-### 4.8 Reset Confirmation Modal (`ConfirmResetModal.tsx`)
+### 4.9 Reset Confirmation Modal (`ConfirmResetModal.tsx`)
 - Accessible modal dialog protecting against accidental data loss.
 
-### 4.9 Unified Project Management & Toast Notifications (`ScoreLibraryModal.tsx`, `ToastContainer.tsx`)
+### 4.10 Unified Project Management & Toast Notifications (`ScoreLibraryModal.tsx`, `ToastContainer.tsx`)
 - **Unified Studio Hub**: Custom projects (stored in IndexedDB) are managed directly within the Score Library's Inspector pane (`ScoreInspectorPane.tsx`), featuring inline title renaming, YAML file export, project duplication, and delete confirmation with smooth fallback to Blueprint 01, completely eliminating redundant standalone dialogs.
 - **Transient Toast Feedback (`ToastContainer.tsx`)**: Lightweight 3-second floating feedback banners confirming file drops, auto-forks, project deletions, and exports.
 - **Legacy Draft Auto-Migration**: On startup hydration, any legacy drafts in IndexedDB that modified bundled presets are automatically migrated into standalone Custom Projects with zero data loss.
 
-### 4.10 Viewport Label, Composition Guides & Optical DoF Blur Controls (`LabelDisplayModeToggle.tsx`)
+### 4.11 Viewport Label, Composition Guides & Optical DoF Blur Controls (`LabelDisplayModeToggle.tsx`)
 - Floating top-right glassmorphic pill overlay mounted on the 3D diorama canvas.
 - Conditioned so the `Guides` and `Blur` toggle buttons appear strictly when in `Stage Cam POV` (`cameraMode === 'stage-pov'`), keeping the 3D Observer view chrome uncluttered.
 - Supports 3 distinct directorial visibility modes (`LabelDisplayMode`):
@@ -280,14 +269,14 @@ Decomposed into 3 focused submodules to preserve the $\le 250$ line modularity s
 - **Optical DoF Blur Toggle (`[ Blur ]` / Hotkey `B`)**: Toggles real-time thin-lens Depth-of-Field bokeh simulation across both the Stage Cam POV viewfinder and the Procedural Stage Cam Monitor (`stageflow:ui:dof-blur`).
 - **Synchronous Persistence**: Preferences are remembered across reloads via `localStorage` (`stageflow:ui:label-mode`, `stageflow:ui:viewfinder-guides`, `stageflow:ui:dof-blur`).
 
-### 4.11 Director's Optical Viewfinder Overlay (`StageCamViewfinderOverlay.tsx`)
+### 4.12 Director's Optical Viewfinder Overlay (`StageCamViewfinderOverlay.tsx`)
 - Engages automatically whenever the 3D diorama switches to **`Stage Cam POV`** (`cameraMode === 'stage-pov'`).
 - **Centered Film Gate**: Sized to `score.aspectRatio` (`16:9`, `2.39:1`) and scaled to 84% of the viewport (`VIEWFINDER_GATE_SCALE = 0.84`), auto-scaling cleanly when the split divider is dragged.
 - **Semi-Translucent Look-Around Mask**: Renders an 82% darkened obsidian veil (`rgba(5, 8, 17, 0.82)`) outside the active gate boundary so off-camera actors and props waiting in the wings remain faintly visible while the active frame pops with commanding contrast.
 - **Framing Brackets & Stamp**: Luminous corner brackets and a top-left micro-stamp (`REC GATE · 16:9 · 50mm`).
 - **Toggleable Guides**: 90% Safe-Action dashed frame, Rule-of-Thirds 3x3 grid, and Center Optical Crosshairs.
 
-### 4.12 Deterministic 60fps Headless Viewport Recorder CLI (`scripts/record/`, `src/recorder/`)
+### 4.13 Deterministic 60fps Headless Viewport Recorder CLI (`scripts/record/`, `src/recorder/`)
 - Standalone CLI recording tool (`npm run record [scene] [options]`) driven by Playwright and FFmpeg.
 - **Stateless Frame Stepping ($t_i = i / 60\text{s}$)**: Steps through any choreography score frame-by-frame with zero dropped frames or browser pacing lag, streaming PNG frames into an FFmpeg H.264/VP9 pipe.
 - **Dedicated Headless Render Route (`?mode=headless-render`)**: `App.tsx` routes to `<HeadlessRecorderView />`, mounting a pure, chrome-free diorama canvas with zero localStorage polling, media clocks, or extraneous listeners.

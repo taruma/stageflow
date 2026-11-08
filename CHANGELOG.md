@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- **Auto-Pause on Scrubber Interaction & Cross-Browser Scrollbar Hiding (`src/ui/transport/*`, `src/ui/DirectorialTransportBar.tsx`, `src/ui/InteractiveStudioApp.tsx`, `src/index.css`, `docs/*`)**:
+  - Implemented auto-pause on scrubber grab and scrub drag (`onPointerDown` and `onChange` on the timeline range slider), pausing active playback upon initial touch/click so the user can inspect intermediate frames without the playhead running away.
+  - Added `.no-scrollbar` cross-browser utility in `src/index.css` paired with explicit `scrollbarWidth: 'none'` and `msOverflowStyle: 'none'` styles on `DirectorialShotChipsStrip.tsx`, permanently eliminating native browser scrollbar tracks on Windows Chromium/WebKit/Firefox.
 - **Directorial Playback Interface Redesign & Submodule Decomposition (`src/ui/transport/*`, `src/ui/DirectorialTransportBar.tsx`, `docs/*`)**:
   - Reorganized the bottom transport row into a **Unified Centered Island** (`DirectorialTransportDeck.tsx`), grouping Play/Pause, Frame Steps, Timecode, Loop Toggle, Audio Mute, and Playback Speed (`0.25x`–`2x`) into a cohesive cockpit with open left and right flanks.
   - Implemented an **Auto-Centering Shot Chips Strip with Navigation Chevrons** (`DirectorialShotChipsStrip.tsx`) featuring flanking `<` and `>` buttons for smooth peek scrolling, automatic active chip centering upon camera cuts (`scrollIntoView`), hidden intrusive scrollbar tracks, and bilateral gradient edge fades.

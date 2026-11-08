@@ -90,12 +90,14 @@ export const DirectorialShotChipsStrip: React.FC<
         ref={containerRef}
         onScroll={updateScrollBounds}
         style={{
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none',
           maskImage:
             'linear-gradient(to right, transparent, black 24px, black calc(100% - 24px), transparent)',
           WebkitMaskImage:
             'linear-gradient(to right, transparent, black 24px, black calc(100% - 24px), transparent)',
         }}
-        className="flex-1 flex items-center gap-1.5 overflow-x-auto px-4 py-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="flex-1 flex items-center gap-1.5 overflow-x-auto px-4 py-0.5 no-scrollbar"
       >
         {shots.map((shot) => {
           const isActive = activeShotId === shot.id;
