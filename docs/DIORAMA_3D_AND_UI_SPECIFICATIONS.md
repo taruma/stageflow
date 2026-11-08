@@ -196,19 +196,25 @@ Adopts professional 3D viewport convention (Blender, Unreal Engine, Maya) distri
    - **Lower Tier ([`CameraModeSwitcher.tsx`](../src/ui/CameraModeSwitcher.tsx))**: Tactile segmented 3-way POV mode switcher (`Scripted` [👁️], `Free Orbit` [🌐], `Stage Cam` [🎥]).
 4. **Bottom-Right (Telemetry & Coordinates)**: [`CameraTelemetryCapsule.tsx`](../src/ui/CameraTelemetryCapsule.tsx) displaying live degrees, distance, and 1-click YAML snippet copying.
 
-### 4.3 Authoring Telemetry Capsule (`CameraTelemetryCapsule.tsx`)
+### 4.3 Authoring Telemetry Capsule (`CameraTelemetryCapsule.tsx`, `CameraTelemetryHoverCard.tsx`, `telemetryYamlFormatter.ts`)
 - Floating bottom-right glassmorphic badge inside the 3D viewport displaying live **human degrees and metric meters** (`Pitch° / Yaw° · Distance(m) · (X, Y, Z)`).
-- **Live Free-Orbit Tracking**: Updates in real time as the user orbits/pans/zooms via `OrbitControls` (`cartesianToSpherical`).
-- **Narrow Viewport Auto-Hiding**: When the diorama pane width drops below the $768\text{px}$ narrow threshold, the capsule is automatically unmounted to keep the bottom 3D stage area 100% clean and unobstructed. In wide mode ($768\text{px}$ to $880\text{px}$), target vector coordinates (`TGT [...]`) are compacted to preserve bottom clearance with the camera mode switcher, expanding automatically when diorama width $\ge 880\text{px}$.
-- **1-Click YAML Snippet Copy**: Clicking the capsule copies a formatted YAML camera block directly to the clipboard:
+- **Integrated Dual-Camera Switcher (`[ 👁 OBS | 🎥 CAM ]`)**:
+  - **`[ 👁 OBS ]` (Observer Camera)**: Tracks the active 3D diorama viewport camera in real time as the user orbits/pans/zooms via `OrbitControls` (`cartesianToSpherical`). Clicking copies a ready-to-paste scoped `observer_camera:` block.
+  - **`[ 🎥 CAM ]` (Stage Camera)**: Displays the active shot's physical filming camera pose (`pitch`, `yaw`, `distance`, `target`, `lens`). Clicking copies a scoped `camera:` block enriched with optical parameters (`focus`, `aperture`).
+  - **Auto-Sync with Manual Override**: Switching viewport modes (bottom-left) to `Stage Cam` automatically selects `CAM`; switching to `Scripted` or `Free Orbit` selects `OBS`. Directors can toggle either tab at any time to inspect the other camera without altering the viewport view.
+- **Narrow Viewport Auto-Hiding**: When the diorama pane width drops below the $768\text{px}$ narrow threshold, the capsule is automatically unmounted to keep the bottom 3D stage area 100% clean and unobstructed. In wide mode ($768\text{px}$ to $920\text{px}$), target vector coordinates (`TGT [...]`) are compacted to preserve bottom clearance with the camera mode switcher, expanding automatically when diorama width $\ge 920\text{px}$.
+- **1-Click Scoped YAML Snippet Copy**: Clicking the capsule copies formatted YAML directly to the clipboard:
   ```yaml
-  target: [0.00, 1.10, 0.00]
-  distance: 7.50
-  pitch: 26.0
-  yaw: 38.0
-  lens: 35mm
+  camera:
+    target: [0.00, 1.20, 0.50]
+    distance: 4.80
+    pitch: 15.0
+    yaw: 45.0
+    lens: 50mm
+    focus: 2.59m
+    aperture: f/2.6
   ```
-- **Context-Aware Physical Rig Readouts**: When an active shot has a physical mount (`tripod`, `track`, `spline_track`), the capsule renders an amber category badge (`TRIPOD` / `TRACK`) and an interactive tooltip breakdown. Clicking the capsule outputs clean `rig:` YAML syntax matching the physical mount.
+- **Context-Aware Physical Rig & Optical Hover Specs**: When an active shot has a physical mount (`tripod`, `track`, `spline_track`), the capsule renders an amber category badge (`TRIPOD` / `TRACK`). The upward hover tooltip card (`CameraTelemetryHoverCard.tsx`) displays detailed pitch, yaw, roll, distance, target, lens, rig mount, and in `CAM` mode adds active maneuver, focus distance, and aperture f-stop.
 
 ### 4.4 Dedicated Compact Diorama Header (`CompactDioramaHeader.tsx` — `< 768px`)
 - When the diorama pane width drops below $768\text{px}$ (e.g. in 3-column studio edit mode, split mode, or on compact screens), `src/ui/InteractiveStudioApp.tsx` dynamically switches from the distributed top overlay trio to a dedicated, unified compact header mounted at `top-3 left-3 right-3`:

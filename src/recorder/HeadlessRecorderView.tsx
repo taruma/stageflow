@@ -257,11 +257,10 @@ export const HeadlessRecorderView: React.FC = () => {
             isPlaying={false}
           />
           <CameraTelemetryCapsule
-            pose={
-              config.cameraMode === 'stage-pov'
-                ? uiFrame.stageCamera.transform.pose
-                : uiFrame.observerCamera.transform.pose
-            }
+            observerPose={uiFrame.observerCamera.transform.pose}
+            stageCamera={uiFrame.stageCamera}
+            observerRig={uiFrame.observerCamera.rig}
+            cameraMode={config.cameraMode}
           />
         </>
       )}

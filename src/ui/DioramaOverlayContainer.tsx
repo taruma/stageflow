@@ -124,12 +124,10 @@ export const DioramaOverlayContainer: React.FC<DioramaOverlayContainerProps> = (
       {/* 4. BOTTOM-RIGHT: Authoring Telemetry Capsule + 1-Click YAML Copy (Hidden when narrow) */}
       {!isNarrow && (
         <CameraTelemetryCapsule
-          pose={liveViewportPose}
-          activeRig={
-            cameraMode === 'stage-pov'
-              ? frame.stageCamera.rig
-              : frame.observerCamera.rig ?? frame.stageCamera.rig
-          }
+          observerPose={liveViewportPose}
+          stageCamera={frame.stageCamera}
+          observerRig={frame.observerCamera.rig}
+          cameraMode={cameraMode}
           dioramaWidth={dioramaWidth}
         />
       )}

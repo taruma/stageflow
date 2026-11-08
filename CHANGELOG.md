@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Dual-Camera Telemetry Capsule with Integrated `[ OBS | CAM ]` Switcher (`src/ui/CameraTelemetryCapsule.tsx`, `src/ui/CameraTelemetryHoverCard.tsx`, `src/ui/telemetryYamlFormatter.ts`, `tests/unit/telemetryYamlFormatter.test.ts`)**:
+  - Implemented an integrated segmented control (`[ 👁 OBS | 🎥 CAM ]`) inside the bottom-right telemetry capsule, enabling directors to seamlessly inspect and copy either the Observer Camera or the active shot's Stage Camera.
+  - Formatted scoped YAML snippet generation: `camera:` with indented properties (`target`, `distance`, `pitch`, `yaw`, `lens`, `focus`, `aperture`) when in `CAM` mode, and `observer_camera:` when in `OBS` mode.
+  - Implemented automatic mode synchronization: switching viewport modes (bottom-left) to `Stage Cam` automatically selects `CAM`; switching to `Scripted` or `Free Orbit` selects `OBS`, while preserving immediate manual tab overrides.
+  - Extracted pure `formatTelemetryYamlSnippet` and comprehensive Vitest unit tests in `tests/unit/telemetryYamlFormatter.test.ts`.
+  - Extracted `<CameraTelemetryHoverCard>` displaying full directorial optics in `CAM` mode (focus distance, continuous aperture, maneuver, and physical mount rigs).
+
 ### Changed
 - **Responsive Directorial Monitor Header & Compact Telemetry Spacing (`src/stage/StageCamMonitorCanvas.tsx`, `docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md`)**:
   - Replaced verbose `"STAGE CAM 01"` designation and `"Full-Frame"` suffix with a concise `● CAM | [lens]mm · [f-stop]` format with `whitespace-nowrap shrink-0` protection.
