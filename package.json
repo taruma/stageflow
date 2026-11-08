@@ -10,7 +10,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "preview": "vite preview",
-    "record": "vite-node scripts/record/cli.ts"
+    "record": "vite-node scripts/record/cli.ts",
+    "record:batch": "vite-node scripts/record/batchRecord.ts"
   },
   "dependencies": {
     "@codemirror/commands": "^6.11.1",

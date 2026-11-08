@@ -40,10 +40,20 @@ export async function ensureViteServer(port = 5173): Promise<ServerInstance> {
     process.execPath,
     [viteBin, '--port', String(port), '--strictPort'],
     {
-      stdio: 'ignore',
+      stdio: ['ignore', 'pipe', 'pipe'],
       detached: false,
     }
   );
+
+  child.stdout?.on('data', (d) => {
+    const str = d.toString();
+    if (str.includes('page reload') || str.includes('hmr') || str.includes('error')) {
+      console.log('[Vite Server]:', str.trim());
+    }
+  });
+  child.stderr?.on('data', (d) => {
+    console.error('[Vite Error]:', d.toString().trim());
+  });
 
   // Poll server readiness for up to 15 seconds
   const startTime = Date.now();

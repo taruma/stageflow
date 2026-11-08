@@ -20,6 +20,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Synchronized living documentation in `docs/YAML_AUTHORING_GUIDE.md` and test suite descriptions.
 
 ### Fixed
+- **Headless Recorder Bridge Resilience & Watcher Isolation (`src/recorder/HeadlessRecorderView.tsx`, `scripts/record/playwrightDriver.ts`, `scripts/record/serverManager.ts`, `vite.config.ts`)**:
+  - Preserved `window.__STAGEFLOW_RECORDER__` bridge reference across React render transitions rather than deleting it on effect unmount, preventing transient undefined access during Playwright frame evaluations.
+  - Expanded step retry ceiling to 10 attempts ($1.5\text{s}$) with explicit readiness checks in `playwrightDriver.ts`.
+  - Added Windows path separator regex (`/[/\\]recordings[/\\]/`) to Vite `server.watch.ignored` in `vite.config.ts`, ensuring continuous video chunk streaming into `recordings/` does not trigger unsolicited full-page browser reloads.
+  - Piped Vite server stdout/stderr in `serverManager.ts` to surface background process errors and reloads.
 - **Compact Diorama Header Breakpoint & Overlay Collision Protection (`src/ui/InteractiveStudioApp.tsx`, `src/ui/DioramaOverlayContainer.tsx`, `src/ui/CompactDioramaHeader.tsx`, `src/ui/CameraTelemetryCapsule.tsx`, `src/ui/ShotBreakdownHud.tsx`, `docs/*`)**:
   - Increased the narrow diorama threshold from `580px` to `768px` (`dioramaWidth < 768`), ensuring standard 3-column Studio mode (`Split` + `Edit` ON) cleanly collapses into the unified single top bar (`CompactDioramaHeader`) instead of crowding the viewport.
   - Added container-aware target vector compaction in `CameraTelemetryCapsule` (`showTargetCoords = dioramaWidth >= 880`), hiding bulky `TGT [...]` coordinates in medium-wide views ($768\text{px}$–$880\text{px}$) to prevent bottom-edge collisions between the camera mode switcher and telemetry capsule while preserving full coordinates on hover tooltip.
@@ -31,6 +36,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Streamlined 4-wheel dolly geometry generation to maintain the strict module line cap (248 lines).
 
 ### Added
+- **Batch Viewport Video Recorder CLI (`record:batch`) (`scripts/record/batchRecord.ts`, `package.json`, `docs/ARCHITECTURE_FILE_MAP.md`)**:
+  - Implemented automated batch recorder CLI iterating over all 7 factory blueprints (BP 01–07) across both Stage Camera POV (`--camera stage-pov`) and Scripted Observer Camera (`--camera scripted`) viewports at 720p 30fps.
+  - Added intelligent resume caching to skip already-rendered assets and added standard `npm run record:batch` script shortcut.
+  - Rendered all 14 reference blueprint videos into `recordings/` matching the canonical naming convention (`BPXX_STAGE_...` and `BPXX_OBSERVER_...`).
 - **Dynamic Two-Shot Framing & Multi-Subject Centroid Look-At Anchors (`src/core/types.ts`, `src/core/scorePrimitives.ts`, `src/core/cameraTargetResolver.ts`, `src/core/dofEvaluator.ts`, `src/core/cameraCueParser.ts`, `src/core/entityKinematicUtils.ts`, `src/ui/library/ScoreStageMinimap.tsx`, `tests/unit/multiTargetFraming.test.ts`, `docs/*`, `CHANGELOG.md`)**:
   - Added support for multi-entity look-at arrays (`TargetAnchor = string | string[] | Vec3`) on `target:`, `from:`, `focus:`, and entity `look_at:`, allowing directors and educators to block conversational spaces and two-shots without hardcoding coordinates.
   - Implemented pure 3D world-space centroid resolution $\vec{T}_{\text{centroid}}(t) = \frac{1}{K}\sum_{i=1}^K \vec{A}_i(t)$ in [`src/core/cameraTargetResolver.ts`](src/core/cameraTargetResolver.ts) using live evaluated entity look anchors $\vec{A}_i(t)$ and optional metric offsets, preserving pure decoupled 3D math and zero circular dependencies with camera eye positions or 2D projection angles.

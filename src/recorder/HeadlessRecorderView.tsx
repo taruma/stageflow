@@ -209,7 +209,7 @@ export const HeadlessRecorderView: React.FC = () => {
     window.__STAGEFLOW_RECORDER__ = bridge;
 
     return () => {
-      delete window.__STAGEFLOW_RECORDER__;
+      // Keep bridge defined to prevent transient undefined window.__STAGEFLOW_RECORDER__ during render transitions
     };
   }, [stepFrame]);
 

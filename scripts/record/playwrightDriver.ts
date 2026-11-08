@@ -59,6 +59,17 @@ export async function runRecordSession(
     page.on('crash', () => {
       console.error('\n❌ Browser Page Crashed!');
     });
+    page.on('framenavigated', (frame) => {
+      if (frame === page.mainFrame()) {
+        console.warn('\n⚠️ Main frame navigated to:', frame.url());
+      }
+    });
+    page.on('console', (msg) => {
+      const text = msg.text();
+      if (text.includes('[vite]') || msg.type() === 'error') {
+        console.log(`[Browser ${msg.type()}]:`, text);
+      }
+    });
 
     const targetUrl = `${serverUrl}/?mode=headless-render`;
     await page.goto(targetUrl, { waitUntil: 'domcontentloaded' });
@@ -133,16 +144,22 @@ export async function runRecordSession(
 
     for (let i = 0; i < totalFrames; i++) {
       let frameResult: RecorderFrameResult | undefined;
-      for (let attempt = 0; attempt < 5; attempt++) {
+      for (let attempt = 0; attempt < 10; attempt++) {
         try {
           frameResult = await page.evaluate(
-            (frameIdx) => window.__STAGEFLOW_RECORDER__!.stepFrame(frameIdx),
+            (frameIdx) => {
+              const rec = window.__STAGEFLOW_RECORDER__;
+              if (!rec?.stepFrame) {
+                throw new Error('__STAGEFLOW_RECORDER__.stepFrame is not ready');
+              }
+              return rec.stepFrame(frameIdx);
+            },
             i
           );
           break;
         } catch (err) {
-          if (attempt === 4) throw err;
-          await new Promise((r) => setTimeout(r, 120));
+          if (attempt === 9) throw err;
+          await new Promise((r) => setTimeout(r, 150));
         }
       }
 

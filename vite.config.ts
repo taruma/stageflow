@@ -6,7 +6,13 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
     watch: {
-      ignored: ['**/.agents/**', '**/recordings/**', '**/_examples/**'],
+      ignored: [
+        '**/.agents/**',
+        '**/recordings/**',
+        '**\\recordings\\**',
+        /[/\\]recordings[/\\]/,
+        '**/_examples/**',
+      ],
     },
   },
   optimizeDeps: {
