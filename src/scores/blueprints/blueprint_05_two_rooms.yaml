@@ -36,7 +36,7 @@ stage:
   grid_step: 1
   observer_camera:
     target: [0.0, 1.2, -0.4]
-    distance: 16.5
+    distance: 24.5
     pitch: 28
     yaw: 22
     lens: 32mm
@@ -706,8 +706,8 @@ observer_shots:
     target: [-5.5, 1.1, 0.0]
     maneuver: "orbit"
     easing: "smooth"
-    distance_start: 12.5
-    distance_end: 10.5
+    distance_start: 20.5
+    distance_end: 18.5
     pitch_start: 28
     pitch_end: 22
     yaw_start: 15
@@ -723,8 +723,8 @@ observer_shots:
     maneuver: "arc"
     easing: "cruise"
     breathe: 1.08
-    distance_start: 11.5
-    distance_end: 11.0
+    distance_start: 19.5
+    distance_end: 19.0
     pitch_start: 24
     pitch_end: 30
     yaw_start: 35
@@ -739,8 +739,8 @@ observer_shots:
     target: [2.0, 1.1, -0.4]
     maneuver: "dolly"
     easing: "smooth"
-    distance_start: 9.5
-    distance_end: 15.5
+    distance_start: 17.5
+    distance_end: 23.5
     pitch_start: 22
     pitch_end: 28
     yaw_start: -25

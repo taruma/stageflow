@@ -29,7 +29,7 @@ stage:
   grid_step: 1
   observer_camera:
     target: [2.5, 1.5, 0]
-    distance: 30.0
+    distance: 38.0
     pitch: 24
     yaw: 25
     lens: 35mm

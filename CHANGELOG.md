@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- **Spacious Observer Camera Diorama Distances (+8m) (`src/scores/blueprints/*.yaml`, `tests/unit/frameEngine.test.ts`)**:
+  - Increased baseline and dynamic observer camera distances by $+8\text{m}$ across all 7 factory blueprints (BP 01–07), providing authentic architectural diorama perspective.
+  - Eliminated viewport boundary clipping on the stage floor grid perimeter, cardinal labels (`+Z Downstage`, `-Z Upstage`), and Stage Camera frustum / track trajectories.
+  - Updated frameEngine unit tests to assert the new diorama distance parameters on Blueprints 03 and 04.
 - **Concise Blueprint Titles & Descriptive Subtitles (`src/scores/blueprints/*.yaml`, `docs/YAML_AUTHORING_GUIDE.md`, `tests/unit/frameEngine.test.ts`)**:
   - Stripped redundant `Blueprint XX:` and `BP XX ·` title prefixes across factory Blueprints 01 through 07, resolving card list text truncation (`...`) alongside the dedicated cyan `[BP 01]`–`[BP 07]` badges.
   - Updated all 7 blueprint titles to be short, punchy, and descriptive: `Two-Shot Arc Blocking` (BP 01), `Cinematic Dialogue Flow` (BP 02), `The Long-Distance Pass` (BP 03), `Cinematography & Framing` (BP 04), `Two Rooms: Threshold Crossing` (BP 05), `Optics, Rack Focus & DoF` (BP 06), and `Camera Rigs & Dolly Tracks` (BP 07).

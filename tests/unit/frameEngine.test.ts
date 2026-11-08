@@ -998,8 +998,8 @@ shots:
     // Observer Camera has no scripted cuts and holds steady at stage baseline
     const obsPose0 = f0.observerCamera.transform.pose;
     const obsPose16 = f16.observerCamera.transform.pose;
-    expect(obsPose0.distance).toBe(30.0);
-    expect(obsPose16.distance).toBe(30.0);
+    expect(obsPose0.distance).toBe(38.0);
+    expect(obsPose16.distance).toBe(38.0);
     expect(obsPose0.pitch).toBeCloseTo(obsPose16.pitch, 5);
     expect(obsPose0.yaw).toBeCloseTo(obsPose16.yaw, 5);
   });
@@ -1231,11 +1231,11 @@ shots:
     const obsStart = computeStageFrame(0.0, score).observerCamera.transform.pose;
     const obsEnd = computeStageFrame(20.0, score).observerCamera.transform.pose;
 
-    expect(obsStart.distance).toBeCloseTo(27.93, 2);
+    expect(obsStart.distance).toBeCloseTo(35.93, 2);
     expect(obsStart.pitch).toBeCloseTo(24.8 * (Math.PI / 180), 3);
     expect(obsStart.yaw).toBeCloseTo(69.2 * (Math.PI / 180), 3);
 
-    expect(obsEnd.distance).toBeCloseTo(11.63, 2);
+    expect(obsEnd.distance).toBeCloseTo(19.63, 2);
     expect(obsEnd.pitch).toBeCloseTo(28.0 * (Math.PI / 180), 3);
     expect(obsEnd.yaw).toBeCloseTo(171.7 * (Math.PI / 180), 3);
   });

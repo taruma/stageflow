@@ -32,7 +32,7 @@ stage:
   grid_step: 1
   observer_camera:
     target: [0, 1.1, 0]
-    distance: 8.5
+    distance: 16.5
     pitch: 28
     yaw: 35
     lens: 35mm
@@ -244,8 +244,8 @@ observer_shots:
     target: [0, 1.1, 0]
     maneuver: "orbit"
     easing: "cruise"
-    distance_start: 8.5
-    distance_end: 6.8
+    distance_start: 16.5
+    distance_end: 14.8
     pitch_start: 28
     pitch_end: 22
     yaw_start: 35
@@ -260,8 +260,8 @@ observer_shots:
     target: [0, 1.1, 0]
     maneuver: "orbit"
     easing: "cruise"
-    distance_start: 6.8
-    distance_end: 6.0
+    distance_start: 14.8
+    distance_end: 14.0
     pitch_start: 22
     pitch_end: 18
     yaw_start: 75
@@ -276,8 +276,8 @@ observer_shots:
     target: [0, 1.1, 0]
     maneuver: "orbit"
     easing: "smooth"
-    distance_start: 6.0
-    distance_end: 9.0
+    distance_start: 14.0
+    distance_end: 17.0
     pitch_start: 18
     pitch_end: 32
     yaw_start: -45

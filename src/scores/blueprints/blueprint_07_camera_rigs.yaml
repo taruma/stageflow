@@ -26,7 +26,7 @@ stage:
   grid_step: 1
   observer_camera:
     target: [0, 1.1, 0]
-    distance: 8.5
+    distance: 16.5
     pitch: 28
     yaw: 35
     lens: 35mm
@@ -141,7 +141,7 @@ shots:
       easing: "smooth"
     observer_camera:
       target: [0, 1.1, 0]
-      distance: 8.5
+      distance: 16.5
       pitch: 28
       yaw: 35
       lens: 35mm
@@ -169,7 +169,7 @@ shots:
       easing: "smooth"
     observer_camera:
       target: [0, 1.1, 0]
-      distance: 8.5
+      distance: 16.5
       pitch: 28
       yaw: 35
       lens: 35mm
