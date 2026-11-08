@@ -96,7 +96,12 @@ export const StageCameraRigMount: React.FC<StageCameraRigMountProps> = ({
     const liveFrame = frameRef.current;
     if (!liveFrame || !isRigVisible) return;
 
-    const liveCam = liveFrame.stageCamera;
+    const isShotDesynced =
+      Boolean(liveFrame.stageCamera.shotId) &&
+      Boolean(stageCam.shotId) &&
+      liveFrame.stageCamera.shotId !== stageCam.shotId;
+
+    const liveCam = isShotDesynced ? stageCam : liveFrame.stageCamera;
     const eye = liveCam.transform.position;
 
     // A. Update Tripod
@@ -107,6 +112,17 @@ export const StageCameraRigMount: React.FC<StageCameraRigMountProps> = ({
     // B. Update Dolly Cart
     if ((rig?.type === 'track' || rig?.type === 'spline_track') && cartGroupRef.current) {
       cartGroupRef.current.position.set(eye.x, 0, eye.z);
+
+      const pts = rig.railPoints;
+      if (pts.length >= 2) {
+        const u = liveCam.rig?.progress ?? 0;
+        const k = Math.min(pts.length - 2, Math.max(0, Math.floor(u * (pts.length - 1))));
+        const dx = pts[k + 1].x - pts[k].x;
+        const dz = pts[k + 1].z - pts[k].z;
+        if (Math.hypot(dx, dz) > 1e-4) {
+          cartGroupRef.current.rotation.y = Math.atan2(dx, dz);
+        }
+      }
 
       if (cartColumnRef.current) {
         const columnHeight = Math.max(0.05, eye.y - 0.12);
@@ -209,17 +225,12 @@ export const StageCameraRigMount: React.FC<StageCameraRigMountProps> = ({
             </mesh>
 
             {/* 4 Wheels on Rails */}
-            {[
-              [-0.21, 0.024, -0.2],
-              [0.21, 0.024, -0.2],
-              [-0.21, 0.024, 0.2],
-              [0.21, 0.024, 0.2],
-            ].map(([wx, wy, wz], wi) => (
-              <mesh key={`wheel-${wi}`} position={[wx, wy, wz]} rotation={[0, 0, Math.PI / 2]}>
+            {[-0.2, 0.2].flatMap((wz) => [-0.21, 0.21].map((wx) => (
+              <mesh key={`wheel-${wx}-${wz}`} position={[wx, 0.024, wz]} rotation={[0, 0, Math.PI / 2]}>
                 <cylinderGeometry args={[0.024, 0.024, 0.03, 12]} />
                 <meshBasicMaterial color={color} />
               </mesh>
-            ))}
+            )))}
 
             {/* Telescoping Vertical Column */}
             <mesh

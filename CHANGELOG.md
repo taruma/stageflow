@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Dolly Cart Tangent Steering & Gated Cut Protection (`src/stage/StageCameraRigMount.tsx`)**:
+  - Dynamically aligned dolly cart heading (`cartGroupRef.current.rotation.y = Math.atan2(dx, dz)`) to the local track tangent along linear and Catmull-Rom spline rails, ensuring wheels roll squarely on top of the rails on lateral ($X$-axis) and curved trucking moves rather than sitting sideways.
+  - Added atomic shot-desync gating (`isShotDesynced = liveFrame.stageCamera.shotId !== stageCam.shotId`) to freeze mount transforms during the 1-frame async React handover across camera cuts, eliminating transient 16ms mount twitching.
+  - Streamlined 4-wheel dolly geometry generation to maintain the strict module line cap (248 lines).
+
 ### Added
 - **Physical Camera Rigs, Dolly Tracks & 3D Blueprint Mounts (`src/core/types.ts`, `src/core/cameraRigEvaluator.ts`, `src/core/cameraCueParser.ts`, `src/core/scoreParser.ts`, `src/core/shotPoseEvaluator.ts`, `src/core/trajectoryChain.ts`, `src/core/frameEngine.ts`, `src/stage/StageCameraRigMount.tsx`, `src/stage/StageCameraRig.tsx`, `src/ui/CameraTelemetryCapsule.tsx`, `src/ui/DioramaOverlayContainer.tsx`, `src/ui/ShotBreakdownHud.tsx`, `src/scores/blueprints/blueprint_07_camera_rigs.yaml`, `src/core/scoreCatalog.ts`, `tests/unit/cameraRigs.test.ts`, `tests/unit/*`, `docs/*`, `AGENTS.md`, `README.md`)**:
   - Added physical camera mount features to StageFlow for both the Illustrative Stage Camera and the Viewport Observer Camera, resolving spatial decoupling between camera eye position and subject tracking.
