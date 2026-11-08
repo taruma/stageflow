@@ -222,7 +222,7 @@ Adopts professional 3D viewport convention (Blender, Unreal Engine, Maya) distri
 ### 4.6 Directorial Playback Transport Suite (`DirectorialTransportBar.tsx`, `src/ui/transport/`)
 Decomposed into 3 focused submodules to preserve the $\le 250$ line modularity standard:
 1. **Directorial Timeline Track (`DirectorialTimelineTrack.tsx`)**:
-   - Proportional shot boundary razor edit cuts under the scrubber.
+   - **High-Contrast Razor Edit Cut Dividers**: Proportional 1.5px vertical divider lines rendered on top of the track (`z-2`), maintaining crisp visibility across both unplayed sections (`bg-text-faint/70`) and the active colored progress fill (`bg-white/90` with shadow) so shot boundaries and pacing are immediately legible.
    - Dual-gradient playback progress fill.
    - **Auto-Pause on Scrubber Interaction**: Grabbing the range slider (`onPointerDown`) or dragging across it (`onChange`) automatically pauses active playback so the director can inspect exact frame poses manually without fighting playback advance.
    - **Floating Hover Preview Tooltip**: Hovering across the track displays a floating tactile pill above the cursor (`00:21.86 · #04 Evan Grabs Ruby's Arm`) clamped within container bounds, paired with a razor vertical hairline on the timeline.

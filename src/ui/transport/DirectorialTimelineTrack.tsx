@@ -99,8 +99,9 @@ export const DirectorialTimelineTrack: React.FC<
       onMouseLeave={handleMouseLeave}
       className="relative flex items-center w-full h-6 group"
     >
-      {/* 1. Shot Boundary Tick Marks under Scrubber */}
+      {/* 1. Shot Boundary Track under Scrubber */}
       <div className="absolute inset-x-0 h-2.5 rounded-full bg-surface-muted border border-border-main overflow-hidden pointer-events-none">
+        {/* Layer 1: Shot Segment Background Highlights */}
         {score.shots.map((shot) => {
           const leftPct = (shot.startSec / safeDuration) * 100;
           const widthPct = ((shot.endSec - shot.startSec) / safeDuration) * 100;
@@ -112,14 +113,14 @@ export const DirectorialTimelineTrack: React.FC<
                 left: `${leftPct}%`,
                 width: `${widthPct}%`,
               }}
-              className={`absolute top-0 bottom-0 border-r border-border-subtle transition-colors ${
-                isActive ? 'bg-amber-500/30' : 'bg-surface-hover/40'
+              className={`absolute top-0 bottom-0 transition-colors ${
+                isActive ? 'bg-amber-500/25' : 'bg-surface-hover/30'
               }`}
             />
           );
         })}
 
-        {/* Luminous Emerald Active Loop Region Bar */}
+        {/* Layer 2: Luminous Emerald Active Loop Region Bar */}
         {loopBounds && (
           <div
             style={{
@@ -130,13 +131,33 @@ export const DirectorialTimelineTrack: React.FC<
           />
         )}
 
-        {/* Active Progress Fill */}
+        {/* Layer 3: Active Progress Fill */}
         <div
           style={{
             width: `${Math.min(100, (currentSec / safeDuration) * 100)}%`,
           }}
           className="h-full bg-gradient-to-r from-sky-500 via-indigo-500 to-amber-500"
         />
+
+        {/* Layer 4: Razor Edit Cut Dividers (Rendered on top of progress fill) */}
+        {score.shots.map((shot) => {
+          if (shot.startSec <= 0.05 || shot.startSec >= safeDuration - 0.05) {
+            return null;
+          }
+          const pct = (shot.startSec / safeDuration) * 100;
+          const isPlayed = currentSec >= shot.startSec;
+          return (
+            <div
+              key={`cut-${shot.id}`}
+              style={{ left: `${pct}%` }}
+              className={`absolute top-0 bottom-0 w-[1.5px] -translate-x-1/2 z-2 transition-colors ${
+                isPlayed
+                  ? 'bg-white/90 shadow-[0_0_2px_rgba(0,0,0,0.5)]'
+                  : 'bg-text-faint/70 dark:bg-text-muted/60'
+              }`}
+            />
+          );
+        })}
       </div>
 
       {/* Luminous Emerald Boundary Bracket Ticks (Rendered over the track) */}

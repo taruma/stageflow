@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- **High-Contrast Razor Edit Cut Dividers on Timeline Scrubber (`src/ui/transport/DirectorialTimelineTrack.tsx`, `docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md`)**:
+  - Implemented 1.5px vertical razor cut dividers placed at each shot boundary, rendered on top of both the background track and active gradient progress fill (`z-2`).
+  - Added dual-state high-contrast styling: crisp illuminated white lines with drop shadows (`bg-white/90`) across the active colored progress bar and distinct muted borders (`bg-text-faint/70`) across unplayed sections, ensuring shot divisions and pacing are clearly visible at all times.
 - **Dynamic Active Shot Looping (`src/hooks/useStageFrameLoop.ts`, `src/ui/InteractiveStudioApp.tsx`, `docs/*`)**:
   - Converted `Loop Shot` playback mode from static single-shot lock to a contextual dynamic active-shot loop that automatically tracks whichever shot is under the playhead.
   - Clicking any shot chip or scrubbing to a different cut smoothly transitions the rehearsal loop to the newly selected shot with zero trapping or snap-back race conditions.
