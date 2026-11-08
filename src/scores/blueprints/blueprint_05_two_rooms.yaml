@@ -24,8 +24,8 @@
 
 version: "1.0"
 id: "blueprint-05-two-rooms"
-title: "Blueprint 05: Two Rooms — The Threshold Crossing"
-subtitle: "17 Shots in 30s · 3 Actor Heights · Living Room to Bedroom Tracking · Decoupled Blocking"
+title: "Two Rooms: Threshold Crossing"
+subtitle: "17 Shots in 2.39:1 · 3 Actor Heights · Continuous Hallway Walk, Vertigo Zoom & Overhead Plunge"
 video: "procedural://two-rooms-threshold"
 aspect_ratio: "2.39:1"
 duration: 30.0

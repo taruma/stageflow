@@ -15,8 +15,8 @@
 
 version: "1.0"
 id: "blueprint-06-optics-dof"
-title: "BP 06 · Optics, Rack Focus & DoF Masterclass"
-subtitle: "Thin-Lens Depth of Field, Off-Axis Focus Tether & Rack Focus Pulls"
+title: "Optics, Rack Focus & DoF"
+subtitle: "Thin-Lens Depth of Field · Off-Axis Focus Tether, Dynamic Aperture Ramp & Subject Rack Focus"
 video: "procedural://optics-dof-masterclass"
 aspect_ratio: "2.39:1"
 duration: 36.0

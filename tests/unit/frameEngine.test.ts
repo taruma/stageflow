@@ -2038,7 +2038,7 @@ shots:
       expect(fTwoShot.entitiesById.get('samira')!.position.x).toBeCloseTo(-1.4, 2);
     });
 
-    it('evaluates Blueprint 06 (Optics, Rack Focus & DoF Masterclass) across all 8 shots and optical transitions', () => {
+    it('evaluates Blueprint 06 (Optics, Rack Focus & DoF) across all 8 shots and optical transitions', () => {
       const bp06 = INITIAL_CATALOG_ITEMS.find(
         (item) => item.id === 'blueprint-06-optics-dof'
       )?.score;

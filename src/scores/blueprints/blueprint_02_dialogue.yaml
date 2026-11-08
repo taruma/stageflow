@@ -20,8 +20,8 @@
 
 version: "1.0"
 id: "blueprint-02-dialogue"
-title: "Blueprint 02: Cinematic Dialogue Flow"
-subtitle: "6 Film Shots · 3 Decoupled Observer Orbits · Reverse Angles · Dolly, Arc & Spline"
+title: "Cinematic Dialogue Flow"
+subtitle: "6 Film Shots · 180° Axis Reverse Angles · Master Dolly, OTS & Catmull-Rom Spline Bridge"
 video: "procedural://dialogue-flow"
 aspect_ratio: "16:9"
 duration: 26.0

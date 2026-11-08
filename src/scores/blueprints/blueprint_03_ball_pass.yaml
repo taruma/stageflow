@@ -17,8 +17,8 @@
 
 version: "1.0"
 id: "blueprint-03-ball-pass"
-title: "Blueprint 03: The Long Distance Pass"
-subtitle: "3 Actors · 30m Span · Parabolic Arc, Ruby Orbit & Straight Bullet Pass · Dynamic Camera Roll"
+title: "The Long-Distance Pass"
+subtitle: "3 Actors Across 30m Span · Parabolic Gravity Arc, Performer Orbit & Dynamic Dutch Roll"
 video: "procedural://ball-pass"
 aspect_ratio: "16:9"
 duration: 16.0

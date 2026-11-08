@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Concise Blueprint Titles & Descriptive Subtitles (`src/scores/blueprints/*.yaml`, `docs/YAML_AUTHORING_GUIDE.md`, `tests/unit/frameEngine.test.ts`)**:
+  - Stripped redundant `Blueprint XX:` and `BP XX ·` title prefixes across factory Blueprints 01 through 07, resolving card list text truncation (`...`) alongside the dedicated cyan `[BP 01]`–`[BP 07]` badges.
+  - Updated all 7 blueprint titles to be short, punchy, and descriptive: `Two-Shot Arc Blocking` (BP 01), `Cinematic Dialogue Flow` (BP 02), `The Long-Distance Pass` (BP 03), `Cinematography & Framing` (BP 04), `Two Rooms: Threshold Crossing` (BP 05), `Optics, Rack Focus & DoF` (BP 06), and `Camera Rigs & Dolly Tracks` (BP 07).
+  - Enriched each blueprint's `subtitle` with detailed technical staging notes (shot counts, optical techniques, aspect ratios, and kinematics).
+  - Synchronized living documentation in `docs/YAML_AUTHORING_GUIDE.md` and test suite descriptions.
+
 ### Fixed
 - **Compact Diorama Header Breakpoint & Overlay Collision Protection (`src/ui/InteractiveStudioApp.tsx`, `src/ui/DioramaOverlayContainer.tsx`, `src/ui/CompactDioramaHeader.tsx`, `src/ui/CameraTelemetryCapsule.tsx`, `src/ui/ShotBreakdownHud.tsx`, `docs/*`)**:
   - Increased the narrow diorama threshold from `580px` to `768px` (`dioramaWidth < 768`), ensuring standard 3-column Studio mode (`Split` + `Edit` ON) cleanly collapses into the unified single top bar (`CompactDioramaHeader`) instead of crowding the viewport.

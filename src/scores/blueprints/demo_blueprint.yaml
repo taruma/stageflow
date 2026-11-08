@@ -8,8 +8,8 @@
 
 version: "1.0"
 id: "demo-blueprint"
-title: "Blueprint 01: Two-Shot Arc Blocking"
-subtitle: "50mm Medium Two-Shot · 45° Clockwise Camera Arc"
+title: "Two-Shot Arc Blocking"
+subtitle: "50mm Medium Two-Shot · 45° Clockwise Camera Arc Around Conversational Axis"
 video: "procedural://demo-blueprint"
 aspect_ratio: "16:9"
 duration: 10.0

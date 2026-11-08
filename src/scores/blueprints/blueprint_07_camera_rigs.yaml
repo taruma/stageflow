@@ -14,8 +14,8 @@
 
 version: "1.0"
 id: "blueprint-07-camera-rigs"
-title: "BP 07 · Camera Rigs, Dolly Tracks & Trucking"
-subtitle: "Physical Tripod Stands, Linear Rails, Curved Splines & Dynamic Two-Shots"
+title: "Camera Rigs & Dolly Tracks"
+subtitle: "Physical Tripod Stands · 6.4m Straight Rails, Curved Dolly Splines & Two-Shot Centroids"
 video: "procedural://demo-blueprint"
 aspect_ratio: "2.39:1"
 duration: 24.0

@@ -15,8 +15,8 @@
 
 version: "1.0"
 id: "blueprint-04-cinematography-tutorial"
-title: "Blueprint 04: Cinematography & Framing Tutorial"
-subtitle: "16 Shots in 20s · Framing Sizes, 3D Tracking, Camera Roll & Off-Frame Offsets"
+title: "Cinematography & Framing"
+subtitle: "16 Rapid Shots · Standard Sizes (EWS to ECU), 3D Tracking, Dutch Roll & Lead-Room Offsets"
 video: "procedural://cinematography-tutorial"
 aspect_ratio: "16:9"
 duration: 20.0
