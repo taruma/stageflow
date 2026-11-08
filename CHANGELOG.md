@@ -8,7 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
-- **Zero-Reflow Uniform Number Strip for Shot Chips (`src/ui/transport/DirectorialShotChipsStrip.tsx`, `docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md`)**:
+- **Adaptive Centering & Zero-Reflow Number Strip for Shot Chips (`src/ui/transport/DirectorialShotChipsStrip.tsx`, `docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md`)**:
+  - Implemented dynamic adaptive centering: when all shot chips fit within the viewport (e.g. 5–15 shots or wide displays), the entire row automatically centers (`justify-center`) directly above the centered transport deck, while navigation chevrons and edge fade masks are cleanly hidden.
+  - When shots overflow (e.g. 25+ shots or narrower viewports), navigation chevrons and edge fade masks appear dynamically, and active cuts automatically smooth-scroll into the center on cut boundaries.
   - Converted all shot chips into uniform-width numbered pills (`#01`, `#02`, `#03`... ~`38px` wide) using pure CSS color transitions (`transition-colors`), completely eliminating browser DOM layout thrashing and reflow during camera cuts.
   - Eliminated redundant timestamps (`0.0s`) and titles from the bottom strip to maximize information density (25–30 shots visible at once), while preserving full shot titles and time spans in native hover tooltips.
 - **High-Contrast Razor Edit Cut Dividers on Timeline Scrubber (`src/ui/transport/DirectorialTimelineTrack.tsx`, `docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md`)**:

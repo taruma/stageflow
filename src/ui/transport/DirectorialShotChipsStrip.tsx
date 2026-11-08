@@ -8,7 +8,13 @@
  *   - Directorial jump-to-shot interaction
  */
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useCallback,
+} from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { ShotCue } from '../../core/types';
 
@@ -25,17 +31,20 @@ export const DirectorialShotChipsStrip: React.FC<
   const activeChipRef = useRef<HTMLButtonElement | null>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
+  const [isOverflowing, setIsOverflowing] = useState(false);
 
   const updateScrollBounds = useCallback(() => {
     const el = containerRef.current;
     if (!el) return;
     const { scrollLeft, scrollWidth, clientWidth } = el;
-    setCanScrollLeft(scrollLeft > 4);
-    setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 4);
+    const overflowing = scrollWidth > clientWidth + 4;
+    setIsOverflowing(overflowing);
+    setCanScrollLeft(overflowing && scrollLeft > 4);
+    setCanScrollRight(overflowing && scrollLeft + clientWidth < scrollWidth - 4);
   }, []);
 
-  // Update bounds on mount, resize, and shot changes
-  useEffect(() => {
+  // Update bounds on mount, layout, resize, and shot changes
+  useLayoutEffect(() => {
     updateScrollBounds();
     const el = containerRef.current;
     if (!el) return;
@@ -44,9 +53,9 @@ export const DirectorialShotChipsStrip: React.FC<
     return () => ro.disconnect();
   }, [updateScrollBounds, shots.length]);
 
-  // Smoothly center the active shot chip whenever activeShotId changes
+  // Smoothly center the active shot chip whenever activeShotId changes (when overflowing)
   useEffect(() => {
-    if (activeChipRef.current) {
+    if (activeChipRef.current && isOverflowing) {
       activeChipRef.current.scrollIntoView({
         behavior: 'smooth',
         inline: 'center',
@@ -56,7 +65,7 @@ export const DirectorialShotChipsStrip: React.FC<
       const timer = setTimeout(updateScrollBounds, 300);
       return () => clearTimeout(timer);
     }
-  }, [activeShotId, updateScrollBounds]);
+  }, [activeShotId, isOverflowing, updateScrollBounds]);
 
   const handleScrollBy = useCallback(
     (delta: number) => {
@@ -72,32 +81,43 @@ export const DirectorialShotChipsStrip: React.FC<
 
   return (
     <div className="relative flex items-center w-full gap-1 select-none">
-      {/* Left Navigation Chevron */}
-      <button
-        type="button"
-        onClick={() => handleScrollBy(-220)}
-        disabled={!canScrollLeft}
-        className={`p-1 rounded-lg bg-surface hover:bg-surface-subtle border border-border-main text-text-muted hover:text-text-main shrink-0 transition-all cursor-pointer shadow-2xs active:scale-95 ${
-          !canScrollLeft ? 'opacity-25 cursor-not-allowed pointer-events-none' : ''
-        }`}
-        title="Scroll previous shots"
-      >
-        <ChevronLeft className="w-3.5 h-3.5" />
-      </button>
+      {/* Left Navigation Chevron (conditionally shown on overflow) */}
+      {isOverflowing && (
+        <button
+          type="button"
+          onClick={() => handleScrollBy(-220)}
+          disabled={!canScrollLeft}
+          className={`p-1 rounded-lg bg-surface hover:bg-surface-subtle border border-border-main text-text-muted hover:text-text-main shrink-0 transition-all cursor-pointer shadow-2xs active:scale-95 ${
+            !canScrollLeft ? 'opacity-25 cursor-not-allowed pointer-events-none' : ''
+          }`}
+          title="Scroll previous shots"
+        >
+          <ChevronLeft className="w-3.5 h-3.5" />
+        </button>
+      )}
 
-      {/* Scrollable Chip Row with Edge Fades & Hidden Raw Scrollbars */}
+      {/* Scrollable Chip Row with Edge Fades when overflowing, Centered when fitting */}
       <div
         ref={containerRef}
         onScroll={updateScrollBounds}
-        style={{
-          scrollbarWidth: 'none',
-          msOverflowStyle: 'none',
-          maskImage:
-            'linear-gradient(to right, transparent, black 24px, black calc(100% - 24px), transparent)',
-          WebkitMaskImage:
-            'linear-gradient(to right, transparent, black 24px, black calc(100% - 24px), transparent)',
-        }}
-        className="flex-1 flex items-center gap-1.5 overflow-x-auto px-4 py-0.5 no-scrollbar"
+        style={
+          isOverflowing
+            ? {
+                scrollbarWidth: 'none',
+                msOverflowStyle: 'none',
+                maskImage:
+                  'linear-gradient(to right, transparent, black 24px, black calc(100% - 24px), transparent)',
+                WebkitMaskImage:
+                  'linear-gradient(to right, transparent, black 24px, black calc(100% - 24px), transparent)',
+              }
+            : {
+                scrollbarWidth: 'none',
+                msOverflowStyle: 'none',
+              }
+        }
+        className={`flex-1 flex items-center gap-1.5 overflow-x-auto px-4 py-0.5 no-scrollbar ${
+          isOverflowing ? 'justify-start' : 'justify-center'
+        }`}
       >
         {shots.map((shot) => {
           const isActive = activeShotId === shot.id;
@@ -124,18 +144,20 @@ export const DirectorialShotChipsStrip: React.FC<
         })}
       </div>
 
-      {/* Right Navigation Chevron */}
-      <button
-        type="button"
-        onClick={() => handleScrollBy(220)}
-        disabled={!canScrollRight}
-        className={`p-1 rounded-lg bg-surface hover:bg-surface-subtle border border-border-main text-text-muted hover:text-text-main shrink-0 transition-all cursor-pointer shadow-2xs active:scale-95 ${
-          !canScrollRight ? 'opacity-25 cursor-not-allowed pointer-events-none' : ''
-        }`}
-        title="Scroll next shots"
-      >
-        <ChevronRight className="w-3.5 h-3.5" />
-      </button>
+      {/* Right Navigation Chevron (conditionally shown on overflow) */}
+      {isOverflowing && (
+        <button
+          type="button"
+          onClick={() => handleScrollBy(220)}
+          disabled={!canScrollRight}
+          className={`p-1 rounded-lg bg-surface hover:bg-surface-subtle border border-border-main text-text-muted hover:text-text-main shrink-0 transition-all cursor-pointer shadow-2xs active:scale-95 ${
+            !canScrollRight ? 'opacity-25 cursor-not-allowed pointer-events-none' : ''
+          }`}
+          title="Scroll next shots"
+        >
+          <ChevronRight className="w-3.5 h-3.5" />
+        </button>
+      )}
     </div>
   );
 };

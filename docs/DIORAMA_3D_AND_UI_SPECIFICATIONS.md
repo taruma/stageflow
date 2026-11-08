@@ -227,15 +227,14 @@ Decomposed into 3 focused submodules to preserve the $\le 250$ line modularity s
    - **Auto-Pause on Scrubber Interaction**: Grabbing the range slider (`onPointerDown`) or dragging across it (`onChange`) automatically pauses active playback so the director can inspect exact frame poses manually without fighting playback advance.
    - **Floating Hover Preview Tooltip**: Hovering across the track displays a floating tactile pill above the cursor (`00:21.86 · #04 Evan Grabs Ruby's Arm`) clamped within container bounds, paired with a razor vertical hairline on the timeline.
    - **Luminous Emerald Loop Indicator & Dynamic Shot Looping**: When `Loop Shot` is enabled, dynamically highlights and bounds playback to whichever shot is currently active with an emerald accent fill, subtle glow, and crisp `[` and `]` boundary bracket ticks that update in real-time when clicking different shot chips or scrubbing without trapping manual seeks.
-2. **Auto-Centering Shot Chips Strip with Chevrons (`DirectorialShotChipsStrip.tsx`)**:
+2. **Adaptive Centered Shot Chips Strip with Chevrons (`DirectorialShotChipsStrip.tsx`)**:
+   - **Adaptive Centering & Clean Overflow Detection**: When all chips fit horizontally within the viewport (e.g. scenes with 5–15 shots or wide screens), the entire chip row automatically centers itself (`justify-center`), creating a balanced visual column directly above the centered transport deck. Flanking chevrons and edge fade masks are cleanly hidden when there is no overflow.
    - **Zero-Reflow Uniform Number Strip**: All shot chips render as sleek, uniform-width numbered pills (`#01`, `#02`, `#03`... ~`38px` wide) using pure CSS color transitions (`transition-colors`), completely eliminating browser DOM reflow and layout thrashing during 60fps/144fps camera cuts.
    - **Active Highlight**: The active shot is instantly distinguished with bold typography and solid primary pill styling (`bg-btn-primary-bg text-btn-primary-text font-bold`).
    - **High Storyboard Density**: Fits 25–30 shots on screen simultaneously without horizontal sprawling, giving directors an instant, panoramic 1-click storyboard jump track across the entire scene.
    - **De-Cluttered & Fast**: Redundant titles and timestamps are omitted from the bottom strip (since the title is already prominently visible in the Left-Panel subpanel, Compact Diorama Header, and timeline hover preview); full shot titles and time spans remain instantly accessible via browser hover tooltips (`title`).
-   - Flanking `<` and `>` chevron buttons allowing 1-click smooth peek scrolling left/right through off-screen shots without jumping the playhead.
-   - Automatically smooth-scrolls the active shot chip into the center on shot cut boundaries via `activeChipRef.scrollIntoView`.
-   - Allows free trackpad / mouse-wheel horizontal peeking forward and backward at any time.
-   - Edge fade masks (`mask-image: linear-gradient(...)`) indicate off-screen shots cleanly without an intrusive raw scrollbar track, enforced cross-browser via `.no-scrollbar` and inline `scrollbarWidth: none` styles.
+   - **Smooth Scrolling on Overflow**: When a scene contains numerous shots that exceed screen width, flanking `<` and `>` chevron buttons appear for 1-click smooth peek scrolling, bilateral edge fade masks indicate off-screen shots, and active cuts automatically smooth-scroll into the center via `activeChipRef.scrollIntoView`.
+   - Allows free trackpad / mouse-wheel horizontal peeking forward and backward at any time without intrusive raw scrollbars (`.no-scrollbar`).
 3. **Unified Centered Transport Deck (`DirectorialTransportDeck.tsx`)**:
    - Organizes controls into a **balanced 3-segment centered island** with subtle dividers:
      - **Left Segment**: Precision timecode readout (`01:01.63 / 01:02.00`).
