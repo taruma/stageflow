@@ -111,20 +111,14 @@ export const DirectorialShotChipsStrip: React.FC<
               ref={isActive ? activeChipRef : undefined}
               type="button"
               onClick={() => onSeek(shot.startSec)}
-              className={`px-2.5 py-1 rounded-xl text-[10px] font-mono flex items-center gap-1.5 shrink-0 transition-all cursor-pointer border ${
+              className={`px-2.5 py-1 rounded-xl text-[10px] font-mono shrink-0 transition-colors cursor-pointer border ${
                 isActive
-                  ? 'bg-btn-primary-bg text-btn-primary-text border-btn-primary-bg font-semibold shadow-xs'
-                  : 'bg-surface hover:bg-surface-subtle border-border-main text-text-muted hover:text-text-main shadow-2xs'
+                  ? 'bg-btn-primary-bg text-btn-primary-text border-btn-primary-bg font-bold shadow-xs'
+                  : 'bg-surface hover:bg-surface-hover border-border-main text-text-muted hover:text-text-main shadow-2xs'
               }`}
               title={`Jump to Shot #${String(shot.shotNumber).padStart(2, '0')}: ${cleanLabel} (${shot.startSec.toFixed(1)}s – ${shot.endSec.toFixed(1)}s)`}
             >
-              <span className="font-bold">
-                #{String(shot.shotNumber).padStart(2, '0')}
-              </span>
-              <span className="truncate max-w-[150px]">{cleanLabel}</span>
-              <span className="text-[9px] opacity-70">
-                {shot.startSec.toFixed(1)}s
-              </span>
+              #{String(shot.shotNumber).padStart(2, '0')}
             </button>
           );
         })}
