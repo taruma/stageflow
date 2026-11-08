@@ -4,18 +4,18 @@
 # Demonstrates physical studio camera mounts:
 #   1. Stationary Tripod Stand: Camera nodal point is locked at a fixed floor coordinate
 #      while the fluid head swivels (pan/tilt) to track an actor walking across stage.
-#   2. Linear Dolly Track (Trucking Right): Camera cart rolls along a 6.4m straight rail
-#      parallel to the action with continuous subject tracking and thin-lens DoF.
+#   2. Linear Dolly Track (Single-to-Two-Shot Glide): Camera cart rolls along a 6.4m straight rail
+#      parallel to the action, smoothly gliding from a single lead lock into a dynamic two-shot centroid.
 #   3. Fixed-Gaze Sideways Truck: Dolly cart glides along the rail with a locked heading
 #      (no target lock), letting actors enter, traverse, and exit the cinematic frame.
-#   4. Curved Spline Track & Rack Focus: Camera rolls along a multi-point Catmull-Rom rail
-#      circling the staging area while executing a rack focus between characters.
+#   4. Curved Spline Track & Two-Shot Rack Focus: Camera rolls along a multi-point Catmull-Rom rail
+#      circling the staging area with dynamic two-shot centroid tracking and rack focus.
 # ==============================================================================
 
 version: "1.0"
 id: "blueprint-07-camera-rigs"
 title: "BP 07 · Camera Rigs, Dolly Tracks & Trucking"
-subtitle: "Physical Tripod Stands, Linear Rails & Curved Spline Dolly Tracks"
+subtitle: "Physical Tripod Stands, Linear Rails, Curved Splines & Dynamic Two-Shots"
 video: "procedural://demo-blueprint"
 aspect_ratio: "2.39:1"
 duration: 24.0
@@ -31,7 +31,7 @@ stage:
     yaw: 35
     lens: 35mm
   stage_camera:
-    target: "protagonist"
+    target: ["protagonist", "interlocutor"]
     distance: 4.5
     pitch: 6
     yaw: 0
@@ -100,8 +100,8 @@ shots:
 
   - id: "shot-02-dolly-track"
     shot: 2
-    label: "Shot 02 · Linear Dolly Track (Parallel Trucking)"
-    description: "Camera cart rolls along a 6.4m floor rail parallel to the actor cross, maintaining tracking lock while showing background parallax."
+    label: "Shot 02 · Linear Dolly Track (Two-Shot Glide)"
+    description: "Camera cart rolls along a 6.4m floor rail, smoothly gliding from a single lead tracking lock (from: protagonist) into a dynamic two-shot centroid master (target: [protagonist, interlocutor]) as the actors meet."
     start: 6.0
     end: 12.0
     stage_camera:
@@ -109,7 +109,10 @@ shots:
         type: "track"
         from: [-3.2, 1.35, 4.4]
         to: [3.2, 1.35, 4.4]
-      target: "protagonist"
+      from: "protagonist"
+      target: ["protagonist", "interlocutor"]
+      focus_start: "protagonist"
+      focus_end: ["protagonist", "interlocutor"]
       lens: 35mm
       easing: "smooth"
       dof: "shallow"
@@ -145,8 +148,8 @@ shots:
 
   - id: "shot-04-spline-track"
     shot: 4
-    label: "Shot 04 · Curved Spline Track & Rack Focus"
-    description: "Dolly rolls along a 4-point curved rail around the staging area while executing a rack focus from lead to interlocutor."
+    label: "Shot 04 · Curved Spline Track & Two-Shot Rack Focus"
+    description: "Dolly rolls along a 4-point curved rail circling the staging area, maintaining a dynamic two-shot centroid lock ([protagonist, interlocutor]) while executing a rack focus."
     start: 18.0
     end: 24.0
     stage_camera:
@@ -157,7 +160,7 @@ shots:
           - [-1.8, 1.6, 3.2]
           - [1.8, 1.45, 3.2]
           - [4.2, 1.35, 5.5]
-      target: "protagonist"
+      target: ["protagonist", "interlocutor"]
       focus_start: "protagonist"
       focus_end: "interlocutor"
       dof: "shallow"
