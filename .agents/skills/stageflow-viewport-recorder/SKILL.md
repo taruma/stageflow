@@ -32,10 +32,9 @@ npm run record [scene] [options]
 
 ### Arguments
 - **`scene`**:
-  - Bundled shortcut: `01`, `02`, `03`, `04`, `05`, `06`, `07`, `vf`
-  - Bundled ID: `blueprint_01_two_shot_arc`, `blueprint_02_dialogue`, `blueprint_03_ball_pass`, `blueprint_04_cinematography_tutorial`, `blueprint_05_two_rooms`, `blueprint_06_optics_dof`, `blueprint_07_camera_rigs`, `vector-field-taruma-sakti`
+  - Bundled shortcut: `01`–`07`, `vf`, or any canonical slug / alias registered in [`src/scores/catalog.yaml`](../../../src/scores/catalog.yaml) (see [`docs/SCORE_CATALOG.md`](../../../docs/SCORE_CATALOG.md)).
   - Custom file path: `path/to/my_scene.yaml` or `.json`
-  - Default: `blueprint_01_two_shot_arc`
+  - Default: `01` (`demo`)
 
 ### Options Reference
 

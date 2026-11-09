@@ -33,7 +33,8 @@ stageflow/
 │   ├── CORE_MATH_AND_SCORE_SPECIFICATIONS.md
 │   ├── MEDIA_CLOCK_AND_SYNC_SPECIFICATIONS.md
 │   ├── DIORAMA_3D_AND_UI_SPECIFICATIONS.md
-│   └── VISUAL_DESIGN_SYSTEM.md      # SSOT for typography, theme engine, UI_TOKENS & palettes
+│   ├── VISUAL_DESIGN_SYSTEM.md      # SSOT for typography, theme engine, UI_TOKENS & palettes
+│   └── SCORE_CATALOG.md             # Master score index & program guide for studies & blueprints
 ├── scripts/                         # CLI Automation & Offline Tooling
 │   └── record/                      # 60fps Playwright + FFmpeg Viewport Recorder
 │       ├── cli.ts                   # CLI entry point, argument parsing & usage help
@@ -55,8 +56,8 @@ stageflow/
 │   │   └── recorderTypes.ts         # Bridge schemas & window.__STAGEFLOW_RECORDER__ interface
 │   ├── scores/                      # Choreography Scores (*.yaml)
 │   │   ├── catalog.yaml             # Declarative YAML manifest for built-in choreography scores, categories & URL aliases
-│   │   ├── studies/                 # Directorial Scene Studies (e.g. vector_field.yaml)
-│   │   └── blueprints/              # Factory camera-blocking presets (BP 01–07)
+│   │   ├── studies/                 # Directorial Scene Studies (see docs/SCORE_CATALOG.md)
+│   │   └── blueprints/              # Factory camera-blocking presets (see docs/SCORE_CATALOG.md)
 │   ├── core/                        # Layer 1: Pure TypeScript Math, Optics & Stateless Frame Engine
 │   │   ├── types.ts                 # Canonical interfaces (StageScore, ShotCue, ObserverShotCue, BlockingCueSpec, StageFrame)
 │   │   ├── constants.ts             # Metric bounds, sensor constants, blueprint color palette
@@ -99,6 +100,7 @@ stageflow/
 │   │   └── useAppShellTheme.ts      # SceneFlow theme hook (Auto/Dark/Warm/Light) & transition suppression
 │   ├── stage/                       # Layer 4: React Three Fiber 3D Blueprint Diorama
 │   │   ├── dioramaTheme.ts          # Adaptive theme clear colors, fog & metric grid line mapping
+│   │   ├── cameraPresets.ts         # Directorial angle presets (Top, Iso, Front, Side) & spherical math
 │   │   ├── DioramaCanvas.tsx        # Root R3F <Canvas>, lighting, fog, and priority -1 frame ticker
 │   │   ├── BlueprintStageScene.tsx  # Shared lighting, metric floor grid, and mannequins
 │   │   ├── BlueprintFloorGrid.tsx   # Metric floor grid (1m / 0.25m), perimeter frame & compass labels

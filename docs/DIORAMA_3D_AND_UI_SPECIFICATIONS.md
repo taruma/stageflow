@@ -175,8 +175,9 @@ Scene entities (`character`, `prop`, `marker`) are rendered with unambiguous ori
     Utilizes pure CSS container-query aspect-fit containment (`.aspect-fit-container` and `.aspect-fit-box` via `min(100cqw, calc(100cqh * ratio))`) across both viewports, strictly maintaining film aspect ratios (16:9, 2.39:1) with automatic letterboxing/pillarboxing and SMPTE 90% safe-action guides without vertical squishing.
   - **Center Column (~40%)**: Dedicated, uninterrupted 3D Blueprint Diorama viewport with 4-corner directorial HUD.
   - **Right Column (~30%)**: Dedicated, full-height YAML Score Studio (`YamlStudioPanel.tsx` in flex column mode) for real-time score authoring and validation.
-- **1-Click Reset Layout (`WorkspaceHeader.tsx`, `useWorkspaceLayout.ts`)**:
-  - Clicking **Reset Layout** in the header right wing restores default column widths (30/40/30), video height (45%), and subpanel expansion, persisting changes to `localStorage` with a confirmation toast.
+- **1-Click Reset Layout & Fullscreen Viewport Controls (`WorkspaceHeader.tsx`, `useWorkspaceLayout.ts`)**:
+  - Clicking **Reset Layout** in the header right wing (desktop viewports $\ge 768\text{px}$) restores default column widths (30/40/30), video height (45%), and subpanel expansion, persisting changes to `localStorage` with a confirmation toast.
+  - A 1-click native browser **Fullscreen** toggle button (`Maximize`/`Minimize` via `document.documentElement.requestFullscreen()` and `document.exitFullscreen()`) is mounted in the header right wing across both desktop and mobile viewports, dynamically tracking browser `fullscreenchange` events with descriptive tooltips.
 - **Center Header Workflow & Layout Pairing (`LayoutSegmentedControl.tsx`)**:
   - Couples the layout mode segmented pill `[ ◫ Split | ⛶ Full ]` with an adjacent **`[ ✎ Edit ]`** toggle pill (styled with SceneFlow-aligned amber accent active state).
 - **Workspace State Matrix**:
@@ -194,7 +195,7 @@ Scene entities (`character`, `prop`, `marker`) are rendered with unambiguous ori
   - **Tactile Rounded Card Presentation**: Retains the signature `rounded-2xl border border-border-main shadow-xl` floating card aesthetic with balanced 10px outer frame padding (`p-2.5 md:p-3`), preserving visual parity with desktop cards while eliminating unbalanced top/bottom voids.
   - **Scene Desk Auto-Suppression**: In mobile view, the Scene Desk subpanel (`VideoWorkspaceSubpanel.tsx`) is completely hidden, allowing the reference video (or procedural Stage Cam) to utilize the full top slot without letterbox fragmentation, while eliminating redundant secondary WebGL contexts on phones.
   - **Header Compacting**: Logo text and `"3D Blocking Diorama"` subtitle are hidden (Box icon only), the `File ▾` dropdown is hidden, and `ActiveScoreIndicator.tsx` expands with smooth ellipsis truncation (`truncate`).
-  - **Mobile Native Fullscreen**: Replaces the desktop-only `Reset Layout` button with a 1-click native browser Fullscreen toggle (`Maximize`/`Minimize` via `document.documentElement.requestFullscreen()`).
+  - **Mobile Fullscreen & Layout Adaptations**: The desktop-only `Reset Layout` button is hidden on narrow viewports (`< md` / `< 768px`), leaving the 1-click native browser Fullscreen toggle prominently positioned in the header right wing alongside the theme dropdown and library button.
   - **Directorial Transport Streamlining**: Auto-hides the shot chips strip (`DirectorialShotChipsStrip.tsx`), leaving only the touch-friendly Scrubber Track and Transport Deck buttons, saving ~35px of vertical screen height.
 
 ### 4.2 4-Corner Directorial HUD Architecture (Wide Mode $\ge 768\text{px}$)

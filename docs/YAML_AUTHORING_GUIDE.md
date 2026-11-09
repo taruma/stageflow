@@ -250,18 +250,12 @@ The detective now translates smoothly from $t = 0.0\text{s}$ to $t = 8.0\text{s}
 
 ### 2.5 Learn From Bundled Studies & Blueprints
 
-StageFlow organizes choreography scores into a clean 3-tier taxonomy (`study`, `blueprint`, `custom`). Explore the bundled catalog for real-world blocking patterns:
+StageFlow organizes choreography scores into a clean 3-tier taxonomy (`study`, `blueprint`, `custom`). The built-in library provides both production-grade scene studies and focused educational blueprints:
 
-- **Directorial Scene Studies (`src/scores/studies/`)**:
-  - **`vector_field.yaml` (Vector Field — Primary Default Scene)**: Authored by Taruma Sakti (1,080 lines, 32 shots, decoupled continuous `blocking:`, 6 observer moves). Demonstrates large-scale multi-actor spatial staging, continuous dialogue tracking, dynamic camera speed ramps, and theatrical look-at anchor handoffs.
-- **Factory Camera-Blocking Blueprints (`src/scores/blueprints/`)**:
-  1. **`demo_blueprint.yaml` (BP 01: Two-Shot Arc Blocking)**: Single-shot profile two-shot to OTS arc using `50mm` standard prime.
-  2. **`blueprint_02_dialogue.yaml` (BP 02: Cinematic Dialogue Flow)**: 6-shot dialogue scene demonstrating OTS reversal, 85mm low hero arc, Catmull-Rom spline, and decoupled diorama master orbits (`observer_shots:`).
-  3. **`blueprint_03_ball_pass.yaml` (BP 03: The Long-Distance Pass)**: 30-meter 3-actor sequence with parabolic projectile kinetics, dynamic character gaze tracking, and Dutch angles from $-18^\circ$ to $+22^\circ$.
-  4. **`blueprint_04_cinematography_tutorial.yaml` (BP 04: Cinematography & Framing)**: 16-shot tutorial sequence teaching framing sizes (EWS to ECU), rule-of-thirds `target_offset`, continuous oners, and barrel rolls.
-  5. **`blueprint_05_two_rooms.yaml` (BP 05: Two Rooms: Threshold Crossing)**: 17-shot sequence in `2.39:1` anamorphic scope demonstrating multi-actor decoupled blocking (`blocking:`) across two physical rooms with carried item prop tracking.
-  6. **`blueprint_06_optics_dof.yaml` (BP 06: Optics, Rack Focus & DoF)**: 8-shot pedagogical sequence demonstrating off-axis subject focus, cinematic rack focus, numerical metric distance pulls, dynamic follow-focus tracking on moving actors, iris aperture ramping ($f/1.4 \to f/11$), waypoint spline focus, and Citizen Kane style deep staging ($f/16$).
-  7. **`blueprint_07_camera_rigs.yaml` (BP 07: Camera Rigs & Dolly Tracks)**: 4-shot masterclass demonstrating stationary tripod pan tracking walk, linear dolly track single-to-two-shot glide with shallow DoF ($f/2.8$), fixed-gaze sideways truck, and curved spline track with dynamic two-shot centroid tracking and rack focus pull.
+- **Directorial Scene Studies (`src/scores/studies/`)**: Real-world auteur cinematography studies authored by Taruma Sakti (such as **Vector Field**, **The Expansion**, and **AFRAID**) demonstrating large-scale spatial staging, multi-actor blocking, continuous single-take oners, and dynamic rack focus.
+- **Factory Camera-Blocking Blueprints (`src/scores/blueprints/`)**: Focused pedagogical blueprints (BP 01–07) systematically demonstrating individual cinematographic concepts: dialogue coverage reversals, projectile kinetics, framing ladders, threshold crossings, optics/DoF masterclasses, and physical dolly tracks.
+
+> 📖 **Complete Score Directory**: For an exhaustive breakdown of every built-in score with narrative synopses, runtimes, camera moves, and optical packages, see [**`docs/SCORE_CATALOG.md`**](SCORE_CATALOG.md).
 
 ### 2.6 The 8 Most Common Authoring Mistakes
 

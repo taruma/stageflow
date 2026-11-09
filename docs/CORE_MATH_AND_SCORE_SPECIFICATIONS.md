@@ -290,9 +290,11 @@ observer_shots:
 
 ### 6.1 Three-Tier Score Taxonomy & Declarative Manifest (`src/scores/catalog.yaml`, `scoreCatalog.ts`)
 StageFlow categorizes scores into a clean 3-tier provenance taxonomy (`ScoreCategory = 'study' | 'blueprint' | 'custom'` in [`src/core/types.ts`](../src/core/types.ts)):
-1. **Directorial Scene Studies (`'study'`)**: Authentic auteur scene studies authored by Taruma Sakti in [`src/scores/studies/`](../src/scores/studies/). The primary default scene loaded on application launch is **Vector Field** ([`vector_field.yaml`](../src/scores/studies/vector_field.yaml), canonical ID: `'vector-field'`, alias: `'vector-field-taruma-sakti'`).
+1. **Directorial Scene Studies (`'study'`)**: Authentic auteur scene studies authored by Taruma Sakti in [`src/scores/studies/`](../src/scores/studies/). Defaults on application launch to *Vector Field* ([`vector_field.yaml`](../src/scores/studies/vector_field.yaml), canonical ID: `'vector-field'`).
 2. **Bundled Blueprints (`'blueprint'`)**: Synthetic educational camera-blocking presets and testbeds in [`src/scores/blueprints/`](../src/scores/blueprints/) (BP 01–BP 07: `'demo'`, `'blueprint-02'` through `'blueprint-07'`).
 3. **Custom Projects (`'custom'`)**: User-authored, dropped, or URL-imported projects persisted in browser IndexedDB.
+
+> 📖 **Master Score Catalog**: For the complete directory of built-in scene studies and blueprints with synopses, runtimes, camera moves, and optical packages, see [**`docs/SCORE_CATALOG.md`**](SCORE_CATALOG.md).
 
 **Declarative Manifest Architecture**: The built-in score catalog is driven declaratively by [`src/scores/catalog.yaml`](../src/scores/catalog.yaml). Authors add, remove, reorder, or rename scores and aliases directly in YAML without writing TypeScript. [`scoreCatalog.ts`](../src/core/scoreCatalog.ts) uses Vite's `import.meta.glob` to eagerly discover and map all `.yaml` files, parse them at build/startup, and expose `INITIAL_CATALOG_ITEMS`. `findCatalogItem(idOrAlias)` resolves scores against both canonical slugs and registered backwards-compatible aliases.
 

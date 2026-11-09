@@ -31,9 +31,9 @@ It synchronizes a universal video player (**Local `.mp4`/`.webm`**, **YouTube UR
 6. **4-Corner Directorial HUD & 3D ViewCube Camera Presets**:
    - Clean 4-corner diorama HUD layout leaving center stage sightlines completely unobstructed.
    - 1-click angle snaps (**Top plan, Iso 45°, Front proscenium, Side profile, Reset**) powered by bespoke isometric 3D ViewCube SVG icons that preserve active look-at target pivots.
-7. **3-Tier Score Provenance Taxonomy & Vector Field**:
+7. **3-Tier Score Provenance Taxonomy & Score Library**:
    - 3-tier catalog organization (`study`, `blueprint`, `custom`) accessible via a 2-column master-detail Score Library dialog with 4-way filter tabs and procedural 2D SVG stage minimaps.
-   - Defaults to **Vector Field** (`vector_field.yaml`, 1,080 lines, 32 shots, decoupled continuous blocking, 6 observer moves) authored by Taruma Sakti, alongside 7 educational blueprint presets (BP 01–07).
+   - Built-in library features directorial scene studies authored by Taruma Sakti (defaulting on launch to *Vector Field*) alongside focused educational blueprints (BP 01–07). See the full program guide in [**`docs/SCORE_CATALOG.md`**](docs/SCORE_CATALOG.md).
 8. **Dual-Tier Storage Persistence, Declarative Manifest (`catalog.yaml`) & Unified Ingestion (`?score` & `?url`)**:
    - Declarative manifest registry (`src/scores/catalog.yaml` & `scoreCatalog.ts`) supporting canonical built-in score slugs (`vector-field`, `demo`, `blueprint-02`–`07`) and backwards-compatible legacy aliases with zero TypeScript editing needed to manage scores.
    - Deep-linking URL routing with automatic "Consume & Clear" address bar hygiene:
@@ -62,6 +62,7 @@ StageFlow is organized into a strictly decoupled **5-Layer Architecture** (`core
 - [**`docs/MEDIA_CLOCK_AND_SYNC_SPECIFICATIONS.md`**](docs/MEDIA_CLOCK_AND_SYNC_SPECIFICATIONS.md) — Layer 2 & 3 universal `MediaClockDriver`, YouTube 60fps drift extrapolation, and dual-tier 60fps ref / ~10Hz UI loop.
 - [**`docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md`**](docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md) — Layer 4 & 5 React Three Fiber blueprint stage, dual-camera handover, directional mannequins, and workspace UI.
 - [**`docs/VISUAL_DESIGN_SYSTEM.md`**](docs/VISUAL_DESIGN_SYSTEM.md) — Single Source of Truth for visual design language, typographic hierarchy, theme engine, centralized `UI_TOKENS`, and decoupled 3D diorama palettes.
+- [**`docs/SCORE_CATALOG.md`**](docs/SCORE_CATALOG.md) — Master score index and program guide for all built-in scene studies and blueprints.
 
 ---
 

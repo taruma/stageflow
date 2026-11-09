@@ -73,7 +73,7 @@ Types: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`.
 > Detailed technical specifications are modularized under [`docs/`](docs/).
 > - **Mandatory Scope**: Before planning, inspecting, or modifying core math, schema/DSL contracts, kinematics, media sync drivers, 3D diorama rigs, or multi-file architecture, the agent **MUST** call `read_file` on the corresponding specification document:
 >   - **Repository Structure & Exhaustive 5-Layer File Map**: Read [`docs/ARCHITECTURE_FILE_MAP.md`](docs/ARCHITECTURE_FILE_MAP.md).
->   - **Layer 1: Core Math, Optics, Trajectories & YAML Score Schema** (`src/core/*`, `src/scores/*.yaml`, `tests/unit/*`): Read [`docs/CORE_MATH_AND_SCORE_SPECIFICATIONS.md`](docs/CORE_MATH_AND_SCORE_SPECIFICATIONS.md), [`docs/STAGEFLOW_SCRIPT_SPECIFICATION.md`](docs/STAGEFLOW_SCRIPT_SPECIFICATION.md), and [`docs/YAML_AUTHORING_GUIDE.md`](docs/YAML_AUTHORING_GUIDE.md).
+>   - **Layer 1: Core Math, Optics, Trajectories & YAML Score Schema** (`src/core/*`, `src/scores/*.yaml`, `tests/unit/*`): Read [`docs/CORE_MATH_AND_SCORE_SPECIFICATIONS.md`](docs/CORE_MATH_AND_SCORE_SPECIFICATIONS.md), [`docs/STAGEFLOW_SCRIPT_SPECIFICATION.md`](docs/STAGEFLOW_SCRIPT_SPECIFICATION.md), [`docs/YAML_AUTHORING_GUIDE.md`](docs/YAML_AUTHORING_GUIDE.md), and [`docs/SCORE_CATALOG.md`](docs/SCORE_CATALOG.md).
 >   - **Layer 2 & 3: Universal Media Clock, YouTube Sync & Dual-Tier 60fps Loop** (`src/media/*`, `src/hooks/*`): Read [`docs/MEDIA_CLOCK_AND_SYNC_SPECIFICATIONS.md`](docs/MEDIA_CLOCK_AND_SYNC_SPECIFICATIONS.md).
 >   - **Layer 4 & 5: 3D Blueprint Diorama, Dual-Camera Rigs & 2D Workspace UI** (`src/stage/*`, `src/ui/*`, `src/App.tsx`): Read [`docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md`](docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md) and [`docs/VISUAL_DESIGN_SYSTEM.md`](docs/VISUAL_DESIGN_SYSTEM.md).
 > - **Exempt / Lightweight Scope**: Localized cosmetic styling (Tailwind utility classes, color tokens), minor UI copy, single-component CSS layout adjustments, and isolated typos do not require full domain spec re-reads.
@@ -114,7 +114,7 @@ stageflow/
 │   ├── stage/             # Layer 4: React Three Fiber 3D blueprint diorama, camera rigs & mannequins
 │   ├── ui/                # Layer 5: 2D directorial UI shell (header, left-panel, editor, guide, library)
 │   ├── recorder/          # Headless recording bridge (?mode=headless-render)
-│   └── scores/            # Choreography scores (*.yaml): studies/ (vector_field) & blueprints/ (BP 01–07)
+│   └── scores/            # Built-in choreography scores (*.yaml): studies/ & blueprints/ (see docs/SCORE_CATALOG.md)
 └── tests/unit/            # Vitest deterministic unit test suites
 ```
 
