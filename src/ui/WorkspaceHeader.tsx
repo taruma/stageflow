@@ -107,7 +107,7 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
             <img
               src="/StageFlow - ICON - Square.png"
               alt="StageFlow Icon"
-              className={`w-full h-full object-contain ${isDark ? 'invert' : ''}`}
+              className={`w-full h-full object-contain ${isDark ? '' : 'invert'}`}
             />
           </div>
         </div>
