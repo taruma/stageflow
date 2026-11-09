@@ -52,7 +52,7 @@ export const DirectorialTransportBar: React.FC<
   const currentSec = frame.timestampSec;
 
   return (
-    <footer className="shrink-0 bg-surface border-t border-border-main px-3 py-2 flex flex-col gap-1.5 select-none z-20 text-text-main shadow-xs">
+    <footer className="shrink-0 bg-surface border-t border-border-main px-2 py-1.5 md:px-3 md:py-2 flex flex-col gap-1 md:gap-1.5 select-none z-20 text-text-main shadow-xs">
       {/* Row 1: Scrubber Track with Visual Cut Markers, Hover Tooltip & Emerald Loop Brackets */}
       <DirectorialTimelineTrack
         score={score}
@@ -65,12 +65,14 @@ export const DirectorialTransportBar: React.FC<
         onPause={onPause}
       />
 
-      {/* Row 2: Auto-Centering Shot Chips with Edge Fade Masks & Hidden Raw Scrollbar */}
-      <DirectorialShotChipsStrip
-        shots={score.shots}
-        activeShotId={frame.activeShot?.id ?? null}
-        onSeek={onSeek}
-      />
+      {/* Row 2: Auto-Centering Shot Chips (Hidden on narrow/mobile viewports < md) */}
+      <div className="hidden md:block">
+        <DirectorialShotChipsStrip
+          shots={score.shots}
+          activeShotId={frame.activeShot?.id ?? null}
+          onSeek={onSeek}
+        />
+      </div>
 
       {/* Row 3: Unified Centered Transport Island */}
       <DirectorialTransportDeck

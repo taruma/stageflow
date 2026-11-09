@@ -184,15 +184,12 @@ Scene entities (`character`, `prop`, `marker`) are rendered with unambiguous ori
   - Right vertical divider (col-resize) adjusts Right Column width ($18\%$ to $45\%$).
   - Left horizontal divider (row-resize) adjusts Video container height ($180\text{px}$ min video, $140\text{px}$ min subpanel).
   - Enforces `.is-resizing-split` during any drag operation to maintain 60fps responsiveness across WebGL and IFrames.
-- **Narrow Screens (`< lg`)**: Responsively stacks the Video Panel (`40%` height) above the 3D Diorama Stage and hides the center layout presets to prevent header crowding.
-  - `Full + Edit OFF`: 100% 3D Diorama stage. Reference video is mounted offscreen (`fixed -left-[99999px]`) to maintain media clock and audio sync without interruption.
-  - `Full + Edit ON`: 2-Column Mode (Diorama 60% | YAML 40%, video cleanly offscreened). Perfect for procedural blueprint scores.
-- **Continuous 3-Way Resizing**:
-  - Left vertical divider (col-resize) adjusts Left Column width ($18\%$ to $45\%$).
-  - Right vertical divider (col-resize) adjusts Right Column width ($18\%$ to $45\%$).
-  - Left horizontal divider (row-resize) adjusts Video container height ($180\text{px}$ min video, $140\text{px}$ min subpanel).
-  - Enforces `.is-resizing-split` during any drag operation to maintain 60fps responsiveness across WebGL and IFrames.
-- **Narrow Screens (`< lg`)**: Responsively stacks the Video Panel (`40%` height) above the 3D Diorama Stage and hides the center layout presets to prevent header crowding.
+- **Mobile & Narrow Viewports (`< md` / `< 768px`)**:
+  - **40/60 Studio Proportion**: Left/Top Column takes exactly `40%` height (`h-[40%]`), and the Center 3D Blueprint Diorama takes the remaining `60%` (`flex-1`).
+  - **Scene Desk Auto-Suppression**: In mobile view, the Scene Desk subpanel (`VideoWorkspaceSubpanel.tsx`) is completely hidden, allowing the reference video (or procedural Stage Cam) to utilize 100% of the 40% height without letterbox fragmentation, while eliminating redundant secondary WebGL contexts on phones.
+  - **Header Compacting**: Logo text and `"3D Blocking Diorama"` subtitle are hidden (Box icon only), the `File ▾` dropdown is hidden, and `ActiveScoreIndicator.tsx` expands with smooth ellipsis truncation (`truncate`).
+  - **Mobile Native Fullscreen**: Replaces the desktop-only `Reset Layout` button with a 1-click native browser Fullscreen toggle (`Maximize`/`Minimize` via `document.documentElement.requestFullscreen()`).
+  - **Directorial Transport Streamlining**: Auto-hides the shot chips strip (`DirectorialShotChipsStrip.tsx`), leaving only the touch-friendly Scrubber Track and Transport Deck buttons, saving ~35px of vertical screen height.
 
 ### 4.2 4-Corner Directorial HUD Architecture (Wide Mode $\ge 768\text{px}$)
 Adopts professional 3D viewport convention (Blender, Unreal Engine, Maya) distributing chrome strictly to the 4 corners while leaving the center stage sightline 100% clean:

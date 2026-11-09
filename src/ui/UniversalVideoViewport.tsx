@@ -43,7 +43,7 @@ export const UniversalVideoViewport: React.FC<UniversalVideoViewportProps> = ({
   themeCategory = 'dark',
 }) => {
   return (
-    <div className="relative flex-1 w-full h-full aspect-fit-container bg-app select-none overflow-hidden p-3">
+    <div className="relative flex-1 w-full h-full aspect-fit-container bg-app select-none overflow-hidden p-1.5 md:p-3">
       {/* 16:9 / Gate Aspect Ratio Responsive Frame */}
       <div
         style={{

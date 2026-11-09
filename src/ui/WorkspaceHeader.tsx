@@ -6,8 +6,8 @@
  * - Right Wing: Theme Mode Dropdown, Score Library Button, and YAML Drawer Toggle
  */
 
-import React, { useState } from 'react';
-import { Box, Book, RotateCcw } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Box, Book, RotateCcw, Maximize, Minimize } from 'lucide-react';
 import type { ScoreCatalogItem } from '../core/scoreCatalog';
 import type {
   AppThemeCategory,
@@ -70,19 +70,38 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
   onCreateBlankProject,
 }) => {
   const [isFileMenuOpen, setIsFileMenuOpen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(Boolean(document.fullscreenElement));
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    };
+  }, []);
+
+  const handleToggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    } else {
+      document.exitFullscreen().catch(() => {});
+    }
+  };
 
   const customScores = catalog.filter((item) => item.isCustom);
 
   return (
     <header className={UI_TOKENS.layout.appHeader}>
       {/* Left Wing: Brand Identity, File Menu & Active Score Indicator */}
-      <div className="flex items-center gap-2.5 min-w-0 max-w-[calc(50%-80px)]">
-        {/* Brand Logo & Title */}
+      <div className="flex items-center gap-2 min-w-0 flex-1 md:flex-initial md:max-w-[calc(50%-80px)]">
+        {/* Brand Logo & Title (Text hidden on mobile < md to maximize active title room) */}
         <div className="flex items-center gap-2 shrink-0">
           <div className="w-7 h-7 rounded-xl bg-surface-muted border border-border-main flex items-center justify-center text-text-main shadow-2xs">
             <Box className="w-4 h-4" />
           </div>
-          <div className="flex flex-col">
+          <div className="hidden md:flex flex-col">
             <span className="text-xs font-black tracking-wider text-text-main uppercase leading-none font-sans">
               StageFlow
             </span>
@@ -92,21 +111,23 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
           </div>
         </div>
 
-        <div className="h-5 w-px bg-border-main shrink-0 hidden sm:block" />
+        <div className="h-5 w-px bg-border-main shrink-0 hidden md:block" />
 
-        {/* Tiered File Dropdown Menu */}
-        <FileMenuDropdown
-          isOpen={isFileMenuOpen}
-          customScoresCount={customScores.length}
-          onToggle={() => setIsFileMenuOpen((prev) => !prev)}
-          onClose={() => setIsFileMenuOpen(false)}
-          onUploadFiles={onUploadFiles}
-          onExportActiveScore={onExportActiveScore}
-          onCreateBlankScore={onCreateBlankProject}
-          onOpenLibrary={onOpenLibrary}
-        />
+        {/* Tiered File Dropdown Menu (Hidden on mobile < md) */}
+        <div className="hidden md:block">
+          <FileMenuDropdown
+            isOpen={isFileMenuOpen}
+            customScoresCount={customScores.length}
+            onToggle={() => setIsFileMenuOpen((prev) => !prev)}
+            onClose={() => setIsFileMenuOpen(false)}
+            onUploadFiles={onUploadFiles}
+            onExportActiveScore={onExportActiveScore}
+            onCreateBlankScore={onCreateBlankProject}
+            onOpenLibrary={onOpenLibrary}
+          />
+        </div>
 
-        {/* Active Score Context Chip (Clickable Option A to Open Library) */}
+        {/* Active Score Context Chip (Clickable to Open Library) */}
         <ActiveScoreIndicator
           catalog={catalog}
           activeSceneId={activeSceneId}
@@ -115,8 +136,8 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
         />
       </div>
 
-      {/* Center Stage: Mathematically Centered at 50% of Header Width */}
-      <div className="absolute left-1/2 -translate-x-1/2 hidden lg:flex items-center pointer-events-auto">
+      {/* Center Stage: Mathematically Centered at 50% of Header Width (Tablets & Desktop) */}
+      <div className="absolute left-1/2 -translate-x-1/2 hidden md:flex items-center pointer-events-auto">
         <LayoutSegmentedControl
           splitPreset={splitPreset}
           onSelectSplitPreset={onSelectSplitPreset}
@@ -125,7 +146,7 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
         />
       </div>
 
-      {/* Right Wing: Theme Mode Dropdown & Score Library Button */}
+      {/* Right Wing: Theme Mode Dropdown, Score Library Button & Fullscreen/Reset Controls */}
       <div className="flex items-center gap-2 shrink-0">
         {/* Theme Mode Selector Dropdown */}
         {onSelectThemeMode && (
@@ -154,12 +175,27 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
           <span className="font-bold tracking-wide">Library</span>
         </button>
 
-        {/* Reset Layout Dimensions Button */}
+        {/* Mobile-Only Native Fullscreen Button (Replaces Reset Layout on mobile < md) */}
+        <button
+          type="button"
+          onClick={handleToggleFullscreen}
+          className={`${UI_TOKENS.button.filePill} flex md:hidden`}
+          title={isFullscreen ? 'Exit Full Screen' : 'Enter Full Screen'}
+          aria-label={isFullscreen ? 'Exit Full Screen' : 'Enter Full Screen'}
+        >
+          {isFullscreen ? (
+            <Minimize className="w-3.5 h-3.5 text-text-muted" />
+          ) : (
+            <Maximize className="w-3.5 h-3.5 text-text-muted" />
+          )}
+        </button>
+
+        {/* Reset Layout Dimensions Button (Desktop & Tablets >= md only) */}
         {onResetLayout && (
           <button
             type="button"
             onClick={onResetLayout}
-            className={UI_TOKENS.button.filePill}
+            className={`${UI_TOKENS.button.filePill} hidden md:flex`}
             title="Reset workspace layout and split widths to default (30/40/30)"
           >
             <RotateCcw className="w-3.5 h-3.5 text-text-muted" />

@@ -139,7 +139,7 @@ export const ResizableSplitWorkspace: React.FC<
   return (
     <div
       ref={containerRef}
-      className="relative flex-1 min-h-0 w-full flex flex-col lg:flex-row overflow-hidden bg-app"
+      className="relative flex-1 min-h-0 w-full flex flex-col md:flex-row overflow-hidden bg-app"
     >
       {/* LEFT COLUMN: Video Viewport + Horizontal Split Divider + Directorial Subpanel */}
       <div
@@ -154,20 +154,24 @@ export const ResizableSplitWorkspace: React.FC<
         className={
           isVideoHidden
             ? 'fixed -left-[99999px] top-0 w-[320px] h-[180px] opacity-0 pointer-events-none overflow-hidden -z-50'
-            : 'w-full h-[40%] lg:h-full lg:w-[var(--left-col-pct)] shrink-0 flex flex-col bg-surface border-b lg:border-b-0 border-border-main overflow-hidden'
+            : 'w-full h-[40%] md:h-full md:w-[var(--left-col-pct)] shrink-0 flex flex-col bg-surface border-b md:border-b-0 border-border-main overflow-hidden'
         }
         aria-hidden={isVideoHidden}
       >
-        {/* Top Section: Reference Video Player */}
+        {/* Top Section: Reference Video Player (or Procedural Stage Cam Monitor) */}
         <div
           style={
             showSubpanel
               ? ({
-                  height: `${videoHeightPct}%`,
+                  '--video-h-pct': `${videoHeightPct}%`,
                 } as React.CSSProperties)
-              : { height: 'calc(100% - 36px)' }
+              : undefined
           }
-          className="w-full shrink-0 min-h-0 relative flex flex-col overflow-hidden"
+          className={`w-full shrink-0 min-h-0 relative flex flex-col overflow-hidden ${
+            showSubpanel
+              ? 'h-full md:h-[var(--video-h-pct)]'
+              : 'h-full md:h-[calc(100%-36px)]'
+          }`}
         >
           {leftVideoPane}
         </div>
@@ -176,7 +180,7 @@ export const ResizableSplitWorkspace: React.FC<
         {showSubpanel && (
           <div
             onPointerDown={handlePointerDownHorizontal}
-            className={`hidden lg:flex h-2 shrink-0 items-center justify-center cursor-row-resize select-none transition-colors z-20 ${
+            className={`hidden md:flex h-2 shrink-0 items-center justify-center cursor-row-resize select-none transition-colors z-20 ${
               isDraggingHorizontal
                 ? 'bg-accent-primary'
                 : 'bg-surface-subtle hover:bg-surface-hover border-y border-border-main'
@@ -187,21 +191,21 @@ export const ResizableSplitWorkspace: React.FC<
           </div>
         )}
 
-        {/* Bottom Section: Directorial Subpanel */}
+        {/* Bottom Section: Directorial Subpanel (Hidden on mobile < md) */}
         {leftSubpanelPane && (
           <div
             style={
               showSubpanel
                 ? ({
-                    height: `${100 - videoHeightPct}%`,
+                    '--subpanel-h-pct': `${100 - videoHeightPct}%`,
                   } as React.CSSProperties)
                 : undefined
             }
-            className={
+            className={`hidden md:flex w-full min-h-0 relative flex-col overflow-hidden ${
               showSubpanel
-                ? 'w-full flex-1 min-h-0 relative flex flex-col overflow-hidden'
-                : 'w-full h-9 shrink-0 relative flex flex-col overflow-hidden'
-            }
+                ? 'flex-1 md:h-[var(--subpanel-h-pct)]'
+                : 'h-9 shrink-0'
+            }`}
           >
             {leftSubpanelPane}
           </div>
@@ -212,7 +216,7 @@ export const ResizableSplitWorkspace: React.FC<
       {!isVideoHidden && (
         <div
           onPointerDown={handlePointerDownLeft}
-          className={`hidden lg:flex w-2 shrink-0 items-center justify-center cursor-col-resize select-none transition-colors z-10 ${
+          className={`hidden md:flex w-2 shrink-0 items-center justify-center cursor-col-resize select-none transition-colors z-10 ${
             isDraggingLeft
               ? 'bg-accent-primary'
               : 'bg-surface-subtle hover:bg-surface-hover border-x border-border-main'
@@ -232,7 +236,7 @@ export const ResizableSplitWorkspace: React.FC<
       {showRightEditor && (
         <div
           onPointerDown={handlePointerDownRight}
-          className={`hidden lg:flex w-2 shrink-0 items-center justify-center cursor-col-resize select-none transition-colors z-10 ${
+          className={`hidden md:flex w-2 shrink-0 items-center justify-center cursor-col-resize select-none transition-colors z-10 ${
             isDraggingRight
               ? 'bg-amber-500'
               : 'bg-surface-subtle hover:bg-surface-hover border-x border-border-main'
@@ -251,7 +255,7 @@ export const ResizableSplitWorkspace: React.FC<
               '--right-col-pct': `${rightSplitPct}%`,
             } as React.CSSProperties
           }
-          className="w-full lg:w-[var(--right-col-pct)] shrink-0 h-full flex flex-col bg-surface z-10"
+          className="w-full md:w-[var(--right-col-pct)] shrink-0 h-full flex flex-col bg-surface z-10"
         >
           {rightEditorPane}
         </div>

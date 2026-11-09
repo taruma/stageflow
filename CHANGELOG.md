@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Mobile Native Fullscreen Control (`src/ui/WorkspaceHeader.tsx`)**:
+  - Introduced a 1-click mobile-only native browser Fullscreen toggle button (`Maximize`/`Minimize` icons via `document.documentElement.requestFullscreen()` and `document.exitFullscreen()`) that mounts on narrow viewports (`< md` / `< 768px`) replacing the desktop-only `Reset Layout` button.
+
+### Changed
+- **Mobile & Narrow Viewport Directorial Experience (`src/ui/WorkspaceHeader.tsx`, `src/ui/ResizableSplitWorkspace.tsx`, `src/ui/UniversalVideoViewport.tsx`, `src/ui/DirectorialTransportBar.tsx`, `src/ui/header/ActiveScoreIndicator.tsx`, `docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md`)**:
+  - **Proportional 40/60 Studio Layout**: Stacks the reference video (or procedural Stage Cam) at exactly 40% height above the 3D Blueprint Diorama (60%), hiding the Scene Desk subpanel on mobile (`hidden md:flex`) so the video pane takes 100% of the 40% height without vertical letterboxing or duplicate WebGL context overhead.
+  - **Header Compacting**: On mobile (`< md`), brand text (`StageFlow · 3D Blocking Diorama`) and the `File ▾` menu are hidden, giving maximum width to `ActiveScoreIndicator.tsx` to display active score titles with smooth ellipsis truncation (`truncate`).
+  - **Streamlined Transport Bar**: Auto-hides the shot chips strip (`DirectorialShotChipsStrip.tsx`) on mobile (`hidden md:block`), reducing footer height to only the Scrubber Track and Transport Deck controls, reclaiming ~35px of vertical screen height for 3D blocking inspection.
+
+### Added
 - **Scene-Wide Custom Metadata Support (`src/core/types.ts`, `src/core/scoreParser.ts`, `src/ui/left-panel/SceneMetadataCard.tsx`, `src/ui/left-panel/SceneProductionBrief.tsx`, `src/scores/blueprints/demo_blueprint.yaml`, `tests/unit/scoreParser.test.ts`, `tests/unit/guideSnippets.test.ts`)**:
   - Introduced dedicated root-level `metadata:` block in YAML choreography scores (`*.yaml`) and normalized AST (`score.metadata?: Record<string, unknown>`), providing a safe namespaced structure for production notes, music/soundtrack cues, camera gear packages, lighting setups, and crew credits.
   - Implemented Layer 5 `SceneMetadataCard.tsx` in the Scene Desk (`SceneProductionBrief.tsx`) positioned directly after the Scene Premise card and before Camera & Optical Package:

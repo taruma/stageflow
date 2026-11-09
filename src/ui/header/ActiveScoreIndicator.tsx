@@ -29,7 +29,7 @@ export const ActiveScoreIndicator: React.FC<ActiveScoreIndicatorProps> = ({
     <button
       type="button"
       onClick={onOpenLibrary}
-      className={`${UI_TOKENS.button.filePill} min-w-0 max-w-[180px] sm:max-w-[240px] xl:max-w-[340px] text-left group`}
+      className={`${UI_TOKENS.button.filePill} min-w-0 max-w-[140px] sm:max-w-[200px] md:max-w-[240px] xl:max-w-[340px] text-left group`}
       title={`Active Score: "${activeTitle}" — Click to open Score Library`}
     >
       <Film className="w-3.5 h-3.5 text-text-muted shrink-0 group-hover:text-text-main transition-colors" />
