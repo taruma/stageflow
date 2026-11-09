@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Stage Cam Monitor Telemetry Spacing (`src/stage/StageCamMonitorCanvas.tsx`)**:
+  - Tightened the horizontal flex gap between telemetry items (`FOV · ROLL` and `YAW · DIST · FOCUS`) from `gap-1.5` (6px) to `gap-1` (4px), reducing visual separation around middle-dot separators for improved pill density and consistency with the opposite `MANEUVER:` badge.
+
 ### Added
 - **Scene Studies: "The Expansion" & "AFRAID" (`src/scores/studies/the-expansion.yaml`, `src/scores/studies/afraid.yaml`, `src/scores/catalog.yaml`)**:
   - Added "The Expansion" (`the-expansion.yaml`): 72s continuous sequence shot study demonstrating spatial expansion and rack-focus choreography on a basketball court (11 continuous camera moves, 5 scripted observer shots).

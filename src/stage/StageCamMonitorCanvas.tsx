@@ -119,7 +119,7 @@ export const StageCamMonitorCanvas: React.FC<StageCamMonitorCanvasProps> = ({
               </button>
             )}
 
-            <div className="hidden @md:flex items-center gap-1.5 bg-surface/80 border border-border-main px-2 py-0.5 rounded-md shadow-xs whitespace-nowrap shrink-0">
+            <div className="hidden @md:flex items-center gap-1 bg-surface/80 border border-border-main px-2 py-0.5 rounded-md shadow-xs whitespace-nowrap shrink-0">
               <div className="flex items-center gap-1">
                 <span className="text-text-muted">FOV</span>
                 <span className="text-text-main font-semibold">
@@ -173,7 +173,7 @@ export const StageCamMonitorCanvas: React.FC<StageCamMonitorCanvasProps> = ({
             </span>
           </div>
 
-          <div className="flex items-center gap-1.5 bg-surface/80 border border-border-main px-2 py-0.5 rounded-md shadow-xs whitespace-nowrap shrink-0">
+          <div className="flex items-center gap-1 bg-surface/80 border border-border-main px-2 py-0.5 rounded-md shadow-xs whitespace-nowrap shrink-0">
             <span>
               YAW: <strong className="text-text-main">{yawDeg.toFixed(1)}°</strong>
             </span>
