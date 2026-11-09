@@ -8,3 +8,16 @@ coverage
 _examples
 recordings
 
+# Environment & Local Secrets
+.env
+.env.*
+!.env.example
+
+# IDE & Editors
+.vscode/
+.idea/
+*.swp
+
+# Test & Playwright outputs
+test-results/
+playwright-report/

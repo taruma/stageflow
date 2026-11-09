@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-11-10
+
 ### Added
 - **Official Brand Logo, Mobile App Icon & Dynamic Favicons (`src/ui/WorkspaceHeader.tsx`, `index.html`, `public/`)**:
   - Integrated official StageFlow brand assets across desktop and mobile headers:

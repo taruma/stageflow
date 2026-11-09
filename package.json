@@ -1,7 +1,26 @@
 {
   "name": "stageflow",
   "private": true,
-  "version": "0.1.0",
+  "version": "1.0.0",
+  "description": "3D Camera-Blocking & Scene Choreography Diorama",
+  "author": "Taruma Sakti (@taruma)",
+  "license": "MIT",
+  "homepage": "https://stageflow.taruma.my.id",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/taruma/stageflow.git"
+  },
+  "keywords": [
+    "threejs",
+    "react-three-fiber",
+    "cinematography",
+    "camera-blocking",
+    "choreography",
+    "diorama",
+    "filmmaking",
+    "typescript",
+    "vite"
+  ],
   "type": "module",
   "scripts": {
     "dev": "vite",
