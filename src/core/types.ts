@@ -395,4 +395,9 @@ export interface ParseScoreResult {
  */
 export type ScoreCategory = 'study' | 'blueprint' | 'custom';
 
+/**
+ * Filter tab categories available in the Score Library modal.
+ */
+export type LibraryFilterTab = 'all' | ScoreCategory;
+
 

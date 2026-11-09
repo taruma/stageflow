@@ -189,7 +189,7 @@ export const FileMenuDropdown: React.FC<FileMenuDropdownProps> = ({
               type="button"
               role="menuitem"
               onClick={() => {
-                onOpenLibrary('all');
+                onOpenLibrary();
                 onClose();
               }}
               className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-text-body hover:text-amber-600 dark:hover:text-amber-300 hover:bg-surface-subtle transition-colors text-left cursor-pointer"

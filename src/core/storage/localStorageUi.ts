@@ -7,6 +7,7 @@ import type {
   AppThemeMode,
   DioramaThemeMode,
   LabelDisplayMode,
+  LibraryFilterTab,
   SplitPreset,
 } from '../types';
 
@@ -26,6 +27,10 @@ const STORAGE_KEYS = {
   SUBPANEL_COLLAPSED: 'stageflow:ui:subpanel-collapsed',
   EDITOR_WORD_WRAP: 'stageflow:ui:editor-word-wrap',
   DOF_BLUR: 'stageflow:ui:dof-blur',
+  LIBRARY_TAB: 'stageflow:ui:library-tab',
+  LIBRARY_STUDY_EXPANDED: 'stageflow:ui:library-study-expanded',
+  LIBRARY_BLUEPRINT_EXPANDED: 'stageflow:ui:library-blueprint-expanded',
+  LIBRARY_CUSTOM_EXPANDED: 'stageflow:ui:library-custom-expanded',
 } as const;
 
 export function loadStoredSplitPreset(): SplitPreset | null {
@@ -325,6 +330,94 @@ export function loadStoredDofBlur(): boolean | null {
 export function saveStoredDofBlur(enabled: boolean): void {
   try {
     localStorage.setItem(STORAGE_KEYS.DOF_BLUR, String(enabled));
+  } catch {
+    // Ignore storage quota or access errors
+  }
+}
+
+export function loadStoredLibraryTab(): LibraryFilterTab | null {
+  try {
+    const val = localStorage.getItem(STORAGE_KEYS.LIBRARY_TAB);
+    if (
+      val === 'all' ||
+      val === 'study' ||
+      val === 'blueprint' ||
+      val === 'custom'
+    ) {
+      return val;
+    }
+  } catch {
+    // Ignore localStorage access restrictions
+  }
+  return null;
+}
+
+export function saveStoredLibraryTab(tab: LibraryFilterTab): void {
+  try {
+    localStorage.setItem(STORAGE_KEYS.LIBRARY_TAB, tab);
+  } catch {
+    // Ignore storage quota or access errors
+  }
+}
+
+export function loadStoredLibraryStudyExpanded(): boolean | null {
+  try {
+    const val = localStorage.getItem(STORAGE_KEYS.LIBRARY_STUDY_EXPANDED);
+    if (val === 'true') return true;
+    if (val === 'false') return false;
+  } catch {
+    // Ignore localStorage access restrictions
+  }
+  return null;
+}
+
+export function saveStoredLibraryStudyExpanded(expanded: boolean): void {
+  try {
+    localStorage.setItem(STORAGE_KEYS.LIBRARY_STUDY_EXPANDED, String(expanded));
+  } catch {
+    // Ignore storage quota or access errors
+  }
+}
+
+export function loadStoredLibraryBlueprintExpanded(): boolean | null {
+  try {
+    const val = localStorage.getItem(STORAGE_KEYS.LIBRARY_BLUEPRINT_EXPANDED);
+    if (val === 'true') return true;
+    if (val === 'false') return false;
+  } catch {
+    // Ignore localStorage access restrictions
+  }
+  return null;
+}
+
+export function saveStoredLibraryBlueprintExpanded(expanded: boolean): void {
+  try {
+    localStorage.setItem(
+      STORAGE_KEYS.LIBRARY_BLUEPRINT_EXPANDED,
+      String(expanded)
+    );
+  } catch {
+    // Ignore storage quota or access errors
+  }
+}
+
+export function loadStoredLibraryCustomExpanded(): boolean | null {
+  try {
+    const val = localStorage.getItem(STORAGE_KEYS.LIBRARY_CUSTOM_EXPANDED);
+    if (val === 'true') return true;
+    if (val === 'false') return false;
+  } catch {
+    // Ignore localStorage access restrictions
+  }
+  return null;
+}
+
+export function saveStoredLibraryCustomExpanded(expanded: boolean): void {
+  try {
+    localStorage.setItem(
+      STORAGE_KEYS.LIBRARY_CUSTOM_EXPANDED,
+      String(expanded)
+    );
   } catch {
     // Ignore storage quota or access errors
   }

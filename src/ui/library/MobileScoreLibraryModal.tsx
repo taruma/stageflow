@@ -10,6 +10,16 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Clapperboard, X, ChevronDown } from 'lucide-react';
 import type { ScoreCatalogItem } from '../../core/scoreCatalog';
 import type { FilterTab } from '../ScoreLibraryModal';
+import {
+  loadStoredLibraryBlueprintExpanded,
+  loadStoredLibraryCustomExpanded,
+  loadStoredLibraryStudyExpanded,
+  loadStoredLibraryTab,
+  saveStoredLibraryBlueprintExpanded,
+  saveStoredLibraryCustomExpanded,
+  saveStoredLibraryStudyExpanded,
+  saveStoredLibraryTab,
+} from '../../core/storage/localStorageUi';
 import { ScoreLibraryCard } from './ScoreLibraryCard';
 import { UI_TOKENS } from '../tokens/ui';
 
@@ -26,22 +36,60 @@ export const MobileScoreLibraryModal: React.FC<MobileScoreLibraryModalProps> = (
   isOpen,
   catalog,
   activeSceneId,
-  initialTab = 'all',
+  initialTab,
   onSelectScene,
   onClose,
 }) => {
-  const [activeTab, setActiveTab] = useState<FilterTab>(initialTab);
-  const [isStudyExpanded, setIsStudyExpanded] = useState(true);
-  const [isBlueprintExpanded, setIsBlueprintExpanded] = useState(false); // Collapsed by default on mobile
-  const [isCustomExpanded, setIsCustomExpanded] = useState(true);
+  const [activeTab, setActiveTab] = useState<FilterTab>(() => {
+    return initialTab ?? loadStoredLibraryTab() ?? 'all';
+  });
+  const [isStudyExpanded, setIsStudyExpanded] = useState<boolean>(() => {
+    return loadStoredLibraryStudyExpanded() ?? true;
+  });
+  const [isBlueprintExpanded, setIsBlueprintExpanded] = useState<boolean>(() => {
+    return loadStoredLibraryBlueprintExpanded() ?? false;
+  });
+  const [isCustomExpanded, setIsCustomExpanded] = useState<boolean>(() => {
+    return loadStoredLibraryCustomExpanded() ?? true;
+  });
+
+  const handleSelectTab = (tab: FilterTab) => {
+    setActiveTab(tab);
+    saveStoredLibraryTab(tab);
+  };
+
+  const handleToggleStudyExpanded = () => {
+    setIsStudyExpanded((prev) => {
+      const next = !prev;
+      saveStoredLibraryStudyExpanded(next);
+      return next;
+    });
+  };
+
+  const handleToggleBlueprintExpanded = () => {
+    setIsBlueprintExpanded((prev) => {
+      const next = !prev;
+      saveStoredLibraryBlueprintExpanded(next);
+      return next;
+    });
+  };
+
+  const handleToggleCustomExpanded = () => {
+    setIsCustomExpanded((prev) => {
+      const next = !prev;
+      saveStoredLibraryCustomExpanded(next);
+      return next;
+    });
+  };
 
   // Synchronize initialTab when modal opens
   useEffect(() => {
     if (isOpen) {
       if (initialTab) {
         setActiveTab(initialTab);
+      } else {
+        setActiveTab(loadStoredLibraryTab() ?? 'all');
       }
-      setIsBlueprintExpanded(false);
     }
   }, [isOpen, initialTab]);
 
@@ -124,7 +172,7 @@ export const MobileScoreLibraryModal: React.FC<MobileScoreLibraryModalProps> = (
       <div className="px-3 py-2 bg-surface-subtle border-b border-border-subtle shrink-0 overflow-x-auto no-scrollbar flex items-center gap-1.5 select-none">
         <button
           type="button"
-          onClick={() => setActiveTab('all')}
+          onClick={() => handleSelectTab('all')}
           className={`px-3 py-1 rounded-full text-xs font-mono font-medium shrink-0 transition-colors cursor-pointer ${
             activeTab === 'all'
               ? 'bg-amber-500 text-white font-bold shadow-xs'
@@ -135,7 +183,7 @@ export const MobileScoreLibraryModal: React.FC<MobileScoreLibraryModalProps> = (
         </button>
         <button
           type="button"
-          onClick={() => setActiveTab('study')}
+          onClick={() => handleSelectTab('study')}
           className={`px-3 py-1 rounded-full text-xs font-mono font-medium shrink-0 transition-colors cursor-pointer ${
             activeTab === 'study'
               ? 'bg-amber-500 text-white font-bold shadow-xs'
@@ -146,7 +194,7 @@ export const MobileScoreLibraryModal: React.FC<MobileScoreLibraryModalProps> = (
         </button>
         <button
           type="button"
-          onClick={() => setActiveTab('blueprint')}
+          onClick={() => handleSelectTab('blueprint')}
           className={`px-3 py-1 rounded-full text-xs font-mono font-medium shrink-0 transition-colors cursor-pointer ${
             activeTab === 'blueprint'
               ? 'bg-amber-500 text-white font-bold shadow-xs'
@@ -157,7 +205,7 @@ export const MobileScoreLibraryModal: React.FC<MobileScoreLibraryModalProps> = (
         </button>
         <button
           type="button"
-          onClick={() => setActiveTab('custom')}
+          onClick={() => handleSelectTab('custom')}
           className={`px-3 py-1 rounded-full text-xs font-mono font-medium shrink-0 transition-colors cursor-pointer ${
             activeTab === 'custom'
               ? 'bg-amber-500 text-white font-bold shadow-xs'
@@ -181,7 +229,7 @@ export const MobileScoreLibraryModal: React.FC<MobileScoreLibraryModalProps> = (
               <div className="space-y-1.5">
                 <button
                   type="button"
-                  onClick={() => setIsStudyExpanded((prev) => !prev)}
+                  onClick={handleToggleStudyExpanded}
                   aria-expanded={isStudyExpanded}
                   className="w-full px-2 py-1 text-[10px] font-mono font-bold tracking-wider text-text-muted hover:text-text-main uppercase flex items-center justify-between rounded-md hover:bg-surface-subtle transition-colors group select-none cursor-pointer"
                 >
@@ -218,7 +266,7 @@ export const MobileScoreLibraryModal: React.FC<MobileScoreLibraryModalProps> = (
               <div className="space-y-1.5">
                 <button
                   type="button"
-                  onClick={() => setIsBlueprintExpanded((prev) => !prev)}
+                  onClick={handleToggleBlueprintExpanded}
                   aria-expanded={isBlueprintExpanded}
                   className="w-full px-2 py-1 text-[10px] font-mono font-bold tracking-wider text-text-muted hover:text-text-main uppercase flex items-center justify-between rounded-md hover:bg-surface-subtle transition-colors group select-none cursor-pointer"
                 >
@@ -255,7 +303,7 @@ export const MobileScoreLibraryModal: React.FC<MobileScoreLibraryModalProps> = (
               <div className="space-y-1.5">
                 <button
                   type="button"
-                  onClick={() => setIsCustomExpanded((prev) => !prev)}
+                  onClick={handleToggleCustomExpanded}
                   aria-expanded={isCustomExpanded}
                   className="w-full px-2 py-1 text-[10px] font-mono font-bold tracking-wider text-text-muted hover:text-text-main uppercase flex items-center justify-between rounded-md hover:bg-surface-subtle transition-colors group select-none cursor-pointer"
                 >

@@ -16,11 +16,22 @@ import {
   ChevronDown,
 } from 'lucide-react';
 import type { ScoreCatalogItem } from '../core/scoreCatalog';
+import type { LibraryFilterTab } from '../core/types';
+import {
+  loadStoredLibraryBlueprintExpanded,
+  loadStoredLibraryCustomExpanded,
+  loadStoredLibraryStudyExpanded,
+  loadStoredLibraryTab,
+  saveStoredLibraryBlueprintExpanded,
+  saveStoredLibraryCustomExpanded,
+  saveStoredLibraryStudyExpanded,
+  saveStoredLibraryTab,
+} from '../core/storage/localStorageUi';
 import { ScoreLibraryCard } from './library/ScoreLibraryCard';
 import { ScoreInspectorPane } from './library/ScoreInspectorPane';
 import { UI_TOKENS } from './tokens/ui';
 
-export type FilterTab = 'all' | 'study' | 'blueprint' | 'custom';
+export type FilterTab = LibraryFilterTab;
 
 export interface ScoreLibraryModalProps {
   isOpen: boolean;
@@ -41,7 +52,7 @@ export const ScoreLibraryModal: React.FC<ScoreLibraryModalProps> = ({
   isOpen,
   catalog,
   activeSceneId,
-  initialTab = 'all',
+  initialTab,
   onSelectScene,
   onCreateBlankScore,
   onForkScore,
@@ -51,20 +62,59 @@ export const ScoreLibraryModal: React.FC<ScoreLibraryModalProps> = ({
   onDeleteScore,
   onClose,
 }) => {
-  const [activeTab, setActiveTab] = useState<FilterTab>(initialTab);
+  const [activeTab, setActiveTab] = useState<FilterTab>(() => {
+    return initialTab ?? loadStoredLibraryTab() ?? 'all';
+  });
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedScoreId, setSelectedScoreId] = useState<string>(activeSceneId);
   const [mobileView, setMobileView] = useState<'list' | 'details'>('list');
-  const [isStudyExpanded, setIsStudyExpanded] = useState(true);
-  const [isBlueprintExpanded, setIsBlueprintExpanded] = useState(true);
-  const [isCustomExpanded, setIsCustomExpanded] = useState(true);
+  const [isStudyExpanded, setIsStudyExpanded] = useState<boolean>(() => {
+    return loadStoredLibraryStudyExpanded() ?? true;
+  });
+  const [isBlueprintExpanded, setIsBlueprintExpanded] = useState<boolean>(() => {
+    return loadStoredLibraryBlueprintExpanded() ?? false;
+  });
+  const [isCustomExpanded, setIsCustomExpanded] = useState<boolean>(() => {
+    return loadStoredLibraryCustomExpanded() ?? true;
+  });
   const listContainerRef = useRef<HTMLDivElement>(null);
+
+  const handleSelectTab = (tab: FilterTab) => {
+    setActiveTab(tab);
+    saveStoredLibraryTab(tab);
+  };
+
+  const handleToggleStudyExpanded = () => {
+    setIsStudyExpanded((prev) => {
+      const next = !prev;
+      saveStoredLibraryStudyExpanded(next);
+      return next;
+    });
+  };
+
+  const handleToggleBlueprintExpanded = () => {
+    setIsBlueprintExpanded((prev) => {
+      const next = !prev;
+      saveStoredLibraryBlueprintExpanded(next);
+      return next;
+    });
+  };
+
+  const handleToggleCustomExpanded = () => {
+    setIsCustomExpanded((prev) => {
+      const next = !prev;
+      saveStoredLibraryCustomExpanded(next);
+      return next;
+    });
+  };
 
   // Synchronize initialTab and selectedScoreId when modal opens
   useEffect(() => {
     if (isOpen) {
       if (initialTab) {
         setActiveTab(initialTab);
+      } else {
+        setActiveTab(loadStoredLibraryTab() ?? 'all');
       }
       setSelectedScoreId(activeSceneId);
       setMobileView('list');
@@ -267,7 +317,7 @@ export const ScoreLibraryModal: React.FC<ScoreLibraryModalProps> = ({
                 <div className={UI_TOKENS.button.segmentedGroup}>
                   <button
                     type="button"
-                    onClick={() => setActiveTab('all')}
+                    onClick={() => handleSelectTab('all')}
                     className={
                       activeTab === 'all'
                         ? UI_TOKENS.button.segmentedItemActive
@@ -278,7 +328,7 @@ export const ScoreLibraryModal: React.FC<ScoreLibraryModalProps> = ({
                   </button>
                   <button
                     type="button"
-                    onClick={() => setActiveTab('study')}
+                    onClick={() => handleSelectTab('study')}
                     className={
                       activeTab === 'study'
                         ? UI_TOKENS.button.segmentedItemActive
@@ -289,7 +339,7 @@ export const ScoreLibraryModal: React.FC<ScoreLibraryModalProps> = ({
                   </button>
                   <button
                     type="button"
-                    onClick={() => setActiveTab('blueprint')}
+                    onClick={() => handleSelectTab('blueprint')}
                     className={
                       activeTab === 'blueprint'
                         ? UI_TOKENS.button.segmentedItemActive
@@ -300,7 +350,7 @@ export const ScoreLibraryModal: React.FC<ScoreLibraryModalProps> = ({
                   </button>
                   <button
                     type="button"
-                    onClick={() => setActiveTab('custom')}
+                    onClick={() => handleSelectTab('custom')}
                     className={
                       activeTab === 'custom'
                         ? UI_TOKENS.button.segmentedItemActive
@@ -353,7 +403,7 @@ export const ScoreLibraryModal: React.FC<ScoreLibraryModalProps> = ({
                     <div className="space-y-1.5">
                       <button
                         type="button"
-                        onClick={() => setIsStudyExpanded((prev) => !prev)}
+                        onClick={handleToggleStudyExpanded}
                         aria-expanded={isStudyExpanded}
                         className="w-full px-2 py-1 text-[10px] font-mono font-bold tracking-wider text-text-muted hover:text-text-main uppercase flex items-center justify-between rounded-md hover:bg-surface-subtle transition-colors group select-none cursor-pointer"
                       >
@@ -394,7 +444,7 @@ export const ScoreLibraryModal: React.FC<ScoreLibraryModalProps> = ({
                     <div className="space-y-1.5">
                       <button
                         type="button"
-                        onClick={() => setIsBlueprintExpanded((prev) => !prev)}
+                        onClick={handleToggleBlueprintExpanded}
                         aria-expanded={isBlueprintExpanded}
                         className="w-full px-2 py-1 text-[10px] font-mono font-bold tracking-wider text-text-muted hover:text-text-main uppercase flex items-center justify-between rounded-md hover:bg-surface-subtle transition-colors group select-none cursor-pointer"
                       >
@@ -435,7 +485,7 @@ export const ScoreLibraryModal: React.FC<ScoreLibraryModalProps> = ({
                     <div className="space-y-1.5">
                       <button
                         type="button"
-                        onClick={() => setIsCustomExpanded((prev) => !prev)}
+                        onClick={handleToggleCustomExpanded}
                         aria-expanded={isCustomExpanded}
                         className="w-full px-2 pt-2 pb-1 text-[10px] font-mono font-bold tracking-wider text-text-muted hover:text-text-main uppercase flex items-center justify-between rounded-md hover:bg-surface-subtle transition-colors group select-none cursor-pointer"
                       >

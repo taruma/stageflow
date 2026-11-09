@@ -26,6 +26,14 @@ import {
   saveStoredSubpanelCollapsed,
   loadStoredEditorWordWrap,
   saveStoredEditorWordWrap,
+  loadStoredLibraryTab,
+  saveStoredLibraryTab,
+  loadStoredLibraryStudyExpanded,
+  saveStoredLibraryStudyExpanded,
+  loadStoredLibraryBlueprintExpanded,
+  saveStoredLibraryBlueprintExpanded,
+  loadStoredLibraryCustomExpanded,
+  saveStoredLibraryCustomExpanded,
 } from '../../src/core/storage/localStorageUi';
 import { getDioramaThemeColors } from '../../src/stage/dioramaTheme';
 
@@ -210,6 +218,49 @@ describe('localStorageUi — Synchronous UI Preferences Persistence', () => {
 
     saveStoredEditorWordWrap(false);
     expect(loadStoredEditorWordWrap()).toBe(false);
+  });
+
+  it('persists and hydrates score library filter tab with fallback', () => {
+    expect(loadStoredLibraryTab()).toBeNull();
+
+    saveStoredLibraryTab('study');
+    expect(loadStoredLibraryTab()).toBe('study');
+
+    saveStoredLibraryTab('blueprint');
+    expect(loadStoredLibraryTab()).toBe('blueprint');
+
+    saveStoredLibraryTab('custom');
+    expect(loadStoredLibraryTab()).toBe('custom');
+
+    saveStoredLibraryTab('all');
+    expect(loadStoredLibraryTab()).toBe('all');
+
+    // Invalid fallback
+    globalThis.localStorage.setItem('stageflow:ui:library-tab', 'invalid-tab');
+    expect(loadStoredLibraryTab()).toBeNull();
+  });
+
+  it('persists and hydrates library accordion section expanded states', () => {
+    // Studies
+    expect(loadStoredLibraryStudyExpanded()).toBeNull();
+    saveStoredLibraryStudyExpanded(true);
+    expect(loadStoredLibraryStudyExpanded()).toBe(true);
+    saveStoredLibraryStudyExpanded(false);
+    expect(loadStoredLibraryStudyExpanded()).toBe(false);
+
+    // Blueprints
+    expect(loadStoredLibraryBlueprintExpanded()).toBeNull();
+    saveStoredLibraryBlueprintExpanded(true);
+    expect(loadStoredLibraryBlueprintExpanded()).toBe(true);
+    saveStoredLibraryBlueprintExpanded(false);
+    expect(loadStoredLibraryBlueprintExpanded()).toBe(false);
+
+    // Custom Projects
+    expect(loadStoredLibraryCustomExpanded()).toBeNull();
+    saveStoredLibraryCustomExpanded(true);
+    expect(loadStoredLibraryCustomExpanded()).toBe(true);
+    saveStoredLibraryCustomExpanded(false);
+    expect(loadStoredLibraryCustomExpanded()).toBe(false);
   });
 
   it('provides distinct, valid hex colors for all diorama theme categories', () => {

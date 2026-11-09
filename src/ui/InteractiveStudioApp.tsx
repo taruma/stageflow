@@ -84,7 +84,9 @@ export const InteractiveStudioApp: React.FC = () => {
 
   // Score Library Modal state & initial category tab
   const [isLibraryOpen, setIsLibraryOpen] = useState(false);
-  const [libraryInitialTab, setLibraryInitialTab] = useState<FilterTab>('all');
+  const [libraryInitialTab, setLibraryInitialTab] = useState<
+    FilterTab | undefined
+  >(undefined);
 
   // Measure diorama pane width to toggle between standard and compact header (<768px)
   const stageContainerRef = useRef<HTMLDivElement | null>(null);
@@ -391,7 +393,7 @@ export const InteractiveStudioApp: React.FC = () => {
         onUploadFiles={fileDrop.processFiles}
         onExportActiveScore={handleExportActiveScore}
         onOpenLibrary={(tab) => {
-          setLibraryInitialTab(tab ?? 'all');
+          setLibraryInitialTab(tab);
           setIsLibraryOpen(true);
         }}
         onSelectThemeMode={theme.setThemeMode}
