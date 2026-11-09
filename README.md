@@ -1,4 +1,9 @@
-# StageFlow — 3D Camera-Blocking & Scene Choreography Diorama
+# StageFlow by Taruma Sakti | 3D Camera-Blocking & Scene Choreography Diorama
+
+<p align="center">
+  <img src="public/StageFlow - LOGO - WHITE.png#gh-dark-mode-only" alt="StageFlow Logo" width="480" />
+  <img src="public/StageFlow - LOGO - BLACK.png#gh-light-mode-only" alt="StageFlow Logo" width="480" />
+</p>
 
 **StageFlow** is a standalone 3D spatial staging and camera-blocking visualizer built with **React 19**, **Three.js / React Three Fiber (`@react-three/fiber` & `@react-three/drei`)**, **TypeScript**, and **Tailwind CSS v4**.
 

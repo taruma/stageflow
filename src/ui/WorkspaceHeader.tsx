@@ -7,7 +7,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Box, Book, RotateCcw, Maximize, Minimize } from 'lucide-react';
+import { Book, RotateCcw, Maximize, Minimize } from 'lucide-react';
 import type { ScoreCatalogItem } from '../core/scoreCatalog';
 import type {
   AppThemeCategory,
@@ -91,24 +91,39 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
   };
 
   const customScores = catalog.filter((item) => item.isCustom);
+  const isDark = effectiveThemeCategory === 'dark';
 
   return (
     <header className={UI_TOKENS.layout.appHeader}>
       {/* Left Wing: Brand Identity, File Menu & Active Score Indicator */}
       <div className="flex items-center gap-2 min-w-0 flex-1 md:flex-initial md:max-w-[calc(50%-80px)]">
-        {/* Brand Logo & Title (Text hidden on mobile < md to maximize active title room) */}
-        <div className="flex items-center gap-2 shrink-0">
-          <div className="w-7 h-7 rounded-xl bg-surface-muted border border-border-main flex items-center justify-center text-text-main shadow-2xs">
-            <Box className="w-4 h-4" />
+        {/* Brand Identity: Desktop Horizontal Logo vs Mobile Rounded Box Icon */}
+        {/* Mobile (< md): Theme-adaptive rounded box icon */}
+        <div className="flex md:hidden items-center shrink-0">
+          <div
+            className="w-8 h-8 rounded-xl bg-surface-muted border border-border-main flex items-center justify-center shadow-2xs overflow-hidden p-1 shrink-0"
+            title="StageFlow by Taruma Sakti | 3D Camera-Blocking & Scene Choreography Diorama"
+          >
+            <img
+              src="/StageFlow - ICON - Square.png"
+              alt="StageFlow Icon"
+              className={`w-full h-full object-contain ${isDark ? 'invert' : ''}`}
+            />
           </div>
-          <div className="hidden md:flex flex-col">
-            <span className="text-xs font-black tracking-wider text-text-main uppercase leading-none font-sans">
-              StageFlow
-            </span>
-            <span className="text-[8px] font-black text-text-faint tracking-[0.2em] uppercase mt-0.5 font-sans">
-              3D Blocking Diorama
-            </span>
-          </div>
+        </div>
+
+        {/* Desktop (>= md): Full Horizontal Brand Logo */}
+        <div className="hidden md:flex items-center shrink-0">
+          <img
+            src={
+              isDark
+                ? '/StageFlow - LOGO - WHITE.png'
+                : '/StageFlow - LOGO - BLACK.png'
+            }
+            alt="StageFlow by Taruma Sakti | 3D Camera-Blocking & Scene Choreography Diorama"
+            title="StageFlow by Taruma Sakti | 3D Camera-Blocking & Scene Choreography Diorama"
+            className="h-7 w-auto max-w-[145px] object-contain select-none"
+          />
         </div>
 
         <div className="h-5 w-px bg-border-main shrink-0 hidden md:block" />

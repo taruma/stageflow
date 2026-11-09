@@ -43,7 +43,12 @@ stageflow/
 │       ├── serverManager.ts         # Vite server detection & background startup
 │       ├── cameraPresets.ts         # Camera angle presets (isometric, top-down, front, side)
 │       └── recorderTypes.ts         # Shared CLI & bridge TypeScript interfaces
-├── public/                          # Static web assets & media files
+├── public/                          # Static web assets, logos, icons & favicons
+│   ├── StageFlow - LOGO - BLACK.png # Desktop horizontal brand logo (light/warm themes)
+│   ├── StageFlow - LOGO - WHITE.png # Desktop horizontal brand logo (dark/pure-black themes)
+│   ├── StageFlow - ICON - Square.png# Mobile header rounded box icon (theme-adaptive)
+│   ├── favicon.ico, favicon-*.png   # Browser favicons & Apple touch icons
+│   └── site.webmanifest             # Web application manifest
 ├── src/
 │   ├── recorder/                    # Headless Recording Bridge & Render Environment
 │   │   ├── HeadlessRecorderView.tsx # Canvas mounted on ?mode=headless-render

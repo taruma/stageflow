@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Official Brand Logo, Mobile App Icon & Dynamic Favicons (`src/ui/WorkspaceHeader.tsx`, `index.html`, `public/`)**:
+  - Integrated official StageFlow brand assets across desktop and mobile headers:
+    - Desktop (`>= md`): Full horizontal brand logo dynamically switching between `/StageFlow - LOGO - WHITE.png` for dark themes (Dark Obsidian / Pure Black) and `/StageFlow - LOGO - BLACK.png` for light themes (Light Stone / Warm Paper).
+    - Mobile (`< md`): Elevated rounded-box icon using `/StageFlow - ICON - Square.png` with theme-adaptive background (`bg-surface-muted border-border-main`) and CSS color inversion (`invert`) for high contrast across all light and dark palettes.
+  - Linked browser favicon suite (`favicon.ico`, `favicon-32x32.png`, `favicon-16x16.png`), Apple touch icon (`apple-touch-icon.png`), and web manifest (`site.webmanifest`) in `index.html`.
+  - Updated application title in `index.html`, `site.webmanifest`, `README.md`, and header tooltips to: "StageFlow by Taruma Sakti | 3D Camera-Blocking & Scene Choreography Diorama".
+
+
 ### Changed
 - **Tiered Verification, Scoped Spec Gates & Reactive Wakeup Discipline (`AGENTS.md`, `package.json`)**:
   - Added `"typecheck": "tsc -b"` to `package.json` for fast (< 6s) typecheck verification during rapid iteration.
