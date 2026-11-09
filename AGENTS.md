@@ -60,16 +60,23 @@ Types: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`.
 - **Support both flat and nested authoring**: When introducing or modifying any cue-level property, always parse both the cue root and the nested spec block.
 - **Enable scoped hierarchy overrides**: Scoped child blocks (e.g. `shots[k].observer_camera` or `shots[k].stage_camera`) must always be able to explicitly override parent shot or track-level flags.
 
+### 2.7 Reactive Wakeup Discipline (Zero Background Polling)
+- **Never poll or busy-wait on background commands.** When a terminal command continues running in the background as an asynchronous task, **call zero further tools and let your turn end immediately**.
+- Do not run `manage_task status`, `echo "waiting"`, sleep commands, or dummy shell loops while waiting.
+- The platform will automatically resume your execution via a reactive wakeup message once the background task finishes.
+
 ---
 
 ## 3. Mandatory Pre-Flight Domain Specification Lookup Gate
 
 > [!IMPORTANT]
-> Detailed technical specifications are modularized under [`docs/`](docs/). Before planning, inspecting, or modifying files in any domain below, the agent **MUST** call `read_file` on the corresponding specification document:
-> - **Repository Structure & Exhaustive 5-Layer File Map**: Read [`docs/ARCHITECTURE_FILE_MAP.md`](docs/ARCHITECTURE_FILE_MAP.md).
-> - **Layer 1: Core Math, Optics, Trajectories & YAML Score Schema** (`src/core/*`, `src/scores/*.yaml`, `tests/unit/*`): Read [`docs/CORE_MATH_AND_SCORE_SPECIFICATIONS.md`](docs/CORE_MATH_AND_SCORE_SPECIFICATIONS.md), [`docs/STAGEFLOW_SCRIPT_SPECIFICATION.md`](docs/STAGEFLOW_SCRIPT_SPECIFICATION.md), and [`docs/YAML_AUTHORING_GUIDE.md`](docs/YAML_AUTHORING_GUIDE.md).
-> - **Layer 2 & 3: Universal Media Clock, YouTube Sync & Dual-Tier 60fps Loop** (`src/media/*`, `src/hooks/*`): Read [`docs/MEDIA_CLOCK_AND_SYNC_SPECIFICATIONS.md`](docs/MEDIA_CLOCK_AND_SYNC_SPECIFICATIONS.md).
-> - **Layer 4 & 5: 3D Blueprint Diorama, Dual-Camera Rigs & 2D Workspace UI** (`src/stage/*`, `src/ui/*`, `src/App.tsx`): Read [`docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md`](docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md) and [`docs/VISUAL_DESIGN_SYSTEM.md`](docs/VISUAL_DESIGN_SYSTEM.md).
+> Detailed technical specifications are modularized under [`docs/`](docs/).
+> - **Mandatory Scope**: Before planning, inspecting, or modifying core math, schema/DSL contracts, kinematics, media sync drivers, 3D diorama rigs, or multi-file architecture, the agent **MUST** call `read_file` on the corresponding specification document:
+>   - **Repository Structure & Exhaustive 5-Layer File Map**: Read [`docs/ARCHITECTURE_FILE_MAP.md`](docs/ARCHITECTURE_FILE_MAP.md).
+>   - **Layer 1: Core Math, Optics, Trajectories & YAML Score Schema** (`src/core/*`, `src/scores/*.yaml`, `tests/unit/*`): Read [`docs/CORE_MATH_AND_SCORE_SPECIFICATIONS.md`](docs/CORE_MATH_AND_SCORE_SPECIFICATIONS.md), [`docs/STAGEFLOW_SCRIPT_SPECIFICATION.md`](docs/STAGEFLOW_SCRIPT_SPECIFICATION.md), and [`docs/YAML_AUTHORING_GUIDE.md`](docs/YAML_AUTHORING_GUIDE.md).
+>   - **Layer 2 & 3: Universal Media Clock, YouTube Sync & Dual-Tier 60fps Loop** (`src/media/*`, `src/hooks/*`): Read [`docs/MEDIA_CLOCK_AND_SYNC_SPECIFICATIONS.md`](docs/MEDIA_CLOCK_AND_SYNC_SPECIFICATIONS.md).
+>   - **Layer 4 & 5: 3D Blueprint Diorama, Dual-Camera Rigs & 2D Workspace UI** (`src/stage/*`, `src/ui/*`, `src/App.tsx`): Read [`docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md`](docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md) and [`docs/VISUAL_DESIGN_SYSTEM.md`](docs/VISUAL_DESIGN_SYSTEM.md).
+> - **Exempt / Lightweight Scope**: Localized cosmetic styling (Tailwind utility classes, color tokens), minor UI copy, single-component CSS layout adjustments, and isolated typos do not require full domain spec re-reads.
 
 ### Universal StageFlow Invariants Matrix
 
@@ -115,24 +122,23 @@ stageflow/
 
 ## 5. Tooling, Verification & Testing Policy
 
-Every change—whether in core math, media drivers, 3D stage components, or UI—must pass all three automated verification gates before completion:
+Verification in StageFlow is calibrated into two tiers to balance rigorous mathematical safety with rapid feedback loops:
 
-| Gate | Command | Requirement |
-| :--- | :--- | :--- |
-| **1. Unit Tests** | `npm test` | All Vitest unit suites in `tests/unit/` must pass. New math/parser/engine features require unit tests. |
-| **2. Build & Typecheck** | `npm run build` | `tsc -b && vite build` must pass with **zero TypeScript errors**. |
-| **3. Linter** | `npm run lint` | `oxlint` must report **0 warnings and 0 errors**. |
-| **4. Dev Server** | `npm run dev` | Local interactive verification on `http://localhost:5173`. |
-| **5. Viewport Recorder** | `npm run record` | Deterministic 60fps Playwright + FFmpeg viewport video recorder. |
+### Tiered Verification Gates
+
+| Tier | When to Apply | Automated Commands | Requirement |
+| :--- | :--- | :--- | :--- |
+| **Tier 1: Fast Dev Loop** | Localized UI/styling, minor bugfixes, copy tweaks, isolated single-file components | `npm run lint`<br>`npm run typecheck` (`tsc -b`)<br>Targeted Vitest (if applicable) | `oxlint` 0 warnings; `tsc -b` 0 TypeScript errors (< 6s). Eliminates the 2-minute Vite chunking overhead on trivial edits. |
+| **Tier 2: Core Engine & Full Release** | Core math, kinematics, schema/DSL syntax, 3D diorama rigs, media sync, dependencies, refactors | `npm test`<br>`npm run build` (`tsc -b && vite build`)<br>`npm run lint` | All Vitest unit suites pass (228 tests); zero TypeScript/Vite bundling errors; `oxlint` 0 warnings. |
 
 ### Pre-Delivery Audit Checklist
 Before reporting completion of any task:
 1. **Self-Audit Chaining & Edge Cases**: For forward-chaining or state-persistence changes (`trajectoryChain.ts`, `entity*Evaluator.ts`, `scoreParser.ts`), verify both explicit-value and omitted-field fallback branches so composite states (e.g. `baseTarget + offset`) never double-accumulate, and assert final 3D world-space transforms in unit tests.
 2. **DSL Polymorphism Audit**: Verify that newly introduced or modified properties are accepted both flat at the cue root and nested inside spec blocks (e.g. `camera:` / `observer_camera:`), and verify scoped child overrides.
-3. **Compiler Strictness Verification**: Always run `npm run build` (`tsc -b && vite build`) or `npx tsc -b` alongside `npm test`. Never rely on transpiled Vitest passes alone, as esbuild strips types without enforcing strict flags (`noUnusedParameters`, strict null checks).
+3. **Compiler Strictness Verification**: Always run `npm run typecheck` (`tsc -b`) or `npm run build` (`tsc -b && vite build`) alongside tests. Never rely on transpiled Vitest passes alone, as esbuild strips types without enforcing strict flags (`noUnusedParameters`, strict null checks).
 4. **Docs-as-Code Fixture Awareness**: In documentation suites that act as live test fixtures (e.g. `tests/unit/guideSnippets.test.ts`), any added or modified markdown YAML block directly impacts unit test suites. Run tests after updating docs.
 5. **Dual-Tier Documentation Sync**: When updating documentation for schema changes, update both descriptive guide prose (`YAML_AUTHORING_GUIDE.md`) AND formal AST contract tables (`STAGEFLOW_SCRIPT_SPECIFICATION.md §7.2`).
-6. Run `npm test`, `npm run build`, and `npm run lint`.
+6. Run the appropriate verification tier: Tier 1 (`npm run lint` + `npm run typecheck`) for cosmetic/localized UI edits, or Tier 2 (`npm test` + `npm run build` + `npm run lint`) for core engine/architectural tasks.
 7. Verify that no monolithic files were introduced and layer boundaries remain pure.
 8. Run `rg` across [`AGENTS.md`](AGENTS.md), [`README.md`](README.md), [`docs/*.md`](docs/) (including [`docs/ARCHITECTURE_FILE_MAP.md`](docs/ARCHITECTURE_FILE_MAP.md)), and [`.agents/skills/`](.agents/skills/) for all modified fields, invariants, or file paths, and synchronize every reference.
 9. Record granular change bullets in [`CHANGELOG.md`](CHANGELOG.md) under `## [Unreleased]` based directly on pending diffs (`git diff HEAD`).

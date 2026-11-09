@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- **Tiered Verification, Scoped Spec Gates & Reactive Wakeup Discipline (`AGENTS.md`, `package.json`)**:
+  - Added `"typecheck": "tsc -b"` to `package.json` for fast (< 6s) typecheck verification during rapid iteration.
+  - Calibrated Section 5 of `AGENTS.md` into Tier 1 (Fast Dev Loop: `lint` + `typecheck`) for cosmetic/localized UI edits and Tier 2 (Core Engine: `test` + full `build` + `lint`) for architectural and mathematical changes.
+  - Scoped Section 3's pre-flight domain specification lookup gate to exempt localized cosmetic styling and single-component CSS classes from mandatory 350-line spec reads.
+  - Added Section 2.7 establishing strict reactive wakeup discipline against background task polling loops.
 - **Stage Cam Monitor Telemetry Spacing (`src/stage/StageCamMonitorCanvas.tsx`)**:
   - Tightened the horizontal flex gap between telemetry items (`FOV · ROLL` and `YAW · DIST · FOCUS`) from `gap-1.5` (6px) to `gap-1` (4px), reducing visual separation around middle-dot separators for improved pill density and consistency with the opposite `MANEUVER:` badge.
 
