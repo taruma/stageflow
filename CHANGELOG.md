@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Desktop Fullscreen Viewport Toggle (`src/ui/WorkspaceHeader.tsx`)**:
+  - Surfaced the native browser Fullscreen toggle button on desktop viewports alongside the Reset Layout button in the header right-wing.
+  - Dynamically switches icons between `Maximize` and `Minimize` with reactive `fullscreenchange` event tracking and descriptive tooltips across both mobile and desktop.
+
 - **Declarative Score Catalog Manifest (`src/scores/catalog.yaml`, `src/core/scoreCatalog.ts`)**:
   - Replaced manual 280-line TypeScript import boilerplate with a pure declarative YAML manifest in `src/scores/catalog.yaml`, allowing showrunners to add, remove, reorder, or edit scores and URL aliases purely in YAML without touching TypeScript code.
   - Refactored `src/core/scoreCatalog.ts` to dynamically discover and map all `.yaml` scores using Vite's eager `import.meta.glob('../scores/**/*.yaml', { query: '?raw', eager: true, import: 'default' })`.

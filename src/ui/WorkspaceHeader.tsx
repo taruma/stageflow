@@ -175,21 +175,6 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
           <span className="font-bold tracking-wide">Library</span>
         </button>
 
-        {/* Mobile-Only Native Fullscreen Button (Replaces Reset Layout on mobile < md) */}
-        <button
-          type="button"
-          onClick={handleToggleFullscreen}
-          className={`${UI_TOKENS.button.filePill} flex md:hidden`}
-          title={isFullscreen ? 'Exit Full Screen' : 'Enter Full Screen'}
-          aria-label={isFullscreen ? 'Exit Full Screen' : 'Enter Full Screen'}
-        >
-          {isFullscreen ? (
-            <Minimize className="w-3.5 h-3.5 text-text-muted" />
-          ) : (
-            <Maximize className="w-3.5 h-3.5 text-text-muted" />
-          )}
-        </button>
-
         {/* Reset Layout Dimensions Button (Desktop & Tablets >= md only) */}
         {onResetLayout && (
           <button
@@ -202,6 +187,21 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
             <span className="hidden sm:inline">Reset Layout</span>
           </button>
         )}
+
+        {/* Native Fullscreen Toggle Button (Mobile & Desktop) */}
+        <button
+          type="button"
+          onClick={handleToggleFullscreen}
+          className={UI_TOKENS.button.filePill}
+          title={isFullscreen ? 'Exit Full Screen' : 'Enter Full Screen'}
+          aria-label={isFullscreen ? 'Exit Full Screen' : 'Enter Full Screen'}
+        >
+          {isFullscreen ? (
+            <Minimize className="w-3.5 h-3.5 text-text-muted" />
+          ) : (
+            <Maximize className="w-3.5 h-3.5 text-text-muted" />
+          )}
+        </button>
       </div>
     </header>
   );
