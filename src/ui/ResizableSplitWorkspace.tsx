@@ -12,6 +12,7 @@ import { GripHorizontal, GripVertical } from 'lucide-react';
 import type { SplitPreset } from '../core/types';
 
 export interface ResizableSplitWorkspaceProps {
+  aspectRatio?: number;
   splitPreset: SplitPreset;
   isEditMode: boolean;
   leftSplitPct: number;
@@ -30,6 +31,7 @@ export interface ResizableSplitWorkspaceProps {
 export const ResizableSplitWorkspace: React.FC<
   ResizableSplitWorkspaceProps
 > = ({
+  aspectRatio = 16 / 9,
   splitPreset,
   isEditMode,
   leftSplitPct,
@@ -149,12 +151,14 @@ export const ResizableSplitWorkspace: React.FC<
             ? undefined
             : ({
                 '--left-col-pct': `${leftSplitPct}%`,
+                '--aspect-ratio': String(aspectRatio),
+                '--mobile-video-h': `min(40%, calc(100vw / var(--aspect-ratio)))`,
               } as React.CSSProperties)
         }
         className={
           isVideoHidden
             ? 'fixed -left-[99999px] top-0 w-[320px] h-[180px] opacity-0 pointer-events-none overflow-hidden -z-50'
-            : 'w-full h-[40%] md:h-full md:w-[var(--left-col-pct)] shrink-0 flex flex-col bg-surface border-b md:border-b-0 border-border-main overflow-hidden'
+            : 'w-full h-[var(--mobile-video-h)] md:h-full md:w-[var(--left-col-pct)] shrink-0 flex flex-col bg-black md:bg-surface border-b md:border-b-0 border-border-main overflow-hidden'
         }
         aria-hidden={isVideoHidden}
       >

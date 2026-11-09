@@ -403,6 +403,7 @@ export const InteractiveStudioApp: React.FC = () => {
 
       {/* Main Resizable Split Workspace (Video Panel + 3D Blueprint Diorama + YAML Studio) */}
       <ResizableSplitWorkspace
+        aspectRatio={activeScore.aspectRatio}
         splitPreset={layout.splitPreset}
         isEditMode={layout.isEditMode}
         leftSplitPct={layout.leftSplitPct}
