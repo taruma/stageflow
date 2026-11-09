@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Declarative Score Catalog Manifest (`src/scores/catalog.yaml`, `src/core/scoreCatalog.ts`)**:
+  - Replaced manual 280-line TypeScript import boilerplate with a pure declarative YAML manifest in `src/scores/catalog.yaml`, allowing showrunners to add, remove, reorder, or edit scores and URL aliases purely in YAML without touching TypeScript code.
+  - Refactored `src/core/scoreCatalog.ts` to dynamically discover and map all `.yaml` scores using Vite's eager `import.meta.glob('../scores/**/*.yaml', { query: '?raw', eager: true, import: 'default' })`.
+  - Preserved 100% backwards compatibility for `ScoreCatalogItem`, `findCatalogItem(idOrAlias)`, `isBundledSceneId(id)`, and `generateBlankScoreYaml(id, title)` across the entire diorama, SVG minimap, and CLI recorder.
+
 - **Decoupled Score Manifest & Canonical Slugs (`src/core/scoreCatalog.ts`, `docs/CORE_MATH_AND_SCORE_SPECIFICATIONS.md`)**:
   - Established a curated manifest registry in `scoreCatalog.ts` where public catalog IDs (`score_id`) are explicitly controlled by the showrunner (`'vector-field'`, `'demo'`, `'blueprint-02'` through `'blueprint-07'`), completely decoupled from whatever internal `id:` string is authored inside the YAML text.
   - Added `aliases: string[]` support to `ScoreCatalogItem` preserving backwards-compatible legacy IDs (e.g. `'vector-field-taruma-sakti'`, `'demo-blueprint'`, `'blueprint-02-dialogue'`) and provided `findCatalogItem(idOrAlias)` to seamlessly resolve both canonical slugs and legacy aliases across the studio, tests, and CLI batch recorder.

@@ -49,6 +49,7 @@ stageflow/
 │   │   ├── HeadlessRecorderView.tsx # Canvas mounted on ?mode=headless-render
 │   │   └── recorderTypes.ts         # Bridge schemas & window.__STAGEFLOW_RECORDER__ interface
 │   ├── scores/                      # Choreography Scores (*.yaml)
+│   │   ├── catalog.yaml             # Declarative YAML manifest for built-in choreography scores, categories & URL aliases
 │   │   ├── studies/                 # Directorial Scene Studies (e.g. vector_field.yaml)
 │   │   └── blueprints/              # Factory camera-blocking presets (BP 01–07)
 │   ├── core/                        # Layer 1: Pure TypeScript Math, Optics & Stateless Frame Engine
@@ -72,7 +73,7 @@ stageflow/
 │   │   ├── scoreParser.ts           # Resilient YAML/JSON parser & degree/meter normalizer
 │   │   ├── scoreYamlUtils.ts        # Pure YAML header id/title modifiers, FNV-1a content hashing & duplicate matcher
 │   │   ├── scoreUrlLoader.ts        # Pure Layer 1 remote score validator, query param parser & HTTP fetcher
-│   │   ├── scoreCatalog.ts          # Bundled & custom scene score manifest registry & alias resolver
+│   │   ├── scoreCatalog.ts          # Bundled scene score catalog loader (driven by catalog.yaml via import.meta.glob) & alias resolver
 │   │   └── storage/                 # Client persistence utilities
 │   │       ├── scoreDb.ts           # IndexedDB persistence for score drafts & custom scenes (idb)
 │   │       └── localStorageUi.ts    # Synchronous localStorage helpers for UI preferences

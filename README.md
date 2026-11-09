@@ -27,8 +27,8 @@ It synchronizes a universal video player (**Local `.mp4`/`.webm`**, **YouTube UR
 7. **3-Tier Score Provenance Taxonomy & Vector Field**:
    - 3-tier catalog organization (`study`, `blueprint`, `custom`) accessible via a 2-column master-detail Score Library dialog with 4-way filter tabs and procedural 2D SVG stage minimaps.
    - Defaults to **Vector Field** (`vector_field.yaml`, 1,080 lines, 32 shots, decoupled continuous blocking, 6 observer moves) authored by Taruma Sakti, alongside 7 educational blueprint presets (BP 01–07).
-8. **Dual-Tier Storage Persistence, Decoupled Manifest & Unified Ingestion (`?score` & `?url`)**:
-   - Decoupled manifest registry (`scoreCatalog.ts`) supporting canonical built-in score slugs (`vector-field`, `demo`, `blueprint-02`–`07`) and backwards-compatible legacy aliases.
+8. **Dual-Tier Storage Persistence, Declarative Manifest (`catalog.yaml`) & Unified Ingestion (`?score` & `?url`)**:
+   - Declarative manifest registry (`src/scores/catalog.yaml` & `scoreCatalog.ts`) supporting canonical built-in score slugs (`vector-field`, `demo`, `blueprint-02`–`07`) and backwards-compatible legacy aliases with zero TypeScript editing needed to manage scores.
    - Deep-linking URL routing with automatic "Consume & Clear" address bar hygiene:
      - `?score=<id>` (or legacy `?scene=<id>`) opens built-in presets directly with graceful fallback on unknown slugs.
      - `?url=<http_or_https_link>` loads remote scores with a SceneFlow-style confirmation modal.
