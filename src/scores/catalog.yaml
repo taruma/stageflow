@@ -16,6 +16,18 @@
   aliases:
     - vector-field-taruma-sakti
 
+- id: the-expansion
+  file: studies/the-expansion.yaml
+  category: study
+  aliases:
+    - the-expansion-taruma-sakti
+
+- id: afraid
+  file: studies/afraid.yaml
+  category: study
+  aliases:
+    - afraid-taruma-sakti
+
 - id: demo
   file: blueprints/demo_blueprint.yaml
   category: blueprint
