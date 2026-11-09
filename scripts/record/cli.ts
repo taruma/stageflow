@@ -5,7 +5,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { INITIAL_CATALOG_ITEMS } from '../../src/core/scoreCatalog';
+import { INITIAL_CATALOG_ITEMS, findCatalogItem } from '../../src/core/scoreCatalog';
 import { parseStageScore } from '../../src/core/scoreParser';
 import type {
   AppThemeCategory,
@@ -71,6 +71,12 @@ function resolveScoreYaml(input: string): { yaml: string; id: string } {
     return { yaml, id: filename };
   }
 
+  // Check direct canonical ID or alias match
+  const directMatch = findCatalogItem(input);
+  if (directMatch) {
+    return { yaml: directMatch.rawYaml, id: directMatch.id };
+  }
+
   // Check aliases for study scenes: vf, vector_field, vector-field
   const normalized = input.trim().toLowerCase().replace(/_/g, '-');
   if (
@@ -78,9 +84,7 @@ function resolveScoreYaml(input: string): { yaml: string; id: string } {
     normalized === 'vector-field' ||
     normalized === 'vectorfield'
   ) {
-    const vfItem = INITIAL_CATALOG_ITEMS.find((item) =>
-      item.id.toLowerCase().includes('vector-field')
-    );
+    const vfItem = findCatalogItem('vector-field');
     if (vfItem) {
       return { yaml: vfItem.rawYaml, id: vfItem.id };
     }
@@ -90,11 +94,8 @@ function resolveScoreYaml(input: string): { yaml: string; id: string } {
   const numMatch = input.match(/^(?:bp)?0?([1-9]\d*)$/i);
   if (numMatch) {
     const num = parseInt(numMatch[1], 10);
-    const targetBpId = num === 1 ? 'demo-blueprint' : `blueprint-0${num}`;
-    const bpItem = INITIAL_CATALOG_ITEMS.find(
-      (item) =>
-        item.id.toLowerCase().startsWith(targetBpId) || item.id === targetBpId
-    );
+    const targetBpId = num === 1 ? 'demo' : `blueprint-0${num}`;
+    const bpItem = findCatalogItem(targetBpId);
     if (bpItem) {
       return { yaml: bpItem.rawYaml, id: bpItem.id };
     }
@@ -105,7 +106,8 @@ function resolveScoreYaml(input: string): { yaml: string; id: string } {
     (item) =>
       item.id.toLowerCase() === normalized ||
       item.id.toLowerCase().includes(normalized) ||
-      item.id.toLowerCase().replace(/-/g, '_').includes(input.toLowerCase())
+      item.id.toLowerCase().replace(/-/g, '_').includes(input.toLowerCase()) ||
+      item.aliases?.some((a) => a.toLowerCase().includes(normalized))
   );
   if (catalogItem) {
     return { yaml: catalogItem.rawYaml, id: catalogItem.id };

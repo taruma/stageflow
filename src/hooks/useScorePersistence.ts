@@ -7,6 +7,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   INITIAL_CATALOG_ITEMS,
+  findCatalogItem,
   generateBlankScoreYaml,
   isBundledSceneId,
   type ScoreCatalogItem,
@@ -20,10 +21,17 @@ import {
 } from '../core/storage/scoreDb';
 import { loadStoredActiveSceneId } from '../core/storage/localStorageUi';
 import {
+  computeYamlContentHash,
   generateCustomScoreId,
   updateScoreYamlId,
   updateScoreYamlTitle,
 } from '../core/scoreYamlUtils';
+import { parseInitialUrlQueryParams } from '../core/scoreUrlLoader';
+
+export interface RemoteUrlMatchStatus {
+  kind: 'new' | 'identical' | 'conflict';
+  existingItem?: ScoreCatalogItem;
+}
 
 export interface UseScorePersistenceOptions {
   catalog: ScoreCatalogItem[];
@@ -34,6 +42,9 @@ export interface UseScorePersistenceOptions {
   setRawYaml: (yaml: string) => void;
   setActiveScore: (score: StageScore) => void;
   onClearVideoOverride: () => void;
+  onScoreNotFound?: (requestedId: string) => void;
+  onPendingRemoteUrl?: (url: string, status: RemoteUrlMatchStatus) => void;
+  onOpenedExistingScore?: (title: string) => void;
 }
 
 export function useScorePersistence({
@@ -45,11 +56,19 @@ export function useScorePersistence({
   setRawYaml,
   setActiveScore,
   onClearVideoOverride,
+  onScoreNotFound,
+  onPendingRemoteUrl,
+  onOpenedExistingScore,
 }: UseScorePersistenceOptions) {
   const [storageStatus, setStorageStatus] =
     useState<StoragePersistenceStatus>('bundled');
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Capture initial URL search parameters once on mount (StrictMode-safe)
+  const initialSearchRef = useRef<string>(
+    typeof window !== 'undefined' ? window.location.search : ''
+  );
 
   // 1. Asynchronously hydrate saved custom scenes from IndexedDB on startup
   // Automatically migrates any legacy drafts stored under bundled IDs into Custom Projects
@@ -65,13 +84,14 @@ export function useScorePersistence({
       for (const record of stored) {
         // Auto-migration for legacy drafts modifying bundled IDs
         if (isBundledSceneId(record.id)) {
-          const baseline = INITIAL_CATALOG_ITEMS.find((b) => b.id === record.id);
+          const baseline = findCatalogItem(record.id, INITIAL_CATALOG_ITEMS);
           if (baseline && record.rawYaml.trim() !== baseline.rawYaml.trim()) {
             const migratedId = generateCustomScoreId(record.title || record.id);
             const updatedYaml = updateScoreYamlId(record.rawYaml, migratedId);
 
             const parsedMigrated = parseStageScore(updatedYaml, migratedId);
             if (parsedMigrated.score) {
+              const hash = computeYamlContentHash(updatedYaml);
               const migratedRecord = {
                 id: migratedId,
                 title: record.title || parsedMigrated.score.title,
@@ -79,6 +99,10 @@ export function useScorePersistence({
                 rawYaml: updatedYaml,
                 isCustom: true,
                 updatedAt: Date.now(),
+                contentHash: hash,
+                originalContentHash: hash,
+                sourceUrl: record.sourceUrl,
+                sourceFileName: record.sourceFileName,
               };
               await saveStoredScore(migratedRecord);
               await deleteStoredScore(record.id); // Remove draft from bundled ID so preset is pristine!
@@ -90,6 +114,10 @@ export function useScorePersistence({
                 rawYaml: migratedRecord.rawYaml,
                 score: parsedMigrated.score,
                 isCustom: true,
+                contentHash: hash,
+                originalContentHash: hash,
+                sourceUrl: record.sourceUrl,
+                sourceFileName: record.sourceFileName,
               });
               continue;
             }
@@ -102,6 +130,7 @@ export function useScorePersistence({
 
         const parsed = parseStageScore(record.rawYaml, record.id);
         if (!parsed.score) continue;
+        const itemHash = record.contentHash ?? computeYamlContentHash(record.rawYaml);
         storedCustomItems.push({
           id: record.id,
           title: record.title,
@@ -110,6 +139,10 @@ export function useScorePersistence({
           rawYaml: record.rawYaml,
           score: parsed.score,
           isCustom: true,
+          contentHash: itemHash,
+          originalContentHash: record.originalContentHash ?? itemHash,
+          sourceUrl: record.sourceUrl,
+          sourceFileName: record.sourceFileName,
         });
       }
 
@@ -117,22 +150,72 @@ export function useScorePersistence({
       const mergedCatalog = [...INITIAL_CATALOG_ITEMS, ...storedCustomItems];
       setCatalog(mergedCatalog);
 
-      // Reconcile active scene: honor URL param or localStorage pointer across custom and bundled scenes
-      const sceneFromUrl =
-        typeof window !== 'undefined'
-          ? new URLSearchParams(window.location.search).get('scene')
-          : null;
-      const preferredId =
-        sceneFromUrl ?? loadStoredActiveSceneId() ?? activeSceneId;
-      const targetItem =
-        mergedCatalog.find((item) => item.id === preferredId) ??
-        mergedCatalog[0];
+      // Reconcile active scene: prioritize initial URL parameters, then localStorage pointer
+      const initialSearch = initialSearchRef.current;
+      const { scoreId, remoteUrl } = parseInitialUrlQueryParams(initialSearch);
 
-      if (targetItem) {
-        setActiveSceneId(targetItem.id);
-        setRawYaml(targetItem.rawYaml);
-        setActiveScore(targetItem.score);
-        setStorageStatus(targetItem.isCustom ? 'custom' : 'bundled');
+      // Clean up the URL search bar immediately on mount (Consume & Clear)
+      if (typeof window !== 'undefined' && initialSearch) {
+        const cleanUrl = window.location.pathname + window.location.hash;
+        window.history.replaceState({}, '', cleanUrl);
+      }
+
+      if (scoreId) {
+        const targetItem = findCatalogItem(scoreId, mergedCatalog);
+        if (targetItem) {
+          setActiveSceneId(targetItem.id);
+          setRawYaml(targetItem.rawYaml);
+          setActiveScore(targetItem.score);
+          setStorageStatus(targetItem.isCustom ? 'custom' : 'bundled');
+        } else {
+          // Unknown ?score= slug -> fallback to default scene and trigger notification
+          const fallbackItem = mergedCatalog[0];
+          setActiveSceneId(fallbackItem.id);
+          setRawYaml(fallbackItem.rawYaml);
+          setActiveScore(fallbackItem.score);
+          setStorageStatus('bundled');
+          onScoreNotFound?.(scoreId);
+        }
+      } else if (remoteUrl) {
+        // Check if an existing custom project in IndexedDB already has this sourceUrl
+        const existingCustom = storedCustomItems.find(
+          (c) => c.sourceUrl && c.sourceUrl.trim().toLowerCase() === remoteUrl.trim().toLowerCase()
+        );
+
+        if (existingCustom) {
+          const currentHash = existingCustom.contentHash ?? computeYamlContentHash(existingCustom.rawYaml);
+          const baselineHash = existingCustom.originalContentHash ?? currentHash;
+          const isUnmodified = currentHash === baselineHash;
+
+          if (isUnmodified) {
+            // Quiet when safe: open local project immediately with zero modal!
+            setActiveSceneId(existingCustom.id);
+            setRawYaml(existingCustom.rawYaml);
+            setActiveScore(existingCustom.score);
+            setStorageStatus('custom');
+            onOpenedExistingScore?.(existingCustom.title);
+            onPendingRemoteUrl?.(remoteUrl, { kind: 'identical', existingItem: existingCustom });
+          } else {
+            // Local modifications exist: prompt conflict modal
+            onPendingRemoteUrl?.(remoteUrl, { kind: 'conflict', existingItem: existingCustom });
+          }
+        } else {
+          // First time seeing this remote URL: prompt confirmation modal
+          onPendingRemoteUrl?.(remoteUrl, { kind: 'new' });
+        }
+      } else {
+        // Standard cold load without query parameters
+        const storedId = loadStoredActiveSceneId();
+        const targetItem =
+          (storedId ? findCatalogItem(storedId, mergedCatalog) : undefined) ??
+          mergedCatalog[0];
+
+        if (targetItem) {
+          setActiveSceneId(targetItem.id);
+          setRawYaml(targetItem.rawYaml);
+          setActiveScore(targetItem.score);
+          setStorageStatus(targetItem.isCustom ? 'custom' : 'bundled');
+        }
       }
     }
 
@@ -180,6 +263,9 @@ export function useScorePersistence({
       }
 
       debounceTimerRef.current = setTimeout(async () => {
+        const existingItem = catalog.find((c) => c.id === activeSceneId);
+        const nextHash = computeYamlContentHash(nextYaml);
+
         await saveStoredScore({
           id: activeSceneId,
           title: parsedScore.title,
@@ -187,6 +273,10 @@ export function useScorePersistence({
           rawYaml: nextYaml,
           isCustom: true,
           updatedAt: Date.now(),
+          contentHash: nextHash,
+          originalContentHash: existingItem?.originalContentHash ?? nextHash,
+          sourceUrl: existingItem?.sourceUrl,
+          sourceFileName: existingItem?.sourceFileName,
         });
 
         // Update in-memory catalog
@@ -200,6 +290,8 @@ export function useScorePersistence({
                   rawYaml: nextYaml,
                   score: parsedScore,
                   isCustom: true,
+                  contentHash: nextHash,
+                  originalContentHash: item.originalContentHash ?? nextHash,
                 }
               : item
           )
@@ -208,7 +300,7 @@ export function useScorePersistence({
         setStorageStatus('custom');
       }, 350);
     },
-    [activeSceneId, setCatalog]
+    [activeSceneId, catalog, setCatalog]
   );
 
   // 4. Fork a scene (bundled or custom) into a new standalone Custom Project
@@ -229,6 +321,7 @@ export function useScorePersistence({
       const parsed = parseStageScore(updatedYaml, newId);
       if (!parsed.score) return null;
 
+      const hash = computeYamlContentHash(updatedYaml);
       const newItem: ScoreCatalogItem = {
         id: newId,
         title: newTitle,
@@ -237,6 +330,9 @@ export function useScorePersistence({
         rawYaml: updatedYaml,
         score: parsed.score,
         isCustom: true,
+        contentHash: hash,
+        originalContentHash: hash,
+        sourceFileName: sourceItem.sourceFileName,
       };
 
       await saveStoredScore({
@@ -246,6 +342,9 @@ export function useScorePersistence({
         rawYaml: newItem.rawYaml,
         isCustom: true,
         updatedAt: Date.now(),
+        contentHash: hash,
+        originalContentHash: hash,
+        sourceFileName: sourceItem.sourceFileName,
       });
 
       setCatalog((prev) => [...prev, newItem]);
@@ -346,6 +445,7 @@ export function useScorePersistence({
       const parsed = parseStageScore(blankYaml, newId);
       if (!parsed.score) return null;
 
+      const hash = computeYamlContentHash(blankYaml);
       const newItem: ScoreCatalogItem = {
         id: newId,
         title: newTitle,
@@ -354,6 +454,8 @@ export function useScorePersistence({
         rawYaml: blankYaml,
         score: parsed.score,
         isCustom: true,
+        contentHash: hash,
+        originalContentHash: hash,
       };
 
       await saveStoredScore({
@@ -363,6 +465,8 @@ export function useScorePersistence({
         rawYaml: newItem.rawYaml,
         isCustom: true,
         updatedAt: Date.now(),
+        contentHash: hash,
+        originalContentHash: hash,
       });
 
       setCatalog((prev) => [...prev, newItem]);

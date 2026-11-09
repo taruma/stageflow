@@ -9,9 +9,10 @@
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import type { CameraPresetType } from '../stage/cameraPresets';
-import type { ScoreDiagnostic } from '../core/types';
+import type { ScoreDiagnostic, StageScore } from '../core/types';
 import {
   INITIAL_CATALOG_ITEMS,
+  findCatalogItem,
   isBundledSceneId,
   type ScoreCatalogItem,
 } from '../core/scoreCatalog';
@@ -22,10 +23,21 @@ import {
 } from '../core/storage/localStorageUi';
 import { saveStoredScore } from '../core/storage/scoreDb';
 import {
+  computeYamlContentHash,
   downloadYamlBlob,
+  findDuplicateOrConflictingCustomScore,
   generateCustomScoreId,
   updateScoreYamlId,
+  updateScoreYamlTitle,
 } from '../core/scoreYamlUtils';
+import {
+  fetchRemoteScoreYaml,
+  parseInitialUrlQueryParams,
+} from '../core/scoreUrlLoader';
+import {
+  ConfirmRemoteScoreModal,
+  type RemoteModalMode,
+} from './ConfirmRemoteScoreModal';
 import { useMediaClock } from '../hooks/useMediaClock';
 import { useStageFrameLoop } from '../hooks/useStageFrameLoop';
 import { useFileDropLoader } from '../hooks/useFileDropLoader';
@@ -65,12 +77,14 @@ export const InteractiveStudioApp: React.FC = () => {
     INITIAL_CATALOG_ITEMS
   );
 
-  // Synchronously hydrate active scene id from localStorage or ?scene=<id> query param
+  // Synchronously hydrate active scene id from localStorage or ?score= / ?scene= query param
   const [activeSceneId, setActiveSceneIdState] = useState<string>(() => {
     if (typeof window !== 'undefined') {
-      const sceneParam = new URLSearchParams(window.location.search).get('scene');
-      if (sceneParam) {
-        return sceneParam;
+      const { scoreId } = parseInitialUrlQueryParams(window.location.search);
+      if (scoreId) {
+        const matched = findCatalogItem(scoreId, INITIAL_CATALOG_ITEMS);
+        if (matched) return matched.id;
+        return scoreId; // preserve pointer until storage hydration reconciles
       }
     }
     const stored = loadStoredActiveSceneId();
@@ -149,6 +163,68 @@ export const InteractiveStudioApp: React.FC = () => {
   }, [activeSceneId, activeScore, rawYaml, handleExportScore]);
 
   // IndexedDB Score Persistence Hook (Hydration, Forking, Draft Auto-saving, Project Lifecycle)
+  const [remoteModalState, setRemoteModalState] = useState<{
+    isOpen: boolean;
+    mode: RemoteModalMode;
+    targetUrl?: string;
+    existingItem?: ScoreCatalogItem;
+    sourceFileName?: string;
+    pendingYaml?: string;
+    pendingScore?: StageScore;
+    isLoading?: boolean;
+  }>({
+    isOpen: false,
+    mode: 'url-import',
+  });
+
+  const handleScoreNotFound = useCallback(
+    (requestedId: string) => {
+      showToast(
+        `Score "${requestedId}" not found in library; loaded default score`,
+        'info'
+      );
+    },
+    [showToast]
+  );
+
+  const handleOpenedExistingScore = useCallback(
+    (title: string) => {
+      showToast(`Opened existing project "${title}" from library`, 'info');
+    },
+    [showToast]
+  );
+
+  const handlePendingRemoteUrl = useCallback(
+    (
+      url: string,
+      status: {
+        kind: 'new' | 'identical' | 'conflict';
+        existingItem?: ScoreCatalogItem;
+      }
+    ) => {
+      if (status.kind === 'identical') {
+        return;
+      }
+      if (status.kind === 'conflict' && status.existingItem) {
+        setRemoteModalState({
+          isOpen: true,
+          mode: 'url-conflict',
+          targetUrl: url,
+          existingItem: status.existingItem,
+          isLoading: false,
+        });
+      } else {
+        setRemoteModalState({
+          isOpen: true,
+          mode: 'url-import',
+          targetUrl: url,
+          isLoading: false,
+        });
+      }
+    },
+    []
+  );
+
   const scorePersistence = useScorePersistence({
     catalog,
     activeSceneId,
@@ -158,6 +234,9 @@ export const InteractiveStudioApp: React.FC = () => {
     setRawYaml,
     setActiveScore,
     onClearVideoOverride: () => setVideoOverrideUrl(null),
+    onScoreNotFound: handleScoreNotFound,
+    onPendingRemoteUrl: handlePendingRemoteUrl,
+    onOpenedExistingScore: handleOpenedExistingScore,
   });
 
   // 1. Universal Media Clock (Local HTML5 Video, YouTube IFrame, or Procedural Slate)
@@ -244,71 +323,235 @@ export const InteractiveStudioApp: React.FC = () => {
     }
   }, [activeSceneId, scorePersistence.forkScoreAsCustom, showToast]);
 
-  // Drag-and-drop / File picker handlers for custom .yaml and .mp4 files
-  const handleLoadYamlFile = useCallback(
-    (yamlText: string, fileName: string) => {
-      const fallbackId = fileName.replace(/\.(yaml|yml|json)$/i, '');
-      const parsed = parseStageScore(yamlText, fallbackId);
-      if (parsed.score) {
-        let finalId = parsed.score.id;
-        let finalYaml = yamlText;
-        let wasBundledConflict = false;
+  const handleCloseRemoteModal = useCallback(() => {
+    setRemoteModalState((prev) => ({
+      ...prev,
+      isOpen: false,
+      isLoading: false,
+      pendingYaml: undefined,
+      pendingScore: undefined,
+    }));
+  }, []);
 
-        // Auto-fork collision protection: never overwrite bundled presets
-        if (isBundledSceneId(finalId)) {
-          wasBundledConflict = true;
-          finalId = generateCustomScoreId(fallbackId || finalId);
+  const handleExecuteRemoteImport = useCallback(
+    async (
+      targetUrl: string,
+      asNewCopy = false,
+      overwriteItem?: ScoreCatalogItem
+    ) => {
+      setRemoteModalState((prev) => ({ ...prev, isLoading: true }));
+      try {
+        showToast('Fetching remote score...', 'info');
+        const result = await fetchRemoteScoreYaml(targetUrl);
+        const hash = computeYamlContentHash(result.rawYaml);
+
+        let finalId = overwriteItem
+          ? overwriteItem.id
+          : generateCustomScoreId(result.fallbackId);
+        let finalTitle = result.score.title;
+
+        if (asNewCopy && overwriteItem) {
+          finalTitle = `${overwriteItem.title} (Remote)`;
+          finalId = generateCustomScoreId(result.fallbackId);
+        }
+
+        let finalYaml = result.rawYaml;
+        if (isBundledSceneId(finalId) || asNewCopy || !overwriteItem) {
           finalYaml = updateScoreYamlId(finalYaml, finalId);
+          if (asNewCopy) {
+            finalYaml = updateScoreYamlTitle(finalYaml, finalTitle);
+          }
         }
 
         const finalParsed = parseStageScore(finalYaml, finalId);
-        const resolvedScore = finalParsed.score ?? parsed.score;
+        const resolvedScore = finalParsed.score ?? result.score;
 
         const newItem: ScoreCatalogItem = {
           id: finalId,
-          title: resolvedScore.title,
+          title: finalTitle,
           subtitle: resolvedScore.subtitle,
           category: 'custom',
           rawYaml: finalYaml,
           score: resolvedScore,
           isCustom: true,
+          contentHash: hash,
+          originalContentHash: hash,
+          sourceUrl: targetUrl,
+          sourceFileName: result.fileName,
         };
 
-        setCatalog((prev) => {
-          const filtered = prev.filter((item) => item.id !== newItem.id);
-          return [...filtered, newItem];
-        });
-        setActiveSceneId(newItem.id);
-        setRawYaml(finalYaml);
-        setActiveScore(resolvedScore);
-        setParseError(null);
-        setParseWarning(finalParsed.warning ?? parsed.warning ?? null);
-        setParseDiagnostics(undefined);
-        setVideoOverrideUrl(null);
-        mediaClock.seek(0);
-
-        // Persist custom imported score to IndexedDB
-        saveStoredScore({
+        await saveStoredScore({
           id: newItem.id,
           title: newItem.title,
           subtitle: newItem.subtitle,
           rawYaml: finalYaml,
           isCustom: true,
           updatedAt: Date.now(),
+          contentHash: hash,
+          originalContentHash: hash,
+          sourceUrl: targetUrl,
+          sourceFileName: result.fileName,
         });
 
-        if (wasBundledConflict) {
-          showToast(
-            `Bundled ID detected: imported "${resolvedScore.title}" as new Custom Project`,
-            'info'
-          );
-        } else {
-          showToast(
-            `Imported "${resolvedScore.title}" into Custom Projects`,
-            'success'
-          );
-        }
-      } else {
+        setCatalog((prev) => {
+          const filtered = prev.filter((item) => item.id !== newItem.id);
+          return [...filtered, newItem];
+        });
+
+        setActiveSceneId(newItem.id);
+        setRawYaml(finalYaml);
+        setActiveScore(resolvedScore);
+        setParseError(null);
+        setParseWarning(finalParsed.warning ?? result.warning ?? null);
+        setParseDiagnostics(undefined);
+        setVideoOverrideUrl(null);
+        mediaClock.seek(0);
+
+        handleCloseRemoteModal();
+        showToast(
+          overwriteItem && !asNewCopy
+            ? `Updated "${newItem.title}" from remote score`
+            : `Imported "${newItem.title}" into Custom Projects`,
+          'success'
+        );
+      } catch (err: unknown) {
+        setRemoteModalState((prev) => ({ ...prev, isLoading: false }));
+        const msg = err instanceof Error ? err.message : String(err);
+        showToast(`Failed to load remote score: ${msg}`, 'error');
+      }
+    },
+    [handleCloseRemoteModal, mediaClock, setActiveSceneId, showToast]
+  );
+
+  const handleResolveFileConflict = useCallback(
+    async (action: 'overwrite' | 'copy' | 'keep') => {
+      if (
+        action === 'keep' ||
+        !remoteModalState.existingItem ||
+        !remoteModalState.pendingYaml
+      ) {
+        handleCloseRemoteModal();
+        return;
+      }
+
+      const existing = remoteModalState.existingItem;
+      const yaml = remoteModalState.pendingYaml;
+      const parsed =
+        remoteModalState.pendingScore ??
+        parseStageScore(yaml, existing.id).score;
+      if (!parsed) {
+        handleCloseRemoteModal();
+        return;
+      }
+
+      const hash = computeYamlContentHash(yaml);
+
+      if (action === 'overwrite') {
+        const finalYaml = updateScoreYamlId(yaml, existing.id);
+        const finalParsed = parseStageScore(finalYaml, existing.id);
+        const resolvedScore = finalParsed.score ?? parsed;
+
+        const updatedItem: ScoreCatalogItem = {
+          ...existing,
+          title: resolvedScore.title,
+          subtitle: resolvedScore.subtitle,
+          rawYaml: finalYaml,
+          score: resolvedScore,
+          contentHash: hash,
+          originalContentHash: hash,
+          sourceFileName:
+            remoteModalState.sourceFileName ?? existing.sourceFileName,
+        };
+
+        await saveStoredScore({
+          id: existing.id,
+          title: updatedItem.title,
+          subtitle: updatedItem.subtitle,
+          rawYaml: finalYaml,
+          isCustom: true,
+          updatedAt: Date.now(),
+          contentHash: hash,
+          originalContentHash: hash,
+          sourceFileName: updatedItem.sourceFileName,
+          sourceUrl: existing.sourceUrl,
+        });
+
+        setCatalog((prev) =>
+          prev.map((item) => (item.id === existing.id ? updatedItem : item))
+        );
+        setActiveSceneId(existing.id);
+        setRawYaml(finalYaml);
+        setActiveScore(resolvedScore);
+        mediaClock.seek(0);
+        handleCloseRemoteModal();
+        showToast(
+          `Updated project "${updatedItem.title}" with dropped file`,
+          'success'
+        );
+      } else if (action === 'copy') {
+        const fallbackId =
+          remoteModalState.sourceFileName?.replace(/\.(yaml|yml|json)$/i, '') ||
+          existing.id;
+        const newId = generateCustomScoreId(fallbackId);
+        const newTitle = `${parsed.title || existing.title} (Copy)`;
+        let finalYaml = updateScoreYamlId(yaml, newId);
+        finalYaml = updateScoreYamlTitle(finalYaml, newTitle);
+
+        const finalParsed = parseStageScore(finalYaml, newId);
+        const resolvedScore = finalParsed.score ?? parsed;
+
+        const newItem: ScoreCatalogItem = {
+          id: newId,
+          title: newTitle,
+          subtitle: resolvedScore.subtitle,
+          category: 'custom',
+          rawYaml: finalYaml,
+          score: resolvedScore,
+          isCustom: true,
+          contentHash: hash,
+          originalContentHash: hash,
+          sourceFileName: remoteModalState.sourceFileName,
+        };
+
+        await saveStoredScore({
+          id: newItem.id,
+          title: newItem.title,
+          subtitle: newItem.subtitle,
+          rawYaml: finalYaml,
+          isCustom: true,
+          updatedAt: Date.now(),
+          contentHash: hash,
+          originalContentHash: hash,
+          sourceFileName: newItem.sourceFileName,
+        });
+
+        setCatalog((prev) => [...prev, newItem]);
+        setActiveSceneId(newItem.id);
+        setRawYaml(finalYaml);
+        setActiveScore(resolvedScore);
+        mediaClock.seek(0);
+        handleCloseRemoteModal();
+        showToast(
+          `Imported "${newItem.title}" as new Custom Project`,
+          'success'
+        );
+      }
+    },
+    [
+      handleCloseRemoteModal,
+      mediaClock,
+      remoteModalState,
+      setActiveSceneId,
+      showToast,
+    ]
+  );
+
+  // Drag-and-drop / File picker handlers for custom .yaml and .mp4 files
+  const handleLoadYamlFile = useCallback(
+    (yamlText: string, fileName: string) => {
+      const fallbackId = fileName.replace(/\.(yaml|yml|json)$/i, '');
+      const parsed = parseStageScore(yamlText, fallbackId);
+      if (!parsed.score) {
         setRawYaml(yamlText);
         setParseError(parsed.error);
         setParseWarning(null);
@@ -318,9 +561,120 @@ export const InteractiveStudioApp: React.FC = () => {
           `Failed to parse YAML: ${parsed.error ?? 'Syntax error'}`,
           'error'
         );
+        return;
+      }
+
+      // Check against existing Custom Projects using Unified Content-Hash Matcher
+      const customItems = catalog.filter((c) => c.isCustom);
+      const match = findDuplicateOrConflictingCustomScore(
+        {
+          rawYaml: yamlText,
+          id: parsed.score.id,
+          sourceFileName: fileName,
+        },
+        customItems
+      );
+
+      // Case 1: Identical content hash match -> Open existing instantly with zero duplicate!
+      if (match.kind === 'identical') {
+        const existing = match.existingItem;
+        setActiveSceneId(existing.id);
+        setRawYaml(existing.rawYaml);
+        setActiveScore(existing.score);
+        setParseError(null);
+        setParseWarning(null);
+        setParseDiagnostics(undefined);
+        setVideoOverrideUrl(null);
+        mediaClock.seek(0);
+        showToast(
+          `Opened existing project "${existing.title}" (identical score already in library)`,
+          'info'
+        );
+        return;
+      }
+
+      // Case 2: Identity match with differing content -> Open conflict modal
+      if (match.kind === 'conflict') {
+        setRemoteModalState({
+          isOpen: true,
+          mode: 'file-conflict',
+          existingItem: match.existingItem,
+          sourceFileName: fileName,
+          pendingYaml: yamlText,
+          pendingScore: parsed.score,
+          isLoading: false,
+        });
+        return;
+      }
+
+      // Case 3: Brand new score -> Save as new Custom Project
+      let finalId = parsed.score.id;
+      let finalYaml = yamlText;
+      let wasBundledConflict = false;
+
+      // Auto-fork collision protection: never overwrite bundled presets or duplicate IDs
+      if (isBundledSceneId(finalId) || catalog.some((c) => c.id === finalId)) {
+        wasBundledConflict = true;
+        finalId = generateCustomScoreId(fallbackId || finalId);
+        finalYaml = updateScoreYamlId(finalYaml, finalId);
+      }
+
+      const finalParsed = parseStageScore(finalYaml, finalId);
+      const resolvedScore = finalParsed.score ?? parsed.score;
+      const hash = computeYamlContentHash(finalYaml);
+
+      const newItem: ScoreCatalogItem = {
+        id: finalId,
+        title: resolvedScore.title,
+        subtitle: resolvedScore.subtitle,
+        category: 'custom',
+        rawYaml: finalYaml,
+        score: resolvedScore,
+        isCustom: true,
+        contentHash: hash,
+        originalContentHash: hash,
+        sourceFileName: fileName,
+      };
+
+      setCatalog((prev) => {
+        const filtered = prev.filter((item) => item.id !== newItem.id);
+        return [...filtered, newItem];
+      });
+      setActiveSceneId(newItem.id);
+      setRawYaml(finalYaml);
+      setActiveScore(resolvedScore);
+      setParseError(null);
+      setParseWarning(finalParsed.warning ?? parsed.warning ?? null);
+      setParseDiagnostics(undefined);
+      setVideoOverrideUrl(null);
+      mediaClock.seek(0);
+
+      // Persist custom imported score to IndexedDB
+      saveStoredScore({
+        id: newItem.id,
+        title: newItem.title,
+        subtitle: newItem.subtitle,
+        rawYaml: finalYaml,
+        isCustom: true,
+        updatedAt: Date.now(),
+        contentHash: hash,
+        originalContentHash: hash,
+        sourceFileName: fileName,
+      });
+
+      if (wasBundledConflict) {
+        showToast(
+          `Bundled ID detected: imported "${resolvedScore.title}" as new Custom Project`,
+          'info'
+        );
+      } else {
+        showToast(
+          `Imported "${resolvedScore.title}" into Custom Projects`,
+          'success'
+        );
       }
     },
-    [mediaClock, setActiveSceneId, showToast, layout]
+    [catalog, layout, mediaClock, setActiveSceneId, showToast]
   );
 
   const handleLoadVideoBlobUrl = useCallback(
@@ -549,6 +903,57 @@ export const InteractiveStudioApp: React.FC = () => {
         sceneTitle={activeScore.title}
         onConfirm={scorePersistence.confirmResetActiveScore}
         onCancel={() => scorePersistence.setIsResetModalOpen(false)}
+      />
+
+      {/* Remote Score Confirmation & Conflict Dialog Modal */}
+      <ConfirmRemoteScoreModal
+        isOpen={remoteModalState.isOpen}
+        mode={remoteModalState.mode}
+        targetUrl={remoteModalState.targetUrl}
+        existingTitle={remoteModalState.existingItem?.title}
+        sourceFileName={remoteModalState.sourceFileName}
+        isLoading={remoteModalState.isLoading}
+        onCancel={handleCloseRemoteModal}
+        onConfirmImport={() => {
+          if (remoteModalState.targetUrl) {
+            handleExecuteRemoteImport(remoteModalState.targetUrl, false);
+          }
+        }}
+        onKeepLocal={() => {
+          if (remoteModalState.mode === 'file-conflict') {
+            handleResolveFileConflict('keep');
+          } else {
+            handleCloseRemoteModal();
+          }
+        }}
+        onOverwrite={() => {
+          if (
+            remoteModalState.mode === 'url-conflict' &&
+            remoteModalState.targetUrl
+          ) {
+            handleExecuteRemoteImport(
+              remoteModalState.targetUrl,
+              false,
+              remoteModalState.existingItem
+            );
+          } else if (remoteModalState.mode === 'file-conflict') {
+            handleResolveFileConflict('overwrite');
+          }
+        }}
+        onSaveAsCopy={() => {
+          if (
+            remoteModalState.mode === 'url-conflict' &&
+            remoteModalState.targetUrl
+          ) {
+            handleExecuteRemoteImport(
+              remoteModalState.targetUrl,
+              true,
+              remoteModalState.existingItem
+            );
+          } else if (remoteModalState.mode === 'file-conflict') {
+            handleResolveFileConflict('copy');
+          }
+        }}
       />
 
       {/* Choreography Score Library Modal (Dedicated Mobile Sheet vs Desktop 2-Column Master-Detail) */}

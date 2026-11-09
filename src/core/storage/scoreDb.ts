@@ -12,6 +12,10 @@ export interface StoredScoreRecord {
   rawYaml: string;
   isCustom: boolean;
   updatedAt: number;
+  contentHash?: string;
+  originalContentHash?: string;
+  sourceUrl?: string;
+  sourceFileName?: string;
 }
 
 interface StageFlowDbSchema extends DBSchema {

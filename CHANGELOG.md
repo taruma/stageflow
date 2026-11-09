@@ -8,6 +8,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Decoupled Score Manifest & Canonical Slugs (`src/core/scoreCatalog.ts`, `docs/CORE_MATH_AND_SCORE_SPECIFICATIONS.md`)**:
+  - Established a curated manifest registry in `scoreCatalog.ts` where public catalog IDs (`score_id`) are explicitly controlled by the showrunner (`'vector-field'`, `'demo'`, `'blueprint-02'` through `'blueprint-07'`), completely decoupled from whatever internal `id:` string is authored inside the YAML text.
+  - Added `aliases: string[]` support to `ScoreCatalogItem` preserving backwards-compatible legacy IDs (e.g. `'vector-field-taruma-sakti'`, `'demo-blueprint'`, `'blueprint-02-dialogue'`) and provided `findCatalogItem(idOrAlias)` to seamlessly resolve both canonical slugs and legacy aliases across the studio, tests, and CLI batch recorder.
+  - Updated `isBundledSceneId(id)` to be alias-aware, preventing factory presets from ever being overwritten by legacy or canonical IDs.
+- **Remote Score Loader & Query Parameter Parser (`src/core/scoreUrlLoader.ts`, `tests/unit/scoreUrlLoader.test.ts`)**:
+  - Introduced pure Layer 1 module `scoreUrlLoader.ts` with zero React/DOM dependencies:
+    - `parseInitialUrlQueryParams(search)`: Extracts and normalizes `?score=` (with `?scene=` fallback) and `?url=`.
+    - `validateScoreUrl(urlStr)`: Enforces `http:` or `https:` protocol validation.
+    - `extractFallbackIdFromUrl(urlStr)`: Extracts sanitized slug from URL pathnames for project naming.
+    - `fetchRemoteScoreYaml(targetUrl)`: Safely fetches remote YAML files, performs AST validation via `parseStageScore`, and provides human-readable error diagnostics on HTTP status, CORS restriction, network timeout, or YAML syntax failure.
+  - Added comprehensive unit test suite `tests/unit/scoreUrlLoader.test.ts` covering URL parsing, scheme validation, slug extraction, and mocked fetch error handling.
+- **Remote Score Confirmation & Conflict Modal (`src/ui/ConfirmRemoteScoreModal.tsx`)**:
+  - Introduced an accessible SceneFlow-style modal dialog supporting three directorial modes:
+    - `url-import`: Prompts user before fetching an unseen remote URL, displaying the origin host badge.
+    - `url-conflict`: Alerts user when re-opening a URL where the local copy was modified, offering **Keep Existing**, **Overwrite with Remote**, or **Save as New Copy**.
+    - `file-conflict`: Alerts user when dropping or opening a file matching an existing Custom Project with different content, offering **Keep Existing**, **Update Existing Project**, or **Import as New Copy**.
+- **Unified Normalized Content Fingerprinting & Conflict Ingestion (`src/core/scoreYamlUtils.ts`, `src/core/storage/scoreDb.ts`, `src/hooks/useScorePersistence.ts`, `src/ui/InteractiveStudioApp.tsx`, `tests/unit/scoreYamlUtils.test.ts`)**:
+  - Implemented `normalizeYamlForComparison(yaml)` and 32-bit FNV-1a `computeYamlContentHash(yaml)`, normalizing line endings (`\r\n` $\to$ `\n`) and stripping the top-level `id:` line so a score loaded via `?url=` yesterday and the original `.yaml` file dropped from desktop today produce the exact same fingerprint.
+  - Implemented `findDuplicateOrConflictingCustomScore(...)` creating a single unified pipeline for both remote URLs and local file drops:
+    - **Exact Content Match**: Instantly opens existing local project with **zero duplicates and zero modal dialog** ($O(1)$ lookup, `< 1ms`).
+    - **Identity Collision with Different Content**: Safely prompts conflict modal, preventing silent overwrites of user edits.
+    - **New Project**: Ingests cleanly as a persistent Custom Project in IndexedDB.
+  - Extended `StoredScoreRecord` with `contentHash`, `originalContentHash`, `sourceUrl`, and `sourceFileName`.
+- **URL "Consume & Clear" Address Bar Hygiene (`src/hooks/useScorePersistence.ts`)**:
+  - Implemented automatic address bar cleanup via `window.history.replaceState({}, '', window.location.pathname)` immediately upon consuming query parameters (`?score=`, `?scene=`, `?url=`), preventing browser reloads (`F5`) from re-triggering modals or network fetches while cleanly preserving working session drafts.
+
+### Added
 - **Score Library Tab & Accordion Section Persistence (`src/core/storage/localStorageUi.ts`, `src/core/types.ts`, `src/ui/ScoreLibraryModal.tsx`, `src/ui/library/MobileScoreLibraryModal.tsx`, `src/ui/InteractiveStudioApp.tsx`, `src/ui/header/FileMenuDropdown.tsx`, `tests/unit/storage.test.ts`, `docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md`)**:
   - **Bundled Blueprints Collapsed by Default on Desktop**: Configured the `Bundled Blueprints` accordion section under the "All" grouped list in [`ScoreLibraryModal.tsx`](src/ui/ScoreLibraryModal.tsx) to default to collapsed (`false`), matching the mobile UX and putting immediate focus on hero `Scene Studies` (Vector Field) and user `Custom Projects`.
   - **Accordion Collapse State Persistence**: Introduced `stageflow:ui:library-study-expanded` (default: `true`), `stageflow:ui:library-blueprint-expanded` (default: `false`), and `stageflow:ui:library-custom-expanded` (default: `true`) in [`localStorageUi.ts`](src/core/storage/localStorageUi.ts), remembering user expand/collapse interactions across reloads in both desktop and mobile library modals.

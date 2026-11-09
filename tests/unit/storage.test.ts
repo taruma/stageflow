@@ -283,8 +283,20 @@ import { parseStageScore } from '../../src/core/scoreParser';
 
 describe('scoreCatalog — Bundled Presets & Blank Project Generator', () => {
   it('correctly identifies bundled scene IDs and custom scene IDs', () => {
+    // Canonical slugs
+    expect(isBundledSceneId('vector-field')).toBe(true);
+    expect(isBundledSceneId('demo')).toBe(true);
+    expect(isBundledSceneId('blueprint-02')).toBe(true);
+    expect(isBundledSceneId('blueprint-03')).toBe(true);
+    expect(isBundledSceneId('blueprint-04')).toBe(true);
+    expect(isBundledSceneId('blueprint-05')).toBe(true);
+    expect(isBundledSceneId('blueprint-06')).toBe(true);
+    expect(isBundledSceneId('blueprint-07')).toBe(true);
+
+    // Backwards-compatible legacy aliases
     expect(isBundledSceneId('vector-field-taruma-sakti')).toBe(true);
     expect(isBundledSceneId('demo-blueprint')).toBe(true);
+    expect(isBundledSceneId('blueprint-01')).toBe(true);
     expect(isBundledSceneId('blueprint-02-dialogue')).toBe(true);
     expect(isBundledSceneId('blueprint-03-ball-pass')).toBe(true);
     expect(isBundledSceneId('blueprint-04-cinematography-tutorial')).toBe(true);

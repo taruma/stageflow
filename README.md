@@ -27,8 +27,12 @@ It synchronizes a universal video player (**Local `.mp4`/`.webm`**, **YouTube UR
 7. **3-Tier Score Provenance Taxonomy & Vector Field**:
    - 3-tier catalog organization (`study`, `blueprint`, `custom`) accessible via a 2-column master-detail Score Library dialog with 4-way filter tabs and procedural 2D SVG stage minimaps.
    - Defaults to **Vector Field** (`vector_field.yaml`, 1,080 lines, 32 shots, decoupled continuous blocking, 6 observer moves) authored by Taruma Sakti, alongside 7 educational blueprint presets (BP 01–07).
-8. **Dual-Tier Storage Persistence & YAML SSOT**:
-   - Automatically saves score drafts and custom imported scenes in browser **IndexedDB** (`idb`), while persisting UI layout preferences in **`localStorage`**. Heavy local dropped videos remain strictly in temporary session memory, and the YAML score remains the authoritative single source of truth for video playback.
+8. **Dual-Tier Storage Persistence, Decoupled Manifest & Unified Ingestion (`?score` & `?url`)**:
+   - Decoupled manifest registry (`scoreCatalog.ts`) supporting canonical built-in score slugs (`vector-field`, `demo`, `blueprint-02`–`07`) and backwards-compatible legacy aliases.
+   - Deep-linking URL routing with automatic "Consume & Clear" address bar hygiene:
+     - `?score=<id>` (or legacy `?scene=<id>`) opens built-in presets directly with graceful fallback on unknown slugs.
+     - `?url=<http_or_https_link>` loads remote scores with a SceneFlow-style confirmation modal.
+   - Unified content fingerprinting (`computeYamlContentHash`, FNV-1a) across both remote URLs and local file drops: identical files open immediately with zero duplicates and zero modal friction, while conflicting files prompt a safe 3-way conflict dialog (**Keep Existing**, **Overwrite**, or **Save as New Copy**). Automatically saves custom scores in browser **IndexedDB** (`idb`), while persisting UI layout preferences in **`localStorage`**. Heavy local dropped videos remain strictly in temporary session memory, and the YAML score remains the authoritative single source of truth for video playback.
 9. **Standalone In-App Documentation & Specification Viewer (`?mode=guide` / `?mode=spec`)**:
    - Distraction-free, full-window Markdown + KaTeX manual viewer with two-tier Table of Contents sidebar (`GuideSidebarToc.tsx`), live scroll spy, real-time TOC filtering, and granular bundle code-splitting (~77% cold-payload reduction).
 10. **Deterministic 60fps Viewport Video Recorder**:

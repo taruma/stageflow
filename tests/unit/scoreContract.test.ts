@@ -217,7 +217,8 @@ describe('Universal Choreography Score Contract Tests', () => {
   describe('Scene Studies (Authored by Taruma Sakti)', () => {
     it('contains at least one official study score (default scene)', () => {
       expect(studyItems.length).toBeGreaterThan(0);
-      expect(studyItems[0].id).toBe('vector-field-taruma-sakti');
+      expect(studyItems[0].id).toBe('vector-field');
+      expect(studyItems[0].aliases).toContain('vector-field-taruma-sakti');
     });
 
     for (const item of studyItems) {

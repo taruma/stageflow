@@ -7,7 +7,7 @@
 import { describe, expect, it } from 'vitest';
 import { parseStageScore } from '../../src/core/scoreParser';
 import { computeStageFrame } from '../../src/core/frameEngine';
-import { INITIAL_CATALOG_ITEMS } from '../../src/core/scoreCatalog';
+import { findCatalogItem } from '../../src/core/scoreCatalog';
 import { radToDeg } from '../../src/core/sphericalMath';
 
 describe('cameraRigs — Kinematic Invariants & DSL Contracts', () => {
@@ -297,9 +297,7 @@ shots:
   });
 
   it('validates Blueprint 07 (Camera Rigs & Dolly Masterclass) compiles and runs cleanly across all 4 shots', () => {
-    const bp07Item = INITIAL_CATALOG_ITEMS.find(
-      (item) => item.id === 'blueprint-07-camera-rigs'
-    );
+    const bp07Item = findCatalogItem('blueprint-07');
     expect(bp07Item).toBeDefined();
     const bp07 = bp07Item!.score;
 

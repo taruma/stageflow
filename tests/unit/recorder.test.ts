@@ -10,7 +10,7 @@ import {
 } from '../../scripts/record/recorderTypes';
 import { resolveFfmpegPath } from '../../scripts/record/ffmpegPipeline';
 import { computeStageFrame } from '../../src/core/frameEngine';
-import { INITIAL_CATALOG_ITEMS } from '../../src/core/scoreCatalog';
+import { INITIAL_CATALOG_ITEMS, findCatalogItem } from '../../src/core/scoreCatalog';
 
 describe('Recorder Camera Presets', () => {
   it('defines valid pitch, yaw, and distance for all presets', () => {
@@ -95,61 +95,49 @@ describe('Recorder Audio Track Configuration', () => {
 });
 
 describe('Bundled Scene Shortcuts & Catalog Resolution', () => {
-  it('resolves all 6 blueprints and vector field correctly', () => {
+  it('resolves all 7 blueprints and vector field correctly', () => {
     const resolveShortcut = (input: string) => {
+      const direct = findCatalogItem(input);
+      if (direct) return direct;
+
       const normalized = input.trim().toLowerCase().replace(/_/g, '-');
       if (
         normalized === 'vf' ||
         normalized === 'vector-field' ||
         normalized === 'vectorfield'
       ) {
-        return INITIAL_CATALOG_ITEMS.find((item) =>
-          item.id.toLowerCase().includes('vector-field')
-        );
+        return findCatalogItem('vector-field');
       }
       const numMatch = input.match(/^(?:bp)?0?([1-9]\d*)$/i);
       if (numMatch) {
         const num = parseInt(numMatch[1], 10);
-        const targetBpId = num === 1 ? 'demo-blueprint' : `blueprint-0${num}`;
-        return INITIAL_CATALOG_ITEMS.find(
-          (item) =>
-            item.id.toLowerCase().startsWith(targetBpId) ||
-            item.id === targetBpId
-        );
+        const targetBpId = num === 1 ? 'demo' : `blueprint-0${num}`;
+        return findCatalogItem(targetBpId);
       }
-      return INITIAL_CATALOG_ITEMS.find(
-        (item) =>
-          item.id.toLowerCase() === normalized ||
-          item.id.toLowerCase().includes(normalized)
-      );
+      return findCatalogItem(normalized);
     };
 
-    expect(resolveShortcut('01')?.id).toBe('demo-blueprint');
-    expect(resolveShortcut('02')?.id).toBe('blueprint-02-dialogue');
-    expect(resolveShortcut('03')?.id).toBe('blueprint-03-ball-pass');
-    expect(resolveShortcut('04')?.id).toBe(
-      'blueprint-04-cinematography-tutorial'
-    );
-    expect(resolveShortcut('05')?.id).toBe('blueprint-05-two-rooms');
-    expect(resolveShortcut('06')?.id).toBe('blueprint-06-optics-dof');
-    expect(resolveShortcut('07')?.id).toBe('blueprint-07-camera-rigs');
-    expect(resolveShortcut('vf')?.id).toBe('vector-field-taruma-sakti');
-    expect(resolveShortcut('vector_field')?.id).toBe(
-      'vector-field-taruma-sakti'
-    );
+    expect(resolveShortcut('01')?.id).toBe('demo');
+    expect(resolveShortcut('demo-blueprint')?.id).toBe('demo');
+    expect(resolveShortcut('02')?.id).toBe('blueprint-02');
+    expect(resolveShortcut('blueprint-02-dialogue')?.id).toBe('blueprint-02');
+    expect(resolveShortcut('03')?.id).toBe('blueprint-03');
+    expect(resolveShortcut('04')?.id).toBe('blueprint-04');
+    expect(resolveShortcut('05')?.id).toBe('blueprint-05');
+    expect(resolveShortcut('06')?.id).toBe('blueprint-06');
+    expect(resolveShortcut('07')?.id).toBe('blueprint-07');
+    expect(resolveShortcut('vf')?.id).toBe('vector-field');
+    expect(resolveShortcut('vector_field')?.id).toBe('vector-field');
+    expect(resolveShortcut('vector-field-taruma-sakti')?.id).toBe('vector-field');
   });
 });
 
 describe('Optics Bokeh Blur Invariant in Headless Recorder', () => {
   it('respects score optics dofBlur when CLI flag is omitted', () => {
-    const bp06 = INITIAL_CATALOG_ITEMS.find(
-      (i) => i.id === 'blueprint-06-optics-dof'
-    );
+    const bp06 = findCatalogItem('blueprint-06');
     expect(bp06?.score.optics?.dofBlur).toBe(true);
 
-    const bp01 = INITIAL_CATALOG_ITEMS.find(
-      (i) => i.id === 'demo-blueprint'
-    );
+    const bp01 = findCatalogItem('demo');
     expect(bp01?.score.optics?.dofBlur ?? false).toBe(false);
 
     const resolveBlur = (cliBlur?: boolean, scoreBlur?: boolean) =>

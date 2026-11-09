@@ -6,7 +6,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { INITIAL_CATALOG_ITEMS } from '../../src/core/scoreCatalog';
+import { findCatalogItem } from '../../src/core/scoreCatalog';
 import { runRecordSession } from './playwrightDriver';
 import type { CliOptions } from './recorderTypes';
 import { RESOLUTION_PRESETS } from './recorderTypes';
@@ -19,13 +19,13 @@ interface BlueprintTarget {
 }
 
 const BLUEPRINT_TARGETS: BlueprintTarget[] = [
-  { id: 'demo-blueprint', prefix: 'BP01', name: 'Two_Shot_Arc_Blocking' },
-  { id: 'blueprint-02-dialogue', prefix: 'BP02', name: 'Cinematic_Dialogue_Flow' },
-  { id: 'blueprint-03-ball-pass', prefix: 'BP03', name: 'The_Long_Distance_Pass' },
-  { id: 'blueprint-04-cinematography-tutorial', prefix: 'BP04', name: 'Cinematography_and_Framing' },
-  { id: 'blueprint-05-two-rooms', prefix: 'BP05', name: 'Two_Rooms_Threshold_Crossing' },
-  { id: 'blueprint-06-optics-dof', prefix: 'BP06', name: 'Optics_Rack_Focus_DoF' },
-  { id: 'blueprint-07-camera-rigs', prefix: 'BP07', name: 'Camera_Rigs_and_Dolly_Tracks' },
+  { id: 'demo', prefix: 'BP01', name: 'Two_Shot_Arc_Blocking' },
+  { id: 'blueprint-02', prefix: 'BP02', name: 'Cinematic_Dialogue_Flow' },
+  { id: 'blueprint-03', prefix: 'BP03', name: 'The_Long_Distance_Pass' },
+  { id: 'blueprint-04', prefix: 'BP04', name: 'Cinematography_and_Framing' },
+  { id: 'blueprint-05', prefix: 'BP05', name: 'Two_Rooms_Threshold_Crossing' },
+  { id: 'blueprint-06', prefix: 'BP06', name: 'Optics_Rack_Focus_DoF' },
+  { id: 'blueprint-07', prefix: 'BP07', name: 'Camera_Rigs_and_Dolly_Tracks' },
 ];
 
 const MODES: Array<{ mode: 'stage-pov' | 'scripted'; label: 'STAGE' | 'OBSERVER' }> = [
@@ -53,7 +53,7 @@ async function runBatch(): Promise<void> {
 
   try {
     for (const bp of BLUEPRINT_TARGETS) {
-      const catalogItem = INITIAL_CATALOG_ITEMS.find((item) => item.id === bp.id);
+      const catalogItem = findCatalogItem(bp.id);
       if (!catalogItem) {
         console.error(`❌ Catalog item "${bp.id}" not found. Skipping.`);
         continue;

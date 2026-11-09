@@ -163,7 +163,8 @@ shots:
     const blueprints = INITIAL_CATALOG_ITEMS.filter((item) => item.category === 'blueprint');
 
     expect(studies.length).toBeGreaterThanOrEqual(1);
-    expect(studies[0].id).toBe('vector-field-taruma-sakti');
+    expect(studies[0].id).toBe('vector-field');
+    expect(studies[0].aliases).toContain('vector-field-taruma-sakti');
     expect(blueprints.length).toBe(7);
 
     for (const item of INITIAL_CATALOG_ITEMS) {

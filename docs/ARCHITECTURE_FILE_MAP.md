@@ -70,8 +70,9 @@ stageflow/
 │   │   ├── scorePrimitives.ts       # Low-level vector, angle, lens, focus/DoF & enum normalizers
 │   │   ├── cameraCueParser.ts       # Camera poses, shot cue specs, waypoints & observer shots
 │   │   ├── scoreParser.ts           # Resilient YAML/JSON parser & degree/meter normalizer
-│   │   ├── scoreYamlUtils.ts        # Pure YAML header id/title modifiers & slug generators
-│   │   ├── scoreCatalog.ts          # Bundled & custom scene score registry
+│   │   ├── scoreYamlUtils.ts        # Pure YAML header id/title modifiers, FNV-1a content hashing & duplicate matcher
+│   │   ├── scoreUrlLoader.ts        # Pure Layer 1 remote score validator, query param parser & HTTP fetcher
+│   │   ├── scoreCatalog.ts          # Bundled & custom scene score manifest registry & alias resolver
 │   │   └── storage/                 # Client persistence utilities
 │   │       ├── scoreDb.ts           # IndexedDB persistence for score drafts & custom scenes (idb)
 │   │       └── localStorageUi.ts    # Synchronous localStorage helpers for UI preferences
@@ -158,6 +159,7 @@ stageflow/
 │   │   ├── LabelDisplayModeToggle.tsx # Floating 3-mode 3D diorama label toggle (All / Cam / Off)
 │   │   ├── StageCamViewfinderOverlay.tsx # Optical film gate, look-around mask & composition guides
 │   │   ├── ConfirmResetModal.tsx    # Accessible confirmation dialog modal for discarding drafts
+│   │   ├── ConfirmRemoteScoreModal.tsx # Accessible confirmation & conflict dialog modal for external/remote scores
 │   │   ├── StorageStatusBadge.tsx   # Visual status badge (Bundled vs. IndexedDB draft)
 │   │   └── InteractiveStudioApp.tsx # 3D choreography diorama & split workspace orchestrator
 │   ├── App.tsx                      # Code-split root mode switcher & suspense router
@@ -173,6 +175,7 @@ stageflow/
         ├── scoreParser.test.ts
         ├── scoreContract.test.ts
         ├── scoreYamlUtils.test.ts
+        ├── scoreUrlLoader.test.ts
         ├── telemetryYamlFormatter.test.ts
         ├── shotBreakdownUtils.test.ts
         ├── guideUtils.test.ts

@@ -288,22 +288,33 @@ observer_shots:
 
 ## 6. Client Storage Persistence & Video Authority
 
-### 6.1 Three-Tier Score Taxonomy & Catalog Registry (`scoreCatalog.ts`)
+### 6.1 Three-Tier Score Taxonomy & Curated Manifest Registry (`scoreCatalog.ts`)
 StageFlow categorizes scores into a clean 3-tier provenance taxonomy (`ScoreCategory = 'study' | 'blueprint' | 'custom'` in [`src/core/types.ts`](../src/core/types.ts)):
-1. **Directorial Scene Studies (`'study'`)**: Authentic auteur scene studies authored by Taruma Sakti in [`src/scores/studies/`](../src/scores/studies/). The primary default scene loaded on application launch is **Vector Field** ([`vector_field.yaml`](../src/scores/studies/vector_field.yaml), 1,080 lines, 32 shots, decoupled blocking, 6 observer moves).
-2. **Bundled Blueprints (`'blueprint'`)**: Synthetic educational camera-blocking presets and testbeds in [`src/scores/blueprints/`](../src/scores/blueprints/) (BP 01–BP 07).
-3. **Custom Projects (`'custom'`)**: User-authored or imported projects persisted in browser IndexedDB.
+1. **Directorial Scene Studies (`'study'`)**: Authentic auteur scene studies authored by Taruma Sakti in [`src/scores/studies/`](../src/scores/studies/). The primary default scene loaded on application launch is **Vector Field** ([`vector_field.yaml`](../src/scores/studies/vector_field.yaml), canonical ID: `'vector-field'`, alias: `'vector-field-taruma-sakti'`).
+2. **Bundled Blueprints (`'blueprint'`)**: Synthetic educational camera-blocking presets and testbeds in [`src/scores/blueprints/`](../src/scores/blueprints/) (BP 01–BP 07: `'demo'`, `'blueprint-02'` through `'blueprint-07'`).
+3. **Custom Projects (`'custom'`)**: User-authored, dropped, or URL-imported projects persisted in browser IndexedDB.
 
-### 6.2 Score Draft Persistence (`src/core/storage/scoreDb.ts`)
+**Decoupled Manifest Architecture**: The public catalog ID (`score_id`) is defined directly in the manifest registry (`scoreCatalog.ts`), completely decoupled from whatever internal `id:` is authored inside the YAML text. `findCatalogItem(idOrAlias)` resolves scores against both canonical slugs and registered backwards-compatible aliases.
+
+### 6.2 Score Draft Persistence & URL Ingestion (`src/core/storage/scoreDb.ts`, `scoreUrlLoader.ts`)
 Live YAML edits and custom imported score files are persisted to an IndexedDB object store (`'stageflow-db'` $\to$ `'scores'`) using the [`idb`](https://github.com/jakearchibald/idb) promise library:
-- **Record Structure**: `{ id, title, subtitle, rawYaml, isCustom, updatedAt }`.
+- **Record Structure**: `{ id, title, subtitle, rawYaml, isCustom, updatedAt, contentHash?, originalContentHash?, sourceUrl?, sourceFileName? }`.
 - **Auto-save**: Debounced at `350ms` on every valid YAML edit (and `150ms` live sync in CodeMirror 6 studio).
 - **Hydration & Deferred Invalidation**: On application mount, initial state preserves stored scene pointers without premature fallback. When IndexedDB hydration finishes, it reconciles the active scene pointer against the fully merged catalog.
+- **Deep Linking Query Parameters (`?score=`, `?scene=`, `?url=`)**:
+  - `?score=<id>`: Canonical parameter for built-in scores (with `?scene=` accepted as a backwards-compatible alias). Unknown IDs fall back to default scene with a warning toast.
+  - `?url=<http_or_https_link>`: Remote YAML score loader with confirmation modal on first import.
+  - **Consume & Clear**: Both parameters clean up the browser address bar immediately upon mount via `window.history.replaceState` to prevent re-fetching on refresh (`F5`).
 - **Confirmed Reset**: Resetting a score deletes its IndexedDB record via `deleteStoredScore()` and reverts state to the bundled YAML.
-- **Deep Linking Support**: The URL query parameter `?scene=<id>` deep-links directly to any bundled or custom score on cold load.
 
-### 6.3 Pure Layer 1 YAML Manipulation (`src/core/scoreYamlUtils.ts`)
+### 6.3 Pure Layer 1 YAML Manipulation & Unified Content-Hash Matcher (`src/core/scoreYamlUtils.ts`)
 Decoupled Layer 1 utility module (`src/core/scoreYamlUtils.ts`) providing pure string operations with zero React/DOM dependencies:
+- `normalizeYamlForComparison(yaml)`: Unifies CRLF/CR to LF (`\n`), strips the top-level `id:` line, and trims whitespace.
+- `computeYamlContentHash(yaml)`: Computes a fast, deterministic 32-bit FNV-1a content fingerprint (`fnv1a-xxxxxxxx`) over normalized YAML text.
+- `findDuplicateOrConflictingCustomScore(candidate, existingCustomItems)`: Unified matcher for both remote URLs and local dropped files:
+  - **Identical Match (`kind: 'identical'`)**: Activates existing project immediately with **zero duplicate creation and zero modal dialog**.
+  - **Identity Conflict (`kind: 'conflict'`)**: Matches on `sourceUrl`, `sourceFileName`, or YAML `id` with differing content, prompting the user with a conflict modal (**Keep Existing**, **Overwrite**, or **Save as New Copy**).
+  - **New Project (`kind: 'new'`)**: Saves as a fresh Custom Project in IndexedDB.
 - `updateScoreYamlId(yaml, newId)`: Replaces or prepends score `id` using clean quote-aware regex.
 - `updateScoreYamlTitle(yaml, newTitle)`: Modifies or inserts `title` metadata.
 - `generateCustomScoreId(baseSlug)`: Creates collision-free unique slugs (`custom-<slug>-<timestamp>`).

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { computeStageFrame } from '../../src/core/frameEngine';
 import { parseStageScore } from '../../src/core/scoreParser';
-import { INITIAL_CATALOG_ITEMS } from '../../src/core/scoreCatalog';
+import { INITIAL_CATALOG_ITEMS, findCatalogItem } from '../../src/core/scoreCatalog';
 import {
   ZERO_OFFSET,
   resolveShotDestOffset,
@@ -351,9 +351,7 @@ observer_shots:
   });
 
   it('validates Blueprint 02 full timeline continuity and shot cut integrity across all 6 film shots', () => {
-    const bp2Item = INITIAL_CATALOG_ITEMS.find(
-      (item) => item.id === 'blueprint-02-dialogue'
-    );
+    const bp2Item = findCatalogItem('blueprint-02');
     expect(bp2Item).toBeDefined();
     const score = bp2Item!.score;
 
@@ -895,9 +893,7 @@ shots:
   });
 
   it('validates Blueprint 03 30m ball-pass choreography, parabolic arc, Ruby orbit, straight pass and camera roll tracking', () => {
-    const bp3Item = INITIAL_CATALOG_ITEMS.find(
-      (item) => item.id === 'blueprint-03-ball-pass'
-    );
+    const bp3Item = findCatalogItem('blueprint-03');
     expect(bp3Item).toBeDefined();
     const score = bp3Item!.score;
 
@@ -1122,9 +1118,7 @@ shots:
   });
 
   it('validates Blueprint 04 Cinematography Tutorial 20s timeline across all 16 pedagogical shots', () => {
-    const bp4Item = INITIAL_CATALOG_ITEMS.find(
-      (item) => item.id === 'blueprint-04-cinematography-tutorial'
-    );
+    const bp4Item = findCatalogItem('blueprint-04');
     expect(bp4Item).toBeDefined();
     const score = bp4Item!.score;
 
@@ -1764,9 +1758,7 @@ shots:
     });
 
     it('asserts referential stability and zero-jitter of trajectory rails across intra-shot frames', () => {
-      const blueprint03 = INITIAL_CATALOG_ITEMS.find(
-        (item) => item.id === 'blueprint-03-ball-pass'
-      )?.score;
+      const blueprint03 = findCatalogItem('blueprint-03')?.score;
       expect(blueprint03).toBeDefined();
       if (!blueprint03) return;
 
@@ -1996,9 +1988,7 @@ shots:
     });
 
     it('evaluates Blueprint 05 (Two Rooms: Living Room to Bedroom Threshold Crossing) across all 17 shots', () => {
-      const bp05 = INITIAL_CATALOG_ITEMS.find(
-        (item) => item.id === 'blueprint-05-two-rooms'
-      )?.score;
+      const bp05 = findCatalogItem('blueprint-05')?.score;
       expect(bp05).toBeDefined();
       if (!bp05) return;
 
@@ -2039,9 +2029,7 @@ shots:
     });
 
     it('evaluates Blueprint 06 (Optics, Rack Focus & DoF) across all 8 shots and optical transitions', () => {
-      const bp06 = INITIAL_CATALOG_ITEMS.find(
-        (item) => item.id === 'blueprint-06-optics-dof'
-      )?.score;
+      const bp06 = findCatalogItem('blueprint-06')?.score;
       expect(bp06).toBeDefined();
       if (!bp06) return;
 
