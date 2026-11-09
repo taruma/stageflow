@@ -152,13 +152,13 @@ export const ResizableSplitWorkspace: React.FC<
             : ({
                 '--left-col-pct': `${leftSplitPct}%`,
                 '--aspect-ratio': String(aspectRatio),
-                '--mobile-video-h': `min(40%, calc(100vw / var(--aspect-ratio)))`,
+                '--mobile-video-h': `min(40%, calc((100vw - 20px) / var(--aspect-ratio) + 20px))`,
               } as React.CSSProperties)
         }
         className={
           isVideoHidden
             ? 'fixed -left-[99999px] top-0 w-[320px] h-[180px] opacity-0 pointer-events-none overflow-hidden -z-50'
-            : 'w-full h-[var(--mobile-video-h)] md:h-full md:w-[var(--left-col-pct)] shrink-0 flex flex-col bg-black md:bg-surface border-b md:border-b-0 border-border-main overflow-hidden'
+            : 'w-full h-[var(--mobile-video-h)] md:h-full md:w-[var(--left-col-pct)] shrink-0 flex flex-col bg-surface border-b md:border-b-0 border-border-main overflow-hidden'
         }
         aria-hidden={isVideoHidden}
       >
