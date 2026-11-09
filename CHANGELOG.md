@@ -17,6 +17,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 ### Changed
+- **Light Theme Default & Matching Diorama Mode (`src/hooks/useAppShellTheme.ts`, `src/stage/dioramaTheme.ts`, `src/ui/header/ThemeSelectorDropdown.tsx`, `src/ui/WorkspaceHeader.tsx`)**:
+  - Changed the default application shell theme from `'dark'` (Warm Obsidian) to `'light'` (Clean Warm Stone) across `useAppShellTheme` and UI chrome.
+  - Set the default 3D diorama stage theme mode from `'dark'` (Fixed Studio) to `'match-app'` (Follows App), dynamically linking the diorama floor and background to the active light stone theme on fresh launches.
+  - Updated 3D stage and monitor components (`BlueprintFloorGrid.tsx`, `BlueprintStageScene.tsx`, `DioramaCanvas.tsx`, `StageCamMonitorCanvas.tsx`, `UniversalVideoViewport.tsx`, `YamlStudioPanel.tsx`) to default `themeCategory` and `effectiveTheme` to `'light'`.
+  - Reordered options in `ThemeSelectorDropdown.tsx` with `Light` and `Match` prominently positioned as primary selections.
+  - Aligned browser HTML theme color and web manifest metadata (`<meta name="theme-color" content="#f5f5f4" />`, `site.webmanifest`) with the light stone palette (`#f5f5f4`).
+  - Updated domain specifications (`docs/VISUAL_DESIGN_SYSTEM.md`, `docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md`), `README.md`, and unit tests in `tests/unit/storage.test.ts` to assert light baseline colors and match-app resolution.
 - **Tiered Verification, Scoped Spec Gates & Reactive Wakeup Discipline (`AGENTS.md`, `package.json`)**:
   - Added `"typecheck": "tsc -b"` to `package.json` for fast (< 6s) typecheck verification during rapid iteration.
   - Calibrated Section 5 of `AGENTS.md` into Tier 1 (Fast Dev Loop: `lint` + `typecheck`) for cosmetic/localized UI edits and Tier 2 (Core Engine: `test` + full `build` + `lint`) for architectural and mathematical changes.

@@ -29,9 +29,9 @@ const APP_THEME_OPTIONS: Array<{
   label: string;
   icon: React.FC<{ className?: string }>;
 }> = [
-  { id: 'dark', label: 'Dark', icon: Moon },
-  { id: 'warm', label: 'Warm', icon: Sparkles },
   { id: 'light', label: 'Light', icon: Sun },
+  { id: 'warm', label: 'Warm', icon: Sparkles },
+  { id: 'dark', label: 'Dark', icon: Moon },
   { id: 'auto', label: 'Auto', icon: Monitor },
 ];
 
@@ -41,18 +41,18 @@ const DIORAMA_THEME_OPTIONS: Array<{
   sublabel: string;
   icon: React.FC<{ className?: string }>;
 }> = [
-  { id: 'dark', label: 'Dark', sublabel: 'Studio (Fixed)', icon: Moon },
   { id: 'match-app', label: 'Match', sublabel: 'Follows App', icon: Layout },
-  { id: 'warm', label: 'Warm', sublabel: 'Drafting Paper', icon: Sparkles },
   { id: 'light', label: 'Light', sublabel: 'Warm Stone', icon: Sun },
+  { id: 'warm', label: 'Warm', sublabel: 'Drafting Paper', icon: Sparkles },
+  { id: 'dark', label: 'Dark', sublabel: 'Studio (Fixed)', icon: Moon },
 ];
 
 export const ThemeSelectorDropdown: React.FC<ThemeSelectorDropdownProps> = ({
   themeMode,
   effectiveCategory,
   onSelectThemeMode,
-  dioramaThemeMode = 'dark',
-  effectiveDioramaCategory = 'dark',
+  dioramaThemeMode = 'match-app',
+  effectiveDioramaCategory = 'light',
   onSelectDioramaThemeMode,
 }) => {
   const [isOpen, setIsOpen] = useState(false);

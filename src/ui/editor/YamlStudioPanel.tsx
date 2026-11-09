@@ -41,7 +41,7 @@ export const YamlStudioPanel: React.FC<YamlStudioPanelProps> = React.memo(
     parseWarning,
     diagnostics,
     isBundled = false,
-    effectiveTheme = 'dark',
+    effectiveTheme = 'light',
     onChangeYaml,
     onForkScore,
     onClose,

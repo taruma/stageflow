@@ -25,7 +25,7 @@ export const BlueprintFloorGrid: React.FC<BlueprintFloorGridProps> = ({
   gridStep,
   showLabels = true,
   cameraMode,
-  themeCategory = 'dark',
+  themeCategory = 'light',
 }) => {
   const halfW = width * 0.5;
   const halfD = depth * 0.5;

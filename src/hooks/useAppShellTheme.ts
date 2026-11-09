@@ -26,7 +26,7 @@ export function disableTransitionsTemporarily(): void {
   });
 }
 
-function resolveSystemTheme(): AppThemeCategory {
+export function resolveSystemTheme(): AppThemeCategory {
   if (
     typeof window !== 'undefined' &&
     window.matchMedia &&
@@ -34,17 +34,26 @@ function resolveSystemTheme(): AppThemeCategory {
   ) {
     return 'dark';
   }
-  return 'dark'; // StageFlow defaults to dark studio for optimal 3D contrast
+  return 'light'; // StageFlow defaults to light theme
+}
+
+export function resolveEffectiveDioramaCategory(
+  dioramaThemeMode: DioramaThemeMode,
+  effectiveAppCategory: AppThemeCategory
+): AppThemeCategory {
+  return dioramaThemeMode === 'match-app'
+    ? effectiveAppCategory
+    : dioramaThemeMode;
 }
 
 export function useAppShellTheme() {
   const [themeMode, setThemeModeState] = useState<AppThemeMode>(() => {
-    return loadStoredThemeMode() ?? 'dark';
+    return loadStoredThemeMode() ?? 'light';
   });
 
   const [dioramaThemeMode, setDioramaThemeModeState] =
     useState<DioramaThemeMode>(() => {
-      return loadStoredDioramaThemeMode() ?? 'dark';
+      return loadStoredDioramaThemeMode() ?? 'match-app';
     });
 
   const [systemCategory, setSystemCategory] = useState<AppThemeCategory>(
@@ -56,7 +65,7 @@ export function useAppShellTheme() {
     if (typeof window === 'undefined' || !window.matchMedia) return;
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     const handler = (e: MediaQueryListEvent) => {
-      setSystemCategory(e.matches ? 'dark' : 'warm');
+      setSystemCategory(e.matches ? 'dark' : 'light');
     };
     mediaQuery.addEventListener('change', handler);
     return () => mediaQuery.removeEventListener('change', handler);
@@ -73,7 +82,7 @@ export function useAppShellTheme() {
   }, []);
 
   const cycleThemeMode = useCallback(() => {
-    const modes: AppThemeMode[] = ['auto', 'dark', 'warm', 'light'];
+    const modes: AppThemeMode[] = ['light', 'warm', 'dark', 'auto'];
     const nextIndex = (modes.indexOf(themeMode) + 1) % modes.length;
     setThemeMode(modes[nextIndex]);
   }, [themeMode, setThemeMode]);
@@ -82,7 +91,7 @@ export function useAppShellTheme() {
     themeMode === 'auto' ? systemCategory : themeMode;
 
   const effectiveDioramaCategory: AppThemeCategory =
-    dioramaThemeMode === 'match-app' ? effectiveCategory : dioramaThemeMode;
+    resolveEffectiveDioramaCategory(dioramaThemeMode, effectiveCategory);
 
   useEffect(() => {
     if (typeof document === 'undefined') return;

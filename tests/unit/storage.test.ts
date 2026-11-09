@@ -36,6 +36,10 @@ import {
   saveStoredLibraryCustomExpanded,
 } from '../../src/core/storage/localStorageUi';
 import { getDioramaThemeColors } from '../../src/stage/dioramaTheme';
+import {
+  resolveEffectiveDioramaCategory,
+  resolveSystemTheme,
+} from '../../src/hooks/useAppShellTheme';
 
 describe('localStorageUi — Synchronous UI Preferences Persistence', () => {
   const memoryStore: Record<string, string> = {};
@@ -263,11 +267,13 @@ describe('localStorageUi — Synchronous UI Preferences Persistence', () => {
     expect(loadStoredLibraryCustomExpanded()).toBe(false);
   });
 
-  it('provides distinct, valid hex colors for all diorama theme categories', () => {
+  it('provides distinct, valid hex colors for all diorama theme categories with light default', () => {
+    const defaultColors = getDioramaThemeColors();
     const darkColors = getDioramaThemeColors('dark');
     const warmColors = getDioramaThemeColors('warm');
     const lightColors = getDioramaThemeColors('light');
 
+    expect(defaultColors).toEqual(lightColors);
     expect(darkColors.bg).toBe('#0c0a09');
     expect(warmColors.bg).toBe('#f3efe6');
     expect(lightColors.bg).toBe('#f5f5f4');
@@ -275,6 +281,22 @@ describe('localStorageUi — Synchronous UI Preferences Persistence', () => {
     expect(darkColors.floorColor).toBe('#171514');
     expect(warmColors.floorColor).toBe('#faf7f0');
     expect(lightColors.floorColor).toBe('#ffffff');
+  });
+
+  it('resolves effective diorama category correctly with match-app default behavior', () => {
+    // In match-app mode, diorama follows the active app theme category
+    expect(resolveEffectiveDioramaCategory('match-app', 'light')).toBe('light');
+    expect(resolveEffectiveDioramaCategory('match-app', 'warm')).toBe('warm');
+    expect(resolveEffectiveDioramaCategory('match-app', 'dark')).toBe('dark');
+
+    // In fixed mode, diorama retains its explicit setting regardless of app theme
+    expect(resolveEffectiveDioramaCategory('dark', 'light')).toBe('dark');
+    expect(resolveEffectiveDioramaCategory('dark', 'warm')).toBe('dark');
+    expect(resolveEffectiveDioramaCategory('warm', 'light')).toBe('warm');
+    expect(resolveEffectiveDioramaCategory('light', 'dark')).toBe('light');
+
+    // System theme resolver defaults to light when no prefers-color-scheme is matched
+    expect(resolveSystemTheme()).toBe('light');
   });
 });
 

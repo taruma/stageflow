@@ -59,7 +59,7 @@ export const DioramaCanvas: React.FC<DioramaCanvasProps> = ({
   onFreeOrbitPoseChange,
   labelMode = 'all',
   dofBlurEnabled = false,
-  themeCategory = 'dark',
+  themeCategory = 'light',
   cameraPresetActionRef,
 }) => {
   const themeColors = useMemo(

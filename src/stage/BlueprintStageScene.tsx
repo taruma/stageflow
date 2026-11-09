@@ -32,7 +32,7 @@ export const BlueprintStageScene: React.FC<BlueprintStageSceneProps> = ({
   labelMode = 'all',
   isPlaying = false,
   cameraMode,
-  themeCategory = 'dark',
+  themeCategory = 'light',
 }) => {
   return (
     <group>

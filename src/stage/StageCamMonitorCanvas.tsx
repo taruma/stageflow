@@ -41,7 +41,7 @@ export const StageCamMonitorCanvas: React.FC<StageCamMonitorCanvasProps> = ({
   showGuides = true,
   dofBlurEnabled = false,
   onToggleDofBlur,
-  themeCategory = 'dark',
+  themeCategory = 'light',
 }) => {
   const pose = uiFrame.stageCamera.transform.pose;
   const dof = uiFrame.stageCamera.dof;

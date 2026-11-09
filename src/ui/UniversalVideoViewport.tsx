@@ -40,7 +40,7 @@ export const UniversalVideoViewport: React.FC<UniversalVideoViewportProps> = ({
   showGuides = true,
   dofBlurEnabled = false,
   onToggleDofBlur,
-  themeCategory = 'dark',
+  themeCategory = 'light',
 }) => {
   return (
     <div className="relative flex-1 w-full h-full aspect-fit-container bg-app select-none overflow-hidden p-2.5 md:p-3">

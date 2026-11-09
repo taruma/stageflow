@@ -340,15 +340,15 @@ Decomposed into 3 focused submodules to preserve the $\le 250$ line modularity s
   - `--shot <shot_id>` or `--start <sec> --end <sec>`: Slices exact shot cues or timestamp windows.
   - `--res 1080p | 4k | 720p | square | vertical`, `--fps <number>`.
 
-### 4.13 Theme Engine & Split Resize Invariants (`src/hooks/useAppShellTheme.ts`, `src/stage/dioramaTheme.ts`)
+### 4.14 Theme Engine & Split Resize Invariants (`src/hooks/useAppShellTheme.ts`, `src/stage/dioramaTheme.ts`)
 - **Visual Design System SSOT**: All typography, semantic CSS tokens, color palettes, and centralized `UI_TOKENS` are authored in [**`docs/VISUAL_DESIGN_SYSTEM.md`**](VISUAL_DESIGN_SYSTEM.md).
 - **Dual-Tier Decoupled Theme System (`useAppShellTheme.ts`, `ThemeSelectorDropdown.tsx`)**:
-  - **App Shell Theme**: 4 modes (`Dark`, `Warm`, `Light`, `Auto`) persisted in `stageflow:ui:theme-mode`.
-  - **3D Diorama Stage Theme**: Decoupled from the app shell, with 4 modes (`Dark` [default], `Match App`, `Warm`, `Light`) persisted in `stageflow:ui:diorama-theme-mode`. Allows maintaining a high-contrast dark blueprint void on stage while authoring in warm drafting paper or light UI chrome.
+  - **App Shell Theme**: 4 modes (`Light` [default], `Warm`, `Dark`, `Auto`) persisted in `stageflow:ui:theme-mode`.
+  - **3D Diorama Stage Theme**: Decoupled from the app shell, with 4 modes (`Match App` [default], `Light`, `Warm`, `Dark`) persisted in `stageflow:ui:diorama-theme-mode`. Allows maintaining a clean matching stone floor by default, while supporting decoupled dark blueprint void or warm drafting paper on demand.
 - **Adaptive 3D Diorama Stage Palette (`dioramaTheme.ts`)**: Evaluates WebGL clear color, scene fog (`45m`–`160m`), and metric grid materials via `getDioramaPalette(effectiveCategory)` with **0 additional WebGL draw calls or shader passes**.
 - **Transition Freezing (`disableTransitionsTemporarily()`)**: Momentarily suppresses global CSS transitions across the DOM for 1 animation frame during theme swaps, eliminating animation reflow lag.
 - **60fps Split Resize Performance (`body.is-resizing-split`)**: Suppresses transitions and iframe pointer interception across the window while dragging the split workspace divider bar.
 
-### 4.14 Telemetry & Vercel Web Analytics (`@vercel/analytics/react`, `@vercel/speed-insights/react`)
+### 4.15 Telemetry & Vercel Web Analytics (`@vercel/analytics/react`, `@vercel/speed-insights/react`)
 - Seamlessly integrates Core Web Vitals telemetry (`<Analytics />` and `<SpeedInsights />`) into the root `src/App.tsx`.
 - Gated conditionally so tracking scripts run strictly in interactive studio and documentation modes, remaining dormant during headless Playwright recording runs (`?mode=headless-render`).
