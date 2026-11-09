@@ -88,6 +88,7 @@ stageflow/
 │   │   ├── useWorkspaceLayout.ts    # Split workspace presets, column percentages & storage sync
 │   │   ├── useStudioDisplaySettings.ts # 3D diorama label modes, guides, DoF blur & 'L'/'G'/'B' hotkeys
 │   │   ├── useToastNotifications.ts # Floating toast notification queue & auto-dismiss timers
+│   │   ├── useIsMobile.ts           # Zero-polling responsive mobile breakpoint tracker (<768px)
 │   │   └── useAppShellTheme.ts      # SceneFlow theme hook (Auto/Dark/Warm/Light) & transition suppression
 │   ├── stage/                       # Layer 4: React Three Fiber 3D Blueprint Diorama
 │   │   ├── dioramaTheme.ts          # Adaptive theme clear colors, fog & metric grid line mapping
@@ -134,7 +135,8 @@ stageflow/
 │   │   ├── library/                 # Modular score library submodules
 │   │   │   ├── ScoreLibraryCard.tsx # Cinematic choreography score card with color tags & telemetry
 │   │   │   ├── ScoreInspectorPane.tsx # Rich master-detail choreography inspector & action bar
-│   │   │   └── ScoreStageMinimap.tsx # Pure 2D vector SVG top-down stage schematic preview
+│   │   │   ├── ScoreStageMinimap.tsx # Pure 2D vector SVG top-down stage schematic preview
+│   │   │   └── MobileScoreLibraryModal.tsx # Full-screen touch-optimized mobile score switcher (<768px)
 │   │   ├── transport/               # Modular directorial transport bar submodules
 │   │   │   ├── DirectorialTimelineTrack.tsx # Scrubber track, shot ticks, hover tooltip & emerald loop brackets
 │   │   │   ├── DirectorialShotChipsStrip.tsx # Auto-centering shot chips, edge fade masks & hidden scrollbar
@@ -179,6 +181,7 @@ stageflow/
         ├── multiTargetFraming.test.ts
         ├── mediaDrivers.test.ts
         ├── billboardLabelLod.test.ts
+        ├── useIsMobile.test.ts
         └── recorder.test.ts
 ```
 

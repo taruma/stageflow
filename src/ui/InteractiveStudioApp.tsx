@@ -46,6 +46,8 @@ import {
 import { YamlStudioPanel } from './editor';
 import { ConfirmResetModal } from './ConfirmResetModal';
 import { ScoreLibraryModal, type FilterTab } from './ScoreLibraryModal';
+import { MobileScoreLibraryModal } from './library/MobileScoreLibraryModal';
+import { useIsMobile } from '../hooks/useIsMobile';
 import { ToastContainer } from './ToastContainer';
 import { DirectorialTransportBar } from './DirectorialTransportBar';
 import { DioramaOverlayContainer } from './DioramaOverlayContainer';
@@ -55,6 +57,7 @@ export const InteractiveStudioApp: React.FC = () => {
   const { toasts, showToast, dismissToast } = useToastNotifications();
   const layout = useWorkspaceLayout({ onNotify: showToast });
   const display = useStudioDisplaySettings();
+  const isMobile = useIsMobile();
   const [subpanelViewMode, setSubpanelViewMode] =
     useState<SubpanelViewMode>('brief');
 
@@ -546,54 +549,65 @@ export const InteractiveStudioApp: React.FC = () => {
         onCancel={() => scorePersistence.setIsResetModalOpen(false)}
       />
 
-      {/* Choreography Score Library Modal (2-Column Master-Detail) */}
-      <ScoreLibraryModal
-        isOpen={isLibraryOpen}
-        catalog={catalog}
-        activeSceneId={activeSceneId}
-        initialTab={libraryInitialTab}
-        onSelectScene={handleSelectScene}
-        onCreateBlankScore={async () => {
-          const blank = await scorePersistence.createBlankScore();
-          if (blank) {
-            showToast(`Created new blank score "${blank.title}"`, 'success');
-          }
-        }}
-        onForkScore={async (item) => {
-          const custom = await scorePersistence.forkScoreAsCustom(item.id);
-          if (custom) {
-            showToast(
-              `Forked "${item.title}" into editable Custom Project`,
-              'success'
-            );
-          }
-        }}
-        onDuplicateScore={async (id) => {
-          const item = catalog.find((c) => c.id === id);
-          if (item) {
-            const dupe = await scorePersistence.forkScoreAsCustom(item.id);
-            if (dupe) {
-              showToast(`Duplicated "${item.title}"`, 'success');
+      {/* Choreography Score Library Modal (Dedicated Mobile Sheet vs Desktop 2-Column Master-Detail) */}
+      {isMobile ? (
+        <MobileScoreLibraryModal
+          isOpen={isLibraryOpen}
+          catalog={catalog}
+          activeSceneId={activeSceneId}
+          initialTab={libraryInitialTab}
+          onSelectScene={handleSelectScene}
+          onClose={() => setIsLibraryOpen(false)}
+        />
+      ) : (
+        <ScoreLibraryModal
+          isOpen={isLibraryOpen}
+          catalog={catalog}
+          activeSceneId={activeSceneId}
+          initialTab={libraryInitialTab}
+          onSelectScene={handleSelectScene}
+          onCreateBlankScore={async () => {
+            const blank = await scorePersistence.createBlankScore();
+            if (blank) {
+              showToast(`Created new blank score "${blank.title}"`, 'success');
             }
-          }
-        }}
-        onExportScore={handleExportScore}
-        onRenameScore={async (id, newTitle) => {
-          const ok = await scorePersistence.renameCustomScore(id, newTitle);
-          if (ok) {
-            showToast(`Renamed score to "${newTitle}"`, 'success');
-          }
-          return ok;
-        }}
-        onDeleteScore={async (id) => {
-          const ok = await scorePersistence.deleteCustomScore(id);
-          if (ok) {
-            showToast('Custom project deleted', 'info');
-          }
-          return ok;
-        }}
-        onClose={() => setIsLibraryOpen(false)}
-      />
+          }}
+          onForkScore={async (item) => {
+            const custom = await scorePersistence.forkScoreAsCustom(item.id);
+            if (custom) {
+              showToast(
+                `Forked "${item.title}" into editable Custom Project`,
+                'success'
+              );
+            }
+          }}
+          onDuplicateScore={async (id) => {
+            const item = catalog.find((c) => c.id === id);
+            if (item) {
+              const dupe = await scorePersistence.forkScoreAsCustom(item.id);
+              if (dupe) {
+                showToast(`Duplicated "${item.title}"`, 'success');
+              }
+            }
+          }}
+          onExportScore={handleExportScore}
+          onRenameScore={async (id, newTitle) => {
+            const ok = await scorePersistence.renameCustomScore(id, newTitle);
+            if (ok) {
+              showToast(`Renamed score to "${newTitle}"`, 'success');
+            }
+            return ok;
+          }}
+          onDeleteScore={async (id) => {
+            const ok = await scorePersistence.deleteCustomScore(id);
+            if (ok) {
+              showToast('Custom project deleted', 'info');
+            }
+            return ok;
+          }}
+          onClose={() => setIsLibraryOpen(false)}
+        />
+      )}
 
       {/* Floating Toast Notification Container */}
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />

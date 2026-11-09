@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Dedicated Full-Screen Mobile Score Library (`src/ui/library/MobileScoreLibraryModal.tsx`, `src/hooks/useIsMobile.ts`, `tests/unit/useIsMobile.test.ts`, `docs/ARCHITECTURE_FILE_MAP.md`, `docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md`)**:
+  - Introduced `MobileScoreLibraryModal.tsx`, an edge-to-edge full-screen mobile score switcher automatically mounted on viewports `< md` (`< 768px`) via `useIsMobile.ts`, while keeping the desktop 2-column master-detail library completely untouched.
+  - **1-Tap Direct Scene Loading**: Tapping any score card immediately loads that choreography score into the studio and closes the library dialog in one step with zero navigation hops.
+  - **Fluid Category Filter Chips**: Replaces desktop segmented tabs with horizontally scrollable touch pills (`All`, `Studies`, `Blueprints`, `Custom`), omitting desktop-only search and inspector toggles.
+  - **Collapsed Blueprints by Default**: In the "All" tab, the `Bundled Blueprints` section defaults to collapsed (showing chevron and count `7`), keeping `Scene Studies` and user `Custom Projects` instantly accessible without excessive vertical scrolling.
+  - Added unit test suite `tests/unit/useIsMobile.test.ts` for zero-polling breakpoint evaluation and narrow/tablet viewport classification.
 - **Mobile Native Fullscreen Control (`src/ui/WorkspaceHeader.tsx`)**:
   - Introduced a 1-click mobile-only native browser Fullscreen toggle button (`Maximize`/`Minimize` icons via `document.documentElement.requestFullscreen()` and `document.exitFullscreen()`) that mounts on narrow viewports (`< md` / `< 768px`) replacing the desktop-only `Reset Layout` button.
 

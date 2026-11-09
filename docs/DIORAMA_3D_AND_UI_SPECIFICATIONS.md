@@ -159,6 +159,11 @@ Scene entities (`character`, `prop`, `marker`) are rendered with unambiguous ori
     - **Cinematic Telemetry**: Full titles, directorial notes, focal length breakdown (e.g. `35mm, 50mm`), camera maneuver tags, and actor/prop lineup.
     - **Shot Coverage Sequence**: Miniature timeline breakdown detailing each shot's lens, maneuver, and duration.
     - **Unified Project Lifecycle Actions**: Direct inline **Rename**, **Duplicate**, **Export (.yaml)**, and **Delete** for custom projects (eliminating the redundant separate project management modal), alongside **Fork as Custom** for bundled blueprints and **Load Score into Studio**.
+- **Dedicated Full-Screen Mobile Score Switcher (`MobileScoreLibraryModal.tsx`)**:
+  - Automatically mounted on viewports $< 768\text{px}$ via `useIsMobile.ts`, completely decoupling mobile scene selection from the heavy desktop 2-column inspector while preserving the desktop version 100% untouched.
+  - **1-Tap Direct Scene Loading**: Tapping any score card immediately loads that choreography score into the studio and closes the library dialog in one step with zero navigation hops.
+  - **Fluid Category Filter Chips**: Replaces desktop segmented tabs with horizontally scrollable touch pills (`All`, `Studies`, `Blueprints`, `Custom`), omitting desktop-only search and inspector toggles.
+  - **Collapsed Blueprints by Default**: In the "All" tab, the `Bundled Blueprints` section defaults to collapsed (showing chevron and count `7`), keeping `Scene Studies` and user `Custom Projects` instantly accessible without excessive vertical scrolling.
 - **Desktop (`lg+`) 3-Column Studio Workspace Architecture (`ResizableSplitWorkspace.tsx`)**:
   - **Left Column (~30%)**: Houses the reference video player (anchored top, aspect-fit), a continuous horizontal drag divider, and the modular **`VideoWorkspaceSubpanel.tsx`** (Scene Desk). Features a dual-mode **`[ Brief | Stage Cam ]`** header toggle when reference video is present, hosting either:
     - **Mode A (`Brief`)**: The Executive Scene Production Sheet & Call Sheet (`SceneProductionBrief.tsx`, `SceneEntityRoster.tsx`) organized into a high-density 4-card architecture:
