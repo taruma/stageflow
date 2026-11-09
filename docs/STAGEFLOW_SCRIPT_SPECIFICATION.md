@@ -169,7 +169,7 @@ Entities in StageFlow can specify custom 3-dimensional extents ($X, Y, Z$) at ba
 
 ## 5. Temporal Easing & Trajectory Maneuvers
 
-At parse time, every cue duration is clamped to $\Delta t_{\text{parsed}} = \max(0.1,\; t_{\text{end}} - t_{\text{start}})$. At runtime, for a cue spanning $[t_{\text{start}}, t_{\text{end}}]$ with guard $\Delta t = \max(0.016,\; t_{\text{end}} - t_{\text{start}})$, normalized progress $\tau \in [0, 1]$ is:
+At parse time, camera shot durations (`shots` and `observer_shots`) are clamped to $\Delta t_{\text{parsed}} = \max(0.1,\; t_{\text{end}} - t_{\text{start}})$, and standalone `blocking` cues are clamped to $\Delta t_{\text{parsed}} = \max(0.016,\; t_{\text{end}} - t_{\text{start}})$. At runtime, for a cue spanning $[t_{\text{start}}, t_{\text{end}}]$ with guard $\Delta t = \max(0.016,\; t_{\text{end}} - t_{\text{start}})$, normalized progress $\tau \in [0, 1]$ is:
 
 $$\tau = \operatorname{clamp}\left(\frac{t - t_{\text{start}}}{\Delta t},\; 0,\; 1\right)$$
 

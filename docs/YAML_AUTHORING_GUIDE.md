@@ -294,7 +294,7 @@ This chapter defines scene-level metadata, video source binding, stage metric di
 | **`shots`** | `array` | `[]` | `score` | Mandatory array of film coverage shots. |
 | **`blocking`** | `array` | `undefined` | — | Optional decoupled actor/prop movement timeline. |
 | **`observer_shots`** | `array` | `undefined` | `observerShots` | Optional decoupled diorama viewport movement timeline. |
-| **`optics`** | `object` | `undefined` | — | Optional scene-wide optical defaults (`dof_blur: true`, `dof: "shallow"`, `aperture: "f/2.8"`). |
+| **`optics`** | `object` | `undefined` | *(Flat root keys also supported)* | Optional scene-wide optical defaults (`dof_blur: true` [aliases: `dofBlur`, `blur`], `dof: "shallow"`, `aperture: "f/2.8"`). |
 
 ### 3.1.1 Scene Metadata & Production Notes (metadata:)
 
@@ -328,8 +328,8 @@ video: "procedural://demo"
 ```yaml
 # Format B: Structured mapping with dedicated container aspect ratio
 video:
-  src: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
-  aspect_ratio: "16:9"
+  src: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" # (alias: url)
+  aspect_ratio: "16:9"                              # (alias: aspectRatio)
 ```
 
 The engine classifies URLs into three runtime drivers:
@@ -345,8 +345,8 @@ The engine classifies URLs into three runtime drivers:
 stage:
   width: 14            # Stage floor width along X-axis in meters (default: 10)
   depth: 12            # Stage floor depth along Z-axis in meters (default: 10)
-  grid_step: 1         # Major metric grid division in meters (default: 1; minor lines at 0.25m)
-  show_rigs: true      # Global toggle for 3D camera tripod stands and dolly tracks (default: true)
+  grid_step: 1         # Major metric grid division in meters (default: 1; alias: gridStep)
+  show_rigs: true      # Global toggle for 3D camera tripod stands and dolly tracks (default: true; alias: showRigs, or at score root)
 
   # Baseline pose for Viewport Camera (used before Shot 1 or when unscripted)
   observer_camera:
@@ -390,7 +390,7 @@ entities:
     kind: "character"
     style: "mannequin"         # "mannequin" (default) | "edges" | "silhouette" | "wireframe"
     position: [-1.2, 0, 0]     # [x, y, z] in meters (Y=0 is floor plane)
-    rotation: 90               # Facing +90° (toward +X Stage Right)
+    rotation: 90               # Facing +90° (toward +X Stage Right; alias: yaw)
     size: [0.55, 1.82, 0.45]   # [w, h, d] 3D dimensions in meters (or explicit width, height, depth)
     color: "#38bdf8"           # Hex token for proxy, badge, and floor ring
 
@@ -494,7 +494,7 @@ StageFlow uses a unified spherical camera model across both the Illustrative Sta
 | **`frustum_depth`**| `number` | `m` | Stage only | `cone_length` | Depth of 3D gate frustum. `0` or omitted auto-matches distance to target. |
 | **`frustum_color`**| `string` | hex | Stage only | — | Hex color token for frustum lines and focus frame (default: `"#f59e0b"`). |
 | **`show_path`** | `boolean` | — | Stage only | `showPath` | Renders 3D dashed trajectory ribbon in diorama (default: `true`). |
-| **`rig`** | `object` | — | Both | `camera_rig`, `mount` | Physical camera mount (`tripod`, `track`, `spline_track`). See §4.9. |
+| **`rig`** | `object` | — | Both | — | Physical camera mount (`tripod`, `track`, `spline_track`). See §4.9. |
 | **`show_rig`** | `boolean` | — | Stage only | `showRig` | Toggles rendering of 3D tripod legs or floor rails and dolly cart in diorama (default: `true`). |
 | **`focus`** | `string \| number \| array` | `m` | Stage only | `focus_target`, `focusTarget` | Subject entity ID/label, multi-entity array `["a", "b"]`, 3D coordinate `[x,y,z]`, or manual metric focus distance (`3.5` or `"3.5m"`). |
 | **`focus_start`** | `string \| number \| array` | `m` | Stage only | `focusStart` | Starting focus target (single, multi-entity array, or coordinate) or metric distance for a rack focus pull. |
@@ -503,9 +503,9 @@ StageFlow uses a unified spherical camera model across both the Illustrative Sta
 | **`focus_distance_start`** | `number \| string` | `m` | Stage only | `focusDistanceStart` | Starting manual focus distance in meters for a rack focus pull. |
 | **`focus_distance_end`** | `number \| string` | `m` | Stage only | `focusDistanceEnd` | Ending manual focus distance in meters for a rack focus pull. |
 | **`dof`** | `"shallow" \| "medium" \| "deep"` | — | Stage only | `depth_of_field`, `depthOfField` | Semantic Depth-of-Field preset (`shallow` = $f/2.8$, `medium` = $f/5.6$, `deep` = $\infty$). |
-| **`aperture`** | `number \| string` | $f$-stop | Stage only | `f_stop`, `fStop` | Numeric or string lens aperture $f$-stop (e.g. `2.8` or `"f/2.8"`, clamped to $[0.7, 64.0]$). |
-| **`aperture_start`** | `number \| string` | $f$-stop | Stage only | `apertureStart`, `f_stop_start` | Starting lens aperture $f$-stop for an iris ramp. |
-| **`aperture_end`** | `number \| string` | $f$-stop | Stage only | `apertureEnd`, `f_stop_end` | Ending lens aperture $f$-stop for an iris ramp. |
+| **`aperture`** | `number \| string` | $f$-stop | Stage only | `f_stop`, `fStop`, `t_stop` | Numeric or string lens aperture $f$-stop (e.g. `2.8` or `"f/2.8"`, clamped to $[0.7, 64.0]$). |
+| **`aperture_start`** | `number \| string` | $f$-stop | Stage only | `apertureStart`, `f_stop_start`, `dof_start` | Starting lens aperture $f$-stop for an iris ramp. |
+| **`aperture_end`** | `number \| string` | $f$-stop | Stage only | `apertureEnd`, `f_stop_end`, `dof_end` | Ending lens aperture $f$-stop for an iris ramp. |
 
 ### 4.2 Aiming & Anchors (`target`, `from`, `target_offset`)
 
@@ -676,11 +676,11 @@ StageFlow solves this with the declarative `rig:` mount block.
 
 #### 4.9.1 Supported Rig Mount Types
 
-| Rig Type | Authored Fields | Movement Kinematics | 3D Blueprint Mount Rendered |
+| Rig Type (`type \| kind \| mode`) | Authored Fields (& Aliases) | Movement Kinematics | 3D Blueprint Mount Rendered |
 | :--- | :--- | :--- | :--- |
-| **`tripod`** | `position: [x, y, z]` | $\vec{E}(t) \equiv \vec{P}_{\text{tripod}}$ (strictly stationary in world space). | Tubular 3-legged tripod stand with floor pucks and vertical column. |
-| **`track`** | `from: [x, y, z]`, `to: [x, y, z]` | Linear translation along the rail: $\vec{E}(u) = (1 - u)\vec{A} + u\vec{B}$ via shot easing $u = E(\tau)$. | Parallel steel rails ($0.42\text{m}$ gauge) with orthogonal sleepers + 4-wheeled cart. |
-| **`spline_track`** | `points: [[x,y,z], ...]` | Smooth Catmull-Rom curve along rail waypoints with arc-length parameterization. | Curved floor rails with sleepers and wheeled cart following the path. |
+| **`tripod`** | `position: [x, y, z]` (`pos`, `at`, `eye`) | $\vec{E}(t) \equiv \vec{P}_{\text{tripod}}$ (strictly stationary in world space). | Tubular 3-legged tripod stand with floor pucks and vertical column. |
+| **`track`** (`dolly`, `rail`, `slider`, `linear`) | `from: [x, y, z]` (`start`), `to: [x, y, z]` (`end`) | Linear translation along the rail: $\vec{E}(u) = (1 - u)\vec{A} + u\vec{B}$ via shot easing $u = E(\tau)$. | Parallel steel rails ($0.42\text{m}$ gauge) with orthogonal sleepers + 4-wheeled cart. |
+| **`spline_track`** (`spline-track`, `curved_track`, `spline`) | `points: [[x,y,z], ...]` (`waypoints`) | Smooth Catmull-Rom curve along rail waypoints with uniform segment-index parameterization ($u \cdot N_{\text{seg}}$). | Curved floor rails with sleepers and wheeled cart following the path. |
 
 #### 4.9.2 Target-Tracking vs. Fixed-Gaze Framing
 
@@ -737,7 +737,7 @@ The `shots:` array defines the film camera cuts, lens mounts, and editorial cove
 | **`start`** | `number` | `0.0` | `_start` | Cue start timestamp in seconds. |
 | **`end`** | `number` | `start + 5.0` | `_end` | Cue end timestamp in seconds (clamped to $\ge \text{start} + 0.1$). |
 | **`continuous`** | `boolean` | Inherits root | — | When `true`, auto-chains start time and camera kinematics from previous shot. |
-| **`stage_camera`**| `object` | Baseline | `stageCamera` | Physical camera choreography within the diorama. |
+| **`stage_camera`**| `object` | Baseline | `stageCamera`, `camera` | Physical camera choreography within the diorama (optical/rig fields `focus*`, `dof`, `aperture*`, `rig`, `show_rig` may also be authored flat at the shot root). |
 | **`observer_camera`**| `object` | Baseline | `observerCamera` | Legacy per-shot viewport camera choreography. |
 | **`entities`** | `object` | `{}` | — | Per-shot actor movement overrides and focus tags (see §6.4). |
 
@@ -848,10 +848,10 @@ blocking:
     from: [-1.2, 0, 0]         # Optional starting position (defaults to previous cue end)
     position: [2.5, 0, 0.4]    # Destination position at end of cue
     height: 1.15               # Dynamic crouching posture over cue duration (alias: size)
-    rotation: 45               # Explicit destination facing angle in degrees
+    rotation: 45               # Explicit destination facing angle in degrees (alias: yaw)
     look_at: "witness"         # Dynamic continuous gaze tracking (alias: lookAt)
     easing: "cruise"           # Movement easing curve
-    highlighted: true          # Active focus ring and tag
+    highlighted: true          # Active focus ring and tag (alias: highlight)
     visible: true              # Proxy visibility toggle
     note: "Crosses and ducks behind desk" # Staging note (alias: description)
 ```
