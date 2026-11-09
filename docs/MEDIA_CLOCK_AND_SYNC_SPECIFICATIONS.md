@@ -51,7 +51,7 @@ export interface MediaClockDriver {
        $$t_{\text{extrapolated}} = \text{anchorVideoTimeSec} + \frac{\text{performance.now()} - \text{anchorPerfTimeMs}}{1000} \times \text{playbackRate}$$
     3. When `seek(targetSec)` is invoked (e.g. scrubbing while paused or frame-stepping), `anchorVideoTimeSec` updates **synchronously on the same call stack** before `player.seekTo(targetSec, true)` is dispatched, giving the 3D diorama **0ms scrub latency**.
 - **In-Flight Seek Protection (Anti-Reversion Guard)**:
-  - While YouTube processes `seekTo(targetSec)` asynchronously, incoming `player.getCurrentTime()` queries reporting stale pre-seek timestamps are filtered out until YouTube's clock catches up to within $0.35\text{s}$ of the target (or a 600ms safety timeout guard fires). This prevents the scrubber and 3D diorama from rubberbanding back to the pre-seek time.
+  - While YouTube processes `seekTo(targetSec)` asynchronously, incoming `player.getCurrentTime()` queries reporting stale pre-seek timestamps are filtered out until YouTube's clock catches up to within $1.5\text{s}$ of the target (or a 600ms safety timeout guard fires). This prevents the scrubber and 3D diorama from rubberbanding back to the pre-seek time.
 
 ### 2.3 `ProceduralMediaDriver` (`proceduralMediaDriver.ts`)
 - Pure `performance.now()` virtual clock used by `procedural://` blueprint scenes.
@@ -102,5 +102,6 @@ Transport playback, frame-stepping, and diorama display modes are managed via [`
 | **Skip $\pm 1\text{s}$ / $\pm 5\text{s}$** | Scrubber Bar | `ArrowLeft` / `ArrowRight` (`+Shift` for $5\text{s}$) | Seeks $\pm 1\text{s}$ (or $\pm 5\text{s}$ with `Shift`) and increments `lastManualSeekIdRef` (`useMediaClock`). |
 | **Cycle 3D Labels** | Label Mode Toggle | `L` | Cycles diorama labels through `'all' -> 'camera-only' -> 'off' -> 'all'` (`useStudioDisplaySettings`). |
 | **Toggle Safe Guides**| Guides Button | `G` | Toggles optical safe-action box, 3x3 grid, and center reticle in Stage Cam POV / Monitor (`useStudioDisplaySettings`). |
+| **Toggle Optical DoF Blur** | Blur Button | `B` | Toggles real-time thin-lens depth of field bokeh blur in Stage Cam POV / Monitor (`useStudioDisplaySettings`). |
 | **Playback Speed** | `0.25x`, `0.5x`, `1x`, `2x` | — | Adjusts `playbackRate` across HTML5, YouTube, and Procedural drivers (`useMediaClock`). |
 | **Loop Active Shot** | `Loop Shot` Toggle | — | Dynamically bounds and loops playback within whichever shot is currently active (`activeShot.startSec` to `activeShot.endSec`), updating smoothly when jumping across shots without trapping manual seeks (`useStageFrameLoop`). |

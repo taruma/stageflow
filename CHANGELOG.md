@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Documentation & Specifications Sync
+- **Domain Specifications Accuracy Audit (`docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md`, `docs/MEDIA_CLOCK_AND_SYNC_SPECIFICATIONS.md`, `docs/STAGEFLOW_SCRIPT_SPECIFICATION.md`, `docs/VISUAL_DESIGN_SYSTEM.md`)**:
+  - `docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md`: Corrected factory blueprint range reference from `01–05` to `01–07` (including Scene Studies), and synchronized diorama theme palette function name to `getDioramaThemeColors(effectiveCategory)`.
+  - `docs/MEDIA_CLOCK_AND_SYNC_SPECIFICATIONS.md`: Aligned YouTube anti-reversion latch tolerance to calibrated `$1.5\text{s}$` threshold matching `src/media/youtubeMediaDriver.ts`, and added Toggle Optical DoF Blur (`B`) hotkey to the transport & keyboard shortcuts table.
+  - `docs/STAGEFLOW_SCRIPT_SPECIFICATION.md`: Corrected Circle of Confusion max blur circle fraction equation from `0.035` to `0.022` matching `OPTICS_DOF_DEFAULTS.MAX_BLUR_FRACTION` in `src/core/constants.ts`, and added `showRigs?: boolean` to the `StageScore.stage` AST contract table.
+  - `docs/VISUAL_DESIGN_SYSTEM.md`: Synchronized WebGL dynamic palette table hex colors to exact values from `src/stage/dioramaTheme.ts` (`gridSection`, `gridCell`, `borderLine`, `axisLine`), corrected function call to `getDioramaThemeColors`, and updated blueprint catalog badge range to `BP 01–BP 07`.
+
 ## [1.0.0] - 2026-11-10
 
 ### Added

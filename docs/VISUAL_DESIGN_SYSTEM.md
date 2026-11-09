@@ -111,17 +111,17 @@ stageflow:ui:diorama-theme-mode = 'match-app' | 'light' | 'warm' | 'dark'
 
 ### 5.2 WebGL Dynamic Palette Evaluation
 
-The active diorama colors are computed purely in JavaScript via [`getDioramaPalette(effectiveCategory)`](../src/stage/dioramaTheme.ts) and applied directly to R3F materials with **zero extra WebGL draw calls or shader passes**:
+The active diorama colors are computed purely in JavaScript via [`getDioramaThemeColors(effectiveCategory)`](../src/stage/dioramaTheme.ts) and applied directly to R3F materials with **zero extra WebGL draw calls or shader passes**:
 
 | Palette Element | Dark Mode | Warm Mode | Light Mode |
 | :--- | :--- | :--- | :--- |
-| **Clear Color / Background** | `#0c0a09` | `#f3efe6` | `#f5f5f4` |
-| **Depth Fog (`45m`–`160m`)** | `#0c0a09` | `#f3efe6` | `#f5f5f4` |
-| **Ground Plane Floor** | `#171514` | `#faf7f0` | `#ffffff` |
-| **Primary Section Grid (1m)** | `#38bdf8` (Cyan) | `#b0a898` (Warm Grey) | `#a8a29e` (Stone Grey) |
-| **Minor Sub-Grid (0.25m)** | `#1e293b` (Slate) | `#dfd7c5` (Subtle Ivory) | `#e7e5e4` (Subtle Stone) |
-| **Stage Perimeter Frame** | `#0284c7` (Deep Cyan) | `#8c8270` (Muted Warm) | `#78716c` (Muted Stone) |
-| **Axis Crosshair & Reticle** | `#0ea5e9` | `#78716c` | `#57534e` |
+| **Clear Color / Background (`bg`)** | `#0c0a09` | `#f3efe6` | `#f5f5f4` |
+| **Depth Fog (`fog`, `45m`–`160m`)** | `#0c0a09` | `#f3efe6` | `#f5f5f4` |
+| **Ground Plane Floor (`floorColor`)** | `#171514` | `#faf7f0` | `#ffffff` |
+| **Primary Section Grid (`gridSection`, 1m)** | `#2c2825` | `#cfc4af` | `#d6d3d1` |
+| **Minor Sub-Grid (`gridCell`, 0.25m)** | `#1c1917` | `#e4dccb` | `#e7e5e4` |
+| **Stage Perimeter Frame (`borderLine`)** | `#38bdf8` (Cyan) | `#9e8c75` (Muted Warm) | `#78716c` (Muted Stone) |
+| **Axis Crosshair & Reticle (`axisLine`)** | `#38bdf8` (Cyan) | `#b5a48d` (Muted Warm) | `#a8a29e` (Stone Grey) |
 
 ---
 
@@ -153,7 +153,7 @@ The Choreography Score Library ([`ScoreLibraryModal.tsx`](../src/ui/ScoreLibrary
 ### 7.1 High-Density Navigation List (Left Column, ~40%)
 - **4-Way Filter Tabs**: Segmented category selector (`All`, `Studies`, `Blueprints`, `Custom`) for instant filtering across score collections.
 - **Ultra-Compact 2-Line Row Layout (`~50px`)**: Eliminates chunky multi-card waste, fitting 9–10 scores in the viewport simultaneously without scrolling.
-  - **Line 1 (Identity)**: Unified category tag (`STUDY` in Violet, `BP 01`–`BP 05` in Sky Blue, `CUSTOM` in Warm Amber) alongside `Inter` (`font-sans text-xs font-semibold`) un-truncated title.
+  - **Line 1 (Identity)**: Unified category tag (`STUDY` in Violet, `BP 01`–`BP 07` in Sky Blue, `CUSTOM` in Warm Amber) alongside `Inter` (`font-sans text-xs font-semibold`) un-truncated title.
   - **Line 2 (Telemetry)**: Precision `JetBrains Mono` (`font-mono text-[10px]`) delimited string displaying media badge (`Simulator`, `YouTube`, `Local`), duration (`30.0s`), shot count (`17 shots`), and aspect ratio (`16:9`, `2.39:1`).
 - **3-Tier Category Color Coding**:
   - **Directorial Scene Studies**: Deep **Violet / Purple** (`border-l-violet-500`, `bg-violet-500/15`, `text-violet-400`), conveying authentic scene studies authored by Taruma Sakti (such as *Vector Field*).

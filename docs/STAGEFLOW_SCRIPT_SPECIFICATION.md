@@ -107,7 +107,7 @@ StageFlow models a standard 35mm full-frame sensor with horizontal gate width $W
    With focal length $f = f_{\text{mm}} / 1000\text{ m}$, Circle of Confusion $c = 3.0 \times 10^{-5}\text{ m}$ ($0.03\text{ mm}$), and aperture $f$-stop $N \in [0.7, 64.0]$ (`"shallow"` $= 2.8$, `"medium"` $= 5.6$, `"deep"` $= \infty$):
    $$H = \frac{f^2}{N \cdot c} + f, \qquad D_{\text{near}} = \frac{(H - f)\,d_{\text{focus}}}{H + d_{\text{focus}} - 2f}, \qquad D_{\text{far}} = \begin{cases} \frac{(H - f)\,d_{\text{focus}}}{H - d_{\text{focus}}} & d_{\text{focus}} < H \\ \infty & d_{\text{focus}} \ge H \end{cases}$$
    For a fragment at view-space depth $z > 0$, the physical Circle of Confusion blur radius normalized by sensor height $H_{\text{sensor}}$ is:
-   $$\beta(z) = \min\!\left(0.035,\; \frac{f_{\text{mm}}^2}{N \cdot H_{\text{sensor}} \cdot (1000\,d_{\text{focus}} - f_{\text{mm}})} \cdot \frac{|z - d_{\text{focus}}|}{z}\right)$$
+   $$\beta(z) = \min\!\left(0.022,\; \frac{f_{\text{mm}}^2}{N \cdot H_{\text{sensor}} \cdot (1000\,d_{\text{focus}} - f_{\text{mm}})} \cdot \frac{|z - d_{\text{focus}}|}{z}\right)$$
 
 ---
 
@@ -279,7 +279,7 @@ StageFlow is a **stateless functional evaluator** (`Frame_t = f(t, score)`). Eff
 | | `continuous` | `boolean \| undefined` (contiguous timeline & pose-flow flag) |
 | | `videoUrl`, `aspectRatio` | `string` media locator; `number` $\text{AR} > 0$ |
 | | `durationSec`, `offsetSec` | $T_{\text{duration}} > 0\text{ s}$; $t_{\text{offset}} \in \mathbb{R}\text{ s}$ (default $0.0\text{ s}$) |
-| | `stage` | `{ width: number, depth: number, gridStep: number, defaultObserverPose: SphericalPose, defaultStageCameraPose: SphericalPose }` |
+| | `stage` | `{ width: number, depth: number, gridStep: number, showRigs?: boolean, defaultObserverPose: SphericalPose, defaultStageCameraPose: SphericalPose }` |
 | | `entities` | `SceneEntityDef[]` ($t = 0.0\text{ s}$ baseline entity definitions) |
 | | `shots` | `ShotCue[]` (non-empty array of film coverage shots, $\text{length} \ge 1$) |
 | | `observerShots` | `ObserverShotCue[] \| undefined` (optional Tier 1 decoupled observer timeline) |
