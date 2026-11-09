@@ -55,7 +55,7 @@ Visualizes the physical camera filming the shot inside the 3D diorama:
   - Projects 4 corner pyramid rays from the lens nodal point `(0, 0, 0)` to the 4 corners of the rectangular focus gate at `frustumDepth`, sized via `computeFrustumGateDimensions(focalLengthMm, frustumDepth, aspectRatio)`.
   - Renders a luminous **Focus Plane Frame** with subtle rule-of-thirds horizon guides, translucent glass fill, and a target center crosshair ring that slides dynamically along the optical axis to `stageCamera.dof.focusDistanceM`.
 - **3D Depth-of-Field Brackets & Off-Axis Focus Tether (`StageCameraFocusRig.tsx`)**:
-  - **Near & Far DoF Limit Brackets (`StageCameraDofBrackets`)**: When `stageCamera.dof.enabled` is true (`shallow` / `medium` or explicit `aperture`), renders translucent rectangular boundary frames at $z = D_{\text{near}}$ and $z = \min(D_{\text{far}}, 1.8 \cdot \text{frustumDepth})$ connected along the 4 frustum edges, visualizing the exact in-focus depth zone as it expands with wider lenses (`24mm`) or contracts with telephoto lenses (`85mm`).
+  - **Near & Far DoF Limit Brackets (`StageCameraDofBrackets`)**: When `stageCamera.dof.enabled` is true (`shallow` / `medium` or explicit `aperture`), renders dashed rectangular boundary frames at $z = \max(0.15\text{m}, D_{\text{near}})$ and $z = \min(D_{\text{far}}, \max(d, d_{\text{focus}}) + 6.0\text{m})$ (`OPTICS_DOF_DEFAULTS.MAX_VISUAL_FAR_EXTENSION_M = 6.0`), visualizing the exact in-focus depth zone as it expands with wider lenses (`24mm`) or contracts with telephoto lenses (`85mm`).
   - **Off-Axis Focus Target Tether (`StageCameraFocusTether`)**: When `focus:` targets an entity or 3D point displaced from the camera's look-at `target` ($\ge 0.05\text{m}$), renders an emerald (`#10b981`) beacon and dashed tether line from the focus plane center to the focused subject.
 - **Opt-In Single-Pass Stage Cam DoF Blur (`StageCamDofEffect.tsx`)**:
   - When enabled in `Stage Cam POV` or the `StageCamMonitorCanvas` (via the **`[ Blur ]`** button, hotkey **`B`**, or score `optics: { dof_blur: true }`), renders the scene into a single-pass WebGL2 `WebGLRenderTarget` with a hardware `THREE.DepthTexture` (`UnsignedInt248Type`) and applies a 24-tap golden-angle spiral Vogel disk bokeh shader driven by the exact Gaussian thin-lens Circle of Confusion equation $\beta(z)$. Defaults to crisp rendering (`false`) for mobile/tablet GPU safety.
@@ -249,7 +249,7 @@ Adopts professional 3D viewport convention (Blender, Unreal Engine, Maya) distri
 - **Debounced Live Sync & Re-Evaluation (~150ms)**: When editing custom projects, typing updates locally with zero input latency at 60fps/144fps, while `parseStageScore` and 3D diorama re-evaluation trigger after 150ms of typing inactivity, debouncing writes to IndexedDB and preventing WebGL stutter.
   - **Playback & Focus Collision Guards**: Protects in-flight typing against background 10Hz React UI sync renders during looped playback via a three-tier guard (`lastDispatchedTextRef` updated upon actual debounce dispatch, `view.hasFocus` write protection, and `sceneId` transition boundary detection with safe selection clamping).
 - **Top Panel Header (`YamlEditorHeader.tsx`)**:
-  - Compact title bar housing the editor title (`Live YAML Score`), a status badge (`● Live Sync` with pulsing dot or `Read-Only` for bundled blueprints), a **`[ Guide ]`** trigger button (opening the authoring manual in a new tab at `?mode=guide`), and an isolated **`[ ✕ ]`** close button.
+  - Compact title bar housing the editor title (`Live YAML Score`), a status badge (`● Live Sync` with pulsing dot or `Read-Only` for bundled blueprints), **`[ SPEC ]`** (`?mode=spec`) and **`[ Guide ]`** (`?mode=guide`) trigger buttons opening the specification and authoring manuals in a new tab, and an isolated **`[ ✕ ]`** close button.
   - Omit redundant clutter (`Meters...` subtitle, storage badges, and mathematical slogans) for a clean directorial look.
 - **Directorial Action Bar (`YamlActionBar.tsx`)**:
   - Dedicated sub-header strip housing primary buffer actions: **`[ Wrap ]`** (toggles soft line-wrapping on `.cm-scroller` via a dynamic CodeMirror `Compartment`, persisted in `localStorage` under `stageflow:ui:editor-word-wrap`), **`[ Copy ]`** (copies full YAML with visual feedback), and **`[ Fork to Edit → ]`** (when viewing bundled blueprints).
@@ -284,8 +284,7 @@ Decomposed into 3 focused submodules to preserve the $\le 250$ line modularity s
 - **Auto-Fork Collision Guard**: If a dropped YAML file has an `id` that matches a bundled preset (e.g. `demo-blueprint`), StageFlow automatically forks it with a unique custom ID, preserving the factory preset intact and saving the file to `Custom Projects`.
 
 ### 4.8 Storage Persistence Indicator (`StorageStatusBadge.tsx`)
-- Displayed in the top studio header and the YAML inspector status bar.
-- Visually communicates the active persistence tier:
+- Reusable badge component communicating the active persistence tier (`StoragePersistenceStatus`), paired with the `YamlEditorHeader.tsx` sync indicator (`● Live Sync` / `Read-Only`) and Score Library category pills:
   - `Bundled Baseline` (pristine unedited preset).
   - `Draft (IndexedDB)` (active edits saved safely in IndexedDB).
   - `Custom (IndexedDB)` (imported custom scene saved in IndexedDB).

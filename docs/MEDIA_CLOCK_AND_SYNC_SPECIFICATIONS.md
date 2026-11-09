@@ -96,12 +96,14 @@ Transport playback, frame-stepping, and diorama display modes are managed via [`
 
 | Action | UI Control | Keyboard Shortcut | Behavior & Target Hook |
 | :--- | :--- | :--- | :--- |
-| **Play / Pause** | Play / Pause Button | `Space` | Toggles active `MediaClockDriver` playback; restarts from `0.0s` if at end (`useMediaClock`). |
-| **Frame Step Back** | `< [` Button | `[` | Pauses playback and seeks backward by $-\frac{1}{30}\text{s}$ (`-33.3ms`) (`useMediaClock`). |
-| **Frame Step Forward** | `] >` Button | `]` | Pauses playback and seeks forward by $+\frac{1}{30}\text{s}$ (`+33.3ms`) (`useMediaClock`). |
+| **Play / Pause** | `[ ▶ / ❚❚ ]` Button | `Space` | Toggles active `MediaClockDriver` playback; restarts from `0.0s` if at end (`useMediaClock`). |
+| **Restart to `00:00.00`** | `[ ↻ ]` Button | — | Seeks playhead back to `0.0s` (`useMediaClock`). |
+| **Frame Step Back** | — *(Keyboard only)* | `[` | Pauses playback and seeks backward by $-\frac{1}{30}\text{s}$ (`-33.3ms`) (`useMediaClock`). |
+| **Frame Step Forward** | — *(Keyboard only)* | `]` | Pauses playback and seeks forward by $+\frac{1}{30}\text{s}$ (`+33.3ms`) (`useMediaClock`). |
 | **Skip $\pm 1\text{s}$ / $\pm 5\text{s}$** | Scrubber Bar | `ArrowLeft` / `ArrowRight` (`+Shift` for $5\text{s}$) | Seeks $\pm 1\text{s}$ (or $\pm 5\text{s}$ with `Shift`) and increments `lastManualSeekIdRef` (`useMediaClock`). |
 | **Cycle 3D Labels** | Label Mode Toggle | `L` | Cycles diorama labels through `'all' -> 'camera-only' -> 'off' -> 'all'` (`useStudioDisplaySettings`). |
-| **Toggle Safe Guides**| Guides Button | `G` | Toggles optical safe-action box, 3x3 grid, and center reticle in Stage Cam POV / Monitor (`useStudioDisplaySettings`). |
-| **Toggle Optical DoF Blur** | Blur Button | `B` | Toggles real-time thin-lens depth of field bokeh blur in Stage Cam POV / Monitor (`useStudioDisplaySettings`). |
-| **Playback Speed** | `0.25x`, `0.5x`, `1x`, `2x` | — | Adjusts `playbackRate` across HTML5, YouTube, and Procedural drivers (`useMediaClock`). |
-| **Loop Active Shot** | `Loop Shot` Toggle | — | Dynamically bounds and loops playback within whichever shot is currently active (`activeShot.startSec` to `activeShot.endSec`), updating smoothly when jumping across shots without trapping manual seeks (`useStageFrameLoop`). |
+| **Toggle Safe Guides**| `[ Guides ]` Button | `G` | Toggles optical safe-action box, 3x3 grid, and center reticle in Stage Cam POV / Monitor (`useStudioDisplaySettings`). |
+| **Toggle Optical DoF Blur** | `[ Blur ]` Button | `B` | Toggles real-time thin-lens depth of field bokeh blur in Stage Cam POV / Monitor (`useStudioDisplaySettings`). |
+| **Loop Active Shot** | `[ 🔁 ]` Button | — | Dynamically bounds and loops playback within whichever shot is currently active (`activeShot.startSec` to `activeShot.endSec`), updating smoothly when jumping across shots without trapping manual seeks (`useStageFrameLoop`). |
+| **Mute / Unmute Audio** | `[ 🔊 ]` Button | — | Toggles audio mute across HTML5 and YouTube drivers (`useMediaClock`). |
+| **Playback Speed** | — *(Driver API)* | — | Adjusts `playbackRate` (`0.25x`–`2x`) across HTML5, YouTube, and Procedural drivers (`useMediaClock`). |

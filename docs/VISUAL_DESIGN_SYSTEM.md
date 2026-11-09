@@ -45,11 +45,14 @@ All UI components reference semantic CSS custom properties defined in [`src/inde
 | `--surface` | Elevated card surfaces (modals, dropdown menus, transport bar, video card) |
 | `--surface-subtle` | Secondary surface fills (table rows, inactive pills, drawer sidebars) |
 | `--surface-muted` | Muted background fills (disabled buttons, empty state backgrounds) |
+| `--surface-hover` | Interactive hover surface fill |
 | `--border-main` | Primary structural borders dividing viewports, cards, and modal headers |
+| `--border-subtle` | Secondary internal row and header dividers |
 | `--text-main` | High-contrast body text and prominent titles |
+| `--text-body` | Primary interactive item and prose copy |
 | `--text-muted` | Secondary labels, descriptions, and inactive tabs |
-| `--text-subtle` | Monospace timestamps, telemetry sub-labels, and subtle captions |
-| `--accent-primary` | Cinematic amber/cyan interactive focus, hover states, and active pills |
+| `--text-faint` | Monospace timestamps, telemetry sub-labels, and subtle captions |
+| `--btn-primary-bg` / `--btn-primary-text` | Primary interactive button and active chip surface/text tokens |
 
 ### Theme Palettes Matrix
 
@@ -58,7 +61,7 @@ All UI components reference semantic CSS custom properties defined in [`src/inde
 | **`Light`** (Default) | **Clean Warm Stone**: High-clarity editorial daylight | `#f5f5f4` | `#ffffff` | `#e7e5e4` |
 | **`Warm`** | **Architectural Drafting Paper**: Ivory and cream stationery | `#f3efe6` | `#faf7f0` | `#dfd7c5` |
 | **`Dark`** | **Warm Obsidian Studio**: Low eye-strain, cinematic diorama contrast | `#0c0a09` | `#171514` | `#2c2825` |
-| **`Pure Black`** | **OLED Blueprint Void**: Pitch black for pitch dark viewing environments | `#000000` | `#080808` | `#1f1f1f` |
+| **`Pure Black`** | **OLED Blueprint Void**: Pitch black (`[data-pure-black-shell="true"]`) | `#000000` | `#000000` | `#242424` |
 
 ---
 
@@ -68,25 +71,27 @@ To prevent inline class duplication and ensure uniform physical stationery styli
 
 ### 4.1 Layout Shells
 - `UI_TOKENS.layout.appHeader`: 3-wing header bar with `relative z-30`, tactile bottom border, and theme-aware surface fill.
-- `UI_TOKENS.layout.sectionTitle`: Monospace section title with tracking, uppercase formatting, and muted tone.
-- `UI_TOKENS.layout.viewportContainer`: Rounded card frame (`rounded-2xl`) with subtle border and deep shadow.
+- `UI_TOKENS.layout.leftPanelBase` / `.rightPanelBase`: Base flex column containers for split workspace panels.
+- `UI_TOKENS.layout.sectionTitle` / `.sectionTitleMini`: Monospace uppercase section titles with wide tracking and faint tone.
 
 ### 4.2 Modal Dialogs
-- `UI_TOKENS.modal.containerSm`, `.containerMd`, `.containerLibrary`: Standardized accessible modal wrappers with responsive width clamps, backdrop blur, and tactile borders.
-- `UI_TOKENS.modal.header`: Title row with `Libre Baskerville` serif typography, status chips, and close button.
+- `UI_TOKENS.modal.containerSm`, `.containerMd`, `.containerLg`, `.containerLibrary`, `.containerStaging`: Standardized accessible modal wrappers with responsive width clamps and tactile borders.
+- `UI_TOKENS.modal.header` / `.headerSubtle`: Title row with status chips and close button.
 - `UI_TOKENS.modal.footer`: Bottom action row with secondary/primary button alignment.
-- `UI_TOKENS.modal.backdrop`: Translucent dark backdrop (`bg-black/60 backdrop-blur-sm`).
+- `UI_TOKENS.modal.overlay` / `.overlayHeavy`: Translucent backdrop (`bg-overlay-bg` / `bg-overlay-heavy backdrop-blur-sm`).
 
 ### 4.3 Dropdowns & Menus
-- `UI_TOKENS.dropdown.menu`: Floating elevated menu panel with tactile border and shadow.
-- `UI_TOKENS.dropdown.header`: Monospace section category dividers.
-- `UI_TOKENS.dropdown.item`: Interactive menu row with hover accent and icon slot.
+- `UI_TOKENS.dropdown.menu`, `.menuRight`, `.menuWide`: Floating elevated menu panels with tactile border and shadow.
+- `UI_TOKENS.dropdown.header` / `.headerText`: Monospace section category dividers.
+- `UI_TOKENS.dropdown.item` / `.itemActive`: Interactive menu rows with hover accent and active state.
 
-### 4.4 Tactile Buttons & Pills
-- `UI_TOKENS.button.actionPill`: Rounded pill (`rounded-full px-3 py-1 text-xs font-mono font-medium`) for primary triggers.
-- `UI_TOKENS.button.filePill`: Stationery pill for `File ▾` and active score chips.
-- `UI_TOKENS.button.libraryPop`: Distinct amber-accented library gateway button.
-- `UI_TOKENS.button.segmentedGroup`: Segmented pill container for workspace layout and camera POV switchers.
+### 4.4 Tactile Buttons, Pills & Inputs
+- `UI_TOKENS.button.primary`, `.secondary`, `.danger`: Modal and form action buttons.
+- `UI_TOKENS.button.actionPill` / `.actionPillActive`: Compact uppercase tracking pills for toolbar triggers.
+- `UI_TOKENS.button.filePill` / `.filePillActive`: Stationery pills for `File ▾` and active score chips.
+- `UI_TOKENS.button.libraryPop` / `.libraryPopActive`: Distinct gateway buttons for the Score Library.
+- `UI_TOKENS.button.segmentedGroup`, `.segmentedItem`, `.segmentedItemActive`: Segmented pill containers and items for workspace layout and camera POV switchers.
+- `UI_TOKENS.input.search`, `.numberBox`, `.label`, `.labelMini`: Standardized search inputs, numeric boxes, and uppercase form labels.
 
 ---
 
