@@ -304,7 +304,12 @@ describe('scoreCatalog — Bundled Presets & Blank Project Generator', () => {
     expect(isBundledSceneId('blueprint-06-optics-dof')).toBe(true);
     expect(isBundledSceneId('blueprint-07-camera-rigs')).toBe(true);
 
-    expect(isBundledSceneId('the-expansion')).toBe(false);
+    expect(isBundledSceneId('the-expansion')).toBe(true);
+    expect(isBundledSceneId('the-expansion-taruma-sakti')).toBe(true);
+    expect(isBundledSceneId('afraid')).toBe(true);
+    expect(isBundledSceneId('afraid-taruma-sakti')).toBe(true);
+
+    expect(isBundledSceneId('fictitious-study-id')).toBe(false);
     expect(isBundledSceneId('custom-project-123')).toBe(false);
     expect(isBundledSceneId('random-id')).toBe(false);
   });

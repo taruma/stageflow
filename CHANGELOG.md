@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Scene Studies: "The Expansion" & "AFRAID" (`src/scores/studies/the-expansion.yaml`, `src/scores/studies/afraid.yaml`, `src/scores/catalog.yaml`)**:
+  - Added "The Expansion" (`the-expansion.yaml`): 72s continuous sequence shot study demonstrating spatial expansion and rack-focus choreography on a basketball court (11 continuous camera moves, 5 scripted observer shots).
+  - Added "AFRAID" (`afraid.yaml`): 45.375s 16-shot dramatic spatial confrontation study in a twilight field setting.
+  - Registered `the-expansion` and `afraid` alongside their legacy Taruma Sakti authoring aliases in `src/scores/catalog.yaml`.
+  - Updated `vector_field.yaml` subtitle with descriptive narrative synopsis.
+  - Updated `tests/unit/storage.test.ts` to assert bundled registration for both new studies and verify unbundled fallback with fictitious identifiers.
+
 - **Desktop Fullscreen Viewport Toggle (`src/ui/WorkspaceHeader.tsx`)**:
   - Surfaced the native browser Fullscreen toggle button on desktop viewports alongside the Reset Layout button in the header right-wing.
   - Dynamically switches icons between `Maximize` and `Minimize` with reactive `fullscreenchange` event tracking and descriptive tooltips across both mobile and desktop.
