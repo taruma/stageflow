@@ -736,6 +736,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Living Documentation, Governance & Catalog
 
+- **Architecture File Map Synchronization (`docs/ARCHITECTURE_FILE_MAP.md`)**:
+  - Added missing Layer 5 UI components and barrel exports (`CameraModeSwitcher.tsx`, `CameraPresetControls.tsx`, `src/ui/editor/index.ts`, `src/ui/guide/index.ts`) to achieve 100% complete file tree coverage across the repository.
+
 - **Domain Specifications & Score Catalog Accuracy Audit (`docs/SCORE_CATALOG.md`, `docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md`, `docs/MEDIA_CLOCK_AND_SYNC_SPECIFICATIONS.md`, `docs/STAGEFLOW_SCRIPT_SPECIFICATION.md`, `docs/VISUAL_DESIGN_SYSTEM.md`, `docs/YAML_AUTHORING_GUIDE.md`)**:
   - `docs/SCORE_CATALOG.md`: Synchronized exact YAML durations (`blueprint-02` = `26.0s`, `blueprint-03` = `16.0s`), aspect ratio (`blueprint-07` = `2.39:1`), stage dimensions, observer move/blocking cue counts, character rosters (*Vector Field*: Ruby & Evan; *The Expansion*: Frank & Dave; *Afraid*: Sarah & Robbie), and optical lens packages against `src/scores/**/*.yaml`.
   - `docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md`: Corrected factory blueprint range reference from `01–05` to `01–07` (including Scene Studies), synchronized `StageCameraDofBrackets` near/far depth formulas (`MAX_VISUAL_FAR_EXTENSION_M = 6.0m`), documented `[ SPEC ]` + `[ Guide ]` buttons in `YamlEditorHeader.tsx`, clarified `StorageStatusBadge.tsx` usage, and synchronized diorama theme palette function name to `getDioramaThemeColors(effectiveCategory)`.

@@ -129,6 +129,7 @@ stageflow/
 │   │   │   ├── SceneMetadataCard.tsx      # Collapsible scene-wide metadata card (music, gear, notes, markdown)
 │   │   │   └── SceneEntityRoster.tsx      # Categorized Cast, Props & Markers lineup with dimension badges
 │   │   ├── editor/                  # Modular CodeMirror 6 YAML Score Studio submodules
+│   │   │   ├── index.ts             # Barrel exports for editor studio components
 │   │   │   ├── YamlStudioPanel.tsx  # In-flow right-column choreography score studio container
 │   │   │   ├── YamlEditorHeader.tsx # Top header with title, sync badge, Guide trigger & close
 │   │   │   ├── YamlActionBar.tsx    # Directorial action bar (Wrap toggle, Copy, Fork)
@@ -137,6 +138,7 @@ stageflow/
 │   │   │   ├── useCodeMirrorTheme.ts # Dynamic theme extension for Dark/Warm/Light/Pure Black
 │   │   │   └── useYamlEditor.ts     # Compartments, external sync guard & ~150ms debouncer
 │   │   ├── guide/                   # In-app choreography score & script specification manual
+│   │   │   ├── index.ts             # Barrel exports for guide documentation views
 │   │   │   ├── ScoreAuthoringGuideView.tsx # Standalone Markdown + KaTeX manual view (?mode=guide / ?mode=spec)
 │   │   │   ├── GuideSidebarToc.tsx  # Two-tier H2/H3 table of contents sidebar with scroll spy
 │   │   │   ├── guideMarkdownComponents.tsx # Custom markdown element renderers (h1-h3, pre, table)
@@ -155,6 +157,8 @@ stageflow/
 │   │   ├── ResizableSplitWorkspace.tsx # Draggable 3-column studio container (30/40/30) with dual dividers
 │   │   ├── DioramaOverlayContainer.tsx # Center stage responsive HUD overlay dock
 │   │   ├── CompactDioramaHeader.tsx # Unified compact diorama header (<768px)
+│   │   ├── CameraModeSwitcher.tsx   # Tactile 3-way POV mode switcher (Scripted, Free Orbit, Stage Cam)
+│   │   ├── CameraPresetControls.tsx # 1-click angle snaps with isometric 3D ViewCube SVG icons
 │   │   ├── UniversalVideoViewport.tsx  # Local video, YouTube IFrame, or 60fps Stage Cam Simulator
 │   │   ├── ShotBreakdownHud.tsx     # Top-left active shot, lens, maneuver & staging note overlay
 │   │   ├── shotBreakdownUtils.ts    # Target resolver, 3D offset formatting & film gate helpers
