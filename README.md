@@ -57,7 +57,7 @@ Rather than focusing on heavy production pipelines or photorealistic rendering, 
 StageFlow's visual experience follows the natural rhythm of staging a scene:
 
 1. 🖥️ **3-Column Resizable Studio & Live YAML**: A tactile 30/40/30 workspace with reference video, 3D blueprint stage, and CodeMirror 6 YAML editor with 1-click `[ Jump ]` error diagnostics and 4 app themes.
-2. 🎬 **Synchronized Reference Video**: Watch real film footage (or procedural camera slates) playing alongside the 3D diorama. Playback stays locked to the exact millisecond with zero drift, single-frame stepping (`[` / `]`), and variable slow motion (`0.25x`–`2x`).
+2. 🎬 **Synchronized Reference Video**: Watch real film footage (or procedural camera slates) playing alongside the 3D diorama. Playback stays locked to the exact millisecond with zero drift, single-frame stepping (`[` / `]`).
 3. 🚶 **Directional Mannequins & Ground Footprints**: See performers represented on the diorama floor with directional gaze arrows, proportional dimensions, and shape-matched ground footprints that shift smoothly as actors walk, stop, or sit.
 4. 🎥 **Rectangular Frustums & Physical Camera Rigs**: See the camera's physical place in the space. The camera projects a true rectangular film gate cone (`16:9`, `2.39:1`) matching full-frame prime lenses (`24mm`–`85mm`), mounted on visible blueprint tripods, linear dolly rails, or curved tracks.
 5. 🔍 **Visual Focus Planes & Real-Time Bokeh Blur**: See the focal plane represented as a sliding frame in 3D space. Track dynamic rack focus between performers with an emerald focus tether, and toggle real-time single-pass WebGL2 viewfinder bokeh blur (`[ Blur ]` / hotkey `B`) to see the shot through the camera's optical eye.
@@ -115,6 +115,7 @@ shots:
 | `B` | **DoF Bokeh Blur** | Toggle single-pass WebGL2 Stage Cam viewfinder depth-of-field blur |
 | `G` | **Framing Guides** | Toggle rule-of-thirds and safe-action composition overlays |
 | `L` | **3D Label Mode** | Cycle mannequin label display (`all` $\to$ `key` $\to$ `off`) |
+| `?` | **About & Shortcuts** | Open the About StageFlow info modal and documentation links |
 
 ---
 

@@ -7,7 +7,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Book, RotateCcw, Maximize, Minimize } from 'lucide-react';
+import { Book, RotateCcw, Maximize, Minimize, Info } from 'lucide-react';
 import type { ScoreCatalogItem } from '../core/scoreCatalog';
 import type {
   AppThemeCategory,
@@ -32,6 +32,7 @@ export interface WorkspaceHeaderProps {
   isEditMode: boolean;
   storageStatus?: StoragePersistenceStatus;
   isLibraryOpen?: boolean;
+  isInfoOpen?: boolean;
   themeMode?: AppThemeMode;
   effectiveThemeCategory?: AppThemeCategory;
   dioramaThemeMode?: DioramaThemeMode;
@@ -42,6 +43,7 @@ export interface WorkspaceHeaderProps {
   onUploadFiles: (files: FileList) => void;
   onExportActiveScore: () => void;
   onOpenLibrary: (tab?: FilterTab) => void;
+  onOpenInfo?: () => void;
   onResetLayout?: () => void;
   onSelectThemeMode?: (mode: AppThemeMode) => void;
   onSelectDioramaThemeMode?: (mode: DioramaThemeMode) => void;
@@ -55,6 +57,7 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
   isEditMode,
   storageStatus = 'bundled',
   isLibraryOpen = false,
+  isInfoOpen = false,
   themeMode = 'light',
   effectiveThemeCategory = 'light',
   dioramaThemeMode = 'match-app',
@@ -64,6 +67,7 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
   onUploadFiles,
   onExportActiveScore,
   onOpenLibrary,
+  onOpenInfo,
   onResetLayout,
   onSelectThemeMode,
   onSelectDioramaThemeMode,
@@ -217,6 +221,23 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
             <Maximize className="w-3.5 h-3.5 text-text-muted" />
           )}
         </button>
+
+        {/* Standalone About / Info Modal Button (Top Right Corner) */}
+        {onOpenInfo && (
+          <button
+            type="button"
+            onClick={onOpenInfo}
+            className={
+              isInfoOpen
+                ? UI_TOKENS.button.filePillActive
+                : UI_TOKENS.button.filePill
+            }
+            title="About StageFlow, Shortcuts & Documentation"
+            aria-label="About StageFlow, Shortcuts & Documentation"
+          >
+            <Info className="w-3.5 h-3.5 text-text-muted" />
+          </button>
+        )}
       </div>
     </header>
   );

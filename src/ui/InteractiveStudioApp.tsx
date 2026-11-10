@@ -59,6 +59,7 @@ import { YamlStudioPanel } from './editor';
 import { ConfirmResetModal } from './ConfirmResetModal';
 import { ScoreLibraryModal, type FilterTab } from './ScoreLibraryModal';
 import { MobileScoreLibraryModal } from './library/MobileScoreLibraryModal';
+import { AppInfoModal } from './AppInfoModal';
 import { useIsMobile } from '../hooks/useIsMobile';
 import { ToastContainer } from './ToastContainer';
 import { DirectorialTransportBar } from './DirectorialTransportBar';
@@ -101,6 +102,31 @@ export const InteractiveStudioApp: React.FC = () => {
   const [libraryInitialTab, setLibraryInitialTab] = useState<
     FilterTab | undefined
   >(undefined);
+
+  // App Info Modal state
+  const [isInfoOpen, setIsInfoOpen] = useState(false);
+
+  // Global '?' shortcut to open Info / Shortcuts Modal
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.tagName === 'SELECT' ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+      if (e.key === '?' || (e.key === '/' && e.shiftKey)) {
+        e.preventDefault();
+        setIsInfoOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   // Measure diorama pane width to toggle between standard and compact header (<768px)
   const stageContainerRef = useRef<HTMLDivElement | null>(null);
@@ -736,6 +762,7 @@ export const InteractiveStudioApp: React.FC = () => {
         isEditMode={layout.isEditMode}
         storageStatus={scorePersistence.storageStatus}
         isLibraryOpen={isLibraryOpen}
+        isInfoOpen={isInfoOpen}
         themeMode={theme.themeMode}
         effectiveThemeCategory={theme.effectiveCategory}
         dioramaThemeMode={theme.dioramaThemeMode}
@@ -750,6 +777,7 @@ export const InteractiveStudioApp: React.FC = () => {
           setLibraryInitialTab(tab);
           setIsLibraryOpen(true);
         }}
+        onOpenInfo={() => setIsInfoOpen(true)}
         onSelectThemeMode={theme.setThemeMode}
         onSelectDioramaThemeMode={theme.setDioramaThemeMode}
         onCreateBlankProject={async () => {
@@ -1015,6 +1043,12 @@ export const InteractiveStudioApp: React.FC = () => {
           onClose={() => setIsLibraryOpen(false)}
         />
       )}
+
+      {/* About & Studio Info Modal */}
+      <AppInfoModal
+        isOpen={isInfoOpen}
+        onClose={() => setIsInfoOpen(false)}
+      />
 
       {/* Floating Toast Notification Container */}
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />

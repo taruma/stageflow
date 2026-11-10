@@ -405,6 +405,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added friendly project attribution note welcoming shout-outs and links for community projects and video studies.
   - Standardized references to sister suite application **SceneFlow** across `README.md` and `docs/`.
 
+- **Accessible About & Studio Information Modal (`src/ui/AppInfoModal.tsx`, `src/ui/WorkspaceHeader.tsx`, `src/ui/InteractiveStudioApp.tsx`, `docs/*`)**:
+  - Implemented `AppInfoModal.tsx` aligned with sister application SceneFlow parity: features brand logo, version badge, creator credits, directorial intent quote, key capabilities summary, quick shortcuts grid (`Space`, `[`, `]`, `←`/`→`, `B`, `G`, `L`), direct GitHub repository documentation link badges (`GitHub`, `YAML Authoring Guide`, `Mathematical & Kinematic Spec`, `Score Catalog`, `Recorder CLI`), and AI pair-programming credits with vibe-coded disclaimer.
+  - Added standalone `Info` button to the top-right header wing (`WorkspaceHeader.tsx`), positioned adjacent to the native fullscreen button.
+  - Added global `?` keyboard listener in `InteractiveStudioApp.tsx` (when not typing in an input/textarea/editor) to quickly toggle the modal.
+  - Synchronized architectural documentation across [`docs/ARCHITECTURE_FILE_MAP.md`](docs/ARCHITECTURE_FILE_MAP.md) and [`docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md`](docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md).
+
 - **Blueprint 06: Optics, Rack Focus & Depth of Field Masterclass (`src/scores/blueprints/blueprint_06_optics_dof.yaml`, `src/core/scoreCatalog.ts`, `tests/unit/*`, `docs/*`, `README.md`)**:
   - Authored and bundled `blueprint_06_optics_dof.yaml` (36.0s, 2.39:1 anamorphic scope, 8 film shots, 2 observer orbits, 2 decoupled blocking cues) showcasing the full suite of StageFlow optical features.
   - Showcases: (1) global root `optics:` configuration, (2) off-axis entity focus locking with emerald focus tether, (3) subject-to-subject cinematic rack focus (`focus_start` $\to$ `focus_end`), (4) explicit metric distance focus pull (`1.6m` $\to$ `6.8m`), (5) dynamic follow-focus tracking on walking Claire, (6) dynamic iris aperture ramping ($f/1.4 \to f/11$), (7) multi-waypoint Catmull-Rom trajectory with per-waypoint focus & DoF, (8) flat polymorphic cue syntax with 3D Vec3 coordinate focus point, and (9) deep focus master scene ($f/\infty$).
