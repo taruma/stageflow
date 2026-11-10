@@ -405,6 +405,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added friendly project attribution note welcoming shout-outs and links for community projects and video studies.
   - Standardized references to sister suite application **SceneFlow** across `README.md` and `docs/`.
 
+- **Official GitHub Release Notes Archive (`docs/releases/v1.0.0.md`, `docs/ARCHITECTURE_FILE_MAP.md`)**:
+  - Authored standard GitHub release notes for the StageFlow v1.0.0 launch under a new versioned archive directory `docs/releases/`.
+  - Comprehensive launch overview covering the dual-camera spatial architecture, declarative YAML schema, universal media clock, thin-lens optics & DoF, physical camera rigs, directorial call sheet, 60fps headless recorder CLI, studio hotkeys, and bundled scene studies.
+
 - **Accessible About & Studio Information Modal (`src/ui/AppInfoModal.tsx`, `src/ui/WorkspaceHeader.tsx`, `src/ui/InteractiveStudioApp.tsx`, `docs/*`)**:
   - Implemented `AppInfoModal.tsx` aligned with sister application SceneFlow parity: features brand logo, version badge, creator credits, directorial intent quote, key capabilities summary, quick shortcuts grid (`Space`, `[`, `]`, `←`/`→`, `B`, `G`, `L`), direct GitHub repository documentation link badges (`GitHub`, `YAML Authoring Guide`, `Mathematical & Kinematic Spec`, `Score Catalog`, `Recorder CLI`), and AI pair-programming credits with vibe-coded disclaimer.
   - Added standalone `Info` button to the top-right header wing (`WorkspaceHeader.tsx`), positioned adjacent to the native fullscreen button.

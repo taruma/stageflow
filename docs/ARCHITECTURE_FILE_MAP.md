@@ -27,6 +27,8 @@ stageflow/
 ├── CHANGELOG.md                     # Semantic version release log & unreleased change tracking
 ├── README.md                        # Quickstart overview & CLI command reference
 ├── docs/                            # Detailed technical & architectural specifications (SSOT)
+│   ├── releases/                    # Versioned GitHub release notes archive
+│   │   └── v1.0.0.md                # Release notes for StageFlow v1.0.0 initial release
 │   ├── ARCHITECTURE_FILE_MAP.md     # Exhaustive repository file tree & 5-layer module index
 │   ├── STAGEFLOW_SCRIPT_SPECIFICATION.md # Engine SSOT: mathematical model, optics & AST contract
 │   ├── YAML_AUTHORING_GUIDE.md      # Authoring SSOT: quickstart, YAML schema, aliases & cookbook
