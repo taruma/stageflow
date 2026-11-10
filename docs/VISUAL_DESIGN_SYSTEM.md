@@ -6,7 +6,7 @@ This document is the authoritative Single Source of Truth (SSOT) for the **Visua
 
 ## 1. Design Philosophy & Creative Suite Parity
 
-StageFlow is designed to feel like a high-end, tactile director's diorama and architectural blueprint desk. It aligns visually with its sister application **SceneFlow** (`Screenplay-Sync`), sharing:
+StageFlow is designed to feel like a high-end, tactile director's diorama and architectural blueprint desk. It aligns visually with its sister application **SceneFlow**, sharing:
 - **Physical Stationery Aesthetic**: Tactile pill-shaped chrome, elevated surfaces with subtle shadows, and crisp division borders (`border-border-main`).
 - **Quiet, Functional Restraint**: The interface steps back so that the universal video player, 3D spatial staging, camera frustums, and blocking trajectories remain the primary focus.
 - **Instantaneous Responsiveness**: Theme swaps, split resizes, and camera cuts occur with **zero animation stutter and zero 60fps WebGL frame drops**.

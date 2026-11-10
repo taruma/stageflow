@@ -142,7 +142,7 @@ Scene entities (`character`, `prop`, `marker`) are rendered with unambiguous ori
 ## 4. 2D Workspace Shell & Authoring Utilities (`src/ui/`)
 
 ### 4.1 Three-Wing Studio Header & Score Library (`WorkspaceHeader.tsx`, `ScoreLibraryModal.tsx`)
-- **SceneFlow 3-Wing Architecture**: Aligned with sister application SceneFlow (`Screenplay-Sync`), the top studio header bar is divided into three ergonomic wings:
+- **SceneFlow 3-Wing Architecture**: Aligned with sister application **SceneFlow**, the top studio header bar is divided into three ergonomic wings:
   - **Left Wing**: Responsive Brand Identity (desktop displays the full horizontal `StageFlow` logo `/StageFlow - LOGO - WHITE.png` or `/StageFlow - LOGO - BLACK.png` adapted to active theme; mobile viewports `< 768px` display the theme-adaptive rounded box icon with `/StageFlow - ICON - Square.png` switching between light and dark inverted styling), tiered `File ▾` dropdown (`FileMenuDropdown.tsx`), and the interactive `ActiveScoreIndicator.tsx` pill displaying the active score title with uncluttered clarity (technical storage badges like `Bundled Baseline` and `Custom` are reserved for the YAML drawer and Score Library). Clicking the active score chip immediately opens the Score Library.
   - **Center Stage**: Centered `LayoutSegmentedControl.tsx` housing the 2 workspace layout modes (`Split` | `Full`) and an adjacent amber-accented **`[ ✎ Edit ]`** toggle pill in an elevated container.
   - **Right Wing**: Theme mode dropdown (`ThemeSelectorDropdown.tsx`), standalone amber `[ 📖 Library ]` gateway button opening `ScoreLibraryModal.tsx`, and a tactile 1-click **`[ Reset Layout ]`** button.

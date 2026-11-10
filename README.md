@@ -1,109 +1,213 @@
-# StageFlow by Taruma Sakti | 3D Camera-Blocking & Scene Choreography Diorama
+# StageFlow
 
 <p align="center">
-  <img src="public/StageFlow - LOGO - WHITE.png#gh-dark-mode-only" alt="StageFlow Logo" width="480" />
-  <img src="public/StageFlow - LOGO - BLACK.png#gh-light-mode-only" alt="StageFlow Logo" width="480" />
+  <img src="public/StageFlow - LOGO - WHITE.png#gh-dark-mode-only" alt="StageFlow Logo" width="460" />
+  <img src="public/StageFlow - LOGO - BLACK.png#gh-light-mode-only" alt="StageFlow Logo" width="460" />
 </p>
 
-**StageFlow** is a standalone 3D spatial staging and camera-blocking visualizer built with **React 19**, **Three.js / React Three Fiber (`@react-three/fiber` & `@react-three/drei`)**, **TypeScript**, and **Tailwind CSS v4**.
+<p align="center">
+  <strong>An Interactive 3D Blueprint Stage & Code-First Choreography Sketchbook</strong><br />
+  <em>An interactive diorama to explore, dissect, and understand camera blocking and scene choreography.</em>
+</p>
 
-It synchronizes a universal video player (**Local `.mp4`/`.webm`**, **YouTube URLs**, or a built-in **60fps Stage Cam Blueprint Simulator**) with an interactive **3D Minimalist Blueprint Diorama** to illustrate where subjects/props are positioned and how the physical camera is placed, lensed, and moving at every millisecond of a scene.
+<p align="center">
+  <a href="https://github.com/taruma/stageflow/releases"><img src="https://img.shields.io/badge/version-1.0.0-blue.svg?style=flat-square" alt="Version 1.0.0" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-yellow.svg?style=flat-square" alt="License MIT" /></a>
+  <a href="https://github.com/taruma/stageflow"><img src="https://img.shields.io/badge/tests-229%20passed-brightgreen.svg?style=flat-square" alt="Vitest 229 Passed" /></a>
+  <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.8-blue.svg?style=flat-square" alt="TypeScript 5.8" /></a>
+  <a href="https://react.dev/"><img src="https://img.shields.io/badge/React-19-61dafb.svg?style=flat-square" alt="React 19" /></a>
+  <a href="https://threejs.org/"><img src="https://img.shields.io/badge/Three.js-r175-black.svg?style=flat-square" alt="Three.js r175" /></a>
+  <a href="https://stageflow.taruma.my.id"><img src="https://img.shields.io/badge/demo-stageflow.taruma.my.id-emerald.svg?style=flat-square" alt="Live Demo" /></a>
+</p>
 
-> 🌐 **Live Web Application**: [**stageflow.taruma.my.id**](https://stageflow.taruma.my.id)
-
----
-
-## Key Capabilities
-
-1. **Stateless Functional Timeline (`Frame_t = f(t, score)`)**:
-   - Pure mathematical evaluation of camera poses, forward pose chaining ($P_0 \to P_1 \to \dots \to P_k$), dynamic multi-subject centroid look-at anchors (`target: ["a", "b"]`) for two-shot conversational framing, 3D entity spatial dimensions ($w, h, d$) with dynamic 60fps posture transformations (sitting/crouching with rigid anatomical head/shoulder preservation and telescoping torso), shape-matched ground footprints, and decoupled actor blocking (`blocking:`) with zero-drift scrubbing determinism.
-2. **Hybrid Geometric + Directorial Lens Optics & Thin-Lens Depth of Field**:
-   - Metric coordinates ($1\text{ unit} = 1\text{m}$), human degrees in YAML (`pitch`, `yaw`, `rotation`), and full-frame prime focal lengths (`24mm`, `35mm`, `50mm`, `85mm`) projecting a true **Rectangular Cinematic Gate Frustum (`16:9` / `2.39:1`)** with a sliding Focus Plane Frame, subject-driven Rack Focus (`focus_start` $\to$ `focus_end`), 3D Near/Far DoF brackets (`dof: shallow | medium | deep`), emerald off-axis focus tether, and opt-in real-time Stage Cam bokeh simulation (`[ Blur ]` / hotkey `B`).
-3. **Dual-Camera Architecture & Free-Orbit Handover**:
-   - **Observer Camera**: Drives the 3D viewport during playback and automatically releases to `OrbitControls` when paused so you can freely orbit, pan, and inspect the frozen 3D setup.
-   - **Stage Camera**: Illustrative 3D camera rig inside the diorama with sightline, rectangular gate frustum, and 3D trajectory path curve.
-   - **Instant POV Cut**: Switch between `Scripted Observer`, `Free Orbit`, and `Stage Cam POV` with zero transition lag.
-4. **Universal Media Clock Parity**:
-   - Identical 60fps synchronization, scrubbing, frame-stepping (`[` / `]`), and slow-motion playback (`0.25x`, `0.5x`, `1x`, `2x`) across local `.mp4` files, YouTube URLs (with 60fps drift extrapolation), and procedural blueprint slates.
-5. **3-Column Resizable Studio & Code-First YAML Editor**:
-   - Resizable 30/40/30 studio workspace (Reference Video + Directorial Subpanel, 3D Blueprint Diorama, CodeMirror 6 YAML Studio).
-   - CodeMirror 6 editor with Lezer YAML syntax highlighting, soft word wrap toggle (`[ Wrap ]`), debounced live sync (150ms), and a 1-click **`[ Jump ]`** button to exact line/column syntax diagnostics.
-6. **4-Corner Directorial HUD & 3D ViewCube Camera Presets**:
-   - Clean 4-corner diorama HUD layout leaving center stage sightlines completely unobstructed.
-   - 1-click angle snaps (**Top plan, Iso 45°, Front proscenium, Side profile, Reset**) powered by bespoke isometric 3D ViewCube SVG icons that preserve active look-at target pivots.
-7. **3-Tier Score Provenance Taxonomy & Score Library**:
-   - 3-tier catalog organization (`study`, `blueprint`, `custom`) accessible via a 2-column master-detail Score Library dialog with 4-way filter tabs and procedural 2D SVG stage minimaps.
-   - Built-in library features directorial scene studies authored by Taruma Sakti (defaulting on launch to *Vector Field*) alongside focused educational blueprints (BP 01–07). See the full program guide in [**`docs/SCORE_CATALOG.md`**](docs/SCORE_CATALOG.md).
-8. **Dual-Tier Storage Persistence, Declarative Manifest (`catalog.yaml`) & Unified Ingestion (`?score` & `?url`)**:
-   - Declarative manifest registry (`src/scores/catalog.yaml` & `scoreCatalog.ts`) supporting canonical built-in score slugs (`vector-field`, `demo`, `blueprint-02`–`07`) and backwards-compatible legacy aliases with zero TypeScript editing needed to manage scores.
-   - Deep-linking URL routing with automatic "Consume & Clear" address bar hygiene:
-     - `?score=<id>` (or legacy `?scene=<id>`) opens built-in presets directly with graceful fallback on unknown slugs.
-     - `?url=<http_or_https_link>` loads remote scores with a SceneFlow-style confirmation modal.
-   - Unified content fingerprinting (`computeYamlContentHash`, FNV-1a) across both remote URLs and local file drops: identical files open immediately with zero duplicates and zero modal friction, while conflicting files prompt a safe 3-way conflict dialog (**Keep Existing**, **Overwrite**, or **Save as New Copy**). Automatically saves custom scores in browser **IndexedDB** (`idb`), while persisting UI layout preferences in **`localStorage`**. Heavy local dropped videos remain strictly in temporary session memory, and the YAML score remains the authoritative single source of truth for video playback.
-9. **Standalone In-App Documentation & Specification Viewer (`?mode=guide` / `?mode=spec`)**:
-   - Distraction-free, full-window Markdown + KaTeX manual viewer with two-tier Table of Contents sidebar (`GuideSidebarToc.tsx`), live scroll spy, real-time TOC filtering, and granular bundle code-splitting (~77% cold-payload reduction).
-10. **Deterministic 60fps Viewport Video Recorder**:
-    - Headless CLI tool (`npm run record`) powered by Playwright and FFmpeg that steps through scores frame-by-frame ($t_i = i / 60\text{s}$) with zero dropped frames. Exports Scripted Observer or Stage Cam POV viewports in 1080p/4K MP4, WebM, animated GIF, or PNG sequence with toggleable 3D HTML labels and composition guides.
-11. **SceneFlow Visual Design Parity & Decoupled Theme Engine**:
-    - Tactile pill chrome, delicate borders, and editorial typography (`Inter`, `Libre Baskerville`, `JetBrains Mono`) aligned with sister suite app **SceneFlow** (`Screenplay-Sync`). Features an instant 4-mode app theme switcher (`Light Warm Stone` [default], `Warm Drafting Paper`, `Dark Obsidian Studio`, `Auto System`) with transition-freeze performance, paired with an independently configurable 3D diorama stage theme (`Match App` [default], `Light`, `Warm`, `Dark`) so the diorama automatically matches the warm stone daylight theme out of the box while still allowing you to decouple a high-contrast dark blueprint void on the stage on demand (0 extra draw calls).
+<p align="center">
+  <a href="https://stageflow.taruma.my.id"><strong>🌐 Live Studio</strong></a> •
+  <a href="docs/YAML_AUTHORING_GUIDE.md"><strong>📖 YAML Guide</strong></a> •
+  <a href="docs/STAGEFLOW_SCRIPT_SPECIFICATION.md"><strong>📐 Script Specification</strong></a> •
+  <a href="docs/SCORE_CATALOG.md"><strong>🎬 Score Catalog</strong></a> •
+  <a href="docs/VIEWPORT_RECORDER_GUIDE.md"><strong>📹 Recorder CLI</strong></a>
+</p>
 
 ---
 
-## Architecture & Documentation
+## What is StageFlow?
 
-StageFlow is organized into a strictly decoupled **5-Layer Architecture** (`core/` $\to$ `media/` $\to$ `hooks/` $\to$ `stage/` & `ui/`). See the living specification suite for complete details:
+**StageFlow** is an open-source, web-based 3D choreography diorama that synchronizes reference video (**Local `.mp4`/`.webm`**, **YouTube URLs**, or a built-in **60fps Stage Cam Simulator**) side-by-side with an interactive Three.js blueprint stage. 
 
-- [**`AGENTS.md`**](AGENTS.md) — Repository governance, non-negotiable invariants, and 5-layer architecture router.
-- [**`CHANGELOG.md`**](CHANGELOG.md) — Semantic version release history, milestone checkpoints, and unreleased change tracking.
-- [**`docs/ARCHITECTURE_FILE_MAP.md`**](docs/ARCHITECTURE_FILE_MAP.md) — Exhaustive file-by-file repository tree and 5-layer module index.
-- [**`docs/STAGEFLOW_SCRIPT_SPECIFICATION.md`**](docs/STAGEFLOW_SCRIPT_SPECIFICATION.md) — Engine mathematical & kinematic SSOT (coordinate transformations, optical projections, analytical curve equations, and normalized AST contract).
-- [**`docs/YAML_AUTHORING_GUIDE.md`**](docs/YAML_AUTHORING_GUIDE.md) — Declarative YAML score authoring SSOT (quickstart, schema reference, accepted aliases, and production cinematography recipes).
-- [**`docs/CORE_MATH_AND_SCORE_SPECIFICATIONS.md`**](docs/CORE_MATH_AND_SCORE_SPECIFICATIONS.md) — Layer 1 stateless math (`Frame_t = f(t)`), metric/degree conventions, lens optics (`mm`), and YAML score schema.
-- [**`docs/MEDIA_CLOCK_AND_SYNC_SPECIFICATIONS.md`**](docs/MEDIA_CLOCK_AND_SYNC_SPECIFICATIONS.md) — Layer 2 & 3 universal `MediaClockDriver`, YouTube 60fps drift extrapolation, and dual-tier 60fps ref / ~10Hz UI loop.
-- [**`docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md`**](docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md) — Layer 4 & 5 React Three Fiber blueprint stage, dual-camera handover, directional mannequins, and workspace UI.
-- [**`docs/VISUAL_DESIGN_SYSTEM.md`**](docs/VISUAL_DESIGN_SYSTEM.md) — Single Source of Truth for visual design language, typographic hierarchy, theme engine, centralized `UI_TOKENS`, and decoupled 3D diorama palettes.
-- [**`docs/SCORE_CATALOG.md`**](docs/SCORE_CATALOG.md) — Master score index and program guide for all built-in scene studies and blueprints.
-- [**`docs/VIEWPORT_RECORDER_GUIDE.md`**](docs/VIEWPORT_RECORDER_GUIDE.md) — Comprehensive guide and CLI reference for the deterministic 60fps Playwright + FFmpeg viewport video recorder (cameras, resolutions, formats, audio slapping, recipes).
+It lets you visualize where performers stand, how they move, where the physical camera is placed, which focal length is mounted, and where the lens is focused at every millisecond of a scene.
 
 ---
 
-## Commands
+## Why I Built This
 
+> *"What does it actually mean to block a scene? How do camera moves, lens focal lengths, and performer staging interact to create meaning?"*
+
+StageFlow was born out of genuine curiosity: a desire to slow down favorite scenes, deconstruct spatial relationships, and understand how camera work and choreography tell stories on screen.
+
+Rather than focusing on heavy production pipelines or photorealistic rendering, StageFlow keeps things simple and focused:
+
+* **Study Over Production**: A lightweight diorama designed to deconstruct movie scenes and explore *why* a shot was set up a certain way.
+* **Choreography as Code**: Authoring staging in clean, human-readable YAML rather than wrestling with complex 3D drag-and-drop gizmos.
+* **Minimalist Spatial Clarity**: Stripping away visual clutter to highlight pure spatial relationships—sightlines, focal planes, ground footprints, and camera trajectories.
+
+---
+
+## Key Capabilities (A Visual Sequence)
+
+StageFlow's visual experience follows the natural rhythm of staging a scene:
+
+1. 🖥️ **3-Column Resizable Studio & Live YAML**: A tactile 30/40/30 workspace with reference video, 3D blueprint stage, and CodeMirror 6 YAML editor with 1-click `[ Jump ]` error diagnostics and 4 app themes.
+2. 🎬 **Synchronized Reference Video**: Watch real film footage (or procedural camera slates) playing alongside the 3D diorama. Playback stays locked to the exact millisecond with zero drift, single-frame stepping (`[` / `]`), and variable slow motion (`0.25x`–`2x`).
+3. 🚶 **Directional Mannequins & Ground Footprints**: See performers represented on the diorama floor with directional gaze arrows, proportional dimensions, and shape-matched ground footprints that shift smoothly as actors walk, stop, or sit.
+4. 🎥 **Rectangular Frustums & Physical Camera Rigs**: See the camera's physical place in the space. The camera projects a true rectangular film gate cone (`16:9`, `2.39:1`) matching full-frame prime lenses (`24mm`–`85mm`), mounted on visible blueprint tripods, linear dolly rails, or curved tracks.
+5. 🔍 **Visual Focus Planes & Real-Time Bokeh Blur**: See the focal plane represented as a sliding frame in 3D space. Track dynamic rack focus between performers with an emerald focus tether, and toggle real-time single-pass WebGL2 viewfinder bokeh blur (`[ Blur ]` / hotkey `B`) to see the shot through the camera's optical eye.
+6. ⏱️ **Millisecond Scrubbing & Free 3D Inspection on Pause**: Scrub across the timeline with immediate visual feedback. Whenever playback is paused, the diorama automatically hands over to free 3D orbit controls—letting you freely rotate, pan, and inspect the frozen staging from any angle before cutting instantly to the camera's perspective.
+
+---
+
+## Choreography as Code
+
+StageFlow scripts are authored in clean, human-readable YAML. The engine converts high-level directorial notes into exact spatial positions:
+
+```yaml
+version: "1.0"
+title: "Classic Two-Shot Dolly Glide"
+duration: 12.0
+fps: 24
+
+entities:
+  - id: detective
+    kind: character
+    position: [-1.2, 0, 0]
+    facing: 90
+  - id: witness
+    kind: character
+    position: [1.2, 0, 0]
+    facing: -90
+
+shots:
+  - id: shot_01
+    start: 0.0
+    end: 6.0
+    camera:
+      lens: 35mm
+      target: ["detective", "witness"]
+      distance: 3.2m
+      focus: ["detective", "witness"]
+      dof: shallow
+      rig:
+        type: track
+        from: [-2.0, 1.2, 3.0]
+        to: [1.0, 1.2, 3.0]
+```
+
+> 📖 For full syntax, enum aliases, and recipes, see the [**YAML Authoring Guide**](docs/YAML_AUTHORING_GUIDE.md).
+
+---
+
+## Studio Hotkeys
+
+| Hotkey | Directorial Action | Description |
+| :--- | :--- | :--- |
+| `Space` | **Play / Pause** | Automatically unlocks `OrbitControls` for free 3D inspection on pause |
+| `[` / `]` | **Step 1 Frame** | Precise single-frame backward / forward stepping |
+| `←` / `→` | **Scrub Timeline** | Jump 1s backward / forward (Hold `Shift` for 5s jumps) |
+| `B` | **DoF Bokeh Blur** | Toggle single-pass WebGL2 Stage Cam viewfinder depth-of-field blur |
+| `G` | **Framing Guides** | Toggle rule-of-thirds and safe-action composition overlays |
+| `L` | **3D Label Mode** | Cycle mannequin label display (`all` $\to$ `key` $\to$ `off`) |
+
+---
+
+## Quickstart
+
+### Prerequisites
+* [Node.js](https://nodejs.org/) (v20+ recommended, v18+ supported)
+* Modern web browser with WebGL2 support
+* [FFmpeg](https://ffmpeg.org/) (optional, required only for headless video recording)
+
+### Installation & Development
 ```bash
-# Install dependencies
+# 1. Clone the repository
+git clone https://github.com/taruma/stageflow.git
+cd stageflow
+
+# 2. Install dependencies
 npm install
 
-# Start local development server
+# 3. Start local development studio
 npm run dev
-
-# Run unit test suite (Vitest)
-npm test
-
-# Type-check and build production bundle
-npm run build
-
-# Run fast linter (oxlint)
-npm run lint
-
-# Deterministic 60fps Viewport Video Recorder (Playwright + FFmpeg)
-npm run record [scene] [options]
-
-# Automated batch recorder across all factory blueprints (BP 01-07)
-npm run record:batch
-
-# Key Examples:
-# Record Blueprint 01 from Scripted Observer View at 1080p 60fps
-npm run record 01
-
-# Record Stage Camera POV with thin-lens DoF bokeh blur
-npm run record 06 -- --camera stage-pov --blur -o rack_focus.mp4
-
-# Record clean isometric diorama geometry only (no HTML labels)
-npm run record 02 -- --preset iso --labels off -o clean_iso.mp4
-
-# Record single shot cue with reference audio track slapped on output
-npm run record 02 -- --shot shot_01 --camera stage-pov --audio ref.mp4 -o shot01.mp4
-
-# For complete CLI options, resolutions, formats & production recipes:
-# See docs/VIEWPORT_RECORDER_GUIDE.md
 ```
+
+Open `http://localhost:5173` in your browser.
+
+---
+
+## Available Commands
+
+| Command | Task | Description |
+| :--- | :--- | :--- |
+| `npm run dev` | **Local Studio** | Starts Vite development server at `localhost:5173` |
+| `npm test` | **Unit Test Suite** | Runs 229 deterministic unit tests via Vitest |
+| `npm run build` | **Typecheck & Bundle** | Strict TypeScript check (`tsc -b`) and Vite production build |
+| `npm run lint` | **Code Linter** | Ultra-fast static analysis via `oxlint` |
+| `npm run record` | **Viewport Recorder** | Records 60fps video via headless Playwright + FFmpeg |
+| `npm run record:batch` | **Batch Recorder** | Renders all 7 factory blueprints across both camera views |
+
+> 📹 For full recording options, resolutions, codecs, and recipes, see the [**Viewport Video Recorder Guide**](docs/VIEWPORT_RECORDER_GUIDE.md).
+
+---
+
+## 5-Layer Decoupled Architecture
+
+StageFlow enforces a strict one-way dependency rule (`core/` $\to$ `media/` $\to$ `hooks/` $\to$ `stage/` & `ui/`). `src/core/` contains **zero React and zero DOM/Three.js runtime dependencies**.
+
+```mermaid
+graph TD
+  L1["Layer 1: Core Math & Script AST (src/core/)"] --> L2["Layer 2: Universal Media Drivers (src/media/)"]
+  L2 --> L3["Layer 3: 60fps Ref & Persistence Hooks (src/hooks/)"]
+  L3 --> L4["Layer 4: React Three Fiber 3D Stage (src/stage/)"]
+  L3 --> L5["Layer 5: Directorial Studio Shell UI (src/ui/)"]
+```
+
+### Living Documentation Suite (Single Source of Truth)
+
+* [**`AGENTS.md`**](AGENTS.md) — Engineering governance, non-negotiable invariants, and development rules.
+* [**`CHANGELOG.md`**](CHANGELOG.md) — Keep-a-Changelog release history and version tracking.
+* [**`docs/ARCHITECTURE_FILE_MAP.md`**](docs/ARCHITECTURE_FILE_MAP.md) — Exhaustive file-by-file repository tree and 5-layer index.
+* [**`docs/STAGEFLOW_SCRIPT_SPECIFICATION.md`**](docs/STAGEFLOW_SCRIPT_SPECIFICATION.md) — Mathematical and kinematic specifications (analytical curve equations, normalized AST contract).
+* [**`docs/CORE_MATH_AND_SCORE_SPECIFICATIONS.md`**](docs/CORE_MATH_AND_SCORE_SPECIFICATIONS.md) — Layer 1 stateless timeline math ($Frame_t = f(t)$), coordinate systems, and lens optics.
+* [**`docs/MEDIA_CLOCK_AND_SYNC_SPECIFICATIONS.md`**](docs/MEDIA_CLOCK_AND_SYNC_SPECIFICATIONS.md) — Layer 2 & 3 media clock drivers, YouTube drift extrapolation, and dual-tier 60fps/10Hz loop.
+* [**`docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md`**](docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md) — Layer 4 & 5 3D blueprint stage, dual-camera handover, and workspace UI chrome.
+* [**`docs/VISUAL_DESIGN_SYSTEM.md`**](docs/VISUAL_DESIGN_SYSTEM.md) — Typography (`Inter`, `Libre Baskerville`, `JetBrains Mono`), theme engine, and color palettes.
+* [**`docs/SCORE_CATALOG.md`**](docs/SCORE_CATALOG.md) — Master catalog of bundled scene studies and educational blueprints.
+* [**`docs/VIEWPORT_RECORDER_GUIDE.md`**](docs/VIEWPORT_RECORDER_GUIDE.md) — Playwright + FFmpeg viewport video recorder reference and production recipes.
+
+---
+
+## Tech Stack
+
+* **Core Math & Kinematics**: Pure TypeScript, `yaml` AST parser, spherical coordinate kinematics
+* **3D Graphics & Canvas**: [Three.js](https://threejs.org/) (r175), [React Three Fiber](https://r3f.docs.pmnd.rs/) (v9), [@react-three/drei](https://github.com/pmndrs/drei) (v10)
+* **Directorial Studio UI**: [React 19](https://react.dev/), [Tailwind CSS v4](https://tailwindcss.com/), [Lucide React](https://lucide.dev/), [CodeMirror 6](https://codemirror.net/)
+* **Media & Audio Engine**: HTML5 Video, YouTube IFrame API (60fps extrapolation), Web Audio API
+* **State & Persistence**: [IndexedDB (`idb`)](https://github.com/jakearchibald/idb), `localStorage`
+* **Headless Video Export**: [Playwright](https://playwright.dev/) (Chromium), [FFmpeg](https://ffmpeg.org/)
+* **Quality & Tooling**: [Vitest](https://vitest.dev/) (229 deterministic tests), [oxlint](https://oxc.rs/)
+
+---
+
+## Author & Sister Projects
+
+* **Created by**: **Taruma Sakti** ([@taruma](https://github.com/taruma))
+* **AI Pair Programming**: Built inside **Google Antigravity**, utilizing **Gemini 3.8 Flash** and **Gemini 4 Argon** (used heavily for initial codebase scaffolding and mathematical kinematic equations).
+* **Sister Suite Project**: [**SceneFlow**](https://github.com/taruma/screenplay-sync) — Collaborative screenplay and timing alignment studio.
+* **Attribution**: If StageFlow inspires your project, study, or video, a shout-out or link back to [github.com/taruma/stageflow](https://github.com/taruma/stageflow) is always appreciated!
+
+> [!WARNING]
+> **Vibe-Coded Disclaimer**: This software was born through exploratory "vibe coding" and rapid experimental iterations. As such, the code may contain bugs, experimental behaviors, or breaking quirks. Use at your own risk!
+
+---
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
