@@ -36,6 +36,8 @@
 
 It lets you visualize where performers stand, how they move, where the physical camera is placed, which focal length is mounted, and where the lens is focused at every millisecond of a scene.
 
+https://github.com/user-attachments/assets/13aa4d0c-ff44-4236-a904-00c7f1f49dde
+
 ---
 
 ## Why I Built This
