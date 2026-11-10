@@ -34,7 +34,8 @@ stageflow/
 │   ├── MEDIA_CLOCK_AND_SYNC_SPECIFICATIONS.md
 │   ├── DIORAMA_3D_AND_UI_SPECIFICATIONS.md
 │   ├── VISUAL_DESIGN_SYSTEM.md      # SSOT for typography, theme engine, UI_TOKENS & palettes
-│   └── SCORE_CATALOG.md             # Master score index & program guide for studies & blueprints
+│   ├── SCORE_CATALOG.md             # Master score index & program guide for studies & blueprints
+│   └── VIEWPORT_RECORDER_GUIDE.md   # Deterministic 60fps Playwright + FFmpeg recorder operating manual (SSOT)
 ├── scripts/                         # CLI Automation & Offline Tooling
 │   └── record/                      # 60fps Playwright + FFmpeg Viewport Recorder
 │       ├── cli.ts                   # CLI entry point, argument parsing & usage help

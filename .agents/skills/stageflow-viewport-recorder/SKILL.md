@@ -22,6 +22,8 @@ StageFlow records viewports using **deterministic frame-stepping** ($t_i = i / \
 - **Guarantees zero dropped frames, zero stutter, and zero timing drift**, regardless of machine speed.
 - Output defaults to **completely silent** for fast, offline, and self-contained execution.
 
+> 📖 **Comprehensive User Guide**: For complete resolution matrices, encoder specifications, batch automation, and 5 production recipes, see [`docs/VIEWPORT_RECORDER_GUIDE.md`](../../../docs/VIEWPORT_RECORDER_GUIDE.md).
+
 ---
 
 ## 2. CLI Command Syntax

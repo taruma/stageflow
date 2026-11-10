@@ -63,6 +63,7 @@ StageFlow is organized into a strictly decoupled **5-Layer Architecture** (`core
 - [**`docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md`**](docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md) — Layer 4 & 5 React Three Fiber blueprint stage, dual-camera handover, directional mannequins, and workspace UI.
 - [**`docs/VISUAL_DESIGN_SYSTEM.md`**](docs/VISUAL_DESIGN_SYSTEM.md) — Single Source of Truth for visual design language, typographic hierarchy, theme engine, centralized `UI_TOKENS`, and decoupled 3D diorama palettes.
 - [**`docs/SCORE_CATALOG.md`**](docs/SCORE_CATALOG.md) — Master score index and program guide for all built-in scene studies and blueprints.
+- [**`docs/VIEWPORT_RECORDER_GUIDE.md`**](docs/VIEWPORT_RECORDER_GUIDE.md) — Comprehensive guide and CLI reference for the deterministic 60fps Playwright + FFmpeg viewport video recorder (cameras, resolutions, formats, audio slapping, recipes).
 
 ---
 
@@ -87,22 +88,22 @@ npm run lint
 # Deterministic 60fps Viewport Video Recorder (Playwright + FFmpeg)
 npm run record [scene] [options]
 
-# Examples:
+# Automated batch recorder across all factory blueprints (BP 01-07)
+npm run record:batch
+
+# Key Examples:
 # Record Blueprint 01 from Scripted Observer View at 1080p 60fps
 npm run record 01
 
-# Record Stage Camera POV through director's lens with safe-action guides
-npm run record 01 -- --camera stage-pov --guides -o stage_pov.mp4
+# Record Stage Camera POV with thin-lens DoF bokeh blur
+npm run record 06 -- --camera stage-pov --blur -o rack_focus.mp4
 
-# Record Blueprint 06 Stage Camera POV with thin-lens DoF bokeh blur
-npm run record 06 -- --camera stage-pov --blur --guides -o bp06_rack_focus.mp4
+# Record clean isometric diorama geometry only (no HTML labels)
+npm run record 02 -- --preset iso --labels off -o clean_iso.mp4
 
-# Record clean 3D diorama geometry only (no HTML labels)
-npm run record 02 -- --labels off -o clean.mp4
+# Record single shot cue with reference audio track slapped on output
+npm run record 02 -- --shot shot_01 --camera stage-pov --audio ref.mp4 -o shot01.mp4
 
-# Record custom scene and slap audio track from reference video (video image excluded)
-npm run record path/to/my_scene.yaml -- --audio path/to/reference.mp4 -o my_scene.mp4
-
-# Record single shot cue with isometric schematic camera preset in 4K
-npm run record 04 -- --shot shot_01 --preset isometric --res 4k -o shot01_iso_4k.mp4
+# For complete CLI options, resolutions, formats & production recipes:
+# See docs/VIEWPORT_RECORDER_GUIDE.md
 ```
