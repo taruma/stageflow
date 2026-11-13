@@ -779,6 +779,7 @@ export const InteractiveStudioApp: React.FC = () => {
         onExportActiveScore={handleExportActiveScore}
         onOpenVideoExport={() => {
           mediaClock.pause();
+          stageLoop.forceSyncUi();
           setIsVideoExportOpen(true);
         }}
         onOpenLibrary={(tab) => {
@@ -1058,11 +1059,12 @@ export const InteractiveStudioApp: React.FC = () => {
         onClose={() => setIsInfoOpen(false)}
       />
 
-      {/* In-Browser Clean Stage Cam MP4 Export Modal */}
+      {/* In-Browser Clean Stage Cam & Observer MP4 Export Modal */}
       <CleanVideoExportModal
         isOpen={isVideoExportOpen}
         score={activeScore}
         activeShot={stageLoop.uiSnapshot.frame.activeShot}
+        liveViewportPose={stageLoop.uiSnapshot.liveViewportPose}
         dofBlurEnabled={display.dofBlurEnabled}
         onNotify={showToast}
         onClose={() => setIsVideoExportOpen(false)}

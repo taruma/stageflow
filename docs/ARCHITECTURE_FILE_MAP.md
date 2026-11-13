@@ -118,7 +118,7 @@ stageflow/
 │   │   ├── StageCamViewRig.tsx      # Stage Camera POV lock controller for procedural monitor
 │   │   ├── StageCamDofEffect.tsx    # Opt-in single-pass WebGL2 thin-lens Depth-of-Field blur effect
 │   │   ├── StageCamMonitorCanvas.tsx# True 3D Stage Cam monitor with optical safe-action HUD & DoF blur toggle
-│   │   ├── CleanStageCamExportCanvas.tsx # Offscreen R3F Stage Cam canvas (gateScale=1.0) for MP4 export
+│   │   ├── CleanStageCamExportCanvas.tsx # Offscreen R3F canvas (Stage Cam 1:1 gate & 16:9 Observer schematic) for MP4 export
 │   │   ├── DirectionalMannequin.tsx # Stylized character/prop proxies with rigid anatomy, telescoping torso, facing visor & floor trails
 │   │   ├── labelLodMath.ts          # Pure 3D billboard label distance LOD, opacity hierarchy & z-index math
 │   │   └── StageBillboardLabel.tsx  # Crisp 3D HTML floating identity badges & distance-collapsed glowing dots
@@ -180,7 +180,8 @@ stageflow/
 │   │   ├── StageCamViewfinderOverlay.tsx # Optical film gate, look-around mask & composition guides
 │   │   ├── ConfirmResetModal.tsx    # Accessible confirmation dialog modal for discarding drafts
 │   │   ├── ConfirmRemoteScoreModal.tsx # Accessible confirmation & conflict dialog modal for external/remote scores
-│   │   ├── CleanVideoExportModal.tsx # In-browser Clean Film Gate MP4 export config & progress modal
+│   │   ├── CleanVideoExportModal.tsx # In-browser Clean Stage Cam & Observer MP4 export progress modal
+│   │   ├── CleanVideoExportConfigForm.tsx # Export camera, angle, resolution, fps, range & palette form controls
 │   │   ├── StorageStatusBadge.tsx   # Visual status badge (Bundled vs. IndexedDB draft)
 │   │   └── InteractiveStudioApp.tsx # 3D choreography diorama & split workspace orchestrator
 │   ├── App.tsx                      # Code-split root mode switcher & suspense router

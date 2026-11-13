@@ -14,9 +14,11 @@ import {
   computeExportFrameTimestampSec,
   computeExportTimeRange,
   formatExportMp4Filename,
+  resolveExportAspectRatio,
   type ExportFps,
   type ExportRangeMode,
   type ExportResolutionTier,
+  type ExportTargetCamera,
 } from '../core/exportMath';
 import type { ShotCue, StageFrame, StageScore, ToastNotification } from '../core/types';
 
@@ -35,6 +37,7 @@ export interface StartWebVideoExportParams {
   tier: ExportResolutionTier;
   fps: ExportFps;
   rangeMode: ExportRangeMode;
+  targetCamera?: ExportTargetCamera;
   activeShot?: ShotCue | null;
   renderFrame: RenderExportFrameFn;
   previewCanvasRef?: React.RefObject<HTMLCanvasElement | null>;
@@ -149,6 +152,7 @@ export function useWebVideoExport({ onNotify }: UseWebVideoExportOptions = {}) {
       tier,
       fps,
       rangeMode,
+      targetCamera = 'stage-cam',
       activeShot,
       renderFrame,
       previewCanvasRef,
@@ -165,14 +169,19 @@ export function useWebVideoExport({ onNotify }: UseWebVideoExportOptions = {}) {
       setError(null);
       setIsExporting(true);
 
-      const dims = computeExportDimensions(tier, score.aspectRatio);
+      const effectiveAspectRatio = resolveExportAspectRatio(
+        score.aspectRatio,
+        targetCamera
+      );
+      const dims = computeExportDimensions(tier, effectiveAspectRatio);
       const timeRange = computeExportTimeRange(score, rangeMode, fps, activeShot);
       const bitrate = computeExportBitrate(dims.width, dims.height, fps);
       const filename = formatExportMp4Filename(
         score.id || score.title,
         tier,
         fps,
-        timeRange.shotId
+        timeRange.shotId,
+        targetCamera
       );
 
       setProgress({

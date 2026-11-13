@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+#### Observer Diorama Target Camera for In-Browser MP4 Export (GH Issue #5)
+
+- **Observer Export Aspect Ratio & Filename Math (`src/core/exportMath.ts`, `tests/unit/exportMath.test.ts`)**:
+  - Added `ExportTargetCamera` (`'stage-cam' | 'observer'`), `ExportObserverAngleMode` (`'scripted' | 'current-viewport'`), and `resolveExportAspectRatio()` locking Observer Diorama exports to `16:9` (`1920×1080` / `1280×720`) regardless of `score.aspectRatio`.
+  - Extended `formatExportMp4Filename()` to emit `_observer_` vs `_stage_cam_` suffixes with unit test coverage.
+- **Offscreen Observer Diorama Schematic Renderer (`src/stage/CleanStageCamExportCanvas.tsx`, `src/hooks/useWebVideoExport.ts`)**:
+  - Added `ExportCameraViewRig` supporting `Stage Cam POV`, `Scripted Observer`, and `Current Viewport Angle` (`sphericalToCartesian(liveViewportPose, 16/9)`).
+  - Mounts `StageCameraRig` (`cameraMode="scripted"`, `labelMode="off"`) in Observer mode so 3D camera chassis, tripod/dolly tracks, rectangular gate frustums, focus planes, DoF brackets, and trajectory curves render cleanly while suppressing `StageCamDofEffect`.
+- **Modular Export Config Form & Studio Integration (`src/ui/CleanVideoExportConfigForm.tsx`, `src/ui/CleanVideoExportModal.tsx`, `src/ui/InteractiveStudioApp.tsx`)**:
+  - Extracted `CleanVideoExportConfigForm.tsx` with `Target Camera` (`Stage Cam POV` | `Observer Diorama (16:9)`), `Observer Angle` (`Scripted Observer` | `Current Viewport Angle`), disabled `Optical DoF Blur` state for Observer, and an inline WebGL-only schematic notice.
+  - Wired `liveViewportPose` synchronization via `stageLoop.forceSyncUi()` on modal open.
+
 #### In-Browser Clean Film Gate MP4 Export (GH Issue #4)
 
 - **Pure Export Resolution, Timing & Filename Math (`src/core/exportMath.ts`, `tests/unit/exportMath.test.ts`)**:

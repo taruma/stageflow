@@ -9,6 +9,8 @@ import type { ShotCue, StageScore } from './types';
 export type ExportResolutionTier = 720 | 1080;
 export type ExportFps = 24 | 60;
 export type ExportRangeMode = 'scene' | 'shot';
+export type ExportTargetCamera = 'stage-cam' | 'observer';
+export type ExportObserverAngleMode = 'scripted' | 'current-viewport';
 
 export interface ExportDimensions {
   width: number;
@@ -26,6 +28,22 @@ export interface ExportTimeRange {
 }
 
 const WIDE_16_9_THRESHOLD = 16 / 9 - 1e-4;
+
+/**
+ * Resolves the effective export aspect ratio.
+ * Observer Diorama exports always lock to 16:9 regardless of score film gate ratio.
+ */
+export function resolveExportAspectRatio(
+  scoreAspectRatio: number,
+  targetCamera: ExportTargetCamera = 'stage-cam'
+): number {
+  if (targetCamera === 'observer') {
+    return DEFAULT_ASPECT_RATIO;
+  }
+  return Number.isFinite(scoreAspectRatio) && scoreAspectRatio > 0.1
+    ? scoreAspectRatio
+    : DEFAULT_ASPECT_RATIO;
+}
 
 /**
  * Rounds a positive number to the nearest even integer >= 2 for H.264 compliance.
@@ -154,15 +172,17 @@ export function sanitizeExportSlug(raw: string): string {
 
 /**
  * Formats the output MP4 filename:
- * `<slug>[_<shot-id>]_stage_cam_<tier>p_<fps>fps.mp4`
+ * `<slug>[_<shot-id>]_<stage_cam|observer>_<tier>p_<fps>fps.mp4`
  */
 export function formatExportMp4Filename(
   scoreIdOrTitle: string,
   tier: ExportResolutionTier,
   fps: ExportFps,
-  shotId?: string | null
+  shotId?: string | null,
+  targetCamera: ExportTargetCamera = 'stage-cam'
 ): string {
   const baseSlug = sanitizeExportSlug(scoreIdOrTitle);
   const shotSuffix = shotId ? `_${sanitizeExportSlug(shotId)}` : '';
-  return `${baseSlug}${shotSuffix}_stage_cam_${tier}p_${fps}fps.mp4`;
+  const cameraTag = targetCamera === 'observer' ? 'observer' : 'stage_cam';
+  return `${baseSlug}${shotSuffix}_${cameraTag}_${tier}p_${fps}fps.mp4`;
 }

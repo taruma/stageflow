@@ -5,9 +5,11 @@ import {
   computeExportFrameTimestampSec,
   computeExportTimeRange,
   formatExportMp4Filename,
+  resolveExportAspectRatio,
   roundToEven,
   sanitizeExportSlug,
 } from '../../src/core/exportMath';
+import { DEFAULT_ASPECT_RATIO } from '../../src/core/constants';
 import { parseAspectRatio } from '../../src/core/opticsMath';
 import type { ShotCue, StageScore } from '../../src/core/types';
 
@@ -107,5 +109,29 @@ describe('exportMath', () => {
     expect(formatExportMp4Filename('Vector Field', 720, 24, 'shot-2-push')).toBe(
       'vector_field_shot_2_push_stage_cam_720p_24fps.mp4'
     );
+    expect(
+      formatExportMp4Filename('Vector Field', 1080, 60, null, 'observer')
+    ).toBe('vector_field_observer_1080p_60fps.mp4');
+    expect(
+      formatExportMp4Filename('Vector Field', 720, 24, 'shot-2-push', 'observer')
+    ).toBe('vector_field_shot_2_push_observer_720p_24fps.mp4');
+  });
+
+  it('locks Observer Diorama exports to 16:9 regardless of score film gate aspect ratio', () => {
+    for (const ratioRaw of ['2.39:1', '9:16', '4:3', '16:9']) {
+      const scoreRatio = parseAspectRatio(ratioRaw);
+      const effectiveRatio = resolveExportAspectRatio(scoreRatio, 'observer');
+      expect(effectiveRatio).toBeCloseTo(DEFAULT_ASPECT_RATIO, 6);
+
+      const dims1080 = computeExportDimensions(1080, effectiveRatio);
+      expect(dims1080.width).toBe(1920);
+      expect(dims1080.height).toBe(1080);
+
+      const dims720 = computeExportDimensions(720, effectiveRatio);
+      expect(dims720.width).toBe(1280);
+      expect(dims720.height).toBe(720);
+    }
+
+    expect(resolveExportAspectRatio(2.39, 'stage-cam')).toBeCloseTo(2.39, 6);
   });
 });

@@ -150,7 +150,7 @@ Open `http://localhost:5173` in your browser.
 | Command | Task | Description |
 | :--- | :--- | :--- |
 | `npm run dev` | **Local Studio** | Starts Vite development server at `localhost:5173` |
-| `npm test` | **Unit Test Suite** | Runs 235 deterministic unit tests via Vitest |
+| `npm test` | **Unit Test Suite** | Runs 236 deterministic unit tests via Vitest |
 | `npm run build` | **Typecheck & Bundle** | Strict TypeScript check (`tsc -b`) and Vite production build |
 | `npm run lint` | **Code Linter** | Ultra-fast static analysis via `oxlint` |
 | `npm run record` | **Viewport Recorder** | Records 60fps video via headless Playwright + FFmpeg |

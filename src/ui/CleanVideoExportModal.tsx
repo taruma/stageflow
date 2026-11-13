@@ -1,8 +1,7 @@
 /**
- * Directorial Clean Film Gate MP4 Export Modal.
- * Configures resolution tier, framerate, time range, and stage theme (default: Light),
- * inherits Stage Cam [BLUR] state, mounts the offscreen WebGL canvas only while encoding,
- * and displays live deterministic frame progress.
+ * Directorial Clean MP4 Export Modal.
+ * Supports Stage Cam POV (Clean Film Gate) and Observer Diorama (fixed 16:9 schematic),
+ * mounts the offscreen WebGL canvas strictly while encoding, and shows live progress.
  */
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -12,13 +11,17 @@ import {
   computeExportDimensions,
   computeExportTimeRange,
   formatExportMp4Filename,
+  resolveExportAspectRatio,
   type ExportFps,
+  type ExportObserverAngleMode,
   type ExportRangeMode,
   type ExportResolutionTier,
+  type ExportTargetCamera,
 } from '../core/exportMath';
 import type {
   AppThemeCategory,
   ShotCue,
+  SphericalPose,
   StageScore,
   ToastNotification,
 } from '../core/types';
@@ -27,12 +30,14 @@ import {
   type CleanStageCamExportHandle,
 } from '../stage/CleanStageCamExportCanvas';
 import { useWebVideoExport } from '../hooks/useWebVideoExport';
+import { CleanVideoExportConfigForm } from './CleanVideoExportConfigForm';
 import { UI_TOKENS } from './tokens/ui';
 
 export interface CleanVideoExportModalProps {
   isOpen: boolean;
   score: StageScore;
   activeShot?: ShotCue | null;
+  liveViewportPose?: SphericalPose;
   dofBlurEnabled: boolean;
   onNotify?: (message: string, type?: ToastNotification['type']) => void;
   onClose: () => void;
@@ -42,10 +47,15 @@ export const CleanVideoExportModal: React.FC<CleanVideoExportModalProps> = ({
   isOpen,
   score,
   activeShot,
+  liveViewportPose,
   dofBlurEnabled,
   onNotify,
   onClose,
 }) => {
+  const [targetCamera, setTargetCamera] =
+    useState<ExportTargetCamera>('stage-cam');
+  const [observerAngleMode, setObserverAngleMode] =
+    useState<ExportObserverAngleMode>('scripted');
   const [tier, setTier] = useState<ExportResolutionTier>(1080);
   const [fps, setFps] = useState<ExportFps>(60);
   const [rangeMode, setRangeMode] = useState<ExportRangeMode>('scene');
@@ -68,13 +78,22 @@ export const CleanVideoExportModal: React.FC<CleanVideoExportModalProps> = ({
 
   const hasValidShot =
     activeShot != null && activeShot.endSec > activeShot.startSec;
-
   const effectiveRangeMode: ExportRangeMode =
     rangeMode === 'shot' && hasValidShot ? 'shot' : 'scene';
+  const effectiveObserverAngleMode: ExportObserverAngleMode =
+    observerAngleMode === 'current-viewport' && liveViewportPose
+      ? 'current-viewport'
+      : 'scripted';
+  const isObserver = targetCamera === 'observer';
+
+  const effectiveAspectRatio = useMemo(
+    () => resolveExportAspectRatio(score.aspectRatio, targetCamera),
+    [score.aspectRatio, targetCamera]
+  );
 
   const dims = useMemo(
-    () => computeExportDimensions(tier, score.aspectRatio),
-    [tier, score.aspectRatio]
+    () => computeExportDimensions(tier, effectiveAspectRatio),
+    [tier, effectiveAspectRatio]
   );
 
   const timeRange = useMemo(
@@ -88,9 +107,10 @@ export const CleanVideoExportModal: React.FC<CleanVideoExportModalProps> = ({
         score.id || score.title,
         tier,
         fps,
-        timeRange.shotId
+        timeRange.shotId,
+        targetCamera
       ),
-    [score.id, score.title, tier, fps, timeRange.shotId]
+    [score.id, score.title, tier, fps, timeRange.shotId, targetCamera]
   );
 
   const initialFrame = useMemo(
@@ -115,11 +135,8 @@ export const CleanVideoExportModal: React.FC<CleanVideoExportModalProps> = ({
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        if (isExporting) {
-          cancelExport();
-        } else {
-          onClose();
-        }
+        if (isExporting) cancelExport();
+        else onClose();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -137,7 +154,6 @@ export const CleanVideoExportModal: React.FC<CleanVideoExportModalProps> = ({
 
   const handleStartExport = async () => {
     setIsCanvasMounted(true);
-    // Allow React to mount the offscreen WebGL canvas before stepping frame 0
     await new Promise((resolve) => requestAnimationFrame(() => resolve(undefined)));
 
     const success = await startExport({
@@ -145,20 +161,19 @@ export const CleanVideoExportModal: React.FC<CleanVideoExportModalProps> = ({
       tier,
       fps,
       rangeMode: effectiveRangeMode,
+      targetCamera,
       activeShot,
       previewCanvasRef,
       renderFrame: async (frame) => {
         if (!exportCanvasRef.current) {
-          throw new Error('Offscreen Stage Cam canvas is not mounted.');
+          throw new Error('Offscreen export canvas is not mounted.');
         }
         return exportCanvasRef.current.renderFrame(frame);
       },
     });
 
     setIsCanvasMounted(false);
-    if (success) {
-      onClose();
-    }
+    if (success) onClose();
   };
 
   const handleCancelOrClose = () => {
@@ -169,6 +184,14 @@ export const CleanVideoExportModal: React.FC<CleanVideoExportModalProps> = ({
       onClose();
     }
   };
+
+  const summaryTitle = isObserver
+    ? `Observer Diorama · ${
+        effectiveObserverAngleMode === 'current-viewport'
+          ? 'Current Angle'
+          : 'Scripted'
+      }`
+    : 'Stage Cam POV · Clean Gate (1:1)';
 
   return (
     <div
@@ -195,7 +218,7 @@ export const CleanVideoExportModal: React.FC<CleanVideoExportModalProps> = ({
                 id="clean-video-export-title"
                 className="text-sm font-bold font-sans text-text-main"
               >
-                Export Clean Stage Cam (.mp4)
+                Export Video (.mp4)
               </h2>
               <span className="text-[11px] font-mono text-text-muted">
                 {score.title} · {dims.width}×{dims.height}
@@ -213,7 +236,7 @@ export const CleanVideoExportModal: React.FC<CleanVideoExportModalProps> = ({
         </div>
 
         {/* Body */}
-        <div className="p-5 space-y-4">
+        <div className="p-5 space-y-4 max-h-[75vh] overflow-y-auto">
           {!isSupported && (
             <div className="flex items-start gap-2.5 p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-xs text-red-600 dark:text-red-400 font-sans">
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
@@ -232,21 +255,25 @@ export const CleanVideoExportModal: React.FC<CleanVideoExportModalProps> = ({
             </div>
           )}
 
-          {/* Optical Plate Summary */}
+          {/* Optical / Diorama Summary Bar */}
           <div className="flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-surface-subtle border border-border-subtle text-xs font-mono">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-amber-500" />
-              <span className="font-semibold text-text-main">
-                Stage Cam POV · Clean Gate (1:1)
+            <div className="flex items-center gap-2 min-w-0">
+              <span
+                className={`w-2 h-2 rounded-full shrink-0 ${
+                  isObserver ? 'bg-sky-500' : 'bg-amber-500'
+                }`}
+              />
+              <span className="font-semibold text-text-main truncate">
+                {summaryTitle}
               </span>
             </div>
-            <div className="flex items-center gap-1.5">
+            {!isObserver && (
               <button
                 type="button"
                 disabled={isExporting}
                 onClick={() => setExportDofBlur((prev) => !prev)}
                 title="Toggle Thin-Lens Optical Depth-of-Field Blur for this export"
-                className={`px-2 py-0.5 rounded-md text-[10px] font-bold border transition-colors ${
+                className={`px-2 py-0.5 rounded-md text-[10px] font-bold border transition-colors shrink-0 ${
                   isExporting
                     ? 'cursor-default opacity-80'
                     : 'cursor-pointer active:scale-95'
@@ -259,157 +286,37 @@ export const CleanVideoExportModal: React.FC<CleanVideoExportModalProps> = ({
                 <Sparkles className="w-2.5 h-2.5 inline mr-1 -mt-0.5" />
                 BLUR {exportDofBlur ? 'ON' : 'OFF'}
               </button>
-            </div>
+            )}
           </div>
 
           {!isExporting ? (
-            <div className="space-y-3.5">
-              {/* Resolution & Framerate */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <span className={UI_TOKENS.input.label}>Resolution</span>
-                  <div className={`${UI_TOKENS.button.segmentedGroup} w-full`}>
-                    {([1080, 720] as const).map((opt) => (
-                      <button
-                        key={opt}
-                        type="button"
-                        onClick={() => setTier(opt)}
-                        className={`flex-1 justify-center ${
-                          tier === opt
-                            ? UI_TOKENS.button.segmentedItemActive
-                            : UI_TOKENS.button.segmentedItem
-                        }`}
-                      >
-                        {opt}p
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <span className={UI_TOKENS.input.label}>Frame Rate</span>
-                  <div className={`${UI_TOKENS.button.segmentedGroup} w-full`}>
-                    {([60, 24] as const).map((opt) => (
-                      <button
-                        key={opt}
-                        type="button"
-                        onClick={() => setFps(opt)}
-                        className={`flex-1 justify-center ${
-                          fps === opt
-                            ? UI_TOKENS.button.segmentedItemActive
-                            : UI_TOKENS.button.segmentedItem
-                        }`}
-                      >
-                        {opt} fps
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Time Range */}
-              <div className="space-y-1.5">
-                <span className={UI_TOKENS.input.label}>Time Range</span>
-                <div className={`${UI_TOKENS.button.segmentedGroup} w-full`}>
-                  <button
-                    type="button"
-                    onClick={() => setRangeMode('scene')}
-                    className={`flex-1 justify-center ${
-                      effectiveRangeMode === 'scene'
-                        ? UI_TOKENS.button.segmentedItemActive
-                        : UI_TOKENS.button.segmentedItem
-                    }`}
-                  >
-                    Entire Scene ({score.durationSec.toFixed(1)}s)
-                  </button>
-                  <button
-                    type="button"
-                    disabled={!hasValidShot}
-                    onClick={() => setRangeMode('shot')}
-                    className={`flex-1 justify-center disabled:opacity-40 disabled:cursor-not-allowed ${
-                      effectiveRangeMode === 'shot'
-                        ? UI_TOKENS.button.segmentedItemActive
-                        : UI_TOKENS.button.segmentedItem
-                    }`}
-                  >
-                    Current Shot{activeShot ? ` (${activeShot.id})` : ''}
-                  </button>
-                </div>
-              </div>
-
-              {/* Stage Palette & Optical DoF Blur */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <span className={UI_TOKENS.input.label}>Stage Palette</span>
-                  <div className={`${UI_TOKENS.button.segmentedGroup} w-full`}>
-                    {(
-                      [
-                        { id: 'light', label: 'Light' },
-                        { id: 'warm', label: 'Warm' },
-                        { id: 'dark', label: 'Dark' },
-                      ] as const
-                    ).map((opt) => (
-                      <button
-                        key={opt.id}
-                        type="button"
-                        onClick={() => setExportTheme(opt.id)}
-                        className={`flex-1 justify-center ${
-                          exportTheme === opt.id
-                            ? UI_TOKENS.button.segmentedItemActive
-                            : UI_TOKENS.button.segmentedItem
-                        }`}
-                      >
-                        {opt.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <span className={UI_TOKENS.input.label}>Optical DoF Blur</span>
-                  <div className={`${UI_TOKENS.button.segmentedGroup} w-full`}>
-                    {(
-                      [
-                        { value: true, label: 'On' },
-                        { value: false, label: 'Off' },
-                      ] as const
-                    ).map((opt) => (
-                      <button
-                        key={String(opt.value)}
-                        type="button"
-                        onClick={() => setExportDofBlur(opt.value)}
-                        className={`flex-1 justify-center ${
-                          exportDofBlur === opt.value
-                            ? UI_TOKENS.button.segmentedItemActive
-                            : UI_TOKENS.button.segmentedItem
-                        }`}
-                      >
-                        {opt.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Output Summary */}
-              <div className="px-3.5 py-2.5 rounded-xl bg-surface-subtle border border-border-subtle text-[11px] font-mono text-text-muted space-y-1">
-                <div className="flex justify-between gap-2">
-                  <span>Output File</span>
-                  <span className="text-text-main font-semibold truncate">
-                    {filename}
-                  </span>
-                </div>
-                <div className="flex justify-between gap-2">
-                  <span>Cadence & Frames</span>
-                  <span className="text-text-body">
-                    {timeRange.totalFrames} frames · {timeRange.durationSec.toFixed(2)}s · Silent MP4
-                  </span>
-                </div>
-              </div>
-            </div>
+            <CleanVideoExportConfigForm
+              targetCamera={targetCamera}
+              onChangeTargetCamera={setTargetCamera}
+              observerAngleMode={effectiveObserverAngleMode}
+              onChangeObserverAngleMode={setObserverAngleMode}
+              hasCustomViewportPose={Boolean(liveViewportPose)}
+              tier={tier}
+              onChangeTier={setTier}
+              fps={fps}
+              onChangeFps={setFps}
+              rangeMode={effectiveRangeMode}
+              onChangeRangeMode={setRangeMode}
+              hasValidShot={hasValidShot}
+              activeShot={activeShot}
+              sceneDurationSec={score.durationSec}
+              exportTheme={exportTheme}
+              onChangeExportTheme={setExportTheme}
+              exportDofBlur={exportDofBlur}
+              onChangeExportDofBlur={setExportDofBlur}
+              filename={filename}
+              totalFrames={timeRange.totalFrames}
+              exportDurationSec={timeRange.durationSec}
+              width={dims.width}
+              height={dims.height}
+            />
           ) : (
             <div className="space-y-3.5">
-              {/* Live Preview Thumbnail */}
               <div className="flex items-center justify-center rounded-xl bg-app border border-border-main p-2 overflow-hidden">
                 <canvas
                   ref={previewCanvasRef}
@@ -419,11 +326,12 @@ export const CleanVideoExportModal: React.FC<CleanVideoExportModalProps> = ({
                 />
               </div>
 
-              {/* Progress Bar */}
               <div className="space-y-1.5">
                 <div className="h-2 w-full rounded-full bg-surface-muted overflow-hidden">
                   <div
-                    className="h-full bg-amber-500 transition-all duration-100"
+                    className={`h-full transition-all duration-100 ${
+                      isObserver ? 'bg-sky-500' : 'bg-amber-500'
+                    }`}
                     style={{ width: `${progress?.percent ?? 0}%` }}
                   />
                 </div>
@@ -453,7 +361,7 @@ export const CleanVideoExportModal: React.FC<CleanVideoExportModalProps> = ({
             {isExporting ? 'Cancel Export' : 'Cancel'}
           </button>
 
-          {!isExporting && (
+          {!isExporting ? (
             <button
               type="button"
               disabled={!isSupported}
@@ -463,9 +371,7 @@ export const CleanVideoExportModal: React.FC<CleanVideoExportModalProps> = ({
               <Download className="w-4 h-4" />
               <span>Export MP4</span>
             </button>
-          )}
-
-          {isExporting && (
+          ) : (
             <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 text-xs font-bold font-mono">
               <Loader2 className="w-4 h-4 animate-spin" />
               <span>Encoding…</span>
@@ -474,7 +380,6 @@ export const CleanVideoExportModal: React.FC<CleanVideoExportModalProps> = ({
         </div>
       </div>
 
-      {/* Offscreen Clean Film Gate Canvas (Mounted Strictly During Active Export) */}
       {isCanvasMounted && (
         <CleanStageCamExportCanvas
           ref={exportCanvasRef}
@@ -484,6 +389,9 @@ export const CleanVideoExportModal: React.FC<CleanVideoExportModalProps> = ({
           height={dims.height}
           dofBlurEnabled={exportDofBlur}
           themeCategory={exportTheme}
+          targetCamera={targetCamera}
+          observerAngleMode={effectiveObserverAngleMode}
+          customObserverPose={liveViewportPose}
         />
       )}
     </div>
