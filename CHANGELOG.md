@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+#### Workspace Tooling & Authoring Skills
+
+- **Dedicated Choreography Score Creator & Directorial Mentor Skill (`.agents/skills/stageflow-score-creator/SKILL.md`, `AGENTS.md`, `docs/ARCHITECTURE_FILE_MAP.md`)**:
+  - Introduced `stageflow-score-creator` workspace skill dedicated to authoring, scaffolding, explaining, and teaching StageFlow YAML scores (`*.yaml`).
+  - Enforced strict documentation-only boundary: explicitly instructs agents never to inspect or dissect `src/` source code files, relying exclusively on authoritative documentation ([`docs/YAML_AUTHORING_GUIDE.md`](docs/YAML_AUTHORING_GUIDE.md), [`docs/STAGEFLOW_SCRIPT_SPECIFICATION.md`](docs/STAGEFLOW_SCRIPT_SPECIFICATION.md), and [`docs/SCORE_CATALOG.md`](docs/SCORE_CATALOG.md)).
+  - Enforced zero repository pollution: scores are strictly temporary, output directly in chat inside formatted YAML code blocks for copying into the web app's live in-browser YAML Drawer / Editor without dirtying Git.
+  - Built-in pedagogical mentorship model: explains the directorial rationale behind decoupled actor blocking (`blocking:`), full-frame lens selections (`24mm`, `35mm`, `50mm`, `85mm`), orthogonal focus projection (`focus: "<id>"`), and derivative-matched continuous kinematics.
+  - Linked to SSOT documentation headings across coordinate geometry, optics, physical rigs, and the 8 production recipes.
+
 ## [1.0.0] - 2026-11-10
 
 ### Added

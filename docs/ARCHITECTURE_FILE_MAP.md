@@ -21,6 +21,7 @@ $$\texttt{src/core/} \longrightarrow \texttt{src/media/} \longrightarrow \texttt
 stageflow/
 ├── .agents/                         # Workspace Skills & Customizations
 │   └── skills/
+│       ├── stageflow-score-creator/     # Choreography Score Authoring & Directorial Mentor Skill (SKILL.md)
 │       ├── stageflow-score-debugger/    # Choreography Score Kinematic & Visual Debugger Skill (SKILL.md)
 │       └── stageflow-viewport-recorder/ # 60fps Viewport Video Recorder Skill (SKILL.md)
 ├── AGENTS.md                        # Root governance, workflow rules & invariant router (< 24 KB)

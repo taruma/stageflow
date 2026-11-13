@@ -105,7 +105,7 @@ Each layer depends strictly on the layers below it (`core/` $\to$ `media/` $\to$
 
 ```text
 stageflow/
-├── .agents/skills/        # Workspace skills (stageflow-score-debugger, stageflow-viewport-recorder)
+├── .agents/skills/        # Workspace skills (stageflow-score-creator, stageflow-score-debugger, stageflow-viewport-recorder)
 ├── docs/                  # Authoritative domain specifications & ARCHITECTURE_FILE_MAP.md (SSOT)
 ├── scripts/record/        # 60fps Playwright + FFmpeg deterministic viewport video recorder CLI
 ├── src/
