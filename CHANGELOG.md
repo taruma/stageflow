@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+#### In-Browser Clean Film Gate MP4 Export (GH Issue #4)
+
+- **Pure Export Resolution, Timing & Filename Math (`src/core/exportMath.ts`, `tests/unit/exportMath.test.ts`)**:
+  - Added Layer 1 pure utilities `roundToEven`, `computeExportDimensions`, `computeExportBitrate`, `computeExportTimeRange`, `computeExportFrameTimestampSec`, `sanitizeExportSlug`, and `formatExportMp4Filename` with zero React/DOM/Three.js dependencies.
+  - Enforces H.264 even-integer pixel dimensions across `1080p` and `720p` tiers for wide (`16:9`, `1.85:1`, `2.39:1`), standard (`4:3`), and vertical (`9:16`) aspect ratios.
+- **WebCodecs + `mp4-muxer` Deterministic Video Exporter (`src/hooks/useWebVideoExport.ts`, `src/stage/CleanStageCamExportCanvas.tsx`, `package.json`)**:
+  - Added `mp4-muxer` (`^5.2.2`) for client-side MP4 container muxing.
+  - Implemented `CleanStageCamExportCanvas.tsx` mounting an offscreen `<Canvas frameloop="never" dpr={1}>` strictly during active exports, reusing `BlueprintStageScene`, `StageCamViewRig`, and `StageCamDofEffect` (inheriting the active Stage Cam `[BLUR]` toggle) at `gateScale = 1.0` with `labelMode="off"` and zero viewfinder borders.
+  - Implemented `useWebVideoExport.ts` with WebCodecs `VideoEncoder` H.264 profile negotiation (`avc1.640028` → `avc1.640033` → `avc1.4d002a` → `avc1.42001f`), `encodeQueueSize` backpressure control, immediate `VideoFrame.close()` memory release, throttled thumbnail preview updates, and clean cancellation.
+- **Directorial Export Modal & File Menu Integration (`src/ui/CleanVideoExportModal.tsx`, `src/ui/header/FileMenuDropdown.tsx`, `src/ui/WorkspaceHeader.tsx`, `src/ui/InteractiveStudioApp.tsx`)**:
+  - Added `File ▾ → Export Video (.mp4)...` entry point that pauses playback and opens `CleanVideoExportModal.tsx`.
+  - Supports `1080p` / `720p` resolution, `60 fps` / `24 fps` cadence, `Entire Scene` / `Current Shot` range, `Light` (default) / `Warm` / `Dark` stage palettes, and `Optical DoF Blur` (`On` / `Off`, initialized from the active Stage Cam `[BLUR]` toggle) with live progress telemetry and thumbnail preview.
+
 #### Workspace Tooling & Authoring Skills
 
 - **Dedicated Choreography Score Creator & Directorial Mentor Skill (`.agents/skills/stageflow-score-creator/SKILL.md`, `AGENTS.md`, `docs/ARCHITECTURE_FILE_MAP.md`)**:

@@ -148,7 +148,7 @@ Scene entities (`character`, `prop`, `marker`) are rendered with unambiguous ori
   - **Right Wing**: Theme mode dropdown (`ThemeSelectorDropdown.tsx`), standalone amber `[ 📖 Library ]` gateway button opening `ScoreLibraryModal.tsx`, a tactile 1-click **`[ Reset Layout ]`** button, native fullscreen toggle, and an **About / Info** button (`AppInfoModal.tsx`) with global `?` keyboard shortcut.
   - **Authoritative Stacking Context**: The header uses `relative z-30`, ensuring all dropdown menus (`File ▾`, `Color Themes ▾`) and popovers render safely above viewport HUD elements, labels, and badges.
 - **Tiered `File ▾` Menu (`FileMenuDropdown.tsx`)**:
-  - *Media & Score I/O*: "Open Video or Score..." (file picker trigger) and "Export Active Score (.yaml)" (direct browser download).
+  - *Media & Score I/O*: "Open Video or Score..." (file picker trigger), "Export Active Score (.yaml)" (direct browser download), and "Export Video (.mp4)..." (opens `CleanVideoExportModal.tsx` for in-browser WebCodecs clean film gate MP4 export).
   - *Scores*: "New Blank Score..." and "Manage Custom Scores" (with custom scores badge count).
   - *Reference*: "Score Library..." and links to the YAML Authoring Guide and Script Specification.
 - **2-Column Master-Detail Score Library & Project Hub (`ScoreLibraryModal.tsx`, `ScoreInspectorPane.tsx`, `ScoreStageMinimap.tsx`)**:
@@ -352,3 +352,9 @@ Decomposed into 3 focused submodules to preserve the $\le 250$ line modularity s
 ### 4.15 Telemetry & Vercel Web Analytics (`@vercel/analytics/react`, `@vercel/speed-insights/react`)
 - Seamlessly integrates Core Web Vitals telemetry (`<Analytics />` and `<SpeedInsights />`) into the root `src/App.tsx`.
 - Gated conditionally so tracking scripts run strictly in interactive studio and documentation modes, remaining dormant during headless Playwright recording runs (`?mode=headless-render`).
+
+### 4.16 In-Browser Clean Film Gate MP4 Export (`CleanVideoExportModal.tsx`, `CleanStageCamExportCanvas.tsx`, `useWebVideoExport.ts`, `exportMath.ts`)
+- Client-side deterministic MP4 exporter powered by **WebCodecs (`VideoEncoder`)** and **`mp4-muxer`**, triggered from `File ▾ → Export Video (.mp4)...`.
+- **Clean Film Gate Plate**: Mounts an offscreen `<Canvas frameloop="never" dpr={1}>` strictly while actively encoding, rendering `BlueprintStageScene` + `StageCamViewRig` + optional `StageCamDofEffect` (inheriting the current Stage Cam `[BLUR]` toggle state) at `gateScale = 1.0` with zero look-around borders, zero viewfinder brackets, and `labelMode="off"`.
+- **Dynamic Even-Dimension Sizing (`computeExportDimensions`)**: Evaluates H.264-compliant even pixel bounds from `score.aspectRatio` (`1920×1080` for `16:9`, `1920×804` for `2.39:1`, `1920×1038` for `1.85:1`, `1440×1080` for `4:3`, `1080×1920` for `9:16` at `1080p`, and proportional `720p` equivalents).
+- **Directorial Configuration**: Supports `1080p` / `720p`, `60 fps` / `24 fps`, `Entire Scene` / `Current Shot`, Stage Palette (`Light` [default] / `Warm` / `Dark`), and Optical DoF Blur (`On` / `Off`, seeded from the active Stage Cam `[BLUR]` toggle), producing a silent visual plate `<slug>[_<shot>]_stage_cam_<res>p_<fps>fps.mp4` with live preview thumbnail and queue backpressure control.
