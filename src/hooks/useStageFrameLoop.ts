@@ -3,7 +3,13 @@
  * and ~10Hz throttled React state snapshots for UI readouts.
  */
 
-import { useState, useRef, useCallback, useEffect } from 'react';
+import {
+  useState,
+  useRef,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+} from 'react';
 import type {
   CameraViewMode,
   SphericalPose,
@@ -31,23 +37,86 @@ export interface UseStageFrameLoopResult {
   forceSyncUi: () => void;
 }
 
+export function canReuseIdleStageFrame(
+  isDriverPlaying: boolean,
+  manualSeekOccurred: boolean,
+  currentSec: number,
+  prevTimeSec: number,
+  currentScore: StageScore,
+  lastEvaluatedScore: StageScore
+): boolean {
+  return (
+    !isDriverPlaying &&
+    !manualSeekOccurred &&
+    Math.abs(currentSec - prevTimeSec) <= 1e-6 &&
+    currentScore === lastEvaluatedScore
+  );
+}
+
+export function resolveNextLoopSnapshotOnScoreSync(params: {
+  resetOccurred: boolean;
+  currentCameraMode: CameraViewMode;
+  isPlaying: boolean;
+  driverTimeSec: number;
+  score: StageScore;
+  previousViewportPose: SphericalPose;
+}): {
+  nextCameraMode: CameraViewMode;
+  nextFrame: StageFrame;
+  nextViewportPose: SphericalPose;
+} {
+  const nextCameraMode: CameraViewMode = params.resetOccurred
+    ? 'scripted'
+    : params.currentCameraMode;
+  const targetSec = params.resetOccurred ? 0 : params.driverTimeSec;
+  const nextFrame = computeStageFrame(targetSec, params.score);
+
+  let nextViewportPose: SphericalPose;
+  if (params.resetOccurred) {
+    nextViewportPose = cloneSphericalPose(
+      nextFrame.observerCamera.transform.pose
+    );
+  } else if (nextCameraMode === 'scripted' && params.isPlaying) {
+    nextViewportPose = cloneSphericalPose(
+      nextFrame.observerCamera.transform.pose
+    );
+  } else if (nextCameraMode === 'stage-pov') {
+    nextViewportPose = cloneSphericalPose(
+      nextFrame.stageCamera.transform.pose
+    );
+  } else {
+    nextViewportPose = cloneSphericalPose(params.previousViewportPose);
+  }
+
+  return { nextCameraMode, nextFrame, nextViewportPose };
+}
+
 export function useStageFrameLoop(
   score: StageScore,
   driverRef: React.RefObject<MediaClockDriver | null>,
   loopActiveShot: boolean,
   isPlaying: boolean,
-  lastManualSeekIdRef?: React.RefObject<number>
+  lastManualSeekIdRef?: React.RefObject<number>,
+  sceneResetSeq = 0
 ): UseStageFrameLoopResult {
   const [cameraMode, setCameraModeState] = useState<CameraViewMode>('scripted');
 
-  const initialFrame = computeStageFrame(0, score);
+  // Evaluate frame 0 lazily once so 10Hz UI renders do not recompute and discard StageFrame
+  const initFrameRef = useRef<StageFrame | null>(null);
+  if (initFrameRef.current === null) {
+    initFrameRef.current = computeStageFrame(0, score);
+  }
+  const initialFrame = initFrameRef.current;
   const frameRef = useRef<StageFrame>(initialFrame);
+  const lastEvaluatedScoreRef = useRef<StageScore>(score);
   const liveViewportPoseRef = useRef<SphericalPose>(
     cloneSphericalPose(initialFrame.observerCamera.transform.pose)
   );
   const lastUiSyncPerfMsRef = useRef<number>(0);
   const trailingSyncTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastHandledSeekIdRef = useRef<number>(-1);
+  const lastHandledResetSeqRef = useRef<number>(sceneResetSeq);
+  const lastEvaluatedResetSeqRef = useRef<number>(sceneResetSeq);
 
   const [uiSnapshot, setUiSnapshot] = useState<StageUiSnapshot>(() => ({
     timestampSec: 0,
@@ -66,22 +135,33 @@ export function useStageFrameLoop(
     });
   }, []);
 
-  // Re-evaluate immediately when score or play state changes
-  useEffect(() => {
-    const t = driverRef.current?.getCurrentTime() ?? 0;
-    const nextFrame = computeStageFrame(t, score);
-    frameRef.current = nextFrame;
-    if (cameraMode === 'scripted') {
-      liveViewportPoseRef.current = cloneSphericalPose(
-        nextFrame.observerCamera.transform.pose
-      );
-    } else if (cameraMode === 'stage-pov') {
-      liveViewportPoseRef.current = cloneSphericalPose(
-        nextFrame.stageCamera.transform.pose
-      );
+  // Re-evaluate synchronously before paint when score, play state, camera mode, or sceneResetSeq changes
+  useLayoutEffect(() => {
+    const resetOccurred = lastHandledResetSeqRef.current !== sceneResetSeq;
+    lastHandledResetSeqRef.current = sceneResetSeq;
+    if (resetOccurred) {
+      lastEvaluatedResetSeqRef.current = sceneResetSeq;
     }
+
+    const t = driverRef.current?.getCurrentTime() ?? 0;
+    const { nextCameraMode, nextFrame, nextViewportPose } =
+      resolveNextLoopSnapshotOnScoreSync({
+        resetOccurred,
+        currentCameraMode: cameraMode,
+        isPlaying,
+        driverTimeSec: t,
+        score,
+        previousViewportPose: liveViewportPoseRef.current,
+      });
+
+    if (nextCameraMode !== cameraMode) {
+      setCameraModeState(nextCameraMode);
+    }
+    frameRef.current = nextFrame;
+    lastEvaluatedScoreRef.current = score;
+    liveViewportPoseRef.current = nextViewportPose;
     forceSyncUi();
-  }, [score, isPlaying, cameraMode, driverRef, forceSyncUi]);
+  }, [score, isPlaying, cameraMode, driverRef, forceSyncUi, sceneResetSeq]);
 
   const setCameraMode = useCallback(
     (mode: CameraViewMode) => {
@@ -167,9 +247,16 @@ export function useStageFrameLoop(
    */
   const evaluateTick60fps = useCallback((): StageFrame => {
     const drv = driverRef.current;
-    let currentSec = drv ? drv.getCurrentTime() : 0;
-    const prevTime = frameRef.current.timestampSec;
+    const resetPending = lastEvaluatedResetSeqRef.current !== sceneResetSeq;
+    if (resetPending) {
+      lastEvaluatedResetSeqRef.current = sceneResetSeq;
+    }
+
+    let currentSec = resetPending ? 0 : drv ? drv.getCurrentTime() : 0;
+    const prevFrame = frameRef.current;
+    const prevTime = prevFrame.timestampSec;
     const manualSeekOccurred =
+      resetPending ||
       (lastManualSeekIdRef &&
         lastHandledSeekIdRef.current !== lastManualSeekIdRef.current) ||
       Math.abs(currentSec - prevTime) > 0.5;
@@ -178,21 +265,35 @@ export function useStageFrameLoop(
       lastHandledSeekIdRef.current = lastManualSeekIdRef.current;
     }
 
+    const driverPlaying = Boolean(drv?.isPlaying());
+    if (
+      canReuseIdleStageFrame(
+        driverPlaying,
+        manualSeekOccurred,
+        currentSec,
+        prevTime,
+        score,
+        lastEvaluatedScoreRef.current
+      )
+    ) {
+      return prevFrame;
+    }
+
     // Dynamic active shot looping: seamlessly loops whichever shot is currently active without trapping manual jumps
-    if (loopActiveShot && drv && drv.isPlaying() && !manualSeekOccurred) {
-      const activeShot = frameRef.current.activeShot;
+    if (loopActiveShot && drv && driverPlaying && !manualSeekOccurred) {
+      const activeShot = prevFrame.activeShot;
       if (activeShot && currentSec >= activeShot.endSec - 0.02) {
         drv.seek(activeShot.startSec);
         currentSec = activeShot.startSec;
       }
     }
 
-    const prevFrame = frameRef.current;
     const prevShotId = prevFrame.activeShot?.id ?? null;
     const nextFrame = computeStageFrame(currentSec, score);
     frameRef.current = nextFrame;
+    lastEvaluatedScoreRef.current = score;
 
-    if (cameraMode === 'scripted' && drv?.isPlaying()) {
+    if (cameraMode === 'scripted' && driverPlaying) {
       liveViewportPoseRef.current = cloneSphericalPose(
         nextFrame.observerCamera.transform.pose
       );
@@ -223,7 +324,14 @@ export function useStageFrameLoop(
     }
 
     return nextFrame;
-  }, [driverRef, loopActiveShot, score, cameraMode]);
+  }, [
+    driverRef,
+    loopActiveShot,
+    score,
+    cameraMode,
+    lastManualSeekIdRef,
+    sceneResetSeq,
+  ]);
 
   return {
     cameraMode,

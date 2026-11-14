@@ -160,7 +160,11 @@ export class YouTubeMediaDriver implements MediaClockDriver {
               this.callbacks.onPlayStateChange?.(true);
             } else if (state === 2) {
               this.playing = false;
-              const rawT = this.player.getCurrentTime() || this.anchorVideoTimeSec;
+              const polledTime = this.player.getCurrentTime();
+              const rawT =
+                typeof polledTime === 'number' && Number.isFinite(polledTime)
+                  ? polledTime
+                  : this.anchorVideoTimeSec;
               const isSeekSettled =
                 this.pendingSeekTarget === null ||
                 Math.abs(rawT - this.pendingSeekTarget) < 1.5 ||
@@ -172,6 +176,9 @@ export class YouTubeMediaDriver implements MediaClockDriver {
                 this.anchorPerfTimeMs = now;
               }
               this.callbacks.onPlayStateChange?.(false);
+              if (isSeekSettled) {
+                this.callbacks.onSeekSettled?.();
+              }
             } else if (state === 0) {
               this.playing = false;
               this.pendingSeekTarget = null;
@@ -267,6 +274,10 @@ export class YouTubeMediaDriver implements MediaClockDriver {
       }
     }
     return this.fallbackDurationSec;
+  }
+
+  public setDuration(durationSec: number): void {
+    this.fallbackDurationSec = Math.max(0.1, durationSec);
   }
 
   public getPlaybackRate(): number {

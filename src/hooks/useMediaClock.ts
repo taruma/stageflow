@@ -3,7 +3,14 @@
  * playback transport controls, shot-boundary looping, frame-stepping (`[` / `]`), and keyboard shortcuts.
  */
 
-import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import {
+  useState,
+  useRef,
+  useEffect,
+  useLayoutEffect,
+  useCallback,
+  useMemo,
+} from 'react';
 import type { StageScore } from '../core/types';
 import {
   classifyMediaSource,
@@ -38,7 +45,9 @@ export interface UseMediaClockResult {
 
 export function useMediaClock(
   score: StageScore,
-  videoOverrideUrl?: string | null
+  videoOverrideUrl?: string | null,
+  onTimeJump?: () => void,
+  sceneResetSeq = 0
 ): UseMediaClockResult {
   const effectiveUrl = videoOverrideUrl || score.videoUrl;
   const sourceInfo = useMemo(
@@ -50,6 +59,11 @@ export function useMediaClock(
   const html5VideoRef = useRef<HTMLVideoElement | null>(null);
   const youtubeContainerRef = useRef<HTMLDivElement | null>(null);
   const lastManualSeekIdRef = useRef<number>(0);
+  const lastHandledResetSeqRef = useRef<number>(sceneResetSeq);
+  const latestDurationSecRef = useRef<number>(score.durationSec);
+  latestDurationSecRef.current = score.durationSec;
+  const onTimeJumpRef = useRef(onTimeJump);
+  onTimeJumpRef.current = onTimeJump;
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackRate, setPlaybackRateState] = useState(1.0);
@@ -57,14 +71,31 @@ export function useMediaClock(
   const [loopActiveShot, setLoopActiveShot] = useState(false);
   const [durationSec, setDurationSec] = useState(score.durationSec);
 
+  // Update active driver duration in-place so live YAML `duration:` edits preserve current timestamp
   useEffect(() => {
+    driverRef.current?.setDuration?.(score.durationSec);
     setDurationSec(score.durationSec);
   }, [score.durationSec]);
+
+  // Reset clock to t=0 (paused) when a new score session is loaded/created/forked/reset
+  useLayoutEffect(() => {
+    if (sceneResetSeq === lastHandledResetSeqRef.current) return;
+    lastHandledResetSeqRef.current = sceneResetSeq;
+    const drv = driverRef.current;
+    if (drv) {
+      drv.pause();
+      drv.seek(0);
+    }
+    setIsPlaying(false);
+    lastManualSeekIdRef.current += 1;
+    onTimeJumpRef.current?.();
+  }, [sceneResetSeq]);
 
   // Instantiate the appropriate MediaClockDriver whenever sourceInfo changes
   useEffect(() => {
     let activeDriver: MediaClockDriver | null = null;
     setIsPlaying(false);
+    const initialDurationSec = latestDurationSecRef.current;
 
     const callbacks = {
       onPlayStateChange: (playing: boolean) => {
@@ -81,12 +112,15 @@ export function useMediaClock(
       onEnded: () => {
         setIsPlaying(false);
       },
+      onSeekSettled: () => {
+        onTimeJumpRef.current?.();
+      },
     };
 
     if (sourceInfo.kind === 'html5' && html5VideoRef.current) {
       activeDriver = new Html5MediaDriver(
         html5VideoRef.current,
-        score.durationSec,
+        initialDurationSec,
         callbacks
       );
     } else if (
@@ -97,14 +131,17 @@ export function useMediaClock(
       activeDriver = new YouTubeMediaDriver(
         youtubeContainerRef.current,
         sourceInfo.youtubeId,
-        score.durationSec,
+        initialDurationSec,
         callbacks
       );
     } else {
-      activeDriver = new ProceduralMediaDriver(score.durationSec, callbacks);
+      activeDriver = new ProceduralMediaDriver(initialDurationSec, callbacks);
     }
 
     driverRef.current = activeDriver;
+    setDurationSec(activeDriver.getDuration());
+    lastManualSeekIdRef.current += 1;
+    onTimeJumpRef.current?.();
 
     return () => {
       activeDriver?.destroy();
@@ -112,7 +149,7 @@ export function useMediaClock(
         driverRef.current = null;
       }
     };
-  }, [sourceInfo, score.durationSec]);
+  }, [sourceInfo]);
 
   const togglePlay = useCallback(() => {
     const drv = driverRef.current;
@@ -123,6 +160,7 @@ export function useMediaClock(
       if (drv.getCurrentTime() >= drv.getDuration() - 0.05) {
         drv.seek(0);
         lastManualSeekIdRef.current += 1;
+        onTimeJumpRef.current?.();
       }
       drv.play();
     }
@@ -137,6 +175,7 @@ export function useMediaClock(
     if (!drv) return;
     drv.seek(targetSec);
     lastManualSeekIdRef.current += 1;
+    onTimeJumpRef.current?.();
   }, []);
 
   const stepFrames = useCallback((frameCount: number) => {
@@ -148,6 +187,7 @@ export function useMediaClock(
     const nextSec = drv.getCurrentTime() + frameCount * FRAME_STEP_SECONDS;
     drv.seek(nextSec);
     lastManualSeekIdRef.current += 1;
+    onTimeJumpRef.current?.();
   }, []);
 
   const setPlaybackRate = useCallback((rate: number) => {

@@ -5,9 +5,11 @@ import {
   computeExportFrameTimestampSec,
   computeExportTimeRange,
   formatExportMp4Filename,
+  formatExportTimeRangeTag,
   resolveExportAspectRatio,
   roundToEven,
   sanitizeExportSlug,
+  validateCustomExportRange,
 } from '../../src/core/exportMath';
 import { DEFAULT_ASPECT_RATIO } from '../../src/core/constants';
 import { parseAspectRatio } from '../../src/core/opticsMath';
@@ -133,5 +135,222 @@ describe('exportMath', () => {
     }
 
     expect(resolveExportAspectRatio(2.39, 'stage-cam')).toBeCloseTo(2.39, 6);
+  });
+
+  it('validates custom export time ranges for decimals, bounds, inversions, and minimum 1-frame duration', () => {
+    const validDecimal = validateCustomExportRange(2.5, 6.0, 12.0, 60);
+    expect(validDecimal).toEqual({
+      isValid: true,
+      error: null,
+      startSec: 2.5,
+      endSec: 6.0,
+    });
+
+    const exactSingleFrame60 = validateCustomExportRange(
+      1.0,
+      1.0 + 1 / 60,
+      12.0,
+      60
+    );
+    expect(exactSingleFrame60.isValid).toBe(true);
+    expect(exactSingleFrame60.error).toBeNull();
+
+    const exactSingleFrame24 = validateCustomExportRange(
+      1.0,
+      1.0 + 1 / 24,
+      12.0,
+      24
+    );
+    expect(exactSingleFrame24.isValid).toBe(true);
+
+    const floatEpsilonBound = validateCustomExportRange(0, 12.0 + 1e-7, 12.0, 60);
+    expect(floatEpsilonBound).toEqual({
+      isValid: true,
+      error: null,
+      startSec: 0,
+      endSec: 12.0,
+    });
+
+    for (const [start, end] of [
+      [Number.NaN, 5],
+      [1, Number.NaN],
+      [Number.POSITIVE_INFINITY, 5],
+      [1, Number.NEGATIVE_INFINITY],
+    ]) {
+      const res = validateCustomExportRange(start, end, 12.0, 60);
+      expect(res.isValid).toBe(false);
+      expect(res.error).toBeTruthy();
+    }
+
+    const negativeStart = validateCustomExportRange(-0.1, 5.0, 12.0, 60);
+    expect(negativeStart.isValid).toBe(false);
+    expect(negativeStart.error).toContain('negative');
+
+    const exceedsDuration = validateCustomExportRange(2.0, 12.01, 12.0, 60);
+    expect(exceedsDuration.isValid).toBe(false);
+    expect(exceedsDuration.error).toContain('12s');
+
+    for (const [duration, overEnd, expectedTag] of [
+      [45.375, 45.38, '45.375s'],
+      [61.625, 61.63, '61.625s'],
+    ] as const) {
+      const validExact = validateCustomExportRange(0, duration, duration, 60);
+      expect(validExact).toEqual({
+        isValid: true,
+        error: null,
+        startSec: 0,
+        endSec: duration,
+      });
+
+      const over = validateCustomExportRange(0, overEnd, duration, 60);
+      expect(over.isValid).toBe(false);
+      expect(over.error).toContain(expectedTag);
+    }
+
+    const inverted = validateCustomExportRange(6.0, 2.5, 12.0, 60);
+    expect(inverted.isValid).toBe(false);
+    expect(inverted.error).toBeTruthy();
+
+    const empty = validateCustomExportRange(4.0, 4.0, 12.0, 60);
+    expect(empty.isValid).toBe(false);
+    expect(empty.error).toBeTruthy();
+
+    const subFrame60 = validateCustomExportRange(2.5, 2.51, 12.0, 60);
+    expect(subFrame60.isValid).toBe(false);
+    expect(subFrame60.error).toContain('1 frame');
+
+    const subFrame24 = validateCustomExportRange(2.5, 2.54, 12.0, 24);
+    expect(subFrame24.isValid).toBe(false);
+    expect(subFrame24.error).toContain('24fps');
+  });
+
+  it('computes custom export time ranges with clamping and safe fallback while preserving scene/shot modes', () => {
+    const mockShot = {
+      id: 'shot-2-push',
+      label: 'Shot 02 · Push In',
+      startSec: 2.5,
+      endSec: 6.5,
+    } as ShotCue;
+    const mockScore = {
+      durationSec: 12.0,
+    } as StageScore;
+
+    const customRange = computeExportTimeRange(
+      mockScore,
+      'custom',
+      60,
+      mockShot,
+      { startSec: 2.5, endSec: 6.0 }
+    );
+    expect(customRange).toEqual({
+      startSec: 2.5,
+      endSec: 6.0,
+      durationSec: 3.5,
+      totalFrames: 210,
+      shotId: null,
+      shotLabel: null,
+    });
+
+    const clampedOutOfBounds = computeExportTimeRange(
+      mockScore,
+      'custom',
+      24,
+      mockShot,
+      { startSec: -3.0, endSec: 25.0 }
+    );
+    expect(clampedOutOfBounds).toEqual({
+      startSec: 0,
+      endSec: 12.0,
+      durationSec: 12.0,
+      totalFrames: 288,
+      shotId: null,
+      shotLabel: null,
+    });
+
+    const clampedInverted = computeExportTimeRange(
+      mockScore,
+      'custom',
+      60,
+      mockShot,
+      { startSec: 8.0, endSec: 4.0 }
+    );
+    expect(clampedInverted.startSec).toBe(8.0);
+    expect(clampedInverted.endSec).toBe(8.0);
+    expect(clampedInverted.durationSec).toBeCloseTo(1 / 60, 8);
+    expect(clampedInverted.totalFrames).toBe(1);
+    expect(clampedInverted.shotId).toBeNull();
+    expect(clampedInverted.shotLabel).toBeNull();
+
+    const missingCustomFallback = computeExportTimeRange(
+      mockScore,
+      'custom',
+      60,
+      mockShot,
+      null
+    );
+    expect(missingCustomFallback).toEqual({
+      startSec: 0,
+      endSec: 12.0,
+      durationSec: 12.0,
+      totalFrames: 720,
+      shotId: null,
+      shotLabel: null,
+    });
+
+    // Scene and shot modes ignore customRange and preserve exact behavior
+    const sceneWithCustomArg = computeExportTimeRange(
+      mockScore,
+      'scene',
+      60,
+      mockShot,
+      { startSec: 2.5, endSec: 6.0 }
+    );
+    expect(sceneWithCustomArg.startSec).toBe(0);
+    expect(sceneWithCustomArg.endSec).toBe(12.0);
+    expect(sceneWithCustomArg.totalFrames).toBe(720);
+
+    const shotWithCustomArg = computeExportTimeRange(
+      mockScore,
+      'shot',
+      24,
+      mockShot,
+      { startSec: 2.5, endSec: 6.0 }
+    );
+    expect(shotWithCustomArg.startSec).toBe(2.5);
+    expect(shotWithCustomArg.endSec).toBe(6.5);
+    expect(shotWithCustomArg.shotId).toBe('shot-2-push');
+  });
+
+  it('formats custom time range tags and inserts range suffixes into MP4 filenames', () => {
+    expect(formatExportTimeRangeTag(2.5, 6.0)).toBe('2_5s-6s');
+    expect(formatExportTimeRangeTag(1.25, 3.5)).toBe('1_25s-3_5s');
+    expect(formatExportTimeRangeTag(1.234, 5.678)).toBe('1_23s-5_68s');
+    expect(formatExportTimeRangeTag(0, 10)).toBe('0s-10s');
+
+    expect(
+      formatExportMp4Filename('Vector Field', 1080, 60, null, 'stage-cam', {
+        startSec: 2.5,
+        endSec: 6.0,
+      })
+    ).toBe('vector_field_2_5s-6s_stage_cam_1080p_60fps.mp4');
+
+    expect(
+      formatExportMp4Filename('Vector Field', 720, 24, '', 'observer', {
+        startSec: 1.25,
+        endSec: 4.5,
+      })
+    ).toBe('vector_field_1_25s-4_5s_observer_720p_24fps.mp4');
+
+    // Shot ID takes precedence when present
+    expect(
+      formatExportMp4Filename(
+        'Vector Field',
+        1080,
+        60,
+        'shot-2-push',
+        'stage-cam',
+        { startSec: 2.5, endSec: 6.0 }
+      )
+    ).toBe('vector_field_shot_2_push_stage_cam_1080p_60fps.mp4');
   });
 });

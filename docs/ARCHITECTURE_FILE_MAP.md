@@ -30,7 +30,8 @@ stageflow/
 ├── docs/                            # Detailed technical & architectural specifications (SSOT)
 │   ├── releases/                    # Versioned GitHub release notes archive
 │   │   ├── v1.0.0.md                # Release notes for StageFlow v1.0.0 initial release
-│   │   └── v1.1.0.md                # Release notes for StageFlow v1.1.0 feature release
+│   │   ├── v1.1.0.md                # Release notes for StageFlow v1.1.0 feature release
+│   │   └── v1.1.1.md                # Release notes for StageFlow v1.1.1 patch release
 │   ├── ARCHITECTURE_FILE_MAP.md     # Exhaustive repository file tree & 5-layer module index
 │   ├── STAGEFLOW_SCRIPT_SPECIFICATION.md # Engine SSOT: mathematical model, optics & AST contract
 │   ├── YAML_AUTHORING_GUIDE.md      # Authoring SSOT: quickstart, YAML schema, aliases & cookbook
@@ -68,6 +69,7 @@ stageflow/
 │   │   ├── constants.ts             # Metric bounds, sensor constants, blueprint color palette
 │   │   ├── opticsMath.ts            # Focal length (mm) <-> Vertical FOV (deg), Rectangular Gate & Thin-Lens DoF math
 │   │   ├── exportMath.ts            # Pure even-dimension H.264 bounds, bitrate, time-range & MP4 filename helpers
+│   │   ├── exportScrubberMath.ts    # Pure dual-handle export scrubber quantization & drag clamping math
 │   │   ├── sphericalMath.ts         # Degrees <-> Radians, Spherical <-> Cartesian, shortestAngleDiff
 │   │   ├── maneuvers.ts             # 9 easing curves & 11 3D camera trajectory maneuvers
 │   │   ├── dofEvaluator.ts          # Stateless focus distance, rack-focus interpolation & thin-lens DoF evaluator
@@ -111,6 +113,7 @@ stageflow/
 │   │   ├── DioramaCanvas.tsx        # Root R3F <Canvas>, lighting, fog, and priority -1 frame ticker
 │   │   ├── BlueprintStageScene.tsx  # Shared lighting, metric floor grid, and mannequins
 │   │   ├── BlueprintFloorGrid.tsx   # Metric floor grid (1m / 0.25m), perimeter frame & compass labels
+│   │   ├── stageSyncGate.ts         # Layer 4 boundary desync gate holding last-synced 60fps state across async commits
 │   │   ├── ObserverCameraRig.tsx    # Viewport PerspectiveCamera + OrbitControls handover & POV cuts
 │   │   ├── StageCameraRig.tsx       # 3D camera prop, rectangular gate frustum, sliding focus plane & path line
 │   │   ├── StageCameraFocusRig.tsx  # 3D Near/Far DoF limit brackets & emerald off-axis focus tether
@@ -183,6 +186,8 @@ stageflow/
 │   │   ├── ConfirmRemoteScoreModal.tsx # Accessible confirmation & conflict dialog modal for external/remote scores
 │   │   ├── CleanVideoExportModal.tsx # In-browser Clean Stage Cam & Observer MP4 export progress modal
 │   │   ├── CleanVideoExportConfigForm.tsx # Export camera, angle, resolution, fps, range & palette form controls
+│   │   ├── ExportRangeScrubber.tsx  # Dual-handle shot-aware timeline scrubber + inline Start/End decimal inputs
+│   │   ├── ExportRangeScrubberTrack.tsx # Visual scrubber track, shot cut ticks, hover hairline & Start/End thumbs
 │   │   ├── StorageStatusBadge.tsx   # Visual status badge (Bundled vs. IndexedDB draft)
 │   │   └── InteractiveStudioApp.tsx # 3D choreography diorama & split workspace orchestrator
 │   ├── App.tsx                      # Code-split root mode switcher & suspense router
@@ -192,6 +197,7 @@ stageflow/
     └── unit/                        # Vitest deterministic unit test suites
         ├── opticsMath.test.ts
         ├── exportMath.test.ts
+        ├── exportScrubberMath.test.ts
         ├── sphericalMath.test.ts
         ├── cameraRigs.test.ts
         ├── entityEngine.test.ts
@@ -209,6 +215,7 @@ stageflow/
         ├── mediaDrivers.test.ts
         ├── billboardLabelLod.test.ts
         ├── useIsMobile.test.ts
+        ├── stagePerfHelpers.test.ts
         └── recorder.test.ts
 ```
 

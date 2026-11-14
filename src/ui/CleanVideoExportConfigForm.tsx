@@ -14,6 +14,7 @@ import type {
   ExportTargetCamera,
 } from '../core/exportMath';
 import type { AppThemeCategory, ShotCue } from '../core/types';
+import { ExportRangeScrubber } from './ExportRangeScrubber';
 import { UI_TOKENS } from './tokens/ui';
 
 export interface CleanVideoExportConfigFormProps {
@@ -30,7 +31,14 @@ export interface CleanVideoExportConfigFormProps {
   onChangeRangeMode: (mode: ExportRangeMode) => void;
   hasValidShot: boolean;
   activeShot?: ShotCue | null;
+  shots: ShotCue[];
   sceneDurationSec: number;
+  customStartInput: string;
+  customEndInput: string;
+  onChangeCustomRangeInputs: (startInput: string, endInput: string) => void;
+  onChangeCustomStartInput: (value: string) => void;
+  onChangeCustomEndInput: (value: string) => void;
+  customRangeError?: string | null;
   exportTheme: AppThemeCategory;
   onChangeExportTheme: (theme: AppThemeCategory) => void;
   exportDofBlur: boolean;
@@ -58,7 +66,14 @@ export const CleanVideoExportConfigForm: React.FC<
   onChangeRangeMode,
   hasValidShot,
   activeShot,
+  shots,
   sceneDurationSec,
+  customStartInput,
+  customEndInput,
+  onChangeCustomRangeInputs,
+  onChangeCustomStartInput,
+  onChangeCustomEndInput,
+  customRangeError,
   exportTheme,
   onChangeExportTheme,
   exportDofBlur,
@@ -191,27 +206,61 @@ export const CleanVideoExportConfigForm: React.FC<
           <button
             type="button"
             onClick={() => onChangeRangeMode('scene')}
-            className={`flex-1 justify-center ${
+            className={`flex-1 min-w-0 justify-center ${
               rangeMode === 'scene'
                 ? UI_TOKENS.button.segmentedItemActive
                 : UI_TOKENS.button.segmentedItem
             }`}
           >
-            Entire Scene ({sceneDurationSec.toFixed(1)}s)
+            <span className="truncate">
+              Entire Scene ({sceneDurationSec.toFixed(1)}s)
+            </span>
           </button>
           <button
             type="button"
             disabled={!hasValidShot}
             onClick={() => onChangeRangeMode('shot')}
-            className={`flex-1 justify-center disabled:opacity-40 disabled:cursor-not-allowed ${
+            title={
+              activeShot
+                ? `Current Shot (${activeShot.id})`
+                : 'No active shot at current playhead'
+            }
+            className={`flex-1 min-w-0 justify-center disabled:opacity-40 disabled:cursor-not-allowed ${
               rangeMode === 'shot'
                 ? UI_TOKENS.button.segmentedItemActive
                 : UI_TOKENS.button.segmentedItem
             }`}
           >
-            Current Shot{activeShot ? ` (${activeShot.id})` : ''}
+            <span className="truncate">
+              Current Shot{activeShot ? ` (${activeShot.id})` : ''}
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={() => onChangeRangeMode('custom')}
+            className={`flex-1 min-w-0 justify-center ${
+              rangeMode === 'custom'
+                ? UI_TOKENS.button.segmentedItemActive
+                : UI_TOKENS.button.segmentedItem
+            }`}
+          >
+            <span className="truncate">Custom (s)</span>
           </button>
         </div>
+
+        {rangeMode === 'custom' && (
+          <ExportRangeScrubber
+            shots={shots}
+            sceneDurationSec={sceneDurationSec}
+            fps={fps}
+            customStartInput={customStartInput}
+            customEndInput={customEndInput}
+            onChangeRangeInputs={onChangeCustomRangeInputs}
+            onChangeCustomStartInput={onChangeCustomStartInput}
+            onChangeCustomEndInput={onChangeCustomEndInput}
+            customRangeError={customRangeError ?? null}
+          />
+        )}
       </div>
 
       {/* Stage Palette & Optical DoF Blur */}
@@ -295,13 +344,21 @@ export const CleanVideoExportConfigForm: React.FC<
         <div className="flex justify-between gap-2">
           <span>Output File</span>
           <span className="text-text-main font-semibold truncate">
-            {filename}
+            {customRangeError ? '—' : filename}
           </span>
         </div>
         <div className="flex justify-between gap-2">
           <span>Bounds &amp; Cadence</span>
-          <span className="text-text-body">
-            {width}×{height} · {totalFrames} frames ({exportDurationSec.toFixed(2)}s)
+          <span
+            className={
+              customRangeError
+                ? 'text-red-600 dark:text-red-400'
+                : 'text-text-body'
+            }
+          >
+            {customRangeError
+              ? `${width}×${height} · Invalid range`
+              : `${width}×${height} · ${totalFrames} frames (${exportDurationSec.toFixed(2)}s)`}
           </span>
         </div>
       </div>

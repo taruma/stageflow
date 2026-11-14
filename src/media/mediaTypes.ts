@@ -17,6 +17,7 @@ export interface MediaClockStateCallbacks {
   onDurationChange?: (durationSec: number) => void;
   onRateChange?: (rate: number) => void;
   onEnded?: () => void;
+  onSeekSettled?: () => void;
 }
 
 export interface MediaClockDriver {
@@ -30,6 +31,7 @@ export interface MediaClockDriver {
   play(): Promise<void>;
   pause(): void;
   seek(timeSec: number): void;
+  setDuration?(durationSec: number): void;
   setPlaybackRate(rate: number): void;
   setMuted(muted: boolean): void;
   destroy(): void;

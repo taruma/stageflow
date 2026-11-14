@@ -27,6 +27,7 @@ export class Html5MediaDriver implements MediaClockDriver {
 
   private handleSeeked = () => {
     this.pendingSeekSec = null;
+    this.callbacks.onSeekSettled?.();
   };
 
   private handleLoadedMetadata = () => {
@@ -97,6 +98,10 @@ export class Html5MediaDriver implements MediaClockDriver {
   public getDuration(): number {
     const d = this.video.duration;
     return Number.isFinite(d) && d > 0 ? d : this.fallbackDurationSec;
+  }
+
+  public setDuration(durationSec: number): void {
+    this.fallbackDurationSec = Math.max(0.1, durationSec);
   }
 
   public getPlaybackRate(): number {

@@ -11,10 +11,11 @@
  *   - Bypasses the FBO pass completely when `dof.enabled === false` (`dof: 'deep'`).
  */
 
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import type { StageFrame } from '../core/types';
+import { resolveGatedState } from './stageSyncGate';
 import {
   FULL_FRAME_SENSOR_WIDTH_MM,
   OPTICS_DOF_DEFAULTS,
@@ -38,9 +39,7 @@ const DOF_FRAGMENT_SHADER = /* glsl */ `
   uniform float uFocusDistanceM;
   uniform float uNearLimitM;
   uniform float uFarLimitM;
-  uniform float uFocalLengthMm;
-  uniform float uApertureFStop;
-  uniform float uSensorHeightMm;
+  uniform float uOpticalScale;
   uniform float uAspect;
   uniform float uMaxBlur;
 
@@ -59,10 +58,7 @@ const DOF_FRAGMENT_SHADER = /* glsl */ `
     float distFromBracket = depthM < uNearLimitM
       ? (uNearLimitM - depthM)
       : (depthM - uFarLimitM);
-    float dMm = uFocusDistanceM * 1000.0;
-    float denom = max(1.0, uApertureFStop * uSensorHeightMm * max(1.0, dMm - uFocalLengthMm));
-    float opticalScale = (uFocalLengthMm * uFocalLengthMm) / denom;
-    float rawBlur = opticalScale * (abs(depthM - uFocusDistanceM) / max(0.2, depthM));
+    float rawBlur = uOpticalScale * (abs(depthM - uFocusDistanceM) / max(0.2, depthM));
     float ramp = smoothstep(0.0, 0.25, distFromBracket);
     return clamp(rawBlur * ramp * 2.2, 0.0, uMaxBlur);
   }
@@ -133,6 +129,23 @@ const DOF_FRAGMENT_SHADER = /* glsl */ `
   }
 `;
 
+export function computeDofOpticalScale(
+  focusDistanceM: number,
+  apertureFStop: number,
+  sensorHeightMm: number,
+  focalLengthMm: number
+): number {
+  if (!Number.isFinite(apertureFStop) || apertureFStop <= 0) {
+    return 0;
+  }
+  const dMm = focusDistanceM * 1000.0;
+  const denom = Math.max(
+    1.0,
+    apertureFStop * sensorHeightMm * Math.max(1.0, dMm - focalLengthMm)
+  );
+  return (focalLengthMm * focalLengthMm) / denom;
+}
+
 export interface StageCamDofEffectProps {
   frameRef: React.RefObject<StageFrame>;
   uiFrame: StageFrame;
@@ -143,8 +156,9 @@ export const StageCamDofEffect: React.FC<StageCamDofEffectProps> = ({
   uiFrame,
 }) => {
   const { gl, size, viewport } = useThree();
+  const lastSyncedStageCamRef = useRef<StageFrame['stageCamera'] | null>(null);
 
-  const { renderTarget, quadScene, quadCamera, material } = useMemo(() => {
+  const { renderTarget, quadScene, quadCamera, quadGeometry, material } = useMemo(() => {
     const depthTexture = new THREE.DepthTexture(1, 1, THREE.UnsignedIntType);
     depthTexture.minFilter = THREE.NearestFilter;
     depthTexture.magFilter = THREE.NearestFilter;
@@ -168,9 +182,7 @@ export const StageCamDofEffect: React.FC<StageCamDofEffectProps> = ({
         uFocusDistanceM: { value: 3.0 },
         uNearLimitM: { value: 0.0 },
         uFarLimitM: { value: 1000.0 },
-        uFocalLengthMm: { value: 50.0 },
-        uApertureFStop: { value: 2.8 },
-        uSensorHeightMm: { value: 20.25 },
+        uOpticalScale: { value: 0.0 },
         uAspect: { value: 16 / 9 },
         uMaxBlur: { value: OPTICS_DOF_DEFAULTS.MAX_BLUR_FRACTION },
       },
@@ -182,13 +194,15 @@ export const StageCamDofEffect: React.FC<StageCamDofEffectProps> = ({
 
     const qScene = new THREE.Scene();
     const qCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
-    const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), mat);
+    const qGeom = new THREE.PlaneGeometry(2, 2);
+    const quad = new THREE.Mesh(qGeom, mat);
     qScene.add(quad);
 
     return {
       renderTarget: rt,
       quadScene: qScene,
       quadCamera: qCam,
+      quadGeometry: qGeom,
       material: mat,
     };
   }, []);
@@ -207,22 +221,22 @@ export const StageCamDofEffect: React.FC<StageCamDofEffectProps> = ({
     return () => {
       renderTarget.depthTexture?.dispose();
       renderTarget.dispose();
+      quadGeometry.dispose();
       material.dispose();
     };
-  }, [renderTarget, material]);
+  }, [renderTarget, quadGeometry, material]);
 
   // Priority 1 takes over the final R3F render pass when mounted
   useFrame(({ scene, camera }) => {
     const committedCam = uiFrame.stageCamera;
     const liveFrame = frameRef.current;
-    const isShotDesynced =
-      Boolean(liveFrame?.stageCamera.shotId) &&
-      Boolean(committedCam.shotId) &&
-      liveFrame?.stageCamera.shotId !== committedCam.shotId;
-
-    const stageCam = isShotDesynced
-      ? committedCam
-      : liveFrame?.stageCamera ?? committedCam;
+    const { state: stageCam } = resolveGatedState(
+      liveFrame?.stageCamera,
+      committedCam,
+      lastSyncedStageCamRef.current,
+      (cam) => cam.shotId
+    );
+    lastSyncedStageCamRef.current = stageCam;
     const dof = stageCam.dof;
 
     // Fast path: if current shot has infinite DoF ('deep'), render directly to screen
@@ -243,10 +257,12 @@ export const StageCamDofEffect: React.FC<StageCamDofEffectProps> = ({
     material.uniforms.uFarLimitM.value = Number.isFinite(dof.farLimitM)
       ? dof.farLimitM
       : 1000.0;
-    material.uniforms.uFocalLengthMm.value =
-      stageCam.transform.pose.focalLengthMm;
-    material.uniforms.uApertureFStop.value = dof.apertureFStop;
-    material.uniforms.uSensorHeightMm.value = sensorHeightMm;
+    material.uniforms.uOpticalScale.value = computeDofOpticalScale(
+      dof.focusDistanceM,
+      dof.apertureFStop,
+      sensorHeightMm,
+      stageCam.transform.pose.focalLengthMm
+    );
 
     // 1. Render scene color & hardware depth into offscreen target
     gl.setRenderTarget(renderTarget);

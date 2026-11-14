@@ -4,7 +4,8 @@
  * Dynamically reacts to the active theme palette with zero extra draw calls.
  */
 
-import React, { useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
+import { useThree } from '@react-three/fiber';
 import { Grid, Line, Text } from '@react-three/drei';
 import * as THREE from 'three';
 import type { AppThemeCategory, CameraViewMode } from '../core/types';
@@ -19,7 +20,7 @@ export interface BlueprintFloorGridProps {
   themeCategory?: AppThemeCategory;
 }
 
-export const BlueprintFloorGrid: React.FC<BlueprintFloorGridProps> = ({
+export const BlueprintFloorGrid: React.FC<BlueprintFloorGridProps> = React.memo(({
   width,
   depth,
   gridStep,
@@ -63,10 +64,21 @@ export const BlueprintFloorGrid: React.FC<BlueprintFloorGridProps> = ({
     [halfD]
   );
 
+  const invalidate = useThree((state) => state.invalidate);
+  const handleTextSync = useCallback(() => {
+    invalidate();
+  }, [invalidate]);
+
   const ringGeom = useMemo(
     () => new THREE.RingGeometry(0.18, 0.21, 32),
     []
   );
+
+  useEffect(() => {
+    return () => {
+      ringGeom.dispose();
+    };
+  }, [ringGeom]);
 
   return (
     <group>
@@ -138,6 +150,7 @@ export const BlueprintFloorGrid: React.FC<BlueprintFloorGridProps> = ({
       {showLabels && !isStagePov && (
         <>
           <Text
+            onSync={handleTextSync}
             position={[0, 0.005, halfD + 0.55]}
             rotation={[-Math.PI / 2, 0, 0]}
             fontSize={0.24}
@@ -151,6 +164,7 @@ export const BlueprintFloorGrid: React.FC<BlueprintFloorGridProps> = ({
           </Text>
 
           <Text
+            onSync={handleTextSync}
             position={[0, 0.005, -halfD - 0.55]}
             rotation={[-Math.PI / 2, 0, 0]}
             fontSize={0.24}
@@ -166,4 +180,4 @@ export const BlueprintFloorGrid: React.FC<BlueprintFloorGridProps> = ({
       )}
     </group>
   );
-};
+});

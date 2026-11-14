@@ -32,6 +32,7 @@ import {
   getPresetTransform,
   type CameraPresetType,
 } from './cameraPresets';
+import { resolveGatedState } from './stageSyncGate';
 
 export interface ObserverCameraRigProps {
   cameraMode: CameraViewMode;
@@ -44,6 +45,97 @@ export interface ObserverCameraRigProps {
     type: CameraPresetType;
     id: number;
   } | null>;
+  sceneResetSeq?: number;
+}
+
+export interface ObserverCameraUpdateInput {
+  cameraMode: CameraViewMode;
+  isPlaying: boolean;
+  modeChanged: boolean;
+  seekOccurred: boolean;
+  justStartedPlaying: boolean;
+  sizeChanged: boolean;
+  resetOccurred: boolean;
+  frame: StageFrame;
+  uiFrame?: StageFrame;
+  lastSyncedStageCam: StageFrame['stageCamera'] | null;
+  lastSyncedObserverCam: StageFrame['observerCamera'] | null;
+}
+
+export type ObserverCameraUpdateAction =
+  | {
+      kind: 'apply';
+      applyMode: CameraViewMode;
+      transform: CameraTransform3D;
+      nextLastSyncedStageCam: StageFrame['stageCamera'] | null;
+      nextLastSyncedObserverCam: StageFrame['observerCamera'] | null;
+    }
+  | {
+      kind: 'clamp-orbit';
+    };
+
+/**
+ * Pure frame decision resolver for ObserverCameraRig.
+ * Ensures explicit score resets snap directly to the new score's frame-0
+ * observer pose without being gated by stale pre-reset uiFrame shot IDs.
+ */
+export function resolveObserverCameraUpdate(
+  input: ObserverCameraUpdateInput
+): ObserverCameraUpdateAction {
+  if (input.resetOccurred) {
+    return {
+      kind: 'apply',
+      applyMode: 'scripted',
+      transform: input.frame.observerCamera.transform,
+      nextLastSyncedStageCam: null,
+      nextLastSyncedObserverCam: input.frame.observerCamera,
+    };
+  }
+
+  if (input.cameraMode === 'stage-pov') {
+    const resolvedStageCam = input.uiFrame
+      ? resolveGatedState(
+          input.frame.stageCamera,
+          input.uiFrame.stageCamera,
+          input.lastSyncedStageCam,
+          (cam) => cam.shotId
+        ).state
+      : input.frame.stageCamera;
+    return {
+      kind: 'apply',
+      applyMode: 'stage-pov',
+      transform: resolvedStageCam.transform,
+      nextLastSyncedStageCam: resolvedStageCam,
+      nextLastSyncedObserverCam: input.lastSyncedObserverCam,
+    };
+  }
+
+  if (
+    input.cameraMode === 'scripted' &&
+    (input.isPlaying ||
+      input.modeChanged ||
+      input.seekOccurred ||
+      input.justStartedPlaying ||
+      input.sizeChanged)
+  ) {
+    const resolvedObserverCam = input.uiFrame
+      ? resolveGatedState(
+          input.frame.observerCamera,
+          input.uiFrame.observerCamera,
+          input.lastSyncedObserverCam,
+          (cam) => cam.shotId
+        ).state
+      : input.frame.observerCamera;
+    return {
+      kind: 'apply',
+      applyMode: 'scripted',
+      transform: resolvedObserverCam.transform,
+      nextLastSyncedStageCam: input.lastSyncedStageCam,
+      nextLastSyncedObserverCam: resolvedObserverCam,
+    };
+  }
+
+  return { kind: 'clamp-orbit' };
 }
 
 export const ObserverCameraRig: React.FC<ObserverCameraRigProps> = ({
@@ -54,13 +146,24 @@ export const ObserverCameraRig: React.FC<ObserverCameraRigProps> = ({
   lastManualSeekIdRef,
   onFreeOrbitPoseChange,
   cameraPresetActionRef,
+  sceneResetSeq,
 }) => {
-  const { camera, size } = useThree();
+  const { camera, size, invalidate } = useThree();
   const controlsRef = useRef<OrbitControlsImpl | null>(null);
   const lastHandledSeekIdRef = useRef<number>(lastManualSeekIdRef.current);
   const lastHandledPresetIdRef = useRef<number>(0);
+  const lastHandledResetSeqRef = useRef<number>(sceneResetSeq ?? 0);
   const lastModeRef = useRef<CameraViewMode>(cameraMode);
   const wasPlayingRef = useRef<boolean>(isPlaying);
+  const lastSyncedStageCamRef = useRef<StageFrame['stageCamera'] | null>(null);
+  const lastSyncedObserverCamRef = useRef<StageFrame['observerCamera'] | null>(
+    null
+  );
+  const isFlushingDampingRef = useRef<boolean>(false);
+  const lastSizeRef = useRef<{ width: number; height: number }>({
+    width: size.width,
+    height: size.height,
+  });
   // Preserve the un-adapted optical focal length because persp.fov is widened
   // by computeAdaptiveDioramaFovDeg / computeViewfinderCanvasFovDeg on narrow panes.
   const initialPose =
@@ -78,6 +181,16 @@ export const ObserverCameraRig: React.FC<ObserverCameraRigProps> = ({
   ) => {
     lastAppliedFocalLengthMmRef.current = transform.pose.focalLengthMm;
     const persp = camera as THREE.PerspectiveCamera;
+
+    // Clear any residual OrbitControls damping delta before snapping to a new pose
+    if (controlsRef.current && controlsRef.current.enableDamping) {
+      isFlushingDampingRef.current = true;
+      controlsRef.current.enableDamping = false;
+      controlsRef.current.update();
+      controlsRef.current.enableDamping = true;
+      isFlushingDampingRef.current = false;
+    }
+
     persp.position.set(
       transform.position.x,
       transform.position.y,
@@ -157,6 +270,19 @@ export const ObserverCameraRig: React.FC<ObserverCameraRigProps> = ({
     const justStartedPlaying = !wasPlayingRef.current && isPlaying;
     wasPlayingRef.current = isPlaying;
 
+    const sizeChanged =
+      size.width !== lastSizeRef.current.width ||
+      size.height !== lastSizeRef.current.height;
+    lastSizeRef.current.width = size.width;
+    lastSizeRef.current.height = size.height;
+
+    const resetOccurred =
+      sceneResetSeq !== undefined &&
+      sceneResetSeq !== lastHandledResetSeqRef.current;
+    if (resetOccurred) {
+      lastHandledResetSeqRef.current = sceneResetSeq;
+    }
+
     // Handle Camera Presets trigger (Top, Iso, Front, Side, Reset)
     const presetAction = cameraPresetActionRef?.current;
     if (presetAction && presetAction.id !== lastHandledPresetIdRef.current) {
@@ -177,47 +303,36 @@ export const ObserverCameraRig: React.FC<ObserverCameraRigProps> = ({
         applyTransformImperatively(targetTransform, 'free');
       }
       handleControlsChange(true);
+      invalidate();
       return;
     }
 
-    // 1. STAGE CAMERA POV MODE: Always locked to the illustrative Stage Camera's exact frustum
-    if (cameraMode === 'stage-pov') {
-      const isShotDesynced =
-        uiFrame !== undefined &&
-        Boolean(frame.stageCamera.shotId) &&
-        Boolean(uiFrame.stageCamera.shotId) &&
-        frame.stageCamera.shotId !== uiFrame.stageCamera.shotId;
+    // 1. STAGE CAMERA POV / SCRIPTED OBSERVER / EXPLICIT SCORE RESET
+    const cameraAction = resolveObserverCameraUpdate({
+      cameraMode,
+      isPlaying,
+      modeChanged,
+      seekOccurred,
+      justStartedPlaying,
+      sizeChanged,
+      resetOccurred,
+      frame,
+      uiFrame,
+      lastSyncedStageCam: lastSyncedStageCamRef.current,
+      lastSyncedObserverCam: lastSyncedObserverCamRef.current,
+    });
 
-      const transform = isShotDesynced
-        ? uiFrame.stageCamera.transform
-        : frame.stageCamera.transform;
-
-      applyTransformImperatively(transform, 'stage-pov');
+    if (cameraAction.kind === 'apply') {
+      lastSyncedStageCamRef.current = cameraAction.nextLastSyncedStageCam;
+      lastSyncedObserverCamRef.current = cameraAction.nextLastSyncedObserverCam;
+      applyTransformImperatively(
+        cameraAction.transform,
+        cameraAction.applyMode
+      );
       return;
     }
 
-    // 2. SCRIPTED OBSERVER MODE:
-    //    - Locked to observerCamera track while playing
-    //    - Snaps on mode switch or when scrubbing while paused
-    //    - Releases lock to OrbitControls when paused so user can freely orbit/inspect
-    if (cameraMode === 'scripted') {
-      if (isPlaying || modeChanged || seekOccurred || justStartedPlaying) {
-        const isObserverShotDesynced =
-          uiFrame !== undefined &&
-          Boolean(frame.observerCamera.shotId) &&
-          Boolean(uiFrame.observerCamera.shotId) &&
-          frame.observerCamera.shotId !== uiFrame.observerCamera.shotId;
-
-        const transform = isObserverShotDesynced
-          ? uiFrame.observerCamera.transform
-          : frame.observerCamera.transform;
-
-        applyTransformImperatively(transform, 'scripted');
-        return;
-      }
-    }
-
-    // 3. FREE ORBIT MODE / PAUSED SCRIPTED MODE:
+    // 2. FREE ORBIT MODE / PAUSED SCRIPTED MODE:
     // Update dynamic floor clearance and enforce ground safety clamp
     if (isOrbitEnabled && controlsRef.current) {
       const controls = controlsRef.current;
@@ -247,7 +362,9 @@ export const ObserverCameraRig: React.FC<ObserverCameraRigProps> = ({
     cameraMode === 'free' || (cameraMode === 'scripted' && !isPlaying);
 
   const handleControlsChange = (immediate = false) => {
-    if (!isOrbitEnabled || !controlsRef.current) return;
+    if (isFlushingDampingRef.current || !isOrbitEnabled || !controlsRef.current) {
+      return;
+    }
     const persp = camera as THREE.PerspectiveCamera;
     const tgt = controlsRef.current.target;
 
