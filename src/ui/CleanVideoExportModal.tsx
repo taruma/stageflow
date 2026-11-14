@@ -20,6 +20,10 @@ import {
   type ExportResolutionTier,
   type ExportTargetCamera,
 } from '../core/exportMath';
+import {
+  formatScrubberSecondsInput,
+  parseScrubberSecondsInput,
+} from '../core/exportScrubberMath';
 import type {
   AppThemeCategory,
   ShotCue,
@@ -45,18 +49,6 @@ export interface CleanVideoExportModalProps {
   onClose: () => void;
 }
 
-function formatCustomSecondsInput(sec: number): string {
-  if (!Number.isFinite(sec)) return '0';
-  return String(Number(Math.max(0, sec).toFixed(2)));
-}
-
-function parseCustomSecondsInput(raw: string): number {
-  const trimmed = raw.trim();
-  if (trimmed === '') return Number.NaN;
-  const parsed = Number(trimmed);
-  return Number.isFinite(parsed) ? parsed : Number.NaN;
-}
-
 export const CleanVideoExportModal: React.FC<CleanVideoExportModalProps> = ({
   isOpen,
   score,
@@ -75,7 +67,7 @@ export const CleanVideoExportModal: React.FC<CleanVideoExportModalProps> = ({
   const [rangeMode, setRangeMode] = useState<ExportRangeMode>('scene');
   const [customStartInput, setCustomStartInput] = useState<string>('0');
   const [customEndInput, setCustomEndInput] = useState<string>(() =>
-    formatCustomSecondsInput(score.durationSec)
+    formatScrubberSecondsInput(score.durationSec)
   );
   const [exportTheme, setExportTheme] = useState<AppThemeCategory>('light');
   const [exportDofBlur, setExportDofBlur] = useState<boolean>(dofBlurEnabled);
@@ -98,22 +90,22 @@ export const CleanVideoExportModal: React.FC<CleanVideoExportModalProps> = ({
     if (scoreChanged) {
       hasCustomRangeRef.current = false;
       setCustomStartInput('0');
-      setCustomEndInput(formatCustomSecondsInput(score.durationSec));
+      setCustomEndInput(formatScrubberSecondsInput(score.durationSec));
       return;
     }
 
     setCustomStartInput((prev) => {
-      const parsed = parseCustomSecondsInput(prev);
+      const parsed = parseScrubberSecondsInput(prev);
       if (!Number.isFinite(parsed)) return prev;
       return parsed > score.durationSec
-        ? formatCustomSecondsInput(score.durationSec)
+        ? formatScrubberSecondsInput(score.durationSec)
         : prev;
     });
     setCustomEndInput((prev) => {
-      const parsed = parseCustomSecondsInput(prev);
+      const parsed = parseScrubberSecondsInput(prev);
       if (!Number.isFinite(parsed)) return prev;
       return parsed > score.durationSec
-        ? formatCustomSecondsInput(score.durationSec)
+        ? formatScrubberSecondsInput(score.durationSec)
         : prev;
     });
   }, [scoreKey, score.durationSec]);
@@ -157,8 +149,8 @@ export const CleanVideoExportModal: React.FC<CleanVideoExportModalProps> = ({
       const seedEnd = useShotRange
         ? Math.min(score.durationSec, activeShot.endSec)
         : score.durationSec;
-      setCustomStartInput(formatCustomSecondsInput(seedStart));
-      setCustomEndInput(formatCustomSecondsInput(seedEnd));
+      setCustomStartInput(formatScrubberSecondsInput(seedStart));
+      setCustomEndInput(formatScrubberSecondsInput(seedEnd));
     }
     setRangeMode(nextMode);
   };
@@ -179,8 +171,8 @@ export const CleanVideoExportModal: React.FC<CleanVideoExportModalProps> = ({
     setCustomEndInput(endInput);
   };
 
-  const parsedCustomStart = parseCustomSecondsInput(customStartInput);
-  const parsedCustomEnd = parseCustomSecondsInput(customEndInput);
+  const parsedCustomStart = parseScrubberSecondsInput(customStartInput);
+  const parsedCustomEnd = parseScrubberSecondsInput(customEndInput);
 
   const customValidation = useMemo(
     () =>

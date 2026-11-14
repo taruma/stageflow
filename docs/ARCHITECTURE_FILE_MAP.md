@@ -186,6 +186,7 @@ stageflow/
 │   │   ├── CleanVideoExportModal.tsx # In-browser Clean Stage Cam & Observer MP4 export progress modal
 │   │   ├── CleanVideoExportConfigForm.tsx # Export camera, angle, resolution, fps, range & palette form controls
 │   │   ├── ExportRangeScrubber.tsx  # Dual-handle shot-aware timeline scrubber + inline Start/End decimal inputs
+│   │   ├── ExportRangeScrubberTrack.tsx # Visual scrubber track, shot cut ticks, hover hairline & Start/End thumbs
 │   │   ├── StorageStatusBadge.tsx   # Visual status badge (Bundled vs. IndexedDB draft)
 │   │   └── InteractiveStudioApp.tsx # 3D choreography diorama & split workspace orchestrator
 │   ├── App.tsx                      # Code-split root mode switcher & suspense router

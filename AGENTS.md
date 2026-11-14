@@ -130,7 +130,7 @@ Verification in StageFlow is calibrated into two tiers to balance rigorous mathe
 | Tier | When to Apply | Automated Commands | Requirement |
 | :--- | :--- | :--- | :--- |
 | **Tier 1: Fast Dev Loop** | Localized UI/styling, minor bugfixes, copy tweaks, isolated single-file components | `npm run lint`<br>`npm run typecheck` (`tsc -b`)<br>Targeted Vitest (if applicable) | `oxlint` 0 warnings; `tsc -b` 0 TypeScript errors (< 6s). Eliminates the 2-minute Vite chunking overhead on trivial edits. |
-| **Tier 2: Core Engine & Full Release** | Core math, kinematics, schema/DSL syntax, 3D diorama rigs, media sync, dependencies, refactors | `npm test`<br>`npm run build` (`tsc -b && vite build`)<br>`npm run lint` | All Vitest unit suites pass (254 tests); zero TypeScript/Vite bundling errors; `oxlint` 0 warnings. |
+| **Tier 2: Core Engine & Full Release** | Core math, kinematics, schema/DSL syntax, 3D diorama rigs, media sync, dependencies, refactors | `npm test`<br>`npm run build` (`tsc -b && vite build`)<br>`npm run lint` | All Vitest unit suites pass (256 tests); zero TypeScript/Vite bundling errors; `oxlint` 0 warnings. |
 
 ### Pre-Delivery Audit Checklist
 Before reporting completion of any task:

@@ -37,17 +37,28 @@ export function quantizeScrubberSec(
       : 0.1;
   const safeStep = Number.isFinite(stepSec) && stepSec > 0 ? stepSec : 0.1;
   const safeRaw = Number.isFinite(rawSec) ? rawSec : 0;
-  const snapped = Math.round(safeRaw / safeStep) * safeStep;
-  const clamped = clamp(snapped, 0, safeDuration);
-  return Number(clamped.toFixed(2));
+  const snapped = Number((Math.round(safeRaw / safeStep) * safeStep).toFixed(3));
+  return clamp(snapped, 0, safeDuration);
 }
 
 /**
- * Formats a seconds number concisely for string input state (e.g. `2.5`, `6`).
+ * Formats a seconds number concisely for string input state (up to 3 decimal
+ * places, e.g. `2.5`, `6`, `61.625`).
  */
 export function formatScrubberSecondsInput(sec: number): string {
   if (!Number.isFinite(sec)) return '0';
-  return String(Number(Math.max(0, sec).toFixed(2)));
+  return String(Number(Math.max(0, sec).toFixed(3)));
+}
+
+/**
+ * Parses a numeric seconds input string, returning `Number.NaN` for empty or
+ * non-finite values.
+ */
+export function parseScrubberSecondsInput(raw: string): number {
+  const trimmed = raw.trim();
+  if (trimmed === '') return Number.NaN;
+  const parsed = Number(trimmed);
+  return Number.isFinite(parsed) ? parsed : Number.NaN;
 }
 
 /**
@@ -154,18 +165,36 @@ export function applyScrubberHandleChange(
   if (handle === 'start') {
     const maxStart = Math.max(0, baseEnd - effectiveMinSpan);
     const quantized = quantizeScrubberSec(targetSec, safeDuration, stepSec);
-    const nextStart = Number(clamp(quantized, 0, maxStart).toFixed(2));
+    const nextStart = clamp(
+      Number(clamp(quantized, 0, maxStart).toFixed(3)),
+      0,
+      maxStart
+    );
+    const nextEnd = clamp(
+      Number(Math.max(nextStart + effectiveMinSpan, baseEnd).toFixed(3)),
+      0,
+      safeDuration
+    );
     return {
       startSec: nextStart,
-      endSec: Number(Math.max(nextStart + effectiveMinSpan, baseEnd).toFixed(2)),
+      endSec: nextEnd,
     };
   }
 
   const minEnd = Math.min(safeDuration, baseStart + effectiveMinSpan);
   const quantized = quantizeScrubberSec(targetSec, safeDuration, stepSec);
-  const nextEnd = Number(clamp(quantized, minEnd, safeDuration).toFixed(2));
+  const nextEnd = clamp(
+    Number(clamp(quantized, minEnd, safeDuration).toFixed(3)),
+    minEnd,
+    safeDuration
+  );
+  const nextStart = clamp(
+    Number(Math.min(baseStart, nextEnd - effectiveMinSpan).toFixed(3)),
+    0,
+    Math.max(0, nextEnd - effectiveMinSpan)
+  );
   return {
-    startSec: Number(Math.min(baseStart, nextEnd - effectiveMinSpan).toFixed(2)),
+    startSec: nextStart,
     endSec: nextEnd,
   };
 }

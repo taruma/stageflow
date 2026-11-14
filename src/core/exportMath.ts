@@ -163,7 +163,7 @@ export function validateCustomExportRange(
   if (endSec > sceneDurationSec + CUSTOM_BOUND_EPSILON) {
     return {
       isValid: false,
-      error: `End time cannot exceed scene duration (${Number(sceneDurationSec.toFixed(2))}s).`,
+      error: `End time cannot exceed scene duration (${Number(sceneDurationSec.toFixed(3))}s).`,
       startSec,
       endSec,
     };

@@ -190,6 +190,23 @@ describe('exportMath', () => {
     expect(exceedsDuration.isValid).toBe(false);
     expect(exceedsDuration.error).toContain('12s');
 
+    for (const [duration, overEnd, expectedTag] of [
+      [45.375, 45.38, '45.375s'],
+      [61.625, 61.63, '61.625s'],
+    ] as const) {
+      const validExact = validateCustomExportRange(0, duration, duration, 60);
+      expect(validExact).toEqual({
+        isValid: true,
+        error: null,
+        startSec: 0,
+        endSec: duration,
+      });
+
+      const over = validateCustomExportRange(0, overEnd, duration, 60);
+      expect(over.isValid).toBe(false);
+      expect(over.error).toContain(expectedTag);
+    }
+
     const inverted = validateCustomExportRange(6.0, 2.5, 12.0, 60);
     expect(inverted.isValid).toBe(false);
     expect(inverted.error).toBeTruthy();
