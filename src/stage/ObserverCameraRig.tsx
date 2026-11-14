@@ -32,6 +32,7 @@ import {
   getPresetTransform,
   type CameraPresetType,
 } from './cameraPresets';
+import { resolveGatedState } from './stageSyncGate';
 
 export interface ObserverCameraRigProps {
   cameraMode: CameraViewMode;
@@ -55,12 +56,20 @@ export const ObserverCameraRig: React.FC<ObserverCameraRigProps> = ({
   onFreeOrbitPoseChange,
   cameraPresetActionRef,
 }) => {
-  const { camera, size } = useThree();
+  const { camera, size, invalidate } = useThree();
   const controlsRef = useRef<OrbitControlsImpl | null>(null);
   const lastHandledSeekIdRef = useRef<number>(lastManualSeekIdRef.current);
   const lastHandledPresetIdRef = useRef<number>(0);
   const lastModeRef = useRef<CameraViewMode>(cameraMode);
   const wasPlayingRef = useRef<boolean>(isPlaying);
+  const lastSyncedStageCamRef = useRef<StageFrame['stageCamera'] | null>(null);
+  const lastSyncedObserverCamRef = useRef<StageFrame['observerCamera'] | null>(
+    null
+  );
+  const lastSizeRef = useRef<{ width: number; height: number }>({
+    width: size.width,
+    height: size.height,
+  });
   // Preserve the un-adapted optical focal length because persp.fov is widened
   // by computeAdaptiveDioramaFovDeg / computeViewfinderCanvasFovDeg on narrow panes.
   const initialPose =
@@ -157,6 +166,12 @@ export const ObserverCameraRig: React.FC<ObserverCameraRigProps> = ({
     const justStartedPlaying = !wasPlayingRef.current && isPlaying;
     wasPlayingRef.current = isPlaying;
 
+    const sizeChanged =
+      size.width !== lastSizeRef.current.width ||
+      size.height !== lastSizeRef.current.height;
+    lastSizeRef.current.width = size.width;
+    lastSizeRef.current.height = size.height;
+
     // Handle Camera Presets trigger (Top, Iso, Front, Side, Reset)
     const presetAction = cameraPresetActionRef?.current;
     if (presetAction && presetAction.id !== lastHandledPresetIdRef.current) {
@@ -177,22 +192,23 @@ export const ObserverCameraRig: React.FC<ObserverCameraRigProps> = ({
         applyTransformImperatively(targetTransform, 'free');
       }
       handleControlsChange(true);
+      invalidate();
       return;
     }
 
     // 1. STAGE CAMERA POV MODE: Always locked to the illustrative Stage Camera's exact frustum
     if (cameraMode === 'stage-pov') {
-      const isShotDesynced =
-        uiFrame !== undefined &&
-        Boolean(frame.stageCamera.shotId) &&
-        Boolean(uiFrame.stageCamera.shotId) &&
-        frame.stageCamera.shotId !== uiFrame.stageCamera.shotId;
+      const resolvedStageCam = uiFrame
+        ? resolveGatedState(
+            frame.stageCamera,
+            uiFrame.stageCamera,
+            lastSyncedStageCamRef.current,
+            (cam) => cam.shotId
+          ).state
+        : frame.stageCamera;
+      lastSyncedStageCamRef.current = resolvedStageCam;
 
-      const transform = isShotDesynced
-        ? uiFrame.stageCamera.transform
-        : frame.stageCamera.transform;
-
-      applyTransformImperatively(transform, 'stage-pov');
+      applyTransformImperatively(resolvedStageCam.transform, 'stage-pov');
       return;
     }
 
@@ -201,18 +217,24 @@ export const ObserverCameraRig: React.FC<ObserverCameraRigProps> = ({
     //    - Snaps on mode switch or when scrubbing while paused
     //    - Releases lock to OrbitControls when paused so user can freely orbit/inspect
     if (cameraMode === 'scripted') {
-      if (isPlaying || modeChanged || seekOccurred || justStartedPlaying) {
-        const isObserverShotDesynced =
-          uiFrame !== undefined &&
-          Boolean(frame.observerCamera.shotId) &&
-          Boolean(uiFrame.observerCamera.shotId) &&
-          frame.observerCamera.shotId !== uiFrame.observerCamera.shotId;
+      if (
+        isPlaying ||
+        modeChanged ||
+        seekOccurred ||
+        justStartedPlaying ||
+        sizeChanged
+      ) {
+        const resolvedObserverCam = uiFrame
+          ? resolveGatedState(
+              frame.observerCamera,
+              uiFrame.observerCamera,
+              lastSyncedObserverCamRef.current,
+              (cam) => cam.shotId
+            ).state
+          : frame.observerCamera;
+        lastSyncedObserverCamRef.current = resolvedObserverCam;
 
-        const transform = isObserverShotDesynced
-          ? uiFrame.observerCamera.transform
-          : frame.observerCamera.transform;
-
-        applyTransformImperatively(transform, 'scripted');
+        applyTransformImperatively(resolvedObserverCam.transform, 'scripted');
         return;
       }
     }

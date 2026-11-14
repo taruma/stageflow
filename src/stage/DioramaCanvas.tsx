@@ -6,7 +6,7 @@
  */
 
 import React, { useMemo } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import type {
   AppThemeCategory,
   CameraViewMode,
@@ -38,6 +38,7 @@ export interface DioramaCanvasProps {
     type: CameraPresetType;
     id: number;
   } | null>;
+  cameraPresetSeq?: number;
 }
 
 const FrameLoopTicker: React.FC<{ onTick: () => void }> = ({ onTick }) => {
@@ -45,6 +46,52 @@ const FrameLoopTicker: React.FC<{ onTick: () => void }> = ({ onTick }) => {
   useFrame(() => {
     onTick();
   }, -1);
+  return null;
+};
+
+const CanvasDemandInvalidator: React.FC<{
+  score: StageScore;
+  cameraMode: CameraViewMode;
+  isPlaying: boolean;
+  uiFrame: StageFrame;
+  labelMode: LabelDisplayMode;
+  dofBlurEnabled: boolean;
+  themeCategory: AppThemeCategory;
+  cameraPresetSeq: number;
+  evaluateTick60fps: () => void;
+}> = ({
+  score,
+  cameraMode,
+  isPlaying,
+  uiFrame,
+  labelMode,
+  dofBlurEnabled,
+  themeCategory,
+  cameraPresetSeq,
+  evaluateTick60fps,
+}) => {
+  const invalidate = useThree((state) => state.invalidate);
+  const size = useThree((state) => state.size);
+
+  React.useLayoutEffect(() => {
+    if (isPlaying) return;
+    evaluateTick60fps();
+    invalidate();
+  }, [
+    score,
+    cameraMode,
+    isPlaying,
+    uiFrame,
+    labelMode,
+    dofBlurEnabled,
+    themeCategory,
+    cameraPresetSeq,
+    size.width,
+    size.height,
+    evaluateTick60fps,
+    invalidate,
+  ]);
+
   return null;
 };
 
@@ -61,6 +108,7 @@ export const DioramaCanvas: React.FC<DioramaCanvasProps> = ({
   dofBlurEnabled = false,
   themeCategory = 'light',
   cameraPresetActionRef,
+  cameraPresetSeq = 0,
 }) => {
   const themeColors = useMemo(
     () => getDioramaThemeColors(themeCategory),
@@ -70,6 +118,7 @@ export const DioramaCanvas: React.FC<DioramaCanvasProps> = ({
   return (
     <div className="relative w-full h-full bg-app select-none overflow-hidden">
       <Canvas
+        frameloop={isPlaying ? 'always' : 'demand'}
         gl={{ antialias: true, powerPreference: 'high-performance' }}
         dpr={[1, 2]}
         camera={{
@@ -84,6 +133,17 @@ export const DioramaCanvas: React.FC<DioramaCanvasProps> = ({
 
         {/* 60fps Stateless Frame Evaluator Tick */}
         <FrameLoopTicker onTick={evaluateTick60fps} />
+        <CanvasDemandInvalidator
+          score={score}
+          cameraMode={cameraMode}
+          isPlaying={isPlaying}
+          uiFrame={uiFrame}
+          labelMode={labelMode}
+          dofBlurEnabled={dofBlurEnabled}
+          themeCategory={themeCategory}
+          cameraPresetSeq={cameraPresetSeq}
+          evaluateTick60fps={evaluateTick60fps}
+        />
 
         {/* 1. Shared Diorama Scene (Lighting, Metric Floor Grid, Directional Mannequins) */}
         <BlueprintStageScene

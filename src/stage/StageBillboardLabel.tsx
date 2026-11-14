@@ -50,6 +50,17 @@ export const StageBillboardLabel: React.FC<StageBillboardLabelProps> = React.mem
     const dotRef = useRef<HTMLDivElement>(null);
     const camera = useThree((s) => s.camera);
 
+    const lastStyleCacheRef = useRef<{
+      pillEl: HTMLDivElement | null;
+      dotEl: HTMLDivElement | null;
+      pillVisibility: string;
+      pillOpacity: string;
+      pillTransform: string;
+      dotVisibility: string;
+      dotOpacity: string;
+      dotTransform: string;
+    } | null>(null);
+
     const syncDomStyles = (cam: THREE.Camera) => {
       if (!groupRef.current) return;
       groupRef.current.getWorldPosition(_tempVec);
@@ -61,33 +72,77 @@ export const StageBillboardLabel: React.FC<StageBillboardLabelProps> = React.mem
         ghosted
       );
 
-      if (pillRef.current) {
-        if (!metrics.showPill || metrics.pillOpacity <= 0.001) {
-          pillRef.current.style.visibility = 'hidden';
-          pillRef.current.style.opacity = '0';
-        } else {
-          pillRef.current.style.visibility = 'visible';
-          pillRef.current.style.opacity = metrics.pillOpacity.toFixed(3);
-          pillRef.current.style.transform = `scale(${metrics.pillScale.toFixed(3)})`;
+      const nextPillHidden = !metrics.showPill || metrics.pillOpacity <= 0.001;
+      const nextPillVisibility = nextPillHidden ? 'hidden' : 'visible';
+      const nextPillOpacity = nextPillHidden
+        ? '0'
+        : metrics.pillOpacity.toFixed(3);
+      const nextPillTransform = nextPillHidden
+        ? ''
+        : `scale(${metrics.pillScale.toFixed(3)})`;
+
+      const nextDotHidden = !metrics.showDot || metrics.dotOpacity <= 0.001;
+      const nextDotVisibility = nextDotHidden ? 'hidden' : 'visible';
+      const nextDotOpacity = nextDotHidden
+        ? '0'
+        : metrics.dotOpacity.toFixed(3);
+      const nextDotTransform = nextDotHidden
+        ? ''
+        : `scale(${metrics.dotScale.toFixed(3)})`;
+
+      const prev = lastStyleCacheRef.current;
+      const pill = pillRef.current;
+      if (pill) {
+        const pillChanged = prev === null || prev.pillEl !== pill;
+        if (pillChanged || prev.pillVisibility !== nextPillVisibility) {
+          pill.style.visibility = nextPillVisibility;
+        }
+        if (pillChanged || prev.pillOpacity !== nextPillOpacity) {
+          pill.style.opacity = nextPillOpacity;
+        }
+        if (
+          !nextPillHidden &&
+          (pillChanged || prev.pillTransform !== nextPillTransform)
+        ) {
+          pill.style.transform = nextPillTransform;
         }
       }
 
-      if (dotRef.current) {
-        if (!metrics.showDot || metrics.dotOpacity <= 0.001) {
-          dotRef.current.style.visibility = 'hidden';
-          dotRef.current.style.opacity = '0';
-        } else {
-          dotRef.current.style.visibility = 'visible';
-          dotRef.current.style.opacity = metrics.dotOpacity.toFixed(3);
-          dotRef.current.style.transform = `scale(${metrics.dotScale.toFixed(3)})`;
+      const dot = dotRef.current;
+      if (dot) {
+        const dotChanged = prev === null || prev.dotEl !== dot;
+        if (dotChanged || prev.dotVisibility !== nextDotVisibility) {
+          dot.style.visibility = nextDotVisibility;
+        }
+        if (dotChanged || prev.dotOpacity !== nextDotOpacity) {
+          dot.style.opacity = nextDotOpacity;
+        }
+        if (
+          !nextDotHidden &&
+          (dotChanged || prev.dotTransform !== nextDotTransform)
+        ) {
+          dot.style.transform = nextDotTransform;
         }
       }
+
+      lastStyleCacheRef.current = {
+        pillEl: pill,
+        dotEl: dot,
+        pillVisibility: nextPillVisibility,
+        pillOpacity: nextPillOpacity,
+        pillTransform: nextPillTransform,
+        dotVisibility: nextDotVisibility,
+        dotOpacity: nextDotOpacity,
+        dotTransform: nextDotTransform,
+      };
     };
 
     // Synchronous layout effect ensures frame-0 / scrubbed poses style DOM before paint
     useLayoutEffect(() => {
       if (visible) {
         syncDomStyles(camera);
+      } else {
+        lastStyleCacheRef.current = null;
       }
     });
 
@@ -162,8 +217,6 @@ export const StageBillboardLabel: React.FC<StageBillboardLabelProps> = React.mem
                 boxShadow: highlighted
                   ? `0 0 14px ${accentColor}, 0 0 4px #ffffff`
                   : `0 0 10px ${accentColor}, 0 2px 6px rgba(0, 0, 0, 0.65)`,
-                visibility: 'hidden',
-                opacity: 0,
               }}
               className="absolute w-2.5 h-2.5 rounded-full border border-white/50 shrink-0 pointer-events-none"
             />

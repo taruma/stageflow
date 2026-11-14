@@ -14,13 +14,14 @@
  *   - Automatically hides brackets when `dof.enabled === false` (`dof: 'deep'`).
  */
 
-import React, { useRef, useMemo, useLayoutEffect } from 'react';
+import React, { useEffect, useRef, useMemo, useLayoutEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Line } from '@react-three/drei';
 import * as THREE from 'three';
 import type { StageFrame } from '../core/types';
 import { BLUEPRINT_PALETTE, OPTICS_DOF_DEFAULTS } from '../core/constants';
 import { computeFrustumGateDimensions } from '../core/opticsMath';
+import { resolveGatedState } from './stageSyncGate';
 
 const UNIT_PLANE_FRAME: Array<[number, number, number]> = [
   [-1, 1, 0],
@@ -44,19 +45,19 @@ export const StageCameraDofBrackets: React.FC<StageCameraDofBracketsProps> = ({
   const rootGroupRef = useRef<THREE.Group | null>(null);
   const nearGroupRef = useRef<THREE.Group | null>(null);
   const farGroupRef = useRef<THREE.Group | null>(null);
+  const lastSyncedCamRef = useRef<StageFrame['stageCamera'] | null>(null);
 
   const syncBrackets = (liveFrame: StageFrame | null) => {
     if (!rootGroupRef.current) return;
 
     const committedCam = uiFrame.stageCamera;
-    const isShotDesynced =
-      Boolean(liveFrame?.stageCamera.shotId) &&
-      Boolean(committedCam.shotId) &&
-      liveFrame?.stageCamera.shotId !== committedCam.shotId;
-
-    const cam = isShotDesynced
-      ? committedCam
-      : liveFrame?.stageCamera ?? committedCam;
+    const { state: cam } = resolveGatedState(
+      liveFrame?.stageCamera,
+      committedCam,
+      lastSyncedCamRef.current,
+      (c) => c.shotId
+    );
+    lastSyncedCamRef.current = cam;
     const dof = cam.dof;
 
     if (!dof || !dof.enabled) {
@@ -145,6 +146,30 @@ export const StageCameraDofBrackets: React.FC<StageCameraDofBracketsProps> = ({
   );
 };
 
+export type LineEndpoints6 = readonly [
+  number,
+  number,
+  number,
+  number,
+  number,
+  number,
+];
+
+export function haveEndpointsChanged(
+  prev: LineEndpoints6 | null,
+  next: LineEndpoints6
+): boolean {
+  if (prev === null) return true;
+  return (
+    prev[0] !== next[0] ||
+    prev[1] !== next[1] ||
+    prev[2] !== next[2] ||
+    prev[3] !== next[3] ||
+    prev[4] !== next[4] ||
+    prev[5] !== next[5]
+  );
+}
+
 export interface StageCameraFocusTetherProps {
   frameRef: React.RefObject<StageFrame>;
   uiFrame: StageFrame;
@@ -161,7 +186,7 @@ export const StageCameraFocusTether: React.FC<StageCameraFocusTetherProps> = ({
   const groupRef = useRef<THREE.Group | null>(null);
   const beaconMeshRef = useRef<THREE.Mesh | null>(null);
 
-  const { lineObject, geo } = useMemo(() => {
+  const { lineObject, geo, mat } = useMemo(() => {
     const geometry = new THREE.BufferGeometry();
     const posAttr = new THREE.BufferAttribute(new Float32Array(6), 3);
     geometry.setAttribute('position', posAttr);
@@ -174,8 +199,19 @@ export const StageCameraFocusTether: React.FC<StageCameraFocusTetherProps> = ({
       opacity: 0.85,
     });
     const line = new THREE.Line(geometry, material);
-    return { lineObject: line, geo: geometry };
+    return { lineObject: line, geo: geometry, mat: material };
   }, [color]);
+
+  const lastEndpointsRef = useRef<LineEndpoints6 | null>(null);
+  const lastSyncedCamRef = useRef<StageFrame['stageCamera'] | null>(null);
+
+  useEffect(() => {
+    lastEndpointsRef.current = null;
+    return () => {
+      geo.dispose();
+      mat.dispose();
+    };
+  }, [geo, mat]);
 
   const syncFocusTether = (liveFrame: StageFrame | null) => {
     if (!groupRef.current) return;
@@ -185,14 +221,13 @@ export const StageCameraFocusTether: React.FC<StageCameraFocusTetherProps> = ({
     }
 
     const committedCam = uiFrame.stageCamera;
-    const isShotDesynced =
-      Boolean(liveFrame?.stageCamera.shotId) &&
-      Boolean(committedCam.shotId) &&
-      liveFrame?.stageCamera.shotId !== committedCam.shotId;
-
-    const cam = isShotDesynced
-      ? committedCam
-      : liveFrame?.stageCamera ?? committedCam;
+    const { state: cam } = resolveGatedState(
+      liveFrame?.stageCamera,
+      committedCam,
+      lastSyncedCamRef.current,
+      (c) => c.shotId
+    );
+    lastSyncedCamRef.current = cam;
     const dof = cam.dof;
     const focusPt = dof?.focusTargetPoint;
 
@@ -230,14 +265,25 @@ export const StageCameraFocusTether: React.FC<StageCameraFocusTetherProps> = ({
       beaconMeshRef.current.position.set(focusPt.x, focusPt.y, focusPt.z);
     }
 
-    const posAttr = geo.attributes.position as
-      | THREE.BufferAttribute
-      | undefined;
-    if (posAttr) {
-      posAttr.setXYZ(0, planeCenterX, planeCenterY, planeCenterZ);
-      posAttr.setXYZ(1, focusPt.x, focusPt.y, focusPt.z);
-      posAttr.needsUpdate = true;
-      lineObject.computeLineDistances();
+    const nextEndpoints: LineEndpoints6 = [
+      planeCenterX,
+      planeCenterY,
+      planeCenterZ,
+      focusPt.x,
+      focusPt.y,
+      focusPt.z,
+    ];
+    if (haveEndpointsChanged(lastEndpointsRef.current, nextEndpoints)) {
+      const posAttr = geo.attributes.position as
+        | THREE.BufferAttribute
+        | undefined;
+      if (posAttr) {
+        posAttr.setXYZ(0, planeCenterX, planeCenterY, planeCenterZ);
+        posAttr.setXYZ(1, focusPt.x, focusPt.y, focusPt.z);
+        posAttr.needsUpdate = true;
+        lineObject.computeLineDistances();
+        lastEndpointsRef.current = nextEndpoints;
+      }
     }
   };
 

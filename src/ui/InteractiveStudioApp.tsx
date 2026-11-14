@@ -269,8 +269,17 @@ export const InteractiveStudioApp: React.FC = () => {
     onOpenedExistingScore: handleOpenedExistingScore,
   });
 
+  const stageSyncCallbackRef = useRef<(() => void) | null>(null);
+  const handleStageTimeJump = useCallback(() => {
+    stageSyncCallbackRef.current?.();
+  }, []);
+
   // 1. Universal Media Clock (Local HTML5 Video, YouTube IFrame, or Procedural Slate)
-  const mediaClock = useMediaClock(activeScore, videoOverrideUrl);
+  const mediaClock = useMediaClock(
+    activeScore,
+    videoOverrideUrl,
+    handleStageTimeJump
+  );
 
   // 2. Dual-Tier 60fps Frame Evaluation Loop
   const stageLoop = useStageFrameLoop(
@@ -281,6 +290,16 @@ export const InteractiveStudioApp: React.FC = () => {
     mediaClock.lastManualSeekIdRef
   );
 
+  const { evaluateTick60fps, forceSyncUi } = stageLoop;
+  useEffect(() => {
+    stageSyncCallbackRef.current = () => {
+      evaluateTick60fps();
+      forceSyncUi();
+    };
+  }, [evaluateTick60fps, forceSyncUi]);
+
+  const cameraPresetIdRef = useRef(0);
+  const [cameraPresetSeq, setCameraPresetSeq] = useState(0);
   const cameraPresetActionRef = useRef<{
     type: CameraPresetType;
     id: number;
@@ -293,7 +312,12 @@ export const InteractiveStudioApp: React.FC = () => {
       } else {
         stageLoop.setCameraMode('free');
       }
-      cameraPresetActionRef.current = { type: preset, id: Date.now() };
+      cameraPresetIdRef.current += 1;
+      cameraPresetActionRef.current = {
+        type: preset,
+        id: cameraPresetIdRef.current,
+      };
+      setCameraPresetSeq(cameraPresetIdRef.current);
     },
     [stageLoop]
   );
@@ -724,19 +748,15 @@ export const InteractiveStudioApp: React.FC = () => {
   const handleSeekAndSync = useCallback(
     (targetSec: number) => {
       mediaClock.seek(targetSec);
-      stageLoop.evaluateTick60fps();
-      stageLoop.forceSyncUi();
     },
-    [mediaClock, stageLoop]
+    [mediaClock]
   );
 
   const handleStepFramesAndSync = useCallback(
     (frames: number) => {
       mediaClock.stepFrames(frames);
-      stageLoop.evaluateTick60fps();
-      stageLoop.forceSyncUi();
     },
-    [mediaClock, stageLoop]
+    [mediaClock]
   );
 
   return (
@@ -876,6 +896,7 @@ export const InteractiveStudioApp: React.FC = () => {
               dofBlurEnabled={display.dofBlurEnabled}
               themeCategory={theme.effectiveDioramaCategory}
               cameraPresetActionRef={cameraPresetActionRef}
+              cameraPresetSeq={cameraPresetSeq}
             />
 
             {/* Responsive Diorama HUD Overlays & POV Viewfinder Dock */}

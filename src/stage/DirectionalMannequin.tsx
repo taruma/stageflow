@@ -9,11 +9,24 @@
  *   - Gated cut synchronization across shot boundaries
  */
 
-import React, { useRef, useMemo, useLayoutEffect } from 'react';
+import React, { useRef, useMemo, useLayoutEffect, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Line, Edges } from '@react-three/drei';
 import * as THREE from 'three';
 import { ENTITY_DEFAULTS } from '../core/constants';
+import type { Vec3 } from '../core/types';
+import { resolveGatedState } from './stageSyncGate';
+
+export function areTrailPointsEqual(a: Vec3[], b: Vec3[]): boolean {
+  if (a === b) return true;
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    if (a[i].x !== b[i].x || a[i].y !== b[i].y || a[i].z !== b[i].z) {
+      return false;
+    }
+  }
+  return true;
+}
 import type {
   CameraViewMode,
   CharacterStyle,
@@ -35,7 +48,28 @@ export interface DirectionalMannequinProps {
   cameraMode?: CameraViewMode;
 }
 
-export const DirectionalMannequin: React.FC<DirectionalMannequinProps> = ({
+export function areDirectionalMannequinPropsEqual(
+  prev: DirectionalMannequinProps,
+  next: DirectionalMannequinProps
+): boolean {
+  return (
+    prev.entityId === next.entityId &&
+    prev.frameRef === next.frameRef &&
+    prev.labelMode === next.labelMode &&
+    prev.isPlaying === next.isPlaying &&
+    prev.cameraMode === next.cameraMode &&
+    prev.initialState.def === next.initialState.def &&
+    prev.initialState.cueId === next.initialState.cueId &&
+    prev.initialState.highlighted === next.initialState.highlighted &&
+    prev.initialState.visible === next.initialState.visible &&
+    areTrailPointsEqual(
+      prev.initialState.trailPoints,
+      next.initialState.trailPoints
+    )
+  );
+}
+
+const DirectionalMannequinComponent: React.FC<DirectionalMannequinProps> = ({
   entityId,
   initialState,
   frameRef,
@@ -45,6 +79,7 @@ export const DirectionalMannequin: React.FC<DirectionalMannequinProps> = ({
   cameraMode,
 }) => {
   const groupRef = useRef<THREE.Group | null>(null);
+  const lastSyncedEntityRef = useRef<EvaluatedEntityState | null>(null);
   const meshContainerRef = useRef<THREE.Group | null>(null);
   const footprintRef = useRef<THREE.Group | null>(null);
   const labelGroupRef = useRef<THREE.Group | null>(null);
@@ -63,27 +98,24 @@ export const DirectionalMannequin: React.FC<DirectionalMannequinProps> = ({
   const charScaleZ = radius > 1e-5 ? rz / radius : 1;
   const isBoxProp = def.kind === 'prop' && (def.shape ?? 'box') === 'box';
 
-  // Helper to get synchronized live entity state
+  // Helper to get synchronized live entity state without backward teleports on memoized initialState
   const getSynchronizedEntity = (liveFrame: StageFrame | null) => {
     if (!liveFrame) return initialState;
     const liveEntity = liveFrame.entitiesById.get(entityId);
     if (!liveEntity) return initialState;
+    if (!uiFrame) return liveEntity;
 
-    const isCueDesynced =
-      uiFrame !== undefined &&
-      liveEntity.cueId !== undefined &&
-      initialState.cueId !== undefined &&
-      liveEntity.cueId !== initialState.cueId;
-
-    if (isCueDesynced) {
-      return initialState;
-    }
-
-    return liveEntity;
+    return resolveGatedState(
+      liveEntity,
+      initialState,
+      lastSyncedEntityRef.current,
+      (entity) => entity.cueId
+    ).state;
   };
 
   const syncEntityTransform = (entity: EvaluatedEntityState) => {
     if (!groupRef.current) return;
+    lastSyncedEntityRef.current = entity;
     groupRef.current.visible = entity.visible;
     groupRef.current.position.set(
       entity.position.x,
@@ -187,6 +219,12 @@ export const DirectionalMannequin: React.FC<DirectionalMannequinProps> = ({
 
     return new THREE.ShapeGeometry(shape);
   }, [isBoxProp, highlighted, rx, rz]);
+
+  useEffect(() => {
+    return () => {
+      boxFootprintGeometry?.dispose();
+    };
+  }, [boxFootprintGeometry]);
 
   const headY = height * ENTITY_DEFAULTS.CHARACTER_LOOK_ANCHOR_RATIO;
   const torsoHeight = Math.max(0.4, height - 0.55);
@@ -593,3 +631,8 @@ export const DirectionalMannequin: React.FC<DirectionalMannequinProps> = ({
     </group>
   );
 };
+
+export const DirectionalMannequin = React.memo(
+  DirectionalMannequinComponent,
+  areDirectionalMannequinPropsEqual
+);

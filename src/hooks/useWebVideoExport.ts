@@ -119,6 +119,17 @@ function drawPreviewThumbnail(
   ctx.drawImage(sourceCanvas, 0, 0, previewCanvas.width, previewCanvas.height);
 }
 
+export function shouldFlushExportProgress(
+  nowMs: number,
+  lastFlushMs: number,
+  frameIndex: number,
+  totalFrames: number,
+  intervalMs = 100
+): boolean {
+  if (frameIndex >= totalFrames - 1) return true;
+  return nowMs - lastFlushMs >= intervalMs;
+}
+
 export function useWebVideoExport({ onNotify }: UseWebVideoExportOptions = {}) {
   const [isExporting, setIsExporting] = useState(false);
   const [progress, setProgress] = useState<WebVideoExportProgress | null>(null);
@@ -232,6 +243,7 @@ export function useWebVideoExport({ onNotify }: UseWebVideoExportOptions = {}) {
 
         const frameDurationUs = Math.round(1_000_000 / fps);
         const startPerf = performance.now();
+        let lastProgressFlushMs = startPerf;
 
         for (let i = 0; i < timeRange.totalFrames; i++) {
           if (abortRef.current) {
@@ -272,12 +284,24 @@ export function useWebVideoExport({ onNotify }: UseWebVideoExportOptions = {}) {
           // Backpressure guard so GPU memory does not queue unbounded VideoFrames
           while (encoder.encodeQueueSize > 6 && !abortRef.current) {
             await yieldToEventLoop();
+            if (abortRef.current) {
+              return false;
+            }
           }
 
-          const elapsedSec = Math.max(0.001, (performance.now() - startPerf) / 1000);
-          const currentShotId = frame.activeShot?.id ?? timeRange.shotId;
+          const nowMs = performance.now();
+          if (
+            shouldFlushExportProgress(
+              nowMs,
+              lastProgressFlushMs,
+              i,
+              timeRange.totalFrames
+            )
+          ) {
+            lastProgressFlushMs = nowMs;
+            const elapsedSec = Math.max(0.001, (nowMs - startPerf) / 1000);
+            const currentShotId = frame.activeShot?.id ?? timeRange.shotId;
 
-          if (i % 2 === 0 || i === timeRange.totalFrames - 1) {
             setProgress({
               frameIndex: i + 1,
               totalFrames: timeRange.totalFrames,

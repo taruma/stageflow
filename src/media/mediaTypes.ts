@@ -17,6 +17,7 @@ export interface MediaClockStateCallbacks {
   onDurationChange?: (durationSec: number) => void;
   onRateChange?: (rate: number) => void;
   onEnded?: () => void;
+  onSeekSettled?: () => void;
 }
 
 export interface MediaClockDriver {
