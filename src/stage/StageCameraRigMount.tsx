@@ -15,6 +15,16 @@ import { useFrame } from '@react-three/fiber';
 import { Line } from '@react-three/drei';
 import * as THREE from 'three';
 import type { StageFrame } from '../core/types';
+import { areTrailPointsEqual } from './DirectionalMannequin';
+import { resolveGatedState } from './stageSyncGate';
+
+const TRIPOD_LEG_ANGLES = [0, (Math.PI * 2) / 3, (Math.PI * 4) / 3] as const;
+const CART_WHEEL_OFFSETS: readonly [number, number][] = [
+  [-0.21, -0.2],
+  [0.21, -0.2],
+  [-0.21, 0.2],
+  [0.21, 0.2],
+];
 
 export interface StageCameraRigMountProps {
   frameRef: React.RefObject<StageFrame>;
@@ -23,7 +33,41 @@ export interface StageCameraRigMountProps {
   color: string;
 }
 
-export const StageCameraRigMount: React.FC<StageCameraRigMountProps> = ({
+export function areRigMountPropsEqual(
+  prev: StageCameraRigMountProps,
+  next: StageCameraRigMountProps
+): boolean {
+  if (
+    prev.frameRef !== next.frameRef ||
+    prev.isBodyVisible !== next.isBodyVisible ||
+    prev.color !== next.color
+  ) {
+    return false;
+  }
+
+  const prevCam = prev.uiFrame.stageCamera;
+  const nextCam = next.uiFrame.stageCamera;
+  if (
+    prevCam.showRig !== nextCam.showRig ||
+    prevCam.shotId !== nextCam.shotId ||
+    Math.max(0.4, prevCam.transform.position.y) !==
+      Math.max(0.4, nextCam.transform.position.y)
+  ) {
+    return false;
+  }
+
+  const prevRig = prevCam.rig;
+  const nextRig = nextCam.rig;
+  if (prevRig === nextRig) return true;
+  if (!prevRig || !nextRig) return false;
+
+  return (
+    prevRig.type === nextRig.type &&
+    areTrailPointsEqual(prevRig.railPoints, nextRig.railPoints)
+  );
+}
+
+const StageCameraRigMountComponent: React.FC<StageCameraRigMountProps> = ({
   frameRef,
   uiFrame,
   isBodyVisible,
@@ -32,6 +76,7 @@ export const StageCameraRigMount: React.FC<StageCameraRigMountProps> = ({
   const tripodGroupRef = useRef<THREE.Group | null>(null);
   const cartGroupRef = useRef<THREE.Group | null>(null);
   const cartColumnRef = useRef<THREE.Mesh | null>(null);
+  const lastSyncedCamRef = useRef<StageFrame['stageCamera'] | null>(null);
 
   const stageCam = uiFrame.stageCamera;
   const rig = stageCam.rig;
@@ -96,12 +141,13 @@ export const StageCameraRigMount: React.FC<StageCameraRigMountProps> = ({
     const liveFrame = frameRef.current;
     if (!liveFrame || !isRigVisible) return;
 
-    const isShotDesynced =
-      Boolean(liveFrame.stageCamera.shotId) &&
-      Boolean(stageCam.shotId) &&
-      liveFrame.stageCamera.shotId !== stageCam.shotId;
-
-    const liveCam = isShotDesynced ? stageCam : liveFrame.stageCamera;
+    const { state: liveCam } = resolveGatedState(
+      liveFrame.stageCamera,
+      stageCam,
+      lastSyncedCamRef.current,
+      (cam) => cam.shotId
+    );
+    lastSyncedCamRef.current = liveCam;
     const eye = liveCam.transform.position;
 
     // A. Update Tripod
@@ -132,13 +178,30 @@ export const StageCameraRigMount: React.FC<StageCameraRigMountProps> = ({
     }
   });
 
-  if (!isRigVisible || !rig) {
-    return null;
-  }
-
   const eyeY = Math.max(0.4, stageCam.transform.position.y);
   const apexY = Math.max(0.15, eyeY - 0.35);
   const legSpread = Math.min(0.65, Math.max(0.28, eyeY * 0.28));
+
+  const tripodLegs = useMemo(
+    () =>
+      TRIPOD_LEG_ANGLES.map((angle) => {
+        const footX = Math.sin(angle) * legSpread;
+        const footZ = Math.cos(angle) * legSpread;
+        return {
+          footX,
+          footZ,
+          points: [
+            [0, apexY, 0] as [number, number, number],
+            [footX, 0.008, footZ] as [number, number, number],
+          ],
+        };
+      }),
+    [apexY, legSpread]
+  );
+
+  if (!isRigVisible || !rig) {
+    return null;
+  }
 
   return (
     <group>
@@ -160,29 +223,17 @@ export const StageCameraRigMount: React.FC<StageCameraRigMountProps> = ({
           </mesh>
 
           {/* 3 Splayed Tripod Legs (120 deg apart) */}
-          {[0, (Math.PI * 2) / 3, (Math.PI * 4) / 3].map((angle, i) => {
-            const footX = Math.sin(angle) * legSpread;
-            const footZ = Math.cos(angle) * legSpread;
-
-            return (
-              <group key={`tripod-leg-${i}`}>
-                {/* Leg Strut */}
-                <Line
-                  points={[
-                    [0, apexY, 0],
-                    [footX, 0.008, footZ],
-                  ]}
-                  color={color}
-                  lineWidth={2}
-                />
-                {/* Floor Foot Puck */}
-                <mesh position={[footX, 0.006, footZ]}>
-                  <cylinderGeometry args={[0.032, 0.038, 0.012, 12]} />
-                  <meshBasicMaterial color={color} />
-                </mesh>
-              </group>
-            );
-          })}
+          {tripodLegs.map((leg, i) => (
+            <group key={`tripod-leg-${i}`}>
+              {/* Leg Strut */}
+              <Line points={leg.points} color={color} lineWidth={2} />
+              {/* Floor Foot Puck */}
+              <mesh position={[leg.footX, 0.006, leg.footZ]}>
+                <cylinderGeometry args={[0.032, 0.038, 0.012, 12]} />
+                <meshBasicMaterial color={color} />
+              </mesh>
+            </group>
+          ))}
 
           {/* Floor Ring Footprint */}
           <mesh position={[0, 0.004, 0]} rotation={[-Math.PI / 2, 0, 0]}>
@@ -225,12 +276,12 @@ export const StageCameraRigMount: React.FC<StageCameraRigMountProps> = ({
             </mesh>
 
             {/* 4 Wheels on Rails */}
-            {[-0.2, 0.2].flatMap((wz) => [-0.21, 0.21].map((wx) => (
+            {CART_WHEEL_OFFSETS.map(([wx, wz]) => (
               <mesh key={`wheel-${wx}-${wz}`} position={[wx, 0.024, wz]} rotation={[0, 0, Math.PI / 2]}>
                 <cylinderGeometry args={[0.024, 0.024, 0.03, 12]} />
                 <meshBasicMaterial color={color} />
               </mesh>
-            )))}
+            ))}
 
             {/* Telescoping Vertical Column */}
             <mesh
@@ -246,3 +297,8 @@ export const StageCameraRigMount: React.FC<StageCameraRigMountProps> = ({
     </group>
   );
 };
+
+export const StageCameraRigMount = React.memo(
+  StageCameraRigMountComponent,
+  areRigMountPropsEqual
+);

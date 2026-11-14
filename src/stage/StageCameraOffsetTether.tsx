@@ -12,10 +12,12 @@
  *   - Automatically hides itself when targetOffset magnitude is negligible (< 0.01m).
  */
 
-import React, { useRef, useMemo, useLayoutEffect } from 'react';
+import React, { useEffect, useRef, useMemo, useLayoutEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import type { StageFrame } from '../core/types';
+import { haveEndpointsChanged, type LineEndpoints6 } from './StageCameraFocusRig';
+import { resolveGatedState } from './stageSyncGate';
 
 export interface StageCameraOffsetTetherProps {
   frameRef: React.RefObject<StageFrame>;
@@ -34,7 +36,7 @@ export const StageCameraOffsetTether: React.FC<StageCameraOffsetTetherProps> = (
   const anchorMeshRef = useRef<THREE.Mesh | null>(null);
 
   // Native THREE.Line pre-allocated once to avoid SVG JSX collisions and GC pressure
-  const { lineObject, geo } = useMemo(() => {
+  const { lineObject, geo, mat } = useMemo(() => {
     const geometry = new THREE.BufferGeometry();
     const posAttr = new THREE.BufferAttribute(new Float32Array(6), 3);
     geometry.setAttribute('position', posAttr);
@@ -47,8 +49,19 @@ export const StageCameraOffsetTether: React.FC<StageCameraOffsetTetherProps> = (
       opacity: 0.85,
     });
     const line = new THREE.Line(geometry, material);
-    return { lineObject: line, geo: geometry };
+    return { lineObject: line, geo: geometry, mat: material };
   }, [color]);
+
+  const lastEndpointsRef = useRef<LineEndpoints6 | null>(null);
+  const lastSyncedCamRef = useRef<StageFrame['stageCamera'] | null>(null);
+
+  useEffect(() => {
+    lastEndpointsRef.current = null;
+    return () => {
+      geo.dispose();
+      mat.dispose();
+    };
+  }, [geo, mat]);
 
   const updateTetherTransform = (frame: StageFrame | null) => {
     if (!groupRef.current) return;
@@ -57,7 +70,13 @@ export const StageCameraOffsetTether: React.FC<StageCameraOffsetTetherProps> = (
       return;
     }
 
-    const cam = frame?.stageCamera ?? uiFrame.stageCamera;
+    const { state: cam } = resolveGatedState(
+      frame?.stageCamera,
+      uiFrame.stageCamera,
+      lastSyncedCamRef.current,
+      (c) => c.shotId
+    );
+    lastSyncedCamRef.current = cam;
     const offset = cam.targetOffset;
     const offsetMag = offset
       ? Math.hypot(offset.x, offset.y, offset.z)
@@ -79,12 +98,25 @@ export const StageCameraOffsetTether: React.FC<StageCameraOffsetTetherProps> = (
     }
 
     // 2. Update line vertices between baseTarget and target
-    const posAttr = geo.attributes.position as THREE.BufferAttribute | undefined;
-    if (posAttr) {
-      posAttr.setXYZ(0, base.x, base.y, base.z);
-      posAttr.setXYZ(1, aim.x, aim.y, aim.z);
-      posAttr.needsUpdate = true;
-      lineObject.computeLineDistances();
+    const nextEndpoints: LineEndpoints6 = [
+      base.x,
+      base.y,
+      base.z,
+      aim.x,
+      aim.y,
+      aim.z,
+    ];
+    if (haveEndpointsChanged(lastEndpointsRef.current, nextEndpoints)) {
+      const posAttr = geo.attributes.position as
+        | THREE.BufferAttribute
+        | undefined;
+      if (posAttr) {
+        posAttr.setXYZ(0, base.x, base.y, base.z);
+        posAttr.setXYZ(1, aim.x, aim.y, aim.z);
+        posAttr.needsUpdate = true;
+        lineObject.computeLineDistances();
+        lastEndpointsRef.current = nextEndpoints;
+      }
     }
   };
 

@@ -111,6 +111,7 @@ stageflow/
 │   │   ├── DioramaCanvas.tsx        # Root R3F <Canvas>, lighting, fog, and priority -1 frame ticker
 │   │   ├── BlueprintStageScene.tsx  # Shared lighting, metric floor grid, and mannequins
 │   │   ├── BlueprintFloorGrid.tsx   # Metric floor grid (1m / 0.25m), perimeter frame & compass labels
+│   │   ├── stageSyncGate.ts         # Layer 4 boundary desync gate holding last-synced 60fps state across async commits
 │   │   ├── ObserverCameraRig.tsx    # Viewport PerspectiveCamera + OrbitControls handover & POV cuts
 │   │   ├── StageCameraRig.tsx       # 3D camera prop, rectangular gate frustum, sliding focus plane & path line
 │   │   ├── StageCameraFocusRig.tsx  # 3D Near/Far DoF limit brackets & emerald off-axis focus tether
@@ -209,6 +210,7 @@ stageflow/
         ├── mediaDrivers.test.ts
         ├── billboardLabelLod.test.ts
         ├── useIsMobile.test.ts
+        ├── stagePerfHelpers.test.ts
         └── recorder.test.ts
 ```
 

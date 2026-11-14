@@ -27,6 +27,7 @@ export class Html5MediaDriver implements MediaClockDriver {
 
   private handleSeeked = () => {
     this.pendingSeekSec = null;
+    this.callbacks.onSeekSettled?.();
   };
 
   private handleLoadedMetadata = () => {

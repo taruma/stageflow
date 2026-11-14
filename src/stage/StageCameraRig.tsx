@@ -26,6 +26,7 @@ import {
 } from './StageCameraFocusRig';
 import { StageCameraOffsetTether } from './StageCameraOffsetTether';
 import { StageCameraRigMount } from './StageCameraRigMount';
+import { resolveGatedState } from './stageSyncGate';
 
 /**
  * Static normalized unit frustum pyramid coordinates (depth Z = 1, bounds [-1, 1]).
@@ -59,6 +60,11 @@ const UNIT_FRUSTUM = {
   ] as Array<[number, number, number]>,
 };
 
+const CAMERA_LABEL_STEM_POINTS: [number, number, number][] = [
+  [0, 0.12, -0.14],
+  [0, 0.58, -0.14],
+];
+
 export interface StageCameraRigProps {
   frameRef: React.RefObject<StageFrame>;
   cameraMode: CameraViewMode;
@@ -78,6 +84,7 @@ export const StageCameraRig: React.FC<StageCameraRigProps> = ({
   const frustumGroupRef = useRef<THREE.Group | null>(null);
   const focusPlaneGroupRef = useRef<THREE.Group | null>(null);
   const targetRingRef = useRef<THREE.Mesh | null>(null);
+  const lastSyncedStageCamRef = useRef<StageFrame['stageCamera'] | null>(null);
 
   const stageCam = uiFrame.stageCamera;
   const pose = stageCam.transform.pose;
@@ -132,56 +139,9 @@ export const StageCameraRig: React.FC<StageCameraRigProps> = ({
     return stageCam.trajectoryPoints.map((pt) => [pt.x, pt.y, pt.z]);
   }, [stageCam.showPath, stageCam.trajectoryPoints]);
 
-  // Synchronous pre-paint setup to initialize transform and frustum scale before first paint
-  useLayoutEffect(() => {
+  const applyRigTransform = (cam: StageFrame['stageCamera']) => {
     if (!rigGroupRef.current) return;
-    const liveFrame = frameRef.current;
-    const isShotDesynced =
-      Boolean(liveFrame?.stageCamera.shotId) &&
-      Boolean(stageCam.shotId) &&
-      liveFrame?.stageCamera.shotId !== stageCam.shotId;
-
-    const effectiveTransform = isShotDesynced
-      ? stageCam.transform
-      : liveFrame?.stageCamera.transform ?? stageCam.transform;
-
-    rigGroupRef.current.position.set(
-      effectiveTransform.position.x,
-      effectiveTransform.position.y,
-      effectiveTransform.position.z
-    );
-    rigGroupRef.current.lookAt(
-      effectiveTransform.target.x,
-      effectiveTransform.target.y,
-      effectiveTransform.target.z
-    );
-
-    if (rollGroupRef.current) {
-      rollGroupRef.current.rotation.z = -effectiveTransform.pose.roll;
-    }
-
-    const liveCam = isShotDesynced
-      ? stageCam
-      : liveFrame?.stageCamera ?? stageCam;
-    syncFrustumAndFocus(liveCam);
-  }, [frameRef, stageCam]);
-
-  // Update 3D position, orientation, and frustum scale imperatively at 60fps/144fps
-  useFrame(() => {
-    const liveFrame = frameRef.current;
-    if (!liveFrame || !rigGroupRef.current) return;
-
-    // Gated Cut: hold the 3D Stage Camera transform at the committed React shot
-    // until React flushes the new shot to the DOM and JSX tree (~16ms).
-    const isShotDesynced =
-      Boolean(liveFrame.stageCamera.shotId) &&
-      Boolean(stageCam.shotId) &&
-      liveFrame.stageCamera.shotId !== stageCam.shotId;
-
-    const transform = isShotDesynced
-      ? stageCam.transform
-      : liveFrame.stageCamera.transform;
-
+    const { transform } = cam;
     rigGroupRef.current.position.set(
       transform.position.x,
       transform.position.y,
@@ -197,9 +157,42 @@ export const StageCameraRig: React.FC<StageCameraRigProps> = ({
       rollGroupRef.current.rotation.z = -transform.pose.roll;
     }
 
-    // Update Frustum Pyramid scale and Focus Plane position at native 60fps/144fps
-    const liveCam = isShotDesynced ? stageCam : liveFrame.stageCamera;
-    syncFrustumAndFocus(liveCam);
+    syncFrustumAndFocus(cam);
+  };
+
+  // Synchronous pre-paint setup to initialize transform and frustum scale before first paint
+  useLayoutEffect(() => {
+    if (!rigGroupRef.current) return;
+    const { state: resolvedCam, isDesynced: isShotDesynced } = resolveGatedState(
+      frameRef.current?.stageCamera,
+      stageCam,
+      lastSyncedStageCamRef.current,
+      (cam) => cam.shotId
+    );
+    lastSyncedStageCamRef.current = resolvedCam;
+    applyRigTransform(resolvedCam);
+
+    if (trajectoryGroupRef.current) {
+      trajectoryGroupRef.current.visible =
+        stageCam.showPath && !isShotDesynced;
+    }
+  }, [frameRef, stageCam]);
+
+  // Update 3D position, orientation, and frustum scale imperatively at 60fps/144fps
+  useFrame(() => {
+    const liveFrame = frameRef.current;
+    if (!liveFrame || !rigGroupRef.current) return;
+
+    // Gated Cut: hold the last rendered 60fps Stage Camera transform while awaiting
+    // React's flush of the new shot (~16ms), avoiding stale uiFrame backward rewinds.
+    const { state: resolvedCam, isDesynced: isShotDesynced } = resolveGatedState(
+      liveFrame.stageCamera,
+      stageCam,
+      lastSyncedStageCamRef.current,
+      (cam) => cam.shotId
+    );
+    lastSyncedStageCamRef.current = resolvedCam;
+    applyRigTransform(resolvedCam);
 
     // Suppress trajectory path ghosting during the 1-frame async transition between shots
     if (trajectoryGroupRef.current) {
@@ -271,10 +264,7 @@ export const StageCameraRig: React.FC<StageCameraRigProps> = ({
           <>
             {labelMode !== 'off' && (
               <Line
-                points={[
-                  [0, 0.12, -0.14],
-                  [0, 0.58, -0.14],
-                ]}
+                points={CAMERA_LABEL_STEM_POINTS}
                 color={color}
                 transparent
                 opacity={0.45}

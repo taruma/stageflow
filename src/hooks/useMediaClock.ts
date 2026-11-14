@@ -38,7 +38,8 @@ export interface UseMediaClockResult {
 
 export function useMediaClock(
   score: StageScore,
-  videoOverrideUrl?: string | null
+  videoOverrideUrl?: string | null,
+  onTimeJump?: () => void
 ): UseMediaClockResult {
   const effectiveUrl = videoOverrideUrl || score.videoUrl;
   const sourceInfo = useMemo(
@@ -50,6 +51,8 @@ export function useMediaClock(
   const html5VideoRef = useRef<HTMLVideoElement | null>(null);
   const youtubeContainerRef = useRef<HTMLDivElement | null>(null);
   const lastManualSeekIdRef = useRef<number>(0);
+  const onTimeJumpRef = useRef(onTimeJump);
+  onTimeJumpRef.current = onTimeJump;
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackRate, setPlaybackRateState] = useState(1.0);
@@ -80,6 +83,9 @@ export function useMediaClock(
       },
       onEnded: () => {
         setIsPlaying(false);
+      },
+      onSeekSettled: () => {
+        onTimeJumpRef.current?.();
       },
     };
 
@@ -123,6 +129,7 @@ export function useMediaClock(
       if (drv.getCurrentTime() >= drv.getDuration() - 0.05) {
         drv.seek(0);
         lastManualSeekIdRef.current += 1;
+        onTimeJumpRef.current?.();
       }
       drv.play();
     }
@@ -137,6 +144,7 @@ export function useMediaClock(
     if (!drv) return;
     drv.seek(targetSec);
     lastManualSeekIdRef.current += 1;
+    onTimeJumpRef.current?.();
   }, []);
 
   const stepFrames = useCallback((frameCount: number) => {
@@ -148,6 +156,7 @@ export function useMediaClock(
     const nextSec = drv.getCurrentTime() + frameCount * FRAME_STEP_SECONDS;
     drv.seek(nextSec);
     lastManualSeekIdRef.current += 1;
+    onTimeJumpRef.current?.();
   }, []);
 
   const setPlaybackRate = useCallback((rate: number) => {

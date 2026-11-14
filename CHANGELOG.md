@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Performance
+
+#### Idle WebGL/CPU Loop Elimination & Per-Frame Diorama Optimizations (GH Issue #9)
+
+- **On-Demand Canvas Rendering & Seek Synchronization (`DioramaCanvas.tsx`, `StageCamMonitorCanvas.tsx`, `ObserverCameraRig.tsx`, `BlueprintFloorGrid.tsx`, `useMediaClock.ts`, `InteractiveStudioApp.tsx`, `html5MediaDriver.ts`, `youtubeMediaDriver.ts`, `mediaTypes.ts`)**:
+  - Switched both 3D `<Canvas>` mounts to `frameloop={isPlaying ? 'always' : 'demand'}` with `<CanvasDemandInvalidator>` and `<MonitorDemandInvalidator>` so paused viewports draw zero redundant WebGL frames while still invalidating immediately on orbits, split resizes, prop/score edits, DoF toggles, camera preset clicks (`cameraPresetSeq`), and async `<Text onSync={invalidate}>` font loads (`BlueprintFloorGrid`).
+  - Added `onSeekSettled` callback to `MediaClockStateCallbacks` (emitted by `Html5MediaDriver` `seeked` and `YouTubeMediaDriver` settled paused state, using explicit `Number.isFinite` polling so `t = 0` is never treated as falsy) and optional `onTimeJump` callback in `useMediaClock` (wired across `seek()`, `stepFrames()`, end-of-timeline `togglePlay` rewinds, and `InteractiveStudioApp.tsx` with narrowed `[evaluateTick60fps, forceSyncUi]` dependencies) to guarantee synchronous evaluation + demand wakeup on paused manual seeks.
+  - Updated `ObserverCameraRig` to detect viewport `sizeChanged` transitions while paused in `'scripted'` mode and call `invalidate()` on preset snaps.
+- **Idle Frame Short-Circuit & Lazy Initialization (`useStageFrameLoop.ts`)**:
+  - Replaced repeated per-render `computeStageFrame(0, score)` initialization with lazy `initFrameRef` evaluation.
+  - Added `canReuseIdleStageFrame()` guard in `evaluateTick60fps()` to bypass `computeStageFrame()` when paused at an unchanged timestamp, unchanged `score` reference, and zero pending manual seeks.
+- **10Hz Re-Render Memoization & Inline Geometry Hoisting (`DirectionalMannequin.tsx`, `BlueprintFloorGrid.tsx`, `StageCameraRigMount.tsx`, `StageCameraRig.tsx`)**:
+  - Memoized `DirectionalMannequin` with `areDirectionalMannequinPropsEqual` + structural `areTrailPointsEqual` comparator so 10Hz `uiSnapshot` ticks skip unaffected mannequins.
+  - Memoized `BlueprintFloorGrid` via `React.memo` and `StageCameraRigMount` via `areRigMountPropsEqual` (preserving updates on crane `y`, `shotId`, `showRig`, and dolly `railPoints` changes while skipping horizontal 10Hz ticks).
+  - Hoisted module-level `CAMERA_LABEL_STEM_POINTS`, `TRIPOD_LEG_ANGLES`, and `CART_WHEEL_OFFSETS` arrays and memoized `tripodLegs` via `useMemo` to avoid per-render `<Line>` array churn.
+- **Delta-Guarded Line/DOM Updates & Three.js Disposal (`StageBillboardLabel.tsx`, `StageCameraFocusRig.tsx`, `StageCameraOffsetTether.tsx`, `DirectionalMannequin.tsx`, `BlueprintFloorGrid.tsx`, `StageCamDofEffect.tsx`)**:
+  - Cached written pill/dot `visibility`, `opacity`, and `transform` strings plus mounted DOM node identities inside `StageBillboardLabel` (resetting cache on `!visible` and removing redundant static `visibility`/`opacity` keys from `dotRef`'s JSX `style` prop).
+  - Extracted `haveEndpointsChanged()` in `StageCameraFocusRig.tsx` and reused it in `StageCameraOffsetTether.tsx` to skip `posAttr.needsUpdate = true` and `computeLineDistances()` when tether endpoints are unchanged.
+  - Added `useEffect` GPU `.dispose()` cleanup for `ringGeom` (`BlueprintFloorGrid`), `boxFootprintGeometry` (`DirectionalMannequin`), `BufferGeometry` + `LineDashedMaterial` (`StageCameraFocusTether`, `StageCameraOffsetTether`), and `quadGeometry` (`StageCamDofEffect`).
+- **Precomputed Shader Optical Scale & Throttled MP4 Export Progress (`StageCamDofEffect.tsx`, `useWebVideoExport.ts`)**:
+  - Moved the frame-invariant thin-lens denominator (`computeDofOpticalScale`) out of the fragment shader into CPU uniform `uOpticalScale`.
+  - Replaced per-2-frame React progress & event-loop yields during WebCodecs MP4 export with `~100ms` wall-clock throttling (`shouldFlushExportProgress`), and added a post-yield `abortRef.current` guard inside the encoder backpressure loop so cancelled exports never flush stale progress.
+- **Verification & Unit Tests (`tests/unit/stagePerfHelpers.test.ts`, `docs/`)**:
+  - Added `tests/unit/stagePerfHelpers.test.ts` covering `canReuseIdleStageFrame`, `areTrailPointsEqual`, `areDirectionalMannequinPropsEqual`, `areRigMountPropsEqual`, `computeDofOpticalScale`, `haveEndpointsChanged`, `shouldFlushExportProgress`, and `resolveGatedState`, and synchronized domain specifications & `ARCHITECTURE_FILE_MAP.md`.
+
+### Fixed
+
+- **Split-Second Shot Boundary Teleport & Rewind Glitch Across Gated Stage Rigs (`src/stage/stageSyncGate.ts`, `DirectionalMannequin.tsx`, `StageCameraRigMount.tsx`, `StageCamViewRig.tsx`, `ObserverCameraRig.tsx`, `StageCamDofEffect.tsx`, `StageCameraRig.tsx`, `StageCameraFocusRig.tsx`, `StageCameraOffsetTether.tsx`, `DioramaCanvas.tsx`)**:
+  - Added [`resolveGatedState`](src/stage/stageSyncGate.ts) so imperatively animated 3D entities, camera mounts, Stage Cam POV/monitor rigs, frustums, DoF focus brackets/tethers, target offset tethers, and the WebGL2 DoF blur shader hold their **last rendered 60fps state** (`lastSynced` ref matching the committed `shotId`/`cueId`) during the ~1-frame async transition across shot or cue boundaries, eliminating 3–10s backward teleports on `React.memo`-frozen `initialState`/`stageCam` props and ~95ms rewinds to stale 10Hz `uiFrame` snapshots.
+  - Hoisted `tripodLegs` `useMemo` unconditionally above the early `return null` in `StageCameraRigMount.tsx` to preserve React hook call order across `stage-pov` / `showRig` / rig-type transitions, synced `trajectoryGroupRef.current.visible` inside `StageCameraRig.tsx`'s `useLayoutEffect`, replaced post-paint `useEffect([..., uiFrame])` in `StageCamViewRig.tsx` with `useLayoutEffect` backed by `resolveGatedState`, and guarded `DioramaCanvas.tsx`'s `CanvasDemandInvalidator` with `if (isPlaying) return;` to avoid redundant mid-commit `evaluateTick60fps()` evaluations during active playback.
+
 ## [1.1.0] - 2026-11-14
 
 ### Changed

@@ -5,8 +5,8 @@
  * Dynamically reacts to the active theme palette with zero extra draw calls.
  */
 
-import React, { useMemo } from 'react';
-import { Canvas } from '@react-three/fiber';
+import React, { useLayoutEffect, useMemo } from 'react';
+import { Canvas, useThree } from '@react-three/fiber';
 import type {
   AppThemeCategory,
   LabelDisplayMode,
@@ -32,6 +32,41 @@ export interface StageCamMonitorCanvasProps {
   themeCategory?: AppThemeCategory;
 }
 
+const MonitorDemandInvalidator: React.FC<{
+  score: StageScore;
+  uiFrame: StageFrame;
+  labelMode: LabelDisplayMode;
+  isPlaying: boolean;
+  dofBlurEnabled: boolean;
+  themeCategory: AppThemeCategory;
+}> = ({
+  score,
+  uiFrame,
+  labelMode,
+  isPlaying,
+  dofBlurEnabled,
+  themeCategory,
+}) => {
+  const invalidate = useThree((state) => state.invalidate);
+  const size = useThree((state) => state.size);
+
+  useLayoutEffect(() => {
+    invalidate();
+  }, [
+    score,
+    uiFrame,
+    labelMode,
+    isPlaying,
+    dofBlurEnabled,
+    themeCategory,
+    size.width,
+    size.height,
+    invalidate,
+  ]);
+
+  return null;
+};
+
 export const StageCamMonitorCanvas: React.FC<StageCamMonitorCanvasProps> = ({
   score,
   frameRef,
@@ -56,6 +91,7 @@ export const StageCamMonitorCanvas: React.FC<StageCamMonitorCanvasProps> = ({
     <div className="relative w-full h-full bg-app select-none overflow-hidden">
       {/* 1. True 3D WebGL Viewport locked to Stage Camera */}
       <Canvas
+        frameloop={isPlaying ? 'always' : 'demand'}
         gl={{ antialias: true, powerPreference: 'high-performance' }}
         dpr={[1, 2]}
         camera={{
@@ -64,6 +100,14 @@ export const StageCamMonitorCanvas: React.FC<StageCamMonitorCanvasProps> = ({
           far: 250,
         }}
       >
+        <MonitorDemandInvalidator
+          score={score}
+          uiFrame={uiFrame}
+          labelMode={labelMode}
+          isPlaying={isPlaying}
+          dofBlurEnabled={dofBlurEnabled}
+          themeCategory={themeCategory}
+        />
         <color attach="background" args={[themeColors.bg]} />
         <fog attach="fog" args={[themeColors.fog, 45, 160]} />
 
