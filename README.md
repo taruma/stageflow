@@ -11,9 +11,9 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/taruma/stageflow/releases"><img src="https://img.shields.io/badge/version-1.0.0-blue.svg?style=flat-square" alt="Version 1.0.0" /></a>
+  <a href="https://github.com/taruma/stageflow/releases"><img src="https://img.shields.io/badge/version-1.1.0-blue.svg?style=flat-square" alt="Version 1.1.0" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-yellow.svg?style=flat-square" alt="License MIT" /></a>
-  <a href="https://github.com/taruma/stageflow"><img src="https://img.shields.io/badge/tests-229%20passed-brightgreen.svg?style=flat-square" alt="Vitest 229 Passed" /></a>
+  <a href="https://github.com/taruma/stageflow"><img src="https://img.shields.io/badge/tests-236%20passed-brightgreen.svg?style=flat-square" alt="Vitest 236 Passed" /></a>
   <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.8-blue.svg?style=flat-square" alt="TypeScript 5.8" /></a>
   <a href="https://react.dev/"><img src="https://img.shields.io/badge/React-19-61dafb.svg?style=flat-square" alt="React 19" /></a>
   <a href="https://threejs.org/"><img src="https://img.shields.io/badge/Three.js-r175-black.svg?style=flat-square" alt="Three.js r175" /></a>
@@ -150,13 +150,13 @@ Open `http://localhost:5173` in your browser.
 | Command | Task | Description |
 | :--- | :--- | :--- |
 | `npm run dev` | **Local Studio** | Starts Vite development server at `localhost:5173` |
-| `npm test` | **Unit Test Suite** | Runs 229 deterministic unit tests via Vitest |
+| `npm test` | **Unit Test Suite** | Runs 236 deterministic unit tests via Vitest |
 | `npm run build` | **Typecheck & Bundle** | Strict TypeScript check (`tsc -b`) and Vite production build |
 | `npm run lint` | **Code Linter** | Ultra-fast static analysis via `oxlint` |
 | `npm run record` | **Viewport Recorder** | Records 60fps video via headless Playwright + FFmpeg |
 | `npm run record:batch` | **Batch Recorder** | Renders all 7 factory blueprints across both camera views |
 
-> 📹 For full recording options, resolutions, codecs, and recipes, see the [**Viewport Video Recorder Guide**](docs/VIEWPORT_RECORDER_GUIDE.md).
+> 📹 For full CLI recording options, resolutions, codecs, and recipes, see the [**Viewport Video Recorder Guide**](docs/VIEWPORT_RECORDER_GUIDE.md). For quick client-side exports without Node/FFmpeg, use **`File ▾ → Export Video (.mp4)...`** directly in the studio (supports **Stage Cam POV** and **16:9 Observer Diorama** views).
 
 ---
 
@@ -195,7 +195,7 @@ graph TD
 * **Media & Audio Engine**: HTML5 Video, YouTube IFrame API (60fps extrapolation), Web Audio API
 * **State & Persistence**: [IndexedDB (`idb`)](https://github.com/jakearchibald/idb), `localStorage`
 * **Headless Video Export**: [Playwright](https://playwright.dev/) (Chromium), [FFmpeg](https://ffmpeg.org/)
-* **Quality & Tooling**: [Vitest](https://vitest.dev/) (229 deterministic tests), [oxlint](https://oxc.rs/)
+* **Quality & Tooling**: [Vitest](https://vitest.dev/) (236 deterministic tests), [oxlint](https://oxc.rs/)
 
 ---
 

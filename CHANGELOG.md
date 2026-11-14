@@ -7,6 +7,59 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-11-14
+
+### Changed
+
+- **Version Bump & Release Preparation (`package.json`, `package-lock.json`, `src/ui/AppInfoModal.tsx`, `README.md`)**:
+  - Bumped application version from `1.0.0` to `1.1.0` across package manifest, lockfile, and `AppInfoModal.tsx` (`APP_VERSION`).
+  - Updated `README.md` version (`1.1.0`) and Vitest (`236 passed`) badges, tech stack test count, and in-browser WebCodecs MP4 export description (`Stage Cam POV` and `16:9 Observer Diorama`).
+
+### Fixed
+
+- **Split-Pane Observer Focal Length Telemetry Leak (`src/stage/ObserverCameraRig.tsx`)**:
+  - Tracked the un-adapted optical focal length (`lastAppliedFocalLengthMmRef`) inside `applyTransformImperatively` instead of reverse-converting the canvas-adapted `PerspectiveCamera.fov` via `verticalFovDegToFocalLengthMm` inside `handleControlsChange`.
+  - Prevents narrow split-workspace layouts (where `computeAdaptiveDioramaFovDeg` widens vertical FOV to preserve horizontal stage framing) from emitting distorted equivalent lens values (e.g., `17mm`–`21mm` instead of `35mm`) in the `[OBS]` Telemetry Capsule and copied YAML snippets during free orbit or preset snaps.
+
+### Added
+
+#### Observer Diorama Target Camera for In-Browser MP4 Export (GH Issue #5)
+
+- **Observer Export Aspect Ratio & Filename Math (`src/core/exportMath.ts`, `tests/unit/exportMath.test.ts`)**:
+  - Added `ExportTargetCamera` (`'stage-cam' | 'observer'`), `ExportObserverAngleMode` (`'scripted' | 'current-viewport'`), and `resolveExportAspectRatio()` locking Observer Diorama exports to `16:9` (`1920×1080` / `1280×720`) regardless of `score.aspectRatio`.
+  - Extended `formatExportMp4Filename()` to emit `_observer_` vs `_stage_cam_` suffixes with unit test coverage.
+- **Offscreen Observer Diorama Schematic Renderer (`src/stage/CleanStageCamExportCanvas.tsx`, `src/hooks/useWebVideoExport.ts`)**:
+  - Added `ExportCameraViewRig` supporting `Stage Cam POV`, `Scripted Observer`, and `Current Viewport Angle` (`sphericalToCartesian(liveViewportPose, 16/9)`).
+  - Mounts `StageCameraRig` (`cameraMode="scripted"`, `labelMode="off"`) in Observer mode so 3D camera chassis, tripod/dolly tracks, rectangular gate frustums, focus planes, DoF brackets, and trajectory curves render cleanly while suppressing `StageCamDofEffect`.
+- **Modular Export Config Form & Studio Integration (`src/ui/CleanVideoExportConfigForm.tsx`, `src/ui/CleanVideoExportModal.tsx`, `src/ui/InteractiveStudioApp.tsx`)**:
+  - Extracted `CleanVideoExportConfigForm.tsx` with `Target Camera` (`Stage Cam POV` | `Observer Diorama (16:9)`), `Observer Angle` (`Scripted Observer` | `Current Viewport Angle`), disabled `Optical DoF Blur` state for Observer, and an inline WebGL-only schematic notice.
+  - Wired `liveViewportPose` synchronization via `stageLoop.forceSyncUi()` on modal open.
+
+#### In-Browser Clean Film Gate MP4 Export (GH Issue #4)
+
+- **Pure Export Resolution, Timing & Filename Math (`src/core/exportMath.ts`, `tests/unit/exportMath.test.ts`)**:
+  - Added Layer 1 pure utilities `roundToEven`, `computeExportDimensions`, `computeExportBitrate`, `computeExportTimeRange`, `computeExportFrameTimestampSec`, `sanitizeExportSlug`, and `formatExportMp4Filename` with zero React/DOM/Three.js dependencies.
+  - Enforces H.264 even-integer pixel dimensions across `1080p` and `720p` tiers for wide (`16:9`, `1.85:1`, `2.39:1`), standard (`4:3`), and vertical (`9:16`) aspect ratios.
+- **WebCodecs + `mp4-muxer` Deterministic Video Exporter (`src/hooks/useWebVideoExport.ts`, `src/stage/CleanStageCamExportCanvas.tsx`, `package.json`)**:
+  - Added `mp4-muxer` (`^5.2.2`) for client-side MP4 container muxing.
+  - Implemented `CleanStageCamExportCanvas.tsx` mounting an offscreen `<Canvas frameloop="never" dpr={1}>` strictly during active exports, reusing `BlueprintStageScene`, `StageCamViewRig`, and `StageCamDofEffect` (inheriting the active Stage Cam `[BLUR]` toggle) at `gateScale = 1.0` with `labelMode="off"` and zero viewfinder borders.
+  - Implemented `useWebVideoExport.ts` with WebCodecs `VideoEncoder` H.264 profile negotiation (`avc1.640028` → `avc1.640033` → `avc1.4d002a` → `avc1.42001f`), `encodeQueueSize` backpressure control, immediate `VideoFrame.close()` memory release, throttled thumbnail preview updates, and clean cancellation.
+- **Directorial Export Modal & File Menu Integration (`src/ui/CleanVideoExportModal.tsx`, `src/ui/header/FileMenuDropdown.tsx`, `src/ui/WorkspaceHeader.tsx`, `src/ui/InteractiveStudioApp.tsx`)**:
+  - Added `File ▾ → Export Video (.mp4)...` entry point that pauses playback and opens `CleanVideoExportModal.tsx`.
+  - Supports `1080p` / `720p` resolution, `60 fps` / `24 fps` cadence, `Entire Scene` / `Current Shot` range, `Light` (default) / `Warm` / `Dark` stage palettes, and `Optical DoF Blur` (`On` / `Off`, initialized from the active Stage Cam `[BLUR]` toggle) with live progress telemetry and thumbnail preview.
+
+#### Workspace Tooling & Release Documentation
+
+- **Release Notes Archive (`docs/releases/v1.1.0.md`, `docs/ARCHITECTURE_FILE_MAP.md`)**:
+  - Authored GitHub release notes for StageFlow `v1.1.0` covering in-browser WebCodecs MP4 export (Stage Cam POV & 16:9 Observer Diorama), the `stageflow-score-creator` workspace skill, and the split-pane Observer focal length telemetry fix; indexed `v1.1.0.md` in `docs/ARCHITECTURE_FILE_MAP.md`.
+
+- **Dedicated Choreography Score Creator & Directorial Mentor Skill (`.agents/skills/stageflow-score-creator/SKILL.md`, `AGENTS.md`, `docs/ARCHITECTURE_FILE_MAP.md`)**:
+  - Introduced `stageflow-score-creator` workspace skill dedicated to authoring, scaffolding, explaining, and teaching StageFlow YAML scores (`*.yaml`).
+  - Enforced strict documentation-only boundary: explicitly instructs agents never to inspect or dissect `src/` source code files, relying exclusively on authoritative documentation ([`docs/YAML_AUTHORING_GUIDE.md`](docs/YAML_AUTHORING_GUIDE.md), [`docs/STAGEFLOW_SCRIPT_SPECIFICATION.md`](docs/STAGEFLOW_SCRIPT_SPECIFICATION.md), and [`docs/SCORE_CATALOG.md`](docs/SCORE_CATALOG.md)).
+  - Enforced zero repository pollution: scores are strictly temporary, output directly in chat inside formatted YAML code blocks for copying into the web app's live in-browser YAML Drawer / Editor without dirtying Git.
+  - Built-in pedagogical mentorship model: explains the directorial rationale behind decoupled actor blocking (`blocking:`), full-frame lens selections (`24mm`, `35mm`, `50mm`, `85mm`), orthogonal focus projection (`focus: "<id>"`), and derivative-matched continuous kinematics.
+  - Linked to SSOT documentation headings across coordinate geometry, optics, physical rigs, and the 8 production recipes.
+
 ## [1.0.0] - 2026-11-10
 
 ### Added

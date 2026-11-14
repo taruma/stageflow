@@ -21,6 +21,7 @@ $$\texttt{src/core/} \longrightarrow \texttt{src/media/} \longrightarrow \texttt
 stageflow/
 ├── .agents/                         # Workspace Skills & Customizations
 │   └── skills/
+│       ├── stageflow-score-creator/     # Choreography Score Authoring & Directorial Mentor Skill (SKILL.md)
 │       ├── stageflow-score-debugger/    # Choreography Score Kinematic & Visual Debugger Skill (SKILL.md)
 │       └── stageflow-viewport-recorder/ # 60fps Viewport Video Recorder Skill (SKILL.md)
 ├── AGENTS.md                        # Root governance, workflow rules & invariant router (< 24 KB)
@@ -28,7 +29,8 @@ stageflow/
 ├── README.md                        # Quickstart overview & CLI command reference
 ├── docs/                            # Detailed technical & architectural specifications (SSOT)
 │   ├── releases/                    # Versioned GitHub release notes archive
-│   │   └── v1.0.0.md                # Release notes for StageFlow v1.0.0 initial release
+│   │   ├── v1.0.0.md                # Release notes for StageFlow v1.0.0 initial release
+│   │   └── v1.1.0.md                # Release notes for StageFlow v1.1.0 feature release
 │   ├── ARCHITECTURE_FILE_MAP.md     # Exhaustive repository file tree & 5-layer module index
 │   ├── STAGEFLOW_SCRIPT_SPECIFICATION.md # Engine SSOT: mathematical model, optics & AST contract
 │   ├── YAML_AUTHORING_GUIDE.md      # Authoring SSOT: quickstart, YAML schema, aliases & cookbook
@@ -65,6 +67,7 @@ stageflow/
 │   │   ├── types.ts                 # Canonical interfaces (StageScore, ShotCue, ObserverShotCue, BlockingCueSpec, StageFrame)
 │   │   ├── constants.ts             # Metric bounds, sensor constants, blueprint color palette
 │   │   ├── opticsMath.ts            # Focal length (mm) <-> Vertical FOV (deg), Rectangular Gate & Thin-Lens DoF math
+│   │   ├── exportMath.ts            # Pure even-dimension H.264 bounds, bitrate, time-range & MP4 filename helpers
 │   │   ├── sphericalMath.ts         # Degrees <-> Radians, Spherical <-> Cartesian, shortestAngleDiff
 │   │   ├── maneuvers.ts             # 9 easing curves & 11 3D camera trajectory maneuvers
 │   │   ├── dofEvaluator.ts          # Stateless focus distance, rack-focus interpolation & thin-lens DoF evaluator
@@ -100,7 +103,8 @@ stageflow/
 │   │   ├── useStudioDisplaySettings.ts # 3D diorama label modes, guides, DoF blur & 'L'/'G'/'B' hotkeys
 │   │   ├── useToastNotifications.ts # Floating toast notification queue & auto-dismiss timers
 │   │   ├── useIsMobile.ts           # Zero-polling responsive mobile breakpoint tracker (<768px)
-│   │   └── useAppShellTheme.ts      # SceneFlow theme hook (Auto/Dark/Warm/Light) & transition suppression
+│   │   ├── useAppShellTheme.ts      # SceneFlow theme hook (Auto/Dark/Warm/Light) & transition suppression
+│   │   └── useWebVideoExport.ts     # WebCodecs H.264 VideoEncoder + mp4-muxer deterministic MP4 exporter hook
 │   ├── stage/                       # Layer 4: React Three Fiber 3D Blueprint Diorama
 │   │   ├── dioramaTheme.ts          # Adaptive theme clear colors, fog & metric grid line mapping
 │   │   ├── cameraPresets.ts         # Directorial angle presets (Top, Iso, Front, Side) & spherical math
@@ -115,6 +119,7 @@ stageflow/
 │   │   ├── StageCamViewRig.tsx      # Stage Camera POV lock controller for procedural monitor
 │   │   ├── StageCamDofEffect.tsx    # Opt-in single-pass WebGL2 thin-lens Depth-of-Field blur effect
 │   │   ├── StageCamMonitorCanvas.tsx# True 3D Stage Cam monitor with optical safe-action HUD & DoF blur toggle
+│   │   ├── CleanStageCamExportCanvas.tsx # Offscreen R3F canvas (Stage Cam 1:1 gate & 16:9 Observer schematic) for MP4 export
 │   │   ├── DirectionalMannequin.tsx # Stylized character/prop proxies with rigid anatomy, telescoping torso, facing visor & floor trails
 │   │   ├── labelLodMath.ts          # Pure 3D billboard label distance LOD, opacity hierarchy & z-index math
 │   │   └── StageBillboardLabel.tsx  # Crisp 3D HTML floating identity badges & distance-collapsed glowing dots
@@ -176,6 +181,8 @@ stageflow/
 │   │   ├── StageCamViewfinderOverlay.tsx # Optical film gate, look-around mask & composition guides
 │   │   ├── ConfirmResetModal.tsx    # Accessible confirmation dialog modal for discarding drafts
 │   │   ├── ConfirmRemoteScoreModal.tsx # Accessible confirmation & conflict dialog modal for external/remote scores
+│   │   ├── CleanVideoExportModal.tsx # In-browser Clean Stage Cam & Observer MP4 export progress modal
+│   │   ├── CleanVideoExportConfigForm.tsx # Export camera, angle, resolution, fps, range & palette form controls
 │   │   ├── StorageStatusBadge.tsx   # Visual status badge (Bundled vs. IndexedDB draft)
 │   │   └── InteractiveStudioApp.tsx # 3D choreography diorama & split workspace orchestrator
 │   ├── App.tsx                      # Code-split root mode switcher & suspense router
@@ -184,6 +191,7 @@ stageflow/
 └── tests/
     └── unit/                        # Vitest deterministic unit test suites
         ├── opticsMath.test.ts
+        ├── exportMath.test.ts
         ├── sphericalMath.test.ts
         ├── cameraRigs.test.ts
         ├── entityEngine.test.ts

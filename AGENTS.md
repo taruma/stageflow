@@ -105,7 +105,7 @@ Each layer depends strictly on the layers below it (`core/` $\to$ `media/` $\to$
 
 ```text
 stageflow/
-├── .agents/skills/        # Workspace skills (stageflow-score-debugger, stageflow-viewport-recorder)
+├── .agents/skills/        # Workspace skills (stageflow-score-creator, stageflow-score-debugger, stageflow-viewport-recorder)
 ├── docs/                  # Authoritative domain specifications & ARCHITECTURE_FILE_MAP.md (SSOT)
 ├── scripts/record/        # 60fps Playwright + FFmpeg deterministic viewport video recorder CLI
 ├── src/
@@ -130,7 +130,7 @@ Verification in StageFlow is calibrated into two tiers to balance rigorous mathe
 | Tier | When to Apply | Automated Commands | Requirement |
 | :--- | :--- | :--- | :--- |
 | **Tier 1: Fast Dev Loop** | Localized UI/styling, minor bugfixes, copy tweaks, isolated single-file components | `npm run lint`<br>`npm run typecheck` (`tsc -b`)<br>Targeted Vitest (if applicable) | `oxlint` 0 warnings; `tsc -b` 0 TypeScript errors (< 6s). Eliminates the 2-minute Vite chunking overhead on trivial edits. |
-| **Tier 2: Core Engine & Full Release** | Core math, kinematics, schema/DSL syntax, 3D diorama rigs, media sync, dependencies, refactors | `npm test`<br>`npm run build` (`tsc -b && vite build`)<br>`npm run lint` | All Vitest unit suites pass (228 tests); zero TypeScript/Vite bundling errors; `oxlint` 0 warnings. |
+| **Tier 2: Core Engine & Full Release** | Core math, kinematics, schema/DSL syntax, 3D diorama rigs, media sync, dependencies, refactors | `npm test`<br>`npm run build` (`tsc -b && vite build`)<br>`npm run lint` | All Vitest unit suites pass (236 tests); zero TypeScript/Vite bundling errors; `oxlint` 0 warnings. |
 
 ### Pre-Delivery Audit Checklist
 Before reporting completion of any task:

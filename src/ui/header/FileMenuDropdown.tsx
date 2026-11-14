@@ -9,6 +9,7 @@ import {
   ChevronDown,
   FolderOpen,
   Download,
+  Film,
   Plus,
   FolderKanban,
   Book,
@@ -24,6 +25,7 @@ export interface FileMenuDropdownProps {
   onClose: () => void;
   onUploadFiles: (files: FileList) => void;
   onExportActiveScore: () => void;
+  onOpenVideoExport?: () => void;
   onCreateBlankScore?: () => void;
   onOpenLibrary: (tab?: FilterTab) => void;
 }
@@ -35,6 +37,7 @@ export const FileMenuDropdown: React.FC<FileMenuDropdownProps> = ({
   onClose,
   onUploadFiles,
   onExportActiveScore,
+  onOpenVideoExport,
   onCreateBlankScore,
   onOpenLibrary,
 }) => {
@@ -141,6 +144,22 @@ export const FileMenuDropdown: React.FC<FileMenuDropdownProps> = ({
               <Download className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
               <span>Export Active Score (.yaml)</span>
             </button>
+
+            {onOpenVideoExport && (
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  onOpenVideoExport();
+                  onClose();
+                }}
+                className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-text-body hover:text-text-main hover:bg-surface-subtle transition-colors text-left cursor-pointer"
+                title="Render and download clean Stage Cam MP4 video in browser"
+              >
+                <Film className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                <span>Export Video (.mp4)...</span>
+              </button>
+            )}
           </div>
 
           {/* Section 2: Score Creation & Management */}

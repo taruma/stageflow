@@ -38,7 +38,7 @@ const GithubIcon: React.FC<{ className?: string }> = ({ className }) => (
   </svg>
 );
 
-const APP_VERSION = '1.0.0';
+const APP_VERSION = '1.1.0';
 const GITHUB_URL = 'https://github.com/taruma/stageflow';
 const AUTHOR_URL = 'https://github.com/taruma';
 const SCENEFLOW_URL = 'https://github.com/taruma/screenplay-sync';

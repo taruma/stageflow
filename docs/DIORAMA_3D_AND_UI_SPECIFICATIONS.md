@@ -43,6 +43,7 @@ To eliminate stage clipping in the resizable split workspace without forcing bla
 - In narrow viewports ($< 16:9$, such as 50/50 split or mobile), the vertical FOV expands analytically:
   $$v\text{FOV}_{\text{adapted}} = 2 \times \arctan\left(\frac{\text{baselineAspect}}{\text{currentAspect}} \times \tan\left(\frac{v\text{FOV}_{\text{base}}}{2}\right)\right)$$
 - Guarantees that whatever stage width is visible in full 16:9 recording is also completely visible in the interactive split workspace, eliminating the authoring trap where split-window adjustments look too distant when recorded.
+- **Un-Adapted Optical Focal Length Preservation**: When `OrbitControls` fires `onChange`, `ObserverCameraRig.tsx` preserves the un-adapted `focalLengthMm` tracked via `lastAppliedFocalLengthMmRef` instead of reverse-computing from the canvas-adapted `PerspectiveCamera.fov`, ensuring the `[OBS]` Telemetry Capsule and copied YAML snippets never report a distorted wide lens in narrow split panes.
 
 > [!IMPORTANT]
 > **Instant Cut Invariant (0ms Transition)**: Switching between `'scripted'`, `'free'`, and `'stage-pov'` applies an instantaneous cut on the very next animation frame without slerp/lerp transition lag.
@@ -148,7 +149,7 @@ Scene entities (`character`, `prop`, `marker`) are rendered with unambiguous ori
   - **Right Wing**: Theme mode dropdown (`ThemeSelectorDropdown.tsx`), standalone amber `[ 📖 Library ]` gateway button opening `ScoreLibraryModal.tsx`, a tactile 1-click **`[ Reset Layout ]`** button, native fullscreen toggle, and an **About / Info** button (`AppInfoModal.tsx`) with global `?` keyboard shortcut.
   - **Authoritative Stacking Context**: The header uses `relative z-30`, ensuring all dropdown menus (`File ▾`, `Color Themes ▾`) and popovers render safely above viewport HUD elements, labels, and badges.
 - **Tiered `File ▾` Menu (`FileMenuDropdown.tsx`)**:
-  - *Media & Score I/O*: "Open Video or Score..." (file picker trigger) and "Export Active Score (.yaml)" (direct browser download).
+  - *Media & Score I/O*: "Open Video or Score..." (file picker trigger), "Export Active Score (.yaml)" (direct browser download), and "Export Video (.mp4)..." (opens `CleanVideoExportModal.tsx` for in-browser WebCodecs clean film gate MP4 export).
   - *Scores*: "New Blank Score..." and "Manage Custom Scores" (with custom scores badge count).
   - *Reference*: "Score Library..." and links to the YAML Authoring Guide and Script Specification.
 - **2-Column Master-Detail Score Library & Project Hub (`ScoreLibraryModal.tsx`, `ScoreInspectorPane.tsx`, `ScoreStageMinimap.tsx`)**:
@@ -352,3 +353,10 @@ Decomposed into 3 focused submodules to preserve the $\le 250$ line modularity s
 ### 4.15 Telemetry & Vercel Web Analytics (`@vercel/analytics/react`, `@vercel/speed-insights/react`)
 - Seamlessly integrates Core Web Vitals telemetry (`<Analytics />` and `<SpeedInsights />`) into the root `src/App.tsx`.
 - Gated conditionally so tracking scripts run strictly in interactive studio and documentation modes, remaining dormant during headless Playwright recording runs (`?mode=headless-render`).
+
+### 4.16 In-Browser Clean MP4 Export (`CleanVideoExportModal.tsx`, `CleanVideoExportConfigForm.tsx`, `CleanStageCamExportCanvas.tsx`, `useWebVideoExport.ts`, `exportMath.ts`)
+- Client-side deterministic MP4 exporter powered by **WebCodecs (`VideoEncoder`)** and **`mp4-muxer`**, triggered from `File ▾ → Export Video (.mp4)...`.
+- **Dual Target Camera Modes**:
+  - **`Stage Cam POV`** *(default)*: Mounts an offscreen `<Canvas frameloop="never" dpr={1}>` strictly while encoding, rendering `BlueprintStageScene` + optional `StageCamDofEffect` (seeded from the active Stage Cam `[BLUR]` toggle) at `gateScale = 1.0` with zero look-around borders, zero viewfinder brackets, and `labelMode="off"`. Output dimensions dynamically conform to `score.aspectRatio` (`1920×1080` for `16:9`, `1920×804` for `2.39:1`, `1920×1038` for `1.85:1`, `1440×1080` for `4:3`, `1080×1920` for `9:16` at `1080p`).
+  - **`Observer Diorama`**: Mounts `BlueprintStageScene` + `StageCameraRig` (`cameraMode="scripted"`, `labelMode="off"`) to render the 3D stage schematic (metric floor grid, mannequins, trails, camera chassis, tripod/dolly tracks, rectangular gate frustum, focus plane, and DoF brackets). Always outputs **`16:9`** (`1920×1080` / `1280×720`) regardless of `score.aspectRatio`, disables `Optical DoF Blur`, and supports **`Scripted Observer`** (`frame.observerCamera.transform`) or **`Current Viewport Angle`** (`liveViewportPose`). Because WebCodecs captures WebGL pixels only, floating DOM `<Html>` pill badges are omitted.
+- **Directorial Configuration**: Supports `1080p` / `720p`, `60 fps` / `24 fps`, `Entire Scene` / `Current Shot`, Stage Palette (`Light` [default] / `Warm` / `Dark`), and Optical DoF Blur (`On` / `Off`, Stage Cam only), producing a silent MP4 plate `<slug>[_<shot>]_<stage_cam|observer>_<res>p_<fps>fps.mp4` with live preview thumbnail and queue backpressure control.

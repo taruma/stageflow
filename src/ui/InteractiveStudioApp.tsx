@@ -60,6 +60,7 @@ import { ConfirmResetModal } from './ConfirmResetModal';
 import { ScoreLibraryModal, type FilterTab } from './ScoreLibraryModal';
 import { MobileScoreLibraryModal } from './library/MobileScoreLibraryModal';
 import { AppInfoModal } from './AppInfoModal';
+import { CleanVideoExportModal } from './CleanVideoExportModal';
 import { useIsMobile } from '../hooks/useIsMobile';
 import { ToastContainer } from './ToastContainer';
 import { DirectorialTransportBar } from './DirectorialTransportBar';
@@ -105,6 +106,9 @@ export const InteractiveStudioApp: React.FC = () => {
 
   // App Info Modal state
   const [isInfoOpen, setIsInfoOpen] = useState(false);
+
+  // In-browser Clean Stage Cam MP4 Export Modal state
+  const [isVideoExportOpen, setIsVideoExportOpen] = useState(false);
 
   // Global '?' shortcut to open Info / Shortcuts Modal
   useEffect(() => {
@@ -773,6 +777,11 @@ export const InteractiveStudioApp: React.FC = () => {
         onResetLayout={layout.handleResetLayout}
         onUploadFiles={fileDrop.processFiles}
         onExportActiveScore={handleExportActiveScore}
+        onOpenVideoExport={() => {
+          mediaClock.pause();
+          stageLoop.forceSyncUi();
+          setIsVideoExportOpen(true);
+        }}
         onOpenLibrary={(tab) => {
           setLibraryInitialTab(tab);
           setIsLibraryOpen(true);
@@ -1048,6 +1057,17 @@ export const InteractiveStudioApp: React.FC = () => {
       <AppInfoModal
         isOpen={isInfoOpen}
         onClose={() => setIsInfoOpen(false)}
+      />
+
+      {/* In-Browser Clean Stage Cam & Observer MP4 Export Modal */}
+      <CleanVideoExportModal
+        isOpen={isVideoExportOpen}
+        score={activeScore}
+        activeShot={stageLoop.uiSnapshot.frame.activeShot}
+        liveViewportPose={stageLoop.uiSnapshot.liveViewportPose}
+        dofBlurEnabled={display.dofBlurEnabled}
+        onNotify={showToast}
+        onClose={() => setIsVideoExportOpen(false)}
       />
 
       {/* Floating Toast Notification Container */}
