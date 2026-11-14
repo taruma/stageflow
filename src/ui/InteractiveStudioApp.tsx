@@ -159,6 +159,10 @@ export const InteractiveStudioApp: React.FC = () => {
 
   const [rawYaml, setRawYaml] = useState<string>(initialItem.rawYaml);
   const [activeScore, setActiveScore] = useState(initialItem.score);
+  const [sceneResetSeq, setSceneResetSeq] = useState<number>(0);
+  const triggerScoreReset = useCallback(() => {
+    setSceneResetSeq((seq) => seq + 1);
+  }, []);
   const [parseError, setParseError] = useState<string | null>(null);
   const [parseWarning, setParseWarning] = useState<string | null>(null);
   const [parseDiagnostics, setParseDiagnostics] = useState<
@@ -259,11 +263,13 @@ export const InteractiveStudioApp: React.FC = () => {
     catalog,
     activeSceneId,
     rawYaml,
+    initialMountedSceneId: initialItem.id,
     setCatalog,
     setActiveSceneId,
     setRawYaml,
     setActiveScore,
     onClearVideoOverride: () => setVideoOverrideUrl(null),
+    onScoreReset: triggerScoreReset,
     onScoreNotFound: handleScoreNotFound,
     onPendingRemoteUrl: handlePendingRemoteUrl,
     onOpenedExistingScore: handleOpenedExistingScore,
@@ -278,7 +284,8 @@ export const InteractiveStudioApp: React.FC = () => {
   const mediaClock = useMediaClock(
     activeScore,
     videoOverrideUrl,
-    handleStageTimeJump
+    handleStageTimeJump,
+    sceneResetSeq
   );
 
   // 2. Dual-Tier 60fps Frame Evaluation Loop
@@ -287,7 +294,8 @@ export const InteractiveStudioApp: React.FC = () => {
     mediaClock.driverRef,
     mediaClock.loopActiveShot,
     mediaClock.isPlaying,
-    mediaClock.lastManualSeekIdRef
+    mediaClock.lastManualSeekIdRef,
+    sceneResetSeq
   );
 
   const { evaluateTick60fps, forceSyncUi } = stageLoop;
@@ -335,9 +343,9 @@ export const InteractiveStudioApp: React.FC = () => {
       setParseWarning(null);
       setParseDiagnostics(undefined);
       setVideoOverrideUrl(null);
-      mediaClock.seek(0);
+      triggerScoreReset();
     },
-    [catalog, mediaClock, setActiveSceneId]
+    [catalog, mediaClock, setActiveSceneId, triggerScoreReset]
   );
 
   // Live YAML editing in the Inspector Drawer (custom projects only)
@@ -459,7 +467,7 @@ export const InteractiveStudioApp: React.FC = () => {
         setParseWarning(finalParsed.warning ?? result.warning ?? null);
         setParseDiagnostics(undefined);
         setVideoOverrideUrl(null);
-        mediaClock.seek(0);
+        triggerScoreReset();
 
         handleCloseRemoteModal();
         showToast(
@@ -474,7 +482,7 @@ export const InteractiveStudioApp: React.FC = () => {
         showToast(`Failed to load remote score: ${msg}`, 'error');
       }
     },
-    [handleCloseRemoteModal, mediaClock, setActiveSceneId, showToast]
+    [handleCloseRemoteModal, setActiveSceneId, showToast, triggerScoreReset]
   );
 
   const handleResolveFileConflict = useCallback(
@@ -536,7 +544,7 @@ export const InteractiveStudioApp: React.FC = () => {
         setActiveSceneId(existing.id);
         setRawYaml(finalYaml);
         setActiveScore(resolvedScore);
-        mediaClock.seek(0);
+        triggerScoreReset();
         handleCloseRemoteModal();
         showToast(
           `Updated project "${updatedItem.title}" with dropped file`,
@@ -583,7 +591,7 @@ export const InteractiveStudioApp: React.FC = () => {
         setActiveSceneId(newItem.id);
         setRawYaml(finalYaml);
         setActiveScore(resolvedScore);
-        mediaClock.seek(0);
+        triggerScoreReset();
         handleCloseRemoteModal();
         showToast(
           `Imported "${newItem.title}" as new Custom Project`,
@@ -593,10 +601,10 @@ export const InteractiveStudioApp: React.FC = () => {
     },
     [
       handleCloseRemoteModal,
-      mediaClock,
       remoteModalState,
       setActiveSceneId,
       showToast,
+      triggerScoreReset,
     ]
   );
 
@@ -639,7 +647,7 @@ export const InteractiveStudioApp: React.FC = () => {
         setParseWarning(null);
         setParseDiagnostics(undefined);
         setVideoOverrideUrl(null);
-        mediaClock.seek(0);
+        triggerScoreReset();
         showToast(
           `Opened existing project "${existing.title}" (identical score already in library)`,
           'info'
@@ -701,7 +709,7 @@ export const InteractiveStudioApp: React.FC = () => {
       setParseWarning(finalParsed.warning ?? parsed.warning ?? null);
       setParseDiagnostics(undefined);
       setVideoOverrideUrl(null);
-      mediaClock.seek(0);
+      triggerScoreReset();
 
       // Persist custom imported score to IndexedDB
       saveStoredScore({
@@ -728,7 +736,7 @@ export const InteractiveStudioApp: React.FC = () => {
         );
       }
     },
-    [catalog, layout, mediaClock, setActiveSceneId, showToast]
+    [catalog, layout, setActiveSceneId, showToast, triggerScoreReset]
   );
 
   const handleLoadVideoBlobUrl = useCallback(
@@ -897,6 +905,7 @@ export const InteractiveStudioApp: React.FC = () => {
               themeCategory={theme.effectiveDioramaCategory}
               cameraPresetActionRef={cameraPresetActionRef}
               cameraPresetSeq={cameraPresetSeq}
+              sceneResetSeq={sceneResetSeq}
             />
 
             {/* Responsive Diorama HUD Overlays & POV Viewfinder Dock */}

@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+#### Observer Camera Snap & Clock Reset on Score Load, Create, Fork & Hydration (GH Issue #8)
+
+- **Monotonic Score Transition Signal & Synchronous Camera Snap (`InteractiveStudioApp.tsx`, `DioramaCanvas.tsx`, `ObserverCameraRig.tsx`)**:
+  - Added a monotonic `sceneResetSeq` state trigger in `InteractiveStudioApp.tsx` wired across `useScorePersistence`, `useMediaClock`, `useStageFrameLoop`, and `<DioramaCanvas>` (`CanvasDemandInvalidator` + `ObserverCameraRig`).
+  - Fired `triggerScoreReset()` / `onScoreReset()` across all score-opening, creation, forking, deletion-fallback, baseline-reset, remote-import, file-conflict, file-drop, and asynchronous IndexedDB / `?score=` / `?remoteUrl=` hydration paths (`useScorePersistence.ts` guarded against `initialMountedSceneId`), while intentionally omitting it on live YAML edits (`handleChangeYaml`) and in-place renames (`renameCustomScore`).
+  - Extracted pure `resolveObserverCameraUpdate()` in `ObserverCameraRig.tsx` so `resetOccurred` clears `lastSyncedStageCamRef` / `lastSyncedObserverCamRef` and snaps the `PerspectiveCamera` + `OrbitControls` directly to `frame.observerCamera.transform` in `'scripted'` mode, preventing stale pre-reset `uiFrame.observerCamera.shotId` values from gating and swallowing the snap, and flushed residual `OrbitControls` damping deltas inside `applyTransformImperatively` (`isFlushingDampingRef`) so snaps mid-coast settle without drift.
+- **Synchronous Frame Loop Reset & Live-Edit Orbit Preservation (`useStageFrameLoop.ts`)**:
+  - Extracted pure `resolveNextLoopSnapshotOnScoreSync()` and migrated score synchronization to `useLayoutEffect` so `sceneResetSeq` transitions atomically reset `cameraMode` to `'scripted'`, evaluate `computeStageFrame(0, score)`, update `liveViewportPoseRef`, and flush `uiSnapshot` prior to paint, while `evaluateTick60fps()` forces `t = 0` on pending resets.
+  - Preserved `cameraMode`, playhead `t`, and paused free-orbit `liveViewportPoseRef` coordinates during live YAML edits when `sceneResetSeq` is unchanged.
+- **In-Place Duration Updates & Clock Reset Parity (`mediaTypes.ts`, `html5MediaDriver.ts`, `youtubeMediaDriver.ts`, `useMediaClock.ts`)**:
+  - Added optional `setDuration(durationSec)` to `MediaClockDriver` and implemented it on `Html5MediaDriver` and `YouTubeMediaDriver` (alongside existing `ProceduralMediaDriver.setDuration`).
+  - Decoupled `useMediaClock`'s driver-instantiation `useEffect` from `score.durationSec` (updating duration in-place via `setDuration()` so live YAML `duration:` edits preserve `t` and playback state), synchronized `durationSec` from newly constructed drivers on source switches, and added a `useLayoutEffect` on `sceneResetSeq` to pause, seek to `0`, and notify `onTimeJump` even when two scores share identical media sources and durations.
+- **Regression Unit Tests & Specification Sync (`tests/unit/stagePerfHelpers.test.ts`, `tests/unit/mediaDrivers.test.ts`, `docs/MEDIA_CLOCK_AND_SYNC_SPECIFICATIONS.md`, `docs/DIORAMA_3D_AND_UI_SPECIFICATIONS.md`)**:
+  - Added unit tests for `resolveObserverCameraUpdate`, `resolveNextLoopSnapshotOnScoreSync`, and in-place `setDuration()` across all three media clock drivers, and synchronized Layer 2/3/4 specs.
+
 ### Added
 
 #### Custom Time Range by Seconds for In-Browser MP4 Export (GH Issue #13)

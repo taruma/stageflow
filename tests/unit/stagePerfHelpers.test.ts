@@ -11,7 +11,11 @@ import {
   DEFAULT_STAGE_CAMERA_POSE,
   OPTICS_DOF_DEFAULTS,
 } from '../../src/core/constants';
-import { canReuseIdleStageFrame } from '../../src/hooks/useStageFrameLoop';
+import {
+  canReuseIdleStageFrame,
+  resolveNextLoopSnapshotOnScoreSync,
+} from '../../src/hooks/useStageFrameLoop';
+import { resolveObserverCameraUpdate } from '../../src/stage/ObserverCameraRig';
 import { shouldFlushExportProgress } from '../../src/hooks/useWebVideoExport';
 import {
   areDirectionalMannequinPropsEqual,
@@ -588,6 +592,143 @@ describe('stagePerfHelpers — Issue #9 deterministic performance guards', () =>
         state: committedCue3,
         isDesynced: true,
       });
+    });
+  });
+
+  describe('Issue #8 — Score transition vs. live YAML edit synchronization', () => {
+    it('resolveObserverCameraUpdate snaps directly to new score observer pose on reset even with stale uiFrame and free mode', () => {
+      const oldObserverCam: StageFrame['observerCamera'] = {
+        active: true,
+        isHold: false,
+        shotId: 'old-shot-1',
+        maneuver: 'orbit',
+        transform: {
+          pose: {
+            target: { x: 2, y: 1, z: 2 },
+            distance: 9,
+            pitch: 0.4,
+            yaw: 1.2,
+            roll: 0,
+            focalLengthMm: 35,
+          },
+          position: { x: 8, y: 4, z: 6 },
+          target: { x: 2, y: 1, z: 2 },
+          up: { x: 0, y: 1, z: 0 },
+          fovDeg: 37.8,
+          aspectRatio: 16 / 9,
+        },
+        trajectoryPoints: [],
+      };
+      const newObserverCam: StageFrame['observerCamera'] = {
+        ...oldObserverCam,
+        shotId: 'new-shot-1',
+        transform: {
+          ...oldObserverCam.transform,
+          position: { x: -3, y: 2.5, z: 5 },
+          target: { x: 0, y: 1.1, z: 0 },
+        },
+      };
+
+      const staleUiFrame: StageFrame = {
+        ...makeFrame(makeStageCameraState({ shotId: 'old-shot-1' })),
+        observerCamera: oldObserverCam,
+      };
+      const newLiveFrame: StageFrame = {
+        ...makeFrame(makeStageCameraState({ shotId: 'new-shot-1' })),
+        timestampSec: 0,
+        observerCamera: newObserverCam,
+      };
+
+      const resetAction = resolveObserverCameraUpdate({
+        cameraMode: 'free',
+        isPlaying: false,
+        modeChanged: false,
+        seekOccurred: false,
+        justStartedPlaying: false,
+        sizeChanged: false,
+        resetOccurred: true,
+        frame: newLiveFrame,
+        uiFrame: staleUiFrame,
+        lastSyncedStageCam: staleUiFrame.stageCamera,
+        lastSyncedObserverCam: oldObserverCam,
+      });
+
+      expect(resetAction).toEqual({
+        kind: 'apply',
+        applyMode: 'scripted',
+        transform: newObserverCam.transform,
+        nextLastSyncedStageCam: null,
+        nextLastSyncedObserverCam: newObserverCam,
+      });
+
+      // Without resetOccurred while paused in scripted mode (e.g. live YAML edit), keep user orbit
+      const pausedEditAction = resolveObserverCameraUpdate({
+        cameraMode: 'scripted',
+        isPlaying: false,
+        modeChanged: false,
+        seekOccurred: false,
+        justStartedPlaying: false,
+        sizeChanged: false,
+        resetOccurred: false,
+        frame: newLiveFrame,
+        uiFrame: newLiveFrame,
+        lastSyncedStageCam: null,
+        lastSyncedObserverCam: newObserverCam,
+      });
+
+      expect(pausedEditAction).toEqual({ kind: 'clamp-orbit' });
+    });
+
+    it('resolveNextLoopSnapshotOnScoreSync resets cameraMode and t=0 pose on reset while preserving paused orbit during live edits', () => {
+      const score = makeDummyScore('score-reset-test');
+      const customOrbitedPose: SphericalPose = {
+        target: { x: 1.5, y: 1.0, z: -0.5 },
+        distance: 11.2,
+        pitch: 0.35,
+        yaw: -0.9,
+        roll: 0,
+        focalLengthMm: 35,
+      };
+
+      const onReset = resolveNextLoopSnapshotOnScoreSync({
+        resetOccurred: true,
+        currentCameraMode: 'free',
+        isPlaying: true,
+        driverTimeSec: 6.4,
+        score,
+        previousViewportPose: customOrbitedPose,
+      });
+
+      expect(onReset.nextCameraMode).toBe('scripted');
+      expect(onReset.nextFrame.timestampSec).toBe(0);
+      expect(onReset.nextViewportPose).toEqual(
+        onReset.nextFrame.observerCamera.transform.pose
+      );
+
+      const onLiveEditPaused = resolveNextLoopSnapshotOnScoreSync({
+        resetOccurred: false,
+        currentCameraMode: 'scripted',
+        isPlaying: false,
+        driverTimeSec: 4.25,
+        score,
+        previousViewportPose: customOrbitedPose,
+      });
+
+      expect(onLiveEditPaused.nextCameraMode).toBe('scripted');
+      expect(onLiveEditPaused.nextFrame.timestampSec).toBe(4.25);
+      expect(onLiveEditPaused.nextViewportPose).toEqual(customOrbitedPose);
+
+      const onLiveEditFreeOrbit = resolveNextLoopSnapshotOnScoreSync({
+        resetOccurred: false,
+        currentCameraMode: 'free',
+        isPlaying: true,
+        driverTimeSec: 4.25,
+        score,
+        previousViewportPose: customOrbitedPose,
+      });
+
+      expect(onLiveEditFreeOrbit.nextCameraMode).toBe('free');
+      expect(onLiveEditFreeOrbit.nextViewportPose).toEqual(customOrbitedPose);
     });
   });
 });

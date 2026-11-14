@@ -37,11 +37,13 @@ export interface UseScorePersistenceOptions {
   catalog: ScoreCatalogItem[];
   activeSceneId: string;
   rawYaml: string;
+  initialMountedSceneId?: string;
   setCatalog: React.Dispatch<React.SetStateAction<ScoreCatalogItem[]>>;
   setActiveSceneId: (id: string) => void;
   setRawYaml: (yaml: string) => void;
   setActiveScore: (score: StageScore) => void;
   onClearVideoOverride: () => void;
+  onScoreReset?: () => void;
   onScoreNotFound?: (requestedId: string) => void;
   onPendingRemoteUrl?: (url: string, status: RemoteUrlMatchStatus) => void;
   onOpenedExistingScore?: (title: string) => void;
@@ -51,11 +53,13 @@ export function useScorePersistence({
   catalog,
   activeSceneId,
   rawYaml,
+  initialMountedSceneId,
   setCatalog,
   setActiveSceneId,
   setRawYaml,
   setActiveScore,
   onClearVideoOverride,
+  onScoreReset,
   onScoreNotFound,
   onPendingRemoteUrl,
   onOpenedExistingScore,
@@ -64,6 +68,9 @@ export function useScorePersistence({
     useState<StoragePersistenceStatus>('bundled');
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const onScoreResetRef = useRef(onScoreReset);
+  onScoreResetRef.current = onScoreReset;
+  const initialMountedIdRef = useRef(initialMountedSceneId);
 
   // Capture initial URL search parameters once on mount (StrictMode-safe)
   const initialSearchRef = useRef<string>(
@@ -167,6 +174,9 @@ export function useScorePersistence({
           setRawYaml(targetItem.rawYaml);
           setActiveScore(targetItem.score);
           setStorageStatus(targetItem.isCustom ? 'custom' : 'bundled');
+          if (targetItem.isCustom || targetItem.id !== initialMountedIdRef.current) {
+            onScoreResetRef.current?.();
+          }
         } else {
           // Unknown ?score= slug -> fallback to default scene and trigger notification
           const fallbackItem = mergedCatalog[0];
@@ -174,6 +184,9 @@ export function useScorePersistence({
           setRawYaml(fallbackItem.rawYaml);
           setActiveScore(fallbackItem.score);
           setStorageStatus('bundled');
+          if (fallbackItem.id !== initialMountedIdRef.current) {
+            onScoreResetRef.current?.();
+          }
           onScoreNotFound?.(scoreId);
         }
       } else if (remoteUrl) {
@@ -193,6 +206,7 @@ export function useScorePersistence({
             setRawYaml(existingCustom.rawYaml);
             setActiveScore(existingCustom.score);
             setStorageStatus('custom');
+            onScoreResetRef.current?.();
             onOpenedExistingScore?.(existingCustom.title);
             onPendingRemoteUrl?.(remoteUrl, { kind: 'identical', existingItem: existingCustom });
           } else {
@@ -215,6 +229,9 @@ export function useScorePersistence({
           setRawYaml(targetItem.rawYaml);
           setActiveScore(targetItem.score);
           setStorageStatus(targetItem.isCustom ? 'custom' : 'bundled');
+          if (targetItem.isCustom || targetItem.id !== initialMountedIdRef.current) {
+            onScoreResetRef.current?.();
+          }
         }
       }
     }
@@ -352,10 +369,11 @@ export function useScorePersistence({
       setRawYaml(newItem.rawYaml);
       setActiveScore(newItem.score);
       setStorageStatus('custom');
+      onScoreReset?.();
 
       return newItem;
     },
-    [catalog, setActiveSceneId, setRawYaml, setActiveScore, setCatalog]
+    [catalog, setActiveSceneId, setRawYaml, setActiveScore, setCatalog, onScoreReset]
   );
 
   // 5. Delete a custom scene from IndexedDB and catalog with fallback
@@ -375,6 +393,7 @@ export function useScorePersistence({
         setActiveScore(fallbackItem.score);
         onClearVideoOverride();
         setStorageStatus('bundled');
+        onScoreReset?.();
       }
 
       return true;
@@ -386,6 +405,7 @@ export function useScorePersistence({
       setActiveScore,
       onClearVideoOverride,
       setCatalog,
+      onScoreReset,
     ]
   );
 
@@ -475,6 +495,7 @@ export function useScorePersistence({
       setActiveScore(newItem.score);
       onClearVideoOverride();
       setStorageStatus('custom');
+      onScoreReset?.();
 
       return newItem;
     },
@@ -484,6 +505,7 @@ export function useScorePersistence({
       setActiveScore,
       onClearVideoOverride,
       setCatalog,
+      onScoreReset,
     ]
   );
 
@@ -507,6 +529,7 @@ export function useScorePersistence({
     setActiveScore(bundledItem.score);
     onClearVideoOverride();
     setStorageStatus('bundled');
+    onScoreReset?.();
   }, [
     activeSceneId,
     setCatalog,
@@ -514,6 +537,7 @@ export function useScorePersistence({
     setRawYaml,
     setActiveScore,
     onClearVideoOverride,
+    onScoreReset,
   ]);
 
   return {
