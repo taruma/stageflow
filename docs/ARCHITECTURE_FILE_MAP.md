@@ -68,6 +68,7 @@ stageflow/
 │   │   ├── constants.ts             # Metric bounds, sensor constants, blueprint color palette
 │   │   ├── opticsMath.ts            # Focal length (mm) <-> Vertical FOV (deg), Rectangular Gate & Thin-Lens DoF math
 │   │   ├── exportMath.ts            # Pure even-dimension H.264 bounds, bitrate, time-range & MP4 filename helpers
+│   │   ├── exportScrubberMath.ts    # Pure dual-handle export scrubber quantization & drag clamping math
 │   │   ├── sphericalMath.ts         # Degrees <-> Radians, Spherical <-> Cartesian, shortestAngleDiff
 │   │   ├── maneuvers.ts             # 9 easing curves & 11 3D camera trajectory maneuvers
 │   │   ├── dofEvaluator.ts          # Stateless focus distance, rack-focus interpolation & thin-lens DoF evaluator
@@ -184,6 +185,7 @@ stageflow/
 │   │   ├── ConfirmRemoteScoreModal.tsx # Accessible confirmation & conflict dialog modal for external/remote scores
 │   │   ├── CleanVideoExportModal.tsx # In-browser Clean Stage Cam & Observer MP4 export progress modal
 │   │   ├── CleanVideoExportConfigForm.tsx # Export camera, angle, resolution, fps, range & palette form controls
+│   │   ├── ExportRangeScrubber.tsx  # Dual-handle shot-aware timeline scrubber + inline Start/End decimal inputs
 │   │   ├── StorageStatusBadge.tsx   # Visual status badge (Bundled vs. IndexedDB draft)
 │   │   └── InteractiveStudioApp.tsx # 3D choreography diorama & split workspace orchestrator
 │   ├── App.tsx                      # Code-split root mode switcher & suspense router
@@ -193,6 +195,7 @@ stageflow/
     └── unit/                        # Vitest deterministic unit test suites
         ├── opticsMath.test.ts
         ├── exportMath.test.ts
+        ├── exportScrubberMath.test.ts
         ├── sphericalMath.test.ts
         ├── cameraRigs.test.ts
         ├── entityEngine.test.ts

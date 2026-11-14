@@ -5,7 +5,7 @@
  */
 
 import React from 'react';
-import { AlertCircle, Camera, Eye, Info } from 'lucide-react';
+import { Camera, Eye, Info } from 'lucide-react';
 import type {
   ExportFps,
   ExportObserverAngleMode,
@@ -14,6 +14,7 @@ import type {
   ExportTargetCamera,
 } from '../core/exportMath';
 import type { AppThemeCategory, ShotCue } from '../core/types';
+import { ExportRangeScrubber } from './ExportRangeScrubber';
 import { UI_TOKENS } from './tokens/ui';
 
 export interface CleanVideoExportConfigFormProps {
@@ -30,9 +31,11 @@ export interface CleanVideoExportConfigFormProps {
   onChangeRangeMode: (mode: ExportRangeMode) => void;
   hasValidShot: boolean;
   activeShot?: ShotCue | null;
+  shots: ShotCue[];
   sceneDurationSec: number;
   customStartInput: string;
   customEndInput: string;
+  onChangeCustomRangeInputs: (startInput: string, endInput: string) => void;
   onChangeCustomStartInput: (value: string) => void;
   onChangeCustomEndInput: (value: string) => void;
   customRangeError?: string | null;
@@ -63,9 +66,11 @@ export const CleanVideoExportConfigForm: React.FC<
   onChangeRangeMode,
   hasValidShot,
   activeShot,
+  shots,
   sceneDurationSec,
   customStartInput,
   customEndInput,
+  onChangeCustomRangeInputs,
   onChangeCustomStartInput,
   onChangeCustomEndInput,
   customRangeError,
@@ -244,53 +249,17 @@ export const CleanVideoExportConfigForm: React.FC<
         </div>
 
         {rangeMode === 'custom' && (
-          <div className="pt-1 space-y-1.5">
-            <div className="grid grid-cols-2 gap-3">
-              <label className="space-y-1 block">
-                <span className={UI_TOKENS.input.labelMini}>Start (s)</span>
-                <input
-                  type="number"
-                  step="0.1"
-                  min={0}
-                  max={sceneDurationSec}
-                  value={customStartInput}
-                  onChange={(e) => onChangeCustomStartInput(e.target.value)}
-                  aria-label="Custom start time in seconds"
-                  className={`${UI_TOKENS.input.numberBox} text-xs px-2.5 py-1.5 ${
-                    customRangeError
-                      ? 'border-red-500/60 focus:ring-red-500/20'
-                      : ''
-                  }`}
-                />
-              </label>
-              <label className="space-y-1 block">
-                <span className={UI_TOKENS.input.labelMini}>End (s)</span>
-                <input
-                  type="number"
-                  step="0.1"
-                  min={0}
-                  max={sceneDurationSec}
-                  value={customEndInput}
-                  onChange={(e) => onChangeCustomEndInput(e.target.value)}
-                  aria-label="Custom end time in seconds"
-                  className={`${UI_TOKENS.input.numberBox} text-xs px-2.5 py-1.5 ${
-                    customRangeError
-                      ? 'border-red-500/60 focus:ring-red-500/20'
-                      : ''
-                  }`}
-                />
-              </label>
-            </div>
-            {customRangeError && (
-              <div
-                role="alert"
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-red-500/10 border border-red-500/30 text-[11px] font-sans text-red-600 dark:text-red-400"
-              >
-                <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                <span>{customRangeError}</span>
-              </div>
-            )}
-          </div>
+          <ExportRangeScrubber
+            shots={shots}
+            sceneDurationSec={sceneDurationSec}
+            fps={fps}
+            customStartInput={customStartInput}
+            customEndInput={customEndInput}
+            onChangeRangeInputs={onChangeCustomRangeInputs}
+            onChangeCustomStartInput={onChangeCustomStartInput}
+            onChangeCustomEndInput={onChangeCustomEndInput}
+            customRangeError={customRangeError ?? null}
+          />
         )}
       </div>
 

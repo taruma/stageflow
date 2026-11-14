@@ -173,6 +173,12 @@ export const CleanVideoExportModal: React.FC<CleanVideoExportModalProps> = ({
     setCustomEndInput(value);
   };
 
+  const handleChangeCustomRangeInputs = (startInput: string, endInput: string) => {
+    hasCustomRangeRef.current = true;
+    setCustomStartInput(startInput);
+    setCustomEndInput(endInput);
+  };
+
   const parsedCustomStart = parseCustomSecondsInput(customStartInput);
   const parsedCustomEnd = parseCustomSecondsInput(customEndInput);
 
@@ -436,9 +442,11 @@ export const CleanVideoExportModal: React.FC<CleanVideoExportModalProps> = ({
               onChangeRangeMode={handleChangeRangeMode}
               hasValidShot={hasValidShot}
               activeShot={activeShot}
+              shots={score.shots}
               sceneDurationSec={score.durationSec}
               customStartInput={customStartInput}
               customEndInput={customEndInput}
+              onChangeCustomRangeInputs={handleChangeCustomRangeInputs}
               onChangeCustomStartInput={handleChangeCustomStartInput}
               onChangeCustomEndInput={handleChangeCustomEndInput}
               customRangeError={customRangeError}
