@@ -5,7 +5,7 @@
  */
 
 import React from 'react';
-import { Camera, Eye, Info } from 'lucide-react';
+import { AlertCircle, Camera, Eye, Info } from 'lucide-react';
 import type {
   ExportFps,
   ExportObserverAngleMode,
@@ -31,6 +31,11 @@ export interface CleanVideoExportConfigFormProps {
   hasValidShot: boolean;
   activeShot?: ShotCue | null;
   sceneDurationSec: number;
+  customStartInput: string;
+  customEndInput: string;
+  onChangeCustomStartInput: (value: string) => void;
+  onChangeCustomEndInput: (value: string) => void;
+  customRangeError?: string | null;
   exportTheme: AppThemeCategory;
   onChangeExportTheme: (theme: AppThemeCategory) => void;
   exportDofBlur: boolean;
@@ -59,6 +64,11 @@ export const CleanVideoExportConfigForm: React.FC<
   hasValidShot,
   activeShot,
   sceneDurationSec,
+  customStartInput,
+  customEndInput,
+  onChangeCustomStartInput,
+  onChangeCustomEndInput,
+  customRangeError,
   exportTheme,
   onChangeExportTheme,
   exportDofBlur,
@@ -191,27 +201,97 @@ export const CleanVideoExportConfigForm: React.FC<
           <button
             type="button"
             onClick={() => onChangeRangeMode('scene')}
-            className={`flex-1 justify-center ${
+            className={`flex-1 min-w-0 justify-center ${
               rangeMode === 'scene'
                 ? UI_TOKENS.button.segmentedItemActive
                 : UI_TOKENS.button.segmentedItem
             }`}
           >
-            Entire Scene ({sceneDurationSec.toFixed(1)}s)
+            <span className="truncate">
+              Entire Scene ({sceneDurationSec.toFixed(1)}s)
+            </span>
           </button>
           <button
             type="button"
             disabled={!hasValidShot}
             onClick={() => onChangeRangeMode('shot')}
-            className={`flex-1 justify-center disabled:opacity-40 disabled:cursor-not-allowed ${
+            title={
+              activeShot
+                ? `Current Shot (${activeShot.id})`
+                : 'No active shot at current playhead'
+            }
+            className={`flex-1 min-w-0 justify-center disabled:opacity-40 disabled:cursor-not-allowed ${
               rangeMode === 'shot'
                 ? UI_TOKENS.button.segmentedItemActive
                 : UI_TOKENS.button.segmentedItem
             }`}
           >
-            Current Shot{activeShot ? ` (${activeShot.id})` : ''}
+            <span className="truncate">
+              Current Shot{activeShot ? ` (${activeShot.id})` : ''}
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={() => onChangeRangeMode('custom')}
+            className={`flex-1 min-w-0 justify-center ${
+              rangeMode === 'custom'
+                ? UI_TOKENS.button.segmentedItemActive
+                : UI_TOKENS.button.segmentedItem
+            }`}
+          >
+            <span className="truncate">Custom (s)</span>
           </button>
         </div>
+
+        {rangeMode === 'custom' && (
+          <div className="pt-1 space-y-1.5">
+            <div className="grid grid-cols-2 gap-3">
+              <label className="space-y-1 block">
+                <span className={UI_TOKENS.input.labelMini}>Start (s)</span>
+                <input
+                  type="number"
+                  step="0.1"
+                  min={0}
+                  max={sceneDurationSec}
+                  value={customStartInput}
+                  onChange={(e) => onChangeCustomStartInput(e.target.value)}
+                  aria-label="Custom start time in seconds"
+                  className={`${UI_TOKENS.input.numberBox} text-xs px-2.5 py-1.5 ${
+                    customRangeError
+                      ? 'border-red-500/60 focus:ring-red-500/20'
+                      : ''
+                  }`}
+                />
+              </label>
+              <label className="space-y-1 block">
+                <span className={UI_TOKENS.input.labelMini}>End (s)</span>
+                <input
+                  type="number"
+                  step="0.1"
+                  min={0}
+                  max={sceneDurationSec}
+                  value={customEndInput}
+                  onChange={(e) => onChangeCustomEndInput(e.target.value)}
+                  aria-label="Custom end time in seconds"
+                  className={`${UI_TOKENS.input.numberBox} text-xs px-2.5 py-1.5 ${
+                    customRangeError
+                      ? 'border-red-500/60 focus:ring-red-500/20'
+                      : ''
+                  }`}
+                />
+              </label>
+            </div>
+            {customRangeError && (
+              <div
+                role="alert"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-red-500/10 border border-red-500/30 text-[11px] font-sans text-red-600 dark:text-red-400"
+              >
+                <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                <span>{customRangeError}</span>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Stage Palette & Optical DoF Blur */}
@@ -295,13 +375,21 @@ export const CleanVideoExportConfigForm: React.FC<
         <div className="flex justify-between gap-2">
           <span>Output File</span>
           <span className="text-text-main font-semibold truncate">
-            {filename}
+            {customRangeError ? '—' : filename}
           </span>
         </div>
         <div className="flex justify-between gap-2">
           <span>Bounds &amp; Cadence</span>
-          <span className="text-text-body">
-            {width}×{height} · {totalFrames} frames ({exportDurationSec.toFixed(2)}s)
+          <span
+            className={
+              customRangeError
+                ? 'text-red-600 dark:text-red-400'
+                : 'text-text-body'
+            }
+          >
+            {customRangeError
+              ? `${width}×${height} · Invalid range`
+              : `${width}×${height} · ${totalFrames} frames (${exportDurationSec.toFixed(2)}s)`}
           </span>
         </div>
       </div>

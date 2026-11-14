@@ -15,6 +15,8 @@ import {
   computeExportTimeRange,
   formatExportMp4Filename,
   resolveExportAspectRatio,
+  validateCustomExportRange,
+  type CustomExportRange,
   type ExportFps,
   type ExportRangeMode,
   type ExportResolutionTier,
@@ -39,6 +41,7 @@ export interface StartWebVideoExportParams {
   rangeMode: ExportRangeMode;
   targetCamera?: ExportTargetCamera;
   activeShot?: ShotCue | null;
+  customRange?: CustomExportRange | null;
   renderFrame: RenderExportFrameFn;
   previewCanvasRef?: React.RefObject<HTMLCanvasElement | null>;
 }
@@ -165,6 +168,7 @@ export function useWebVideoExport({ onNotify }: UseWebVideoExportOptions = {}) {
       rangeMode,
       targetCamera = 'stage-cam',
       activeShot,
+      customRange,
       renderFrame,
       previewCanvasRef,
     }: StartWebVideoExportParams): Promise<boolean> => {
@@ -176,6 +180,26 @@ export function useWebVideoExport({ onNotify }: UseWebVideoExportOptions = {}) {
         return false;
       }
 
+      let validatedCustomRange: CustomExportRange | null = null;
+      if (rangeMode === 'custom') {
+        const validation = validateCustomExportRange(
+          customRange?.startSec ?? Number.NaN,
+          customRange?.endSec ?? Number.NaN,
+          score.durationSec,
+          fps
+        );
+        if (!validation.isValid) {
+          const msg = validation.error ?? 'Invalid custom export time range.';
+          setError(msg);
+          onNotify?.(msg, 'error');
+          return false;
+        }
+        validatedCustomRange = {
+          startSec: validation.startSec,
+          endSec: validation.endSec,
+        };
+      }
+
       abortRef.current = false;
       setError(null);
       setIsExporting(true);
@@ -185,14 +209,21 @@ export function useWebVideoExport({ onNotify }: UseWebVideoExportOptions = {}) {
         targetCamera
       );
       const dims = computeExportDimensions(tier, effectiveAspectRatio);
-      const timeRange = computeExportTimeRange(score, rangeMode, fps, activeShot);
+      const timeRange = computeExportTimeRange(
+        score,
+        rangeMode,
+        fps,
+        activeShot,
+        validatedCustomRange
+      );
       const bitrate = computeExportBitrate(dims.width, dims.height, fps);
       const filename = formatExportMp4Filename(
         score.id || score.title,
         tier,
         fps,
         timeRange.shotId,
-        targetCamera
+        targetCamera,
+        rangeMode === 'custom' ? validatedCustomRange : null
       );
 
       setProgress({

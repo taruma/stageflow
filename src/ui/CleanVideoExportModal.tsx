@@ -12,6 +12,8 @@ import {
   computeExportTimeRange,
   formatExportMp4Filename,
   resolveExportAspectRatio,
+  validateCustomExportRange,
+  type CustomExportRange,
   type ExportFps,
   type ExportObserverAngleMode,
   type ExportRangeMode,
@@ -43,6 +45,18 @@ export interface CleanVideoExportModalProps {
   onClose: () => void;
 }
 
+function formatCustomSecondsInput(sec: number): string {
+  if (!Number.isFinite(sec)) return '0';
+  return String(Number(Math.max(0, sec).toFixed(2)));
+}
+
+function parseCustomSecondsInput(raw: string): number {
+  const trimmed = raw.trim();
+  if (trimmed === '') return Number.NaN;
+  const parsed = Number(trimmed);
+  return Number.isFinite(parsed) ? parsed : Number.NaN;
+}
+
 export const CleanVideoExportModal: React.FC<CleanVideoExportModalProps> = ({
   isOpen,
   score,
@@ -59,9 +73,50 @@ export const CleanVideoExportModal: React.FC<CleanVideoExportModalProps> = ({
   const [tier, setTier] = useState<ExportResolutionTier>(1080);
   const [fps, setFps] = useState<ExportFps>(60);
   const [rangeMode, setRangeMode] = useState<ExportRangeMode>('scene');
+  const [customStartInput, setCustomStartInput] = useState<string>('0');
+  const [customEndInput, setCustomEndInput] = useState<string>(() =>
+    formatCustomSecondsInput(score.durationSec)
+  );
   const [exportTheme, setExportTheme] = useState<AppThemeCategory>('light');
   const [exportDofBlur, setExportDofBlur] = useState<boolean>(dofBlurEnabled);
   const [isCanvasMounted, setIsCanvasMounted] = useState(false);
+
+  const scoreKey = score.id || score.title;
+  const prevScoreKeyRef = useRef<string>(scoreKey);
+  const prevDurationRef = useRef<number>(score.durationSec);
+  const hasCustomRangeRef = useRef<boolean>(false);
+
+  // Reset or clamp custom timestamps whenever the active score or its duration changes
+  useEffect(() => {
+    const scoreChanged = prevScoreKeyRef.current !== scoreKey;
+    const durationChanged = prevDurationRef.current !== score.durationSec;
+    if (!scoreChanged && !durationChanged) return;
+
+    prevScoreKeyRef.current = scoreKey;
+    prevDurationRef.current = score.durationSec;
+
+    if (scoreChanged) {
+      hasCustomRangeRef.current = false;
+      setCustomStartInput('0');
+      setCustomEndInput(formatCustomSecondsInput(score.durationSec));
+      return;
+    }
+
+    setCustomStartInput((prev) => {
+      const parsed = parseCustomSecondsInput(prev);
+      if (!Number.isFinite(parsed)) return prev;
+      return parsed > score.durationSec
+        ? formatCustomSecondsInput(score.durationSec)
+        : prev;
+    });
+    setCustomEndInput((prev) => {
+      const parsed = parseCustomSecondsInput(prev);
+      if (!Number.isFinite(parsed)) return prev;
+      return parsed > score.durationSec
+        ? formatCustomSecondsInput(score.durationSec)
+        : prev;
+    });
+  }, [scoreKey, score.durationSec]);
 
   // Sync initial DoF blur option from active Stage Cam [BLUR] state when modal opens
   useEffect(() => {
@@ -79,12 +134,69 @@ export const CleanVideoExportModal: React.FC<CleanVideoExportModalProps> = ({
   const hasValidShot =
     activeShot != null && activeShot.endSec > activeShot.startSec;
   const effectiveRangeMode: ExportRangeMode =
-    rangeMode === 'shot' && hasValidShot ? 'shot' : 'scene';
+    rangeMode === 'custom'
+      ? 'custom'
+      : rangeMode === 'shot' && hasValidShot
+        ? 'shot'
+        : 'scene';
   const effectiveObserverAngleMode: ExportObserverAngleMode =
     observerAngleMode === 'current-viewport' && liveViewportPose
       ? 'current-viewport'
       : 'scripted';
   const isObserver = targetCamera === 'observer';
+
+  const handleChangeRangeMode = (nextMode: ExportRangeMode) => {
+    if (
+      nextMode === 'custom' &&
+      effectiveRangeMode !== 'custom' &&
+      !hasCustomRangeRef.current
+    ) {
+      const useShotRange =
+        effectiveRangeMode === 'shot' && hasValidShot && activeShot != null;
+      const seedStart = useShotRange ? Math.max(0, activeShot.startSec) : 0;
+      const seedEnd = useShotRange
+        ? Math.min(score.durationSec, activeShot.endSec)
+        : score.durationSec;
+      setCustomStartInput(formatCustomSecondsInput(seedStart));
+      setCustomEndInput(formatCustomSecondsInput(seedEnd));
+    }
+    setRangeMode(nextMode);
+  };
+
+  const handleChangeCustomStartInput = (value: string) => {
+    hasCustomRangeRef.current = true;
+    setCustomStartInput(value);
+  };
+
+  const handleChangeCustomEndInput = (value: string) => {
+    hasCustomRangeRef.current = true;
+    setCustomEndInput(value);
+  };
+
+  const parsedCustomStart = parseCustomSecondsInput(customStartInput);
+  const parsedCustomEnd = parseCustomSecondsInput(customEndInput);
+
+  const customValidation = useMemo(
+    () =>
+      validateCustomExportRange(
+        parsedCustomStart,
+        parsedCustomEnd,
+        score.durationSec,
+        fps
+      ),
+    [parsedCustomStart, parsedCustomEnd, score.durationSec, fps]
+  );
+
+  const isCustomMode = effectiveRangeMode === 'custom';
+  const customRangeError =
+    isCustomMode && !customValidation.isValid ? customValidation.error : null;
+  const activeCustomRange: CustomExportRange | null =
+    isCustomMode && customValidation.isValid
+      ? {
+          startSec: customValidation.startSec,
+          endSec: customValidation.endSec,
+        }
+      : null;
 
   const effectiveAspectRatio = useMemo(
     () => resolveExportAspectRatio(score.aspectRatio, targetCamera),
@@ -97,8 +209,15 @@ export const CleanVideoExportModal: React.FC<CleanVideoExportModalProps> = ({
   );
 
   const timeRange = useMemo(
-    () => computeExportTimeRange(score, effectiveRangeMode, fps, activeShot),
-    [score, effectiveRangeMode, fps, activeShot]
+    () =>
+      computeExportTimeRange(
+        score,
+        effectiveRangeMode,
+        fps,
+        activeShot,
+        activeCustomRange
+      ),
+    [score, effectiveRangeMode, fps, activeShot, activeCustomRange]
   );
 
   const filename = useMemo(
@@ -108,9 +227,18 @@ export const CleanVideoExportModal: React.FC<CleanVideoExportModalProps> = ({
         tier,
         fps,
         timeRange.shotId,
-        targetCamera
+        targetCamera,
+        activeCustomRange
       ),
-    [score.id, score.title, tier, fps, timeRange.shotId, targetCamera]
+    [
+      score.id,
+      score.title,
+      tier,
+      fps,
+      timeRange.shotId,
+      targetCamera,
+      activeCustomRange,
+    ]
   );
 
   const initialFrame = useMemo(
@@ -153,6 +281,9 @@ export const CleanVideoExportModal: React.FC<CleanVideoExportModalProps> = ({
   if (!isOpen) return null;
 
   const handleStartExport = async () => {
+    if (isCustomMode && !customValidation.isValid) {
+      return;
+    }
     setIsCanvasMounted(true);
     await new Promise((resolve) => requestAnimationFrame(() => resolve(undefined)));
 
@@ -163,6 +294,7 @@ export const CleanVideoExportModal: React.FC<CleanVideoExportModalProps> = ({
       rangeMode: effectiveRangeMode,
       targetCamera,
       activeShot,
+      customRange: activeCustomRange,
       previewCanvasRef,
       renderFrame: async (frame) => {
         if (!exportCanvasRef.current) {
@@ -301,10 +433,15 @@ export const CleanVideoExportModal: React.FC<CleanVideoExportModalProps> = ({
               fps={fps}
               onChangeFps={setFps}
               rangeMode={effectiveRangeMode}
-              onChangeRangeMode={setRangeMode}
+              onChangeRangeMode={handleChangeRangeMode}
               hasValidShot={hasValidShot}
               activeShot={activeShot}
               sceneDurationSec={score.durationSec}
+              customStartInput={customStartInput}
+              customEndInput={customEndInput}
+              onChangeCustomStartInput={handleChangeCustomStartInput}
+              onChangeCustomEndInput={handleChangeCustomEndInput}
+              customRangeError={customRangeError}
               exportTheme={exportTheme}
               onChangeExportTheme={setExportTheme}
               exportDofBlur={exportDofBlur}
@@ -364,7 +501,7 @@ export const CleanVideoExportModal: React.FC<CleanVideoExportModalProps> = ({
           {!isExporting ? (
             <button
               type="button"
-              disabled={!isSupported}
+              disabled={!isSupported || customRangeError != null}
               onClick={handleStartExport}
               className={`${UI_TOKENS.button.primary} flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed`}
             >

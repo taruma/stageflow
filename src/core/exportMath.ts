@@ -8,9 +8,21 @@ import type { ShotCue, StageScore } from './types';
 
 export type ExportResolutionTier = 720 | 1080;
 export type ExportFps = 24 | 60;
-export type ExportRangeMode = 'scene' | 'shot';
+export type ExportRangeMode = 'scene' | 'shot' | 'custom';
 export type ExportTargetCamera = 'stage-cam' | 'observer';
 export type ExportObserverAngleMode = 'scripted' | 'current-viewport';
+
+export interface CustomExportRange {
+  startSec: number;
+  endSec: number;
+}
+
+export interface CustomExportRangeValidation {
+  isValid: boolean;
+  error: string | null;
+  startSec: number;
+  endSec: number;
+}
 
 export interface ExportDimensions {
   width: number;
@@ -111,17 +123,117 @@ export function computeExportBitrate(
   return Math.max(2_500_000, Math.min(20_000_000, scaled));
 }
 
+const CUSTOM_BOUND_EPSILON = 1e-6;
+const MIN_FRAME_DURATION_EPSILON = 1e-9;
+
 /**
- * Computes the export time window and deterministic frame count for either
- * the entire scene or the currently active shot.
+ * Validates a user-authored custom export time window `[startSec, endSec]`
+ * against `[0, sceneDurationSec]` and the minimum 1-frame duration (`1 / fps`).
+ */
+export function validateCustomExportRange(
+  startSec: number,
+  endSec: number,
+  sceneDurationSec: number,
+  fps: ExportFps
+): CustomExportRangeValidation {
+  if (!Number.isFinite(startSec) || !Number.isFinite(endSec)) {
+    return {
+      isValid: false,
+      error: 'Start and end times must be valid numbers.',
+      startSec: Number.isFinite(startSec) ? startSec : 0,
+      endSec: Number.isFinite(endSec) ? endSec : 0,
+    };
+  }
+  if (!Number.isFinite(sceneDurationSec) || sceneDurationSec <= 0) {
+    return {
+      isValid: false,
+      error: 'Scene duration must be greater than 0s.',
+      startSec,
+      endSec,
+    };
+  }
+  if (startSec < 0) {
+    return {
+      isValid: false,
+      error: 'Start time cannot be negative.',
+      startSec,
+      endSec,
+    };
+  }
+  if (endSec > sceneDurationSec + CUSTOM_BOUND_EPSILON) {
+    return {
+      isValid: false,
+      error: `End time cannot exceed scene duration (${Number(sceneDurationSec.toFixed(2))}s).`,
+      startSec,
+      endSec,
+    };
+  }
+
+  const clampedEndSec = Math.min(sceneDurationSec, endSec);
+  if (startSec >= clampedEndSec) {
+    return {
+      isValid: false,
+      error: 'Start time must be less than end time.',
+      startSec,
+      endSec: clampedEndSec,
+    };
+  }
+
+  const minDurationSec = 1 / fps;
+  if (clampedEndSec - startSec + MIN_FRAME_DURATION_EPSILON < minDurationSec) {
+    return {
+      isValid: false,
+      error: `Duration must be at least 1 frame (${minDurationSec.toFixed(3)}s at ${fps}fps).`,
+      startSec,
+      endSec: clampedEndSec,
+    };
+  }
+
+  return {
+    isValid: true,
+    error: null,
+    startSec,
+    endSec: clampedEndSec,
+  };
+}
+
+/**
+ * Computes the export time window and deterministic frame count for the
+ * entire scene, the currently active shot, or a custom `[startSec, endSec]` window.
  */
 export function computeExportTimeRange(
   score: StageScore,
   rangeMode: ExportRangeMode,
   fps: ExportFps,
-  activeShot?: ShotCue | null
+  activeShot?: ShotCue | null,
+  customRange?: CustomExportRange | null
 ): ExportTimeRange {
   const sceneDuration = Math.max(0.1, score.durationSec);
+
+  if (rangeMode === 'custom') {
+    const hasFiniteCustom =
+      customRange != null &&
+      Number.isFinite(customRange.startSec) &&
+      Number.isFinite(customRange.endSec);
+    const startSec = hasFiniteCustom
+      ? Math.min(sceneDuration, Math.max(0, customRange.startSec))
+      : 0;
+    const endSec = hasFiniteCustom
+      ? Math.min(sceneDuration, Math.max(startSec, customRange.endSec))
+      : sceneDuration;
+    const durationSec = Math.max(1 / fps, endSec - startSec);
+    const totalFrames = Math.max(1, Math.round(durationSec * fps));
+
+    return {
+      startSec,
+      endSec,
+      durationSec,
+      totalFrames,
+      shotId: null,
+      shotLabel: null,
+    };
+  }
+
   const useShot =
     rangeMode === 'shot' &&
     activeShot != null &&
@@ -170,19 +282,45 @@ export function sanitizeExportSlug(raw: string): string {
   return slug || 'stageflow_scene';
 }
 
+function formatRangeSecToken(sec: number): string {
+  const safeSec = Number.isFinite(sec) ? Math.max(0, sec) : 0;
+  const rounded = Number(safeSec.toFixed(2));
+  return String(rounded).replace('.', '_');
+}
+
+/**
+ * Formats a custom seconds window into a filesystem-safe filename tag
+ * (e.g. `(2.5, 6.0)` -> `2_5s-6s`).
+ */
+export function formatExportTimeRangeTag(
+  startSec: number,
+  endSec: number
+): string {
+  return `${formatRangeSecToken(startSec)}s-${formatRangeSecToken(endSec)}s`;
+}
+
 /**
  * Formats the output MP4 filename:
- * `<slug>[_<shot-id>]_<stage_cam|observer>_<tier>p_<fps>fps.mp4`
+ * `<slug>[_<shot-id>|<_range-tag>]_<stage_cam|observer>_<tier>p_<fps>fps.mp4`
  */
 export function formatExportMp4Filename(
   scoreIdOrTitle: string,
   tier: ExportResolutionTier,
   fps: ExportFps,
   shotId?: string | null,
-  targetCamera: ExportTargetCamera = 'stage-cam'
+  targetCamera: ExportTargetCamera = 'stage-cam',
+  customRange?: CustomExportRange | null
 ): string {
   const baseSlug = sanitizeExportSlug(scoreIdOrTitle);
-  const shotSuffix = shotId ? `_${sanitizeExportSlug(shotId)}` : '';
+  const trimmedShotId = shotId?.trim() || null;
+  const shotSuffix = trimmedShotId ? `_${sanitizeExportSlug(trimmedShotId)}` : '';
+  const rangeSuffix =
+    !trimmedShotId &&
+    customRange != null &&
+    Number.isFinite(customRange.startSec) &&
+    Number.isFinite(customRange.endSec)
+      ? `_${formatExportTimeRangeTag(customRange.startSec, customRange.endSec)}`
+      : '';
   const cameraTag = targetCamera === 'observer' ? 'observer' : 'stage_cam';
-  return `${baseSlug}${shotSuffix}_${cameraTag}_${tier}p_${fps}fps.mp4`;
+  return `${baseSlug}${shotSuffix}${rangeSuffix}_${cameraTag}_${tier}p_${fps}fps.mp4`;
 }

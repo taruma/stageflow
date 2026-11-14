@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+#### Custom Time Range by Seconds for In-Browser MP4 Export (GH Issue #13)
+
+- **Pure Custom Time Range Math, Validation & Filename Tagging (`src/core/exportMath.ts`, `tests/unit/exportMath.test.ts`)**:
+  - Extended `ExportRangeMode` to `'scene' | 'shot' | 'custom'` and added `CustomExportRange` and `CustomExportRangeValidation` interfaces.
+  - Added `validateCustomExportRange(startSec, endSec, sceneDurationSec, fps)` rejecting non-finite numbers, invalid scene durations, negative start times, end times exceeding `sceneDurationSec` (beyond `1e-6` float epsilon), inverted/empty ranges (`startSec >= endSec`), and durations shorter than 1 frame (`1 / fps`).
+  - Extended `computeExportTimeRange(score, rangeMode, fps, activeShot?, customRange?)` to clamp `'custom'` windows within `[0, sceneDuration]` with `shotId: null` / `shotLabel: null` and safe fallback to `[0, sceneDuration]` when `customRange` is omitted, while preserving existing `'scene'` and `'shot'` behavior.
+  - Added `formatExportTimeRangeTag(startSec, endSec)` (rounding up to 2 decimal places with `.` replaced by `_`, e.g., `2_5s-6s`) and extended `formatExportMp4Filename()` to insert `_<rangeTag>` before `_<stage_cam|observer>` when `shotId` is absent (e.g., `vector_field_2_5s-6s_stage_cam_1080p_60fps.mp4`).
+  - Added unit tests in `tests/unit/exportMath.test.ts` covering decimal validation, float-epsilon bounds, non-finite/negative/inverted/sub-frame rejections, `computeExportTimeRange` custom clamping & fallback, and range-tagged MP4 filenames.
+- **Exporter Hook Guard & Custom Range Modal UI (`src/hooks/useWebVideoExport.ts`, `src/ui/CleanVideoExportModal.tsx`, `src/ui/CleanVideoExportConfigForm.tsx`)**:
+  - Extended `StartWebVideoExportParams` with `customRange?: CustomExportRange | null`, validated custom ranges inside `useWebVideoExport()` with clean error aborting (`setError` + `onNotify`), and forwarded validated bounds to `computeExportTimeRange()` and `formatExportMp4Filename()`.
+  - Updated `CleanVideoExportModal.tsx` with string-backed `customStartInput` / `customEndInput` decimal inputs, automatic seeding from the active shot (`[activeShot.startSec, activeShot.endSec]` clamped to `[0, score.durationSec]`) or scene (`[0, score.durationSec]`) on switching to `Custom (s)` before user customization (`hasCustomRangeRef`), persistence across Time Range tab switches once edited, score-change resets and duration-shrink clamping, and disabled `Export MP4` state on validation errors.
+  - Extended `CleanVideoExportConfigForm.tsx` Time Range segmented control with `Custom (s)`, added `Start (s)` / `End (s)` numeric inputs (`step="0.1"`), inline validation alert banner, and invalid-range summary states for `Output File` and `Bounds & Cadence`.
+
 ### Performance
 
 #### Idle WebGL/CPU Loop Elimination & Per-Frame Diorama Optimizations (GH Issue #9)
