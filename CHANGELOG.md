@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-11-14
+
+### Changed
+
+- **Version Bump & Release Preparation (`package.json`, `package-lock.json`, `src/ui/AppInfoModal.tsx`, `README.md`)**:
+  - Bumped application version from `1.0.0` to `1.1.0` across package manifest, lockfile, and `AppInfoModal.tsx` (`APP_VERSION`).
+  - Updated `README.md` version (`1.1.0`) and Vitest (`236 passed`) badges, tech stack test count, and in-browser WebCodecs MP4 export description (`Stage Cam POV` and `16:9 Observer Diorama`).
+
 ### Fixed
 
 - **Split-Pane Observer Focal Length Telemetry Leak (`src/stage/ObserverCameraRig.tsx`)**:
@@ -40,7 +48,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added `File ▾ → Export Video (.mp4)...` entry point that pauses playback and opens `CleanVideoExportModal.tsx`.
   - Supports `1080p` / `720p` resolution, `60 fps` / `24 fps` cadence, `Entire Scene` / `Current Shot` range, `Light` (default) / `Warm` / `Dark` stage palettes, and `Optical DoF Blur` (`On` / `Off`, initialized from the active Stage Cam `[BLUR]` toggle) with live progress telemetry and thumbnail preview.
 
-#### Workspace Tooling & Authoring Skills
+#### Workspace Tooling & Release Documentation
+
+- **Release Notes Archive (`docs/releases/v1.1.0.md`, `docs/ARCHITECTURE_FILE_MAP.md`)**:
+  - Authored GitHub release notes for StageFlow `v1.1.0` covering in-browser WebCodecs MP4 export (Stage Cam POV & 16:9 Observer Diorama), the `stageflow-score-creator` workspace skill, and the split-pane Observer focal length telemetry fix; indexed `v1.1.0.md` in `docs/ARCHITECTURE_FILE_MAP.md`.
 
 - **Dedicated Choreography Score Creator & Directorial Mentor Skill (`.agents/skills/stageflow-score-creator/SKILL.md`, `AGENTS.md`, `docs/ARCHITECTURE_FILE_MAP.md`)**:
   - Introduced `stageflow-score-creator` workspace skill dedicated to authoring, scaffolding, explaining, and teaching StageFlow YAML scores (`*.yaml`).

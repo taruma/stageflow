@@ -1,7 +1,7 @@
 {
   "name": "stageflow",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "3D Camera-Blocking & Scene Choreography Diorama",
   "author": "Taruma Sakti (@taruma)",
   "license": "MIT",
