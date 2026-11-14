@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-11-14
+
+### Changed
+
+- **Version Bump & Release Preparation (`package.json`, `package-lock.json`, `src/ui/AppInfoModal.tsx`, `README.md`, `AGENTS.md`, `docs/releases/v1.1.1.md`, `docs/ARCHITECTURE_FILE_MAP.md`)**:
+  - Bumped application version from `1.1.0` to `1.1.1` across package manifest, lockfile, and `AppInfoModal.tsx` (`APP_VERSION`).
+  - Authored GitHub release notes in `docs/releases/v1.1.1.md` and indexed them in `docs/ARCHITECTURE_FILE_MAP.md`.
+  - Updated `README.md` version (`1.1.1`) and Vitest (`258 passed`) badges, test counts, and `Custom (s)` MP4 export summary, and synced `AGENTS.md` Tier 2 test count (`258 tests`).
+
 ### Fixed
 
 #### Observer Camera Snap & Clock Reset on Score Load, Create, Fork & Hydration (GH Issue #8)
