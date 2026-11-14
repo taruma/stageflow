@@ -73,6 +73,12 @@ describe('MediaClockDrivers - Optimistic In-Flight Seek Synchronization', () => 
       expect(driver.getCurrentTime()).toBe(5.0); // Safely timed out and returned video element time
 
       nowSpy.mockRestore();
+      // When metadata duration is unavailable (NaN), fallback duration updates in-place without changing time
+      (mockVideo as { duration: number }).duration = Number.NaN;
+      driver.seek(12.5);
+      driver.setDuration(25.0);
+      expect(driver.getDuration()).toBe(25.0);
+      expect(driver.getCurrentTime()).toBe(12.5);
       driver.destroy();
     });
   });
@@ -113,17 +119,36 @@ describe('MediaClockDrivers - Optimistic In-Flight Seek Synchronization', () => 
       mockYtCurrentTime = 45.1;
       expect(driver.getCurrentTime()).toBe(45.1);
 
+      // Updating fallback duration in-place does not alter playhead anchor
+      (driver as unknown as { player: { getDuration: () => number } }).player.getDuration =
+        () => 0;
+      driver.setDuration(90.0);
+      expect(driver.getDuration()).toBe(90.0);
+      expect(driver.getCurrentTime()).toBe(45.1);
+
       driver.destroy();
     });
   });
 
   describe('ProceduralMediaDriver', () => {
-    it('seeks synchronously without delay', () => {
+    it('seeks synchronously without delay and updates duration in-place without resetting t', async () => {
       const driver = new ProceduralMediaDriver(60.0);
       expect(driver.getCurrentTime()).toBe(0);
 
       driver.seek(18.25);
       expect(driver.getCurrentTime()).toBe(18.25);
+
+      await driver.play();
+      driver.setDuration(75.0);
+      expect(driver.getDuration()).toBe(75.0);
+      expect(driver.isPlaying()).toBe(true);
+      expect(driver.getCurrentTime()).toBeGreaterThanOrEqual(18.25);
+
+      // Shrinking duration below current position clamps cleanly
+      driver.pause();
+      driver.setDuration(10.0);
+      expect(driver.getDuration()).toBe(10.0);
+      expect(driver.getCurrentTime()).toBe(10.0);
 
       driver.destroy();
     });

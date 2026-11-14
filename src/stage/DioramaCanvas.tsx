@@ -39,6 +39,7 @@ export interface DioramaCanvasProps {
     id: number;
   } | null>;
   cameraPresetSeq?: number;
+  sceneResetSeq?: number;
 }
 
 const FrameLoopTicker: React.FC<{ onTick: () => void }> = ({ onTick }) => {
@@ -58,6 +59,7 @@ const CanvasDemandInvalidator: React.FC<{
   dofBlurEnabled: boolean;
   themeCategory: AppThemeCategory;
   cameraPresetSeq: number;
+  sceneResetSeq: number;
   evaluateTick60fps: () => void;
 }> = ({
   score,
@@ -68,6 +70,7 @@ const CanvasDemandInvalidator: React.FC<{
   dofBlurEnabled,
   themeCategory,
   cameraPresetSeq,
+  sceneResetSeq,
   evaluateTick60fps,
 }) => {
   const invalidate = useThree((state) => state.invalidate);
@@ -86,6 +89,7 @@ const CanvasDemandInvalidator: React.FC<{
     dofBlurEnabled,
     themeCategory,
     cameraPresetSeq,
+    sceneResetSeq,
     size.width,
     size.height,
     evaluateTick60fps,
@@ -109,6 +113,7 @@ export const DioramaCanvas: React.FC<DioramaCanvasProps> = ({
   themeCategory = 'light',
   cameraPresetActionRef,
   cameraPresetSeq = 0,
+  sceneResetSeq = 0,
 }) => {
   const themeColors = useMemo(
     () => getDioramaThemeColors(themeCategory),
@@ -142,6 +147,7 @@ export const DioramaCanvas: React.FC<DioramaCanvasProps> = ({
           dofBlurEnabled={dofBlurEnabled}
           themeCategory={themeCategory}
           cameraPresetSeq={cameraPresetSeq}
+          sceneResetSeq={sceneResetSeq}
           evaluateTick60fps={evaluateTick60fps}
         />
 
@@ -165,6 +171,7 @@ export const DioramaCanvas: React.FC<DioramaCanvasProps> = ({
           lastManualSeekIdRef={lastManualSeekIdRef}
           onFreeOrbitPoseChange={onFreeOrbitPoseChange}
           cameraPresetActionRef={cameraPresetActionRef}
+          sceneResetSeq={sceneResetSeq}
         />
 
         {/* 3. Illustrative Stage Camera with Rectangular Film Gate Frustum */}

@@ -31,6 +31,7 @@ export interface MediaClockDriver {
   play(): Promise<void>;
   pause(): void;
   seek(timeSec: number): void;
+  setDuration?(durationSec: number): void;
   setPlaybackRate(rate: number): void;
   setMuted(muted: boolean): void;
   destroy(): void;

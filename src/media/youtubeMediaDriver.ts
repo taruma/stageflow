@@ -276,6 +276,10 @@ export class YouTubeMediaDriver implements MediaClockDriver {
     return this.fallbackDurationSec;
   }
 
+  public setDuration(durationSec: number): void {
+    this.fallbackDurationSec = Math.max(0.1, durationSec);
+  }
+
   public getPlaybackRate(): number {
     return this.playbackRate;
   }
