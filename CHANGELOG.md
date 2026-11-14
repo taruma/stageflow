@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+#### Custom Time Range by Seconds for In-Browser MP4 Export (GH Issue #13)
+
+- **Pure Custom Time Range Math, Validation & Filename Tagging (`src/core/exportMath.ts`, `tests/unit/exportMath.test.ts`)**:
+  - Extended `ExportRangeMode` to `'scene' | 'shot' | 'custom'` and added `CustomExportRange` and `CustomExportRangeValidation` interfaces.
+  - Added `validateCustomExportRange(startSec, endSec, sceneDurationSec, fps)` rejecting non-finite numbers, invalid scene durations, negative start times, end times exceeding `sceneDurationSec` (beyond `1e-6` float epsilon, preserving 3-decimal precision in error messages via `Number(sceneDurationSec.toFixed(3))`), inverted/empty ranges (`startSec >= endSec`), and durations shorter than 1 frame (`1 / fps`).
+  - Extended `computeExportTimeRange(score, rangeMode, fps, activeShot?, customRange?)` to clamp `'custom'` windows within `[0, sceneDuration]` with `shotId: null` / `shotLabel: null` and safe fallback to `[0, sceneDuration]` when `customRange` is omitted, while preserving existing `'scene'` and `'shot'` behavior.
+  - Added `formatExportTimeRangeTag(startSec, endSec)` (rounding up to 2 decimal places with `.` replaced by `_`, e.g., `2_5s-6s`) and extended `formatExportMp4Filename()` to insert `_<rangeTag>` before `_<stage_cam|observer>` when `shotId` is absent (e.g., `vector_field_2_5s-6s_stage_cam_1080p_60fps.mp4`).
+  - Added 10 unit tests in `tests/unit/exportMath.test.ts` covering decimal validation, float-epsilon bounds, 3-decimal scene durations (`45.375s`, `61.625s`), non-finite/negative/inverted/sub-frame rejections, `computeExportTimeRange` custom clamping & fallback, and range-tagged MP4 filenames.
+- **Exporter Hook Guard & Dual-Handle Custom Range Scrubber UI (`src/hooks/useWebVideoExport.ts`, `src/core/exportScrubberMath.ts`, `src/ui/ExportRangeScrubber.tsx`, `src/ui/ExportRangeScrubberTrack.tsx`, `src/ui/CleanVideoExportModal.tsx`, `src/ui/CleanVideoExportConfigForm.tsx`, `tests/unit/exportScrubberMath.test.ts`)**:
+  - Added Layer 1 `src/core/exportScrubberMath.ts` (`quantizeScrubberSec`, `formatScrubberSecondsInput`, `parseScrubberSecondsInput`, `computeMinScrubberSpanSec`, `computeScrubberVisualState`, `pickNearestScrubberHandle`, `applyScrubberHandleChange`) preserving 3-decimal precision (`toFixed(3)` before clamping for `45.375s` / `61.625s` scores so right-edge drags never round past `sceneDurationSec`), backed by 6 unit tests in `tests/unit/exportScrubberMath.test.ts`.
+  - Created `src/ui/ExportRangeScrubber.tsx` and `src/ui/ExportRangeScrubberTrack.tsx` featuring a simple drag-only shot-aware dual-handle timeline scrubber (shot cut ticks, draggable `Start`/`End` thumbs, nearest-handle track drag, keyboard `ArrowLeft`/`ArrowRight` support, `setPointerCapture`, `endDrag` hover clearing on release outside the track, and inline hover readout) paired with compact inline `Start`/`End` decimal inputs (`step="0.1"`) for exact timing and an inline validation alert banner.
+  - Extended `StartWebVideoExportParams` with `customRange?: CustomExportRange | null`, validated custom ranges inside `useWebVideoExport()` with clean error aborting (`setError` + `onNotify`), and forwarded validated bounds to `computeExportTimeRange()` and `formatExportMp4Filename()`.
+  - Updated `CleanVideoExportModal.tsx` with string-backed `customStartInput` / `customEndInput` decimal inputs, automatic seeding from the active shot (`[activeShot.startSec, activeShot.endSec]` clamped to `[0, score.durationSec]`) or scene (`[0, score.durationSec]`) on switching to `Custom (s)` before user customization (`hasCustomRangeRef`), persistence across Time Range tab switches once edited, score-change resets and duration-shrink clamping, and disabled `Export MP4` state on validation errors.
+  - Extended `CleanVideoExportConfigForm.tsx` Time Range segmented control with `Custom (s)`, wiring `score.shots`, `fps`, and `ExportRangeScrubber` into the configuration panel.
+
 ### Performance
 
 #### Idle WebGL/CPU Loop Elimination & Per-Frame Diorama Optimizations (GH Issue #9)
