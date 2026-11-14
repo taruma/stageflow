@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Split-Pane Observer Focal Length Telemetry Leak (`src/stage/ObserverCameraRig.tsx`)**:
+  - Tracked the un-adapted optical focal length (`lastAppliedFocalLengthMmRef`) inside `applyTransformImperatively` instead of reverse-converting the canvas-adapted `PerspectiveCamera.fov` via `verticalFovDegToFocalLengthMm` inside `handleControlsChange`.
+  - Prevents narrow split-workspace layouts (where `computeAdaptiveDioramaFovDeg` widens vertical FOV to preserve horizontal stage framing) from emitting distorted equivalent lens values (e.g., `17mm`–`21mm` instead of `35mm`) in the `[OBS]` Telemetry Capsule and copied YAML snippets during free orbit or preset snaps.
+
 ### Added
 
 #### Observer Diorama Target Camera for In-Browser MP4 Export (GH Issue #5)

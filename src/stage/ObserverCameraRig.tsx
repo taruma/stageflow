@@ -23,10 +23,10 @@ import {
   MAX_SAFE_POLAR_ANGLE_RAD,
   MIN_FLOOR_CLEARANCE_M,
 } from '../core/sphericalMath';
+import { DEFAULT_OBSERVER_POSE } from '../core/constants';
 import {
   computeAdaptiveDioramaFovDeg,
   computeViewfinderCanvasFovDeg,
-  verticalFovDegToFocalLengthMm,
 } from '../core/opticsMath';
 import {
   getPresetTransform,
@@ -61,12 +61,22 @@ export const ObserverCameraRig: React.FC<ObserverCameraRigProps> = ({
   const lastHandledPresetIdRef = useRef<number>(0);
   const lastModeRef = useRef<CameraViewMode>(cameraMode);
   const wasPlayingRef = useRef<boolean>(isPlaying);
+  // Preserve the un-adapted optical focal length because persp.fov is widened
+  // by computeAdaptiveDioramaFovDeg / computeViewfinderCanvasFovDeg on narrow panes.
+  const initialPose =
+    cameraMode === 'stage-pov'
+      ? (uiFrame ?? frameRef.current)?.stageCamera.transform.pose
+      : (uiFrame ?? frameRef.current)?.observerCamera.transform.pose;
+  const lastAppliedFocalLengthMmRef = useRef<number>(
+    initialPose?.focalLengthMm ?? DEFAULT_OBSERVER_POSE.focalLengthMm
+  );
 
   // Helper to apply a CameraTransform3D directly to Three.js PerspectiveCamera + OrbitControls
   const applyTransformImperatively = (
     transform: CameraTransform3D,
     mode: CameraViewMode
   ) => {
+    lastAppliedFocalLengthMmRef.current = transform.pose.focalLengthMm;
     const persp = camera as THREE.PerspectiveCamera;
     persp.position.set(
       transform.position.x,
@@ -258,8 +268,10 @@ export const ObserverCameraRig: React.FC<ObserverCameraRigProps> = ({
       MAX_SAFE_POLAR_ANGLE_RAD
     );
 
-    const aspect = frameRef.current?.observerCamera.transform.aspectRatio ?? 16 / 9;
-    const focalMm = verticalFovDegToFocalLengthMm(persp.fov, aspect);
+    const focalMm =
+      lastAppliedFocalLengthMmRef.current ??
+      frameRef.current?.observerCamera.transform.pose.focalLengthMm ??
+      DEFAULT_OBSERVER_POSE.focalLengthMm;
     const livePose = cartesianToSpherical(
       { x: persp.position.x, y: persp.position.y, z: persp.position.z },
       { x: tgt.x, y: tgt.y, z: tgt.z },

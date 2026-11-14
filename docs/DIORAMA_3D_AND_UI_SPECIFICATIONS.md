@@ -43,6 +43,7 @@ To eliminate stage clipping in the resizable split workspace without forcing bla
 - In narrow viewports ($< 16:9$, such as 50/50 split or mobile), the vertical FOV expands analytically:
   $$v\text{FOV}_{\text{adapted}} = 2 \times \arctan\left(\frac{\text{baselineAspect}}{\text{currentAspect}} \times \tan\left(\frac{v\text{FOV}_{\text{base}}}{2}\right)\right)$$
 - Guarantees that whatever stage width is visible in full 16:9 recording is also completely visible in the interactive split workspace, eliminating the authoring trap where split-window adjustments look too distant when recorded.
+- **Un-Adapted Optical Focal Length Preservation**: When `OrbitControls` fires `onChange`, `ObserverCameraRig.tsx` preserves the un-adapted `focalLengthMm` tracked via `lastAppliedFocalLengthMmRef` instead of reverse-computing from the canvas-adapted `PerspectiveCamera.fov`, ensuring the `[OBS]` Telemetry Capsule and copied YAML snippets never report a distorted wide lens in narrow split panes.
 
 > [!IMPORTANT]
 > **Instant Cut Invariant (0ms Transition)**: Switching between `'scripted'`, `'free'`, and `'stage-pov'` applies an instantaneous cut on the very next animation frame without slerp/lerp transition lag.
